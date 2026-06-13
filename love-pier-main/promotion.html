@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promotion — Love Pier Beach Cafe</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg:   '#f5f3ef',
+        ink:  '#1a1a1a',
+        muted:'#888888',
+        gold: '#c9a96e',
+        line: 'rgba(0,0,0,0.1)',
+      },
+      fontFamily: {
+        display: ['"Cormorant Garamond"', 'serif'],
+        sans:    ['Jost', 'sans-serif'],
+      },
+    }
+  }
+}
+</script>
+<script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js" defer></script>
+</head>
+<body data-page="promotion" class="bg-bg font-sans text-ink overflow-x-hidden">
+
+<div data-mount="nav"></div>
+<div data-mount="menu"></div>
+
+<!-- Hero promo -->
+<section class="relative w-full h-[480px] overflow-hidden border-b border-line reveal-img sm:h-[380px]">
+  <img class="w-full h-full object-cover [filter:brightness(0.6)_saturate(0.6)]" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1600&q=85" alt="promotion hero" />
+  <div class="absolute inset-0 flex flex-col justify-center px-16 text-bg max-w-[720px] sm:px-6">
+    <span class="inline-flex text-[10px] tracking-[0.4em] uppercase text-gold px-3.5 py-1.5 border border-gold/50 mb-6 w-fit">May Promotion · Limited</span>
+    <h1 class="font-display font-light leading-[0.95] tracking-[-0.02em] text-[clamp(48px,7vw,92px)]">Sunset Hour<br/>at <em class="italic text-gold">half-price</em></h1>
+    <p class="mt-5 text-sm leading-[1.8] text-[rgba(245,243,239,0.75)] font-light max-w-[480px]">Every weekday from 17:00–18:30, all coffee and refresher drinks are 50% off. No code, no fine print — just walk in.</p>
+    <div class="mt-8 flex gap-3 flex-wrap">
+      <a href="reservation.html" class="inline-block bg-gold text-ink text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-bg transition-colors duration-300">Reserve a Spot</a>
+      <a href="menu.html" class="inline-block bg-transparent text-bg text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 border border-white/30 hover:border-white hover:text-white transition-colors duration-300">View Menu</a>
+    </div>
+  </div>
+</section>
+
+<!-- Promo section -->
+<section class="px-10 py-20 border-b border-line reveal sm:px-6 sm:py-14">
+  <div class="flex justify-between items-end mb-12 gap-8 flex-wrap">
+    <div>
+      <span class="block text-[10px] tracking-[0.4em] uppercase text-gold mb-3">This month</span>
+      <h2 class="font-display font-light leading-[1.05] text-[clamp(36px,4.5vw,56px)]">Set deals &amp;<br/>seasonal <em class="italic text-gold">offers</em></h2>
+    </div>
+    <p class="text-xs text-[#999] tracking-[0.05em] max-w-[280px] leading-relaxed">Available in-store only. Cannot be combined with loyalty redemptions.</p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Card 1 -->
+    <div class="flex flex-col bg-white overflow-hidden border border-line hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300">
+      <img class="w-full aspect-[4/3] object-cover [filter:saturate(0.7)]" src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&q=80" alt="brunch" />
+      <div class="p-7 flex flex-col gap-3 flex-1">
+        <span class="text-[9px] tracking-[0.3em] uppercase text-gold border border-gold/40 px-2.5 py-1 self-start">Weekday Set</span>
+        <h3 class="font-display text-[26px] font-light text-ink leading-[1.1]">Brunch for Two</h3>
+        <div class="flex items-baseline gap-3 mt-1">
+          <span class="font-display text-[32px] text-gold font-light">฿480</span>
+          <span class="text-sm text-[#aaa] line-through">฿620</span>
+          <span class="text-[10px] tracking-[0.2em] uppercase text-gold bg-gold/10 px-2.5 py-1">−23%</span>
+        </div>
+        <p class="text-[13px] text-[#777] leading-[1.7] font-light flex-1">Two brunch plates, two filter coffees or teas, one small dessert to share. Available Mon–Fri 09:00–13:00.</p>
+        <div class="flex justify-between items-center pt-4 mt-2 border-t border-line">
+          <span class="text-[10px] tracking-[0.2em] uppercase text-[#aaa]">Until 31 May</span>
+          <a href="reservation.html" class="inline-flex items-center gap-2.5 text-[10px] tracking-[0.3em] uppercase text-[#666] hover:text-ink transition-colors after:content-['→'] after:text-sm after:transition-transform hover:after:translate-x-1">Book</a>
+        </div>
+      </div>
+    </div>
+    <!-- Card 2 -->
+    <div class="flex flex-col bg-white overflow-hidden border border-line hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300">
+      <img class="w-full aspect-[4/3] object-cover [filter:saturate(0.7)]" src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&q=80" alt="coffee box" />
+      <div class="p-7 flex flex-col gap-3 flex-1">
+        <span class="text-[9px] tracking-[0.3em] uppercase text-gold border border-gold/40 px-2.5 py-1 self-start">Take Home</span>
+        <h3 class="font-display text-[26px] font-light text-ink leading-[1.1]">Beans of the Month</h3>
+        <div class="flex items-baseline gap-3 mt-1">
+          <span class="font-display text-[32px] text-gold font-light">฿390</span>
+          <span class="text-sm text-[#aaa] line-through">฿450</span>
+          <span class="text-[10px] tracking-[0.2em] uppercase text-gold bg-gold/10 px-2.5 py-1">−13%</span>
+        </div>
+        <p class="text-[13px] text-[#777] leading-[1.7] font-light flex-1">250g of our featured single-origin, freshly roasted this week. Free in-store grind to your method.</p>
+        <div class="flex justify-between items-center pt-4 mt-2 border-t border-line">
+          <span class="text-[10px] tracking-[0.2em] uppercase text-[#aaa]">While stock lasts</span>
+          <a href="#" class="inline-flex items-center gap-2.5 text-[10px] tracking-[0.3em] uppercase text-[#666] hover:text-ink transition-colors after:content-['→'] after:text-sm after:transition-transform hover:after:translate-x-1">Reserve a bag</a>
+        </div>
+      </div>
+    </div>
+    <!-- Card 3 -->
+    <div class="flex flex-col bg-white overflow-hidden border border-line hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300">
+      <img class="w-full aspect-[4/3] object-cover [filter:saturate(0.7)]" src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=600&q=80" alt="grill" />
+      <div class="p-7 flex flex-col gap-3 flex-1">
+        <span class="text-[9px] tracking-[0.3em] uppercase text-gold border border-gold/40 px-2.5 py-1 self-start">Weekend</span>
+        <h3 class="font-display text-[26px] font-light text-ink leading-[1.1]">Sunset Grill Plate</h3>
+        <div class="flex items-baseline gap-3 mt-1">
+          <span class="font-display text-[32px] text-gold font-light">฿520</span>
+          <span class="text-sm text-[#aaa] line-through">฿680</span>
+          <span class="text-[10px] tracking-[0.2em] uppercase text-gold bg-gold/10 px-2.5 py-1">−24%</span>
+        </div>
+        <p class="text-[13px] text-[#777] leading-[1.7] font-light flex-1">Catch of the day grilled with lemon-herb butter, served with sea salt potatoes and house slaw.</p>
+        <div class="flex justify-between items-center pt-4 mt-2 border-t border-line">
+          <span class="text-[10px] tracking-[0.2em] uppercase text-[#aaa]">Fri–Sun, 17:00 only</span>
+          <a href="reservation.html" class="inline-flex items-center gap-2.5 text-[10px] tracking-[0.3em] uppercase text-[#666] hover:text-ink transition-colors after:content-['→'] after:text-sm after:transition-transform hover:after:translate-x-1">Book</a>
+        </div>
+      </div>
+    </div>
+    <!-- Card 4 -->
+    <div class="flex flex-col bg-white overflow-hidden border border-line hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300">
+      <img class="w-full aspect-[4/3] object-cover [filter:saturate(0.7)]" src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&q=80" alt="caramel coffee" />
+      <div class="p-7 flex flex-col gap-3 flex-1">
+        <span class="text-[9px] tracking-[0.3em] uppercase text-gold border border-gold/40 px-2.5 py-1 self-start">Limited</span>
+        <h3 class="font-display text-[26px] font-light text-ink leading-[1.1]">Caramel Sea Salt Latte</h3>
+        <div class="flex items-baseline gap-3 mt-1">
+          <span class="font-display text-[32px] text-gold font-light">฿120</span>
+          <span class="text-sm text-[#aaa] line-through">฿150</span>
+          <span class="text-[10px] tracking-[0.2em] uppercase text-gold bg-gold/10 px-2.5 py-1">−20%</span>
+        </div>
+        <p class="text-[13px] text-[#777] leading-[1.7] font-light flex-1">Limited-edition May menu only. House caramel, two espresso shots, sea salt foam cap.</p>
+        <div class="flex justify-between items-center pt-4 mt-2 border-t border-line">
+          <span class="text-[10px] tracking-[0.2em] uppercase text-[#aaa]">May only</span>
+          <a href="menu.html" class="inline-flex items-center gap-2.5 text-[10px] tracking-[0.3em] uppercase text-[#666] hover:text-ink transition-colors after:content-['→'] after:text-sm after:transition-transform hover:after:translate-x-1">See menu</a>
+        </div>
+      </div>
+    </div>
+    <!-- Card 5 -->
+    <div class="flex flex-col bg-white overflow-hidden border border-line hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300">
+      <img class="w-full aspect-[4/3] object-cover [filter:saturate(0.7)]" src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&q=80" alt="workshop" />
+      <div class="p-7 flex flex-col gap-3 flex-1">
+        <span class="text-[9px] tracking-[0.3em] uppercase text-gold border border-gold/40 px-2.5 py-1 self-start">Workshop</span>
+        <h3 class="font-display text-[26px] font-light text-ink leading-[1.1]">Barista Bundle</h3>
+        <div class="flex items-baseline gap-3 mt-1">
+          <span class="font-display text-[32px] text-gold font-light">฿1,200</span>
+          <span class="text-sm text-[#aaa] line-through">฿1,400</span>
+          <span class="text-[10px] tracking-[0.2em] uppercase text-gold bg-gold/10 px-2.5 py-1">−14%</span>
+        </div>
+        <p class="text-[13px] text-[#777] leading-[1.7] font-light flex-1">Book any workshop &amp; take home a 250g bag of beans, plus three free pour-overs to practice.</p>
+        <div class="flex justify-between items-center pt-4 mt-2 border-t border-line">
+          <span class="text-[10px] tracking-[0.2em] uppercase text-[#aaa]">Until 30 Jun</span>
+          <a href="events.html" class="inline-flex items-center gap-2.5 text-[10px] tracking-[0.3em] uppercase text-[#666] hover:text-ink transition-colors after:content-['→'] after:text-sm after:transition-transform hover:after:translate-x-1">Book class</a>
+        </div>
+      </div>
+    </div>
+    <!-- Card 6 -->
+    <div class="flex flex-col bg-white overflow-hidden border border-line hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300">
+      <img class="w-full aspect-[4/3] object-cover [filter:saturate(0.7)]" src="https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=600&q=80" alt="gift card" />
+      <div class="p-7 flex flex-col gap-3 flex-1">
+        <span class="text-[9px] tracking-[0.3em] uppercase text-gold border border-gold/40 px-2.5 py-1 self-start">Gift</span>
+        <h3 class="font-display text-[26px] font-light text-ink leading-[1.1]">Gift Card · ฿1,000</h3>
+        <div class="flex items-baseline gap-3 mt-1">
+          <span class="font-display text-[32px] text-gold font-light">฿900</span>
+          <span class="text-sm text-[#aaa] line-through">฿1,000</span>
+          <span class="text-[10px] tracking-[0.2em] uppercase text-gold bg-gold/10 px-2.5 py-1">−10%</span>
+        </div>
+        <p class="text-[13px] text-[#777] leading-[1.7] font-light flex-1">Buy a ฿1,000 gift card for ฿900. Valid 12 months, redeemable for anything on our menu.</p>
+        <div class="flex justify-between items-center pt-4 mt-2 border-t border-line">
+          <span class="text-[10px] tracking-[0.2em] uppercase text-[#aaa]">Any time</span>
+          <a href="contact.html" class="inline-flex items-center gap-2.5 text-[10px] tracking-[0.3em] uppercase text-[#666] hover:text-ink transition-colors after:content-['→'] after:text-sm after:transition-transform hover:after:translate-x-1">Purchase</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Loyalty -->
+<section class="bg-ink text-bg px-10 py-20 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center reveal sm:px-6 sm:py-14 sm:gap-9">
+  <div>
+    <h2 class="font-display font-light leading-none tracking-[-0.02em] mb-5 text-[clamp(40px,5vw,60px)]">The Pier <em class="italic text-gold">Loyalty</em></h2>
+    <p class="text-sm text-[rgba(245,243,239,0.65)] leading-[1.9] font-light mb-7 max-w-[460px]">One card. Every coffee counts. Reach a new tier and unlock perks that don't expire — we keep track so you don't have to.</p>
+    <a href="https://m.me/61590549024692" target="_blank" rel="noopener noreferrer" class="inline-block bg-gold text-ink text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-bg transition-colors duration-300">Join free</a>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-1 bg-white/[0.06] p-1">
+    <div class="bg-white/[0.04] px-5 py-7 text-center">
+      <h4 class="font-display text-[22px] font-light text-gold mb-2">Sand</h4>
+      <div class="text-[10px] tracking-[0.25em] uppercase text-[rgba(245,243,239,0.4)] mb-3.5">5 visits</div>
+      <div class="text-xs text-[rgba(245,243,239,0.7)] leading-relaxed">Free upgrade to large<br/>on any drink</div>
+    </div>
+    <div class="bg-white/[0.04] px-5 py-7 text-center">
+      <h4 class="font-display text-[22px] font-light text-gold mb-2">Tide</h4>
+      <div class="text-[10px] tracking-[0.25em] uppercase text-[rgba(245,243,239,0.4)] mb-3.5">15 visits</div>
+      <div class="text-xs text-[rgba(245,243,239,0.7)] leading-relaxed">One free drink<br/>+ priority seating</div>
+    </div>
+    <div class="bg-white/[0.04] px-5 py-7 text-center">
+      <h4 class="font-display text-[22px] font-light text-gold mb-2">Horizon</h4>
+      <div class="text-[10px] tracking-[0.25em] uppercase text-[rgba(245,243,239,0.4)] mb-3.5">30 visits</div>
+      <div class="text-xs text-[rgba(245,243,239,0.7)] leading-relaxed">Free brunch each month<br/>+ workshop discount</div>
+    </div>
+  </div>
+</section>
+
+<!-- Fine print -->
+<section class="bg-bg px-10 py-12 text-center sm:px-6 sm:py-8">
+  <p class="text-[11px] text-[#aaa] leading-[1.8] tracking-[0.05em] max-w-[760px] mx-auto">All promotions valid in-store only and subject to availability. Set deals cannot be combined. Discounts apply to listed items only and are not stackable with loyalty redemptions. Love Pier reserves the right to amend offers at any time. See staff for current terms.</p>
+</section>
+
+<div data-mount="footer" data-tagline="A LITTLE EXTRA, <em>EVERY DAY</em>"></div>
+
+<script src="partials.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

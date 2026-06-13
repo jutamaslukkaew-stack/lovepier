@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Love Pier Beach Cafe</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg:   '#f5f3ef',
+        ink:  '#1a1a1a',
+        muted:'#888888',
+        gold: '#c9a96e',
+        line: 'rgba(0,0,0,0.1)',
+      },
+      fontFamily: {
+        display: ['"Cormorant Garamond"', 'serif'],
+        sans:    ['Jost', 'sans-serif'],
+      },
+    }
+  }
+}
+</script>
+<script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js" defer></script>
+</head>
+<body data-page="about" class="bg-bg font-sans text-ink overflow-x-hidden">
+
+<div data-mount="nav"></div>
+<div data-mount="menu"></div>
+
+<!-- Story hero -->
+<section class="relative h-[70vh] min-h-[480px] overflow-hidden border-b border-line reveal-img">
+  <img class="w-full h-full object-cover [filter:saturate(0.6)_brightness(0.85)]" src="https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1600&q=85" alt="story hero" />
+  <div class="absolute inset-0 flex flex-col justify-end p-16 text-bg lg:p-16 sm:p-6">
+    <div class="text-[10px] tracking-[0.4em] uppercase text-[rgba(245,243,239,0.6)] mb-4">Our Story · Since 2017</div>
+    <h1 class="font-display font-light leading-[0.9] tracking-[-0.03em] max-w-[1000px] text-[clamp(56px,8vw,110px)]">A cafe<br/>built on <em class="italic text-gold">slow time</em></h1>
+  </div>
+</section>
+
+<!-- Story intro -->
+<section class="px-10 py-24 grid grid-cols-1 lg:grid-cols-2 gap-24 items-start border-b border-line reveal lg:px-10 sm:px-6 sm:py-16 sm:gap-8">
+  <div class="font-display font-light leading-[1.35] text-ink tracking-[-0.01em] text-[clamp(28px,3vw,38px)]">
+    <em class="italic text-gold">Love Pier</em> started with one decision: that the sea should be louder than the coffee machine. Everything else followed.
+  </div>
+  <div class="text-sm leading-[2] text-[#555] font-light">
+    <p class="mb-4">In early 2017, two friends — a photographer and a former barista — drove down Phetkasem Road with no plan beyond an idea: that there should be a place on the Cha-am coast where mornings are not rushed, the menu is not crowded, and the music is just loud enough to hear over the waves.</p>
+    <p class="mb-4">We rented a building with a wide blue awning, painted the walls the color of low tide, and opened with eleven menu items. Nothing has fundamentally changed since — only sharpened.</p>
+    <p>Eight years on, we are a team of twelve. Our coffee is still single-origin, still roasted weekly. Our breakfasts still feature whatever the morning fishermen drop off at the back door. Our regulars still order the same thing on Tuesdays.</p>
+  </div>
+</section>
+
+<!-- Values -->
+<section class="px-10 py-24 bg-ink text-bg reveal lg:px-10 sm:px-6 sm:py-16">
+  <div class="flex justify-between items-end mb-16 gap-10 flex-wrap">
+    <h2 class="font-display font-light leading-[1.05] text-[clamp(36px,4.5vw,60px)]">What we<br/>care <em class="italic text-gold">about</em></h2>
+    <p class="text-[13px] text-[rgba(245,243,239,0.5)] max-w-xs leading-[1.8]">Four things hold steady, no matter how busy the season. They show up in every cup we pour and every plate we send out.</p>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 border-t border-l border-[rgba(255,255,255,0.08)]">
+    <div class="px-8 py-10 border-r border-b border-[rgba(255,255,255,0.08)]">
+      <div class="font-display text-[56px] font-light text-gold leading-none tracking-[-0.02em]">01</div>
+      <h4 class="font-display text-[22px] font-light mt-4 mb-2.5">Slowness, on purpose</h4>
+      <p class="text-[13px] text-[rgba(245,243,239,0.6)] leading-[1.8] font-light">We don't push tables to turn over. If you sit for three hours with one filter coffee, you've understood the place.</p>
+    </div>
+    <div class="px-8 py-10 border-r border-b border-[rgba(255,255,255,0.08)]">
+      <div class="font-display text-[56px] font-light text-gold leading-none tracking-[-0.02em]">02</div>
+      <h4 class="font-display text-[22px] font-light mt-4 mb-2.5">Local before far</h4>
+      <p class="text-[13px] text-[rgba(245,243,239,0.6)] leading-[1.8] font-light">Ingredients walk in from down the road wherever possible. Fish, eggs, herbs, vegetables — same-day, same-coast.</p>
+    </div>
+    <div class="px-8 py-10 border-r border-b border-[rgba(255,255,255,0.08)]">
+      <div class="font-display text-[56px] font-light text-gold leading-none tracking-[-0.02em]">03</div>
+      <h4 class="font-display text-[22px] font-light mt-4 mb-2.5">One thing, well</h4>
+      <p class="text-[13px] text-[rgba(245,243,239,0.6)] leading-[1.8] font-light">We'd rather serve a small menu we believe in than a long menu we don't. Same with coffee. Same with playlists.</p>
+    </div>
+    <div class="px-8 py-10 border-r border-b border-[rgba(255,255,255,0.08)]">
+      <div class="font-display text-[56px] font-light text-gold leading-none tracking-[-0.02em]">04</div>
+      <h4 class="font-display text-[22px] font-light mt-4 mb-2.5">Quiet beats clever</h4>
+      <p class="text-[13px] text-[rgba(245,243,239,0.6)] leading-[1.8] font-light">Beautiful food doesn't need a flourish. Beautiful coffee doesn't need a story. We let the work speak softly.</p>
+    </div>
+    <div class="px-8 py-10 border-r border-b border-[rgba(255,255,255,0.08)]">
+      <div class="font-display text-[56px] font-light text-gold leading-none tracking-[-0.02em]">05</div>
+      <h4 class="font-display text-[22px] font-light mt-4 mb-2.5">Hire kind people</h4>
+      <p class="text-[13px] text-[rgba(245,243,239,0.6)] leading-[1.8] font-light">Skills can be taught. Warmth cannot. Our team is small for a reason — we work with people we want to work with.</p>
+    </div>
+    <div class="px-8 py-10 border-r border-b border-[rgba(255,255,255,0.08)]">
+      <div class="font-display text-[56px] font-light text-gold leading-none tracking-[-0.02em]">06</div>
+      <h4 class="font-display text-[22px] font-light mt-4 mb-2.5">Care for the coast</h4>
+      <p class="text-[13px] text-[rgba(245,243,239,0.6)] leading-[1.8] font-light">1% of every coffee sold goes to local beach cleanup. We pick up after ourselves; we pick up after others when needed.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Pull quote -->
+<section class="bg-white px-16 py-24 text-center reveal sm:px-6 sm:py-16">
+  <blockquote class="font-display font-light leading-[1.3] text-ink tracking-[-0.01em] max-w-[900px] mx-auto text-[clamp(28px,3.5vw,44px)]">
+    "<em class="italic text-gold">The sea</em> doesn't care if it's a busy Tuesday. Neither, in our best moments, do we."
+  </blockquote>
+  <cite class="block mt-8 font-sans text-[11px] tracking-[0.3em] uppercase text-muted not-italic">— Pim &amp; Tao, founders</cite>
+</section>
+
+<!-- Team -->
+<section class="px-10 py-24 border-b border-line reveal lg:px-10 sm:px-6 sm:py-16">
+  <div class="mb-14">
+    <h2 class="font-display font-light leading-[1.05] text-[clamp(36px,4.5vw,56px)]">The <em class="italic text-gold">people</em></h2>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="group">
+      <img class="w-full aspect-[4/5] object-cover [filter:saturate(0.65)_grayscale(0.2)] group-hover:[filter:saturate(0.95)] transition-[filter] duration-300 mb-4" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&q=80" alt="Pim" />
+      <h4 class="font-display text-[22px] font-normal text-ink">Pim Charoenpong</h4>
+      <div class="text-[11px] tracking-[0.2em] uppercase text-gold mt-1">Co-Founder · Roaster</div>
+      <p class="text-xs text-[#777] mt-2.5 leading-[1.7] font-light">Used to take photographs for living. Now takes them for fun and roasts beans for living. Lives ten minutes up the road.</p>
+    </div>
+    <div class="group">
+      <img class="w-full aspect-[4/5] object-cover [filter:saturate(0.65)_grayscale(0.2)] group-hover:[filter:saturate(0.95)] transition-[filter] duration-300 mb-4" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&q=80" alt="Tao" />
+      <h4 class="font-display text-[22px] font-normal text-ink">Tao Sirisin</h4>
+      <div class="text-[11px] tracking-[0.2em] uppercase text-gold mt-1">Co-Founder · Kitchen</div>
+      <p class="text-xs text-[#777] mt-2.5 leading-[1.7] font-light">Trained at a small bistro in Chiang Mai. Believes that nothing on a brunch plate should fight with anything else on the plate.</p>
+    </div>
+    <div class="group">
+      <img class="w-full aspect-[4/5] object-cover [filter:saturate(0.65)_grayscale(0.2)] group-hover:[filter:saturate(0.95)] transition-[filter] duration-300 mb-4" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&q=80" alt="Mai" />
+      <h4 class="font-display text-[22px] font-normal text-ink">Mai Suthep</h4>
+      <div class="text-[11px] tracking-[0.2em] uppercase text-gold mt-1">Head Barista</div>
+      <p class="text-xs text-[#777] mt-2.5 leading-[1.7] font-light">National latte art finalist 2024. Drinks her espresso with two ice cubes — never anyone else's order, just hers.</p>
+    </div>
+    <div class="group">
+      <img class="w-full aspect-[4/5] object-cover [filter:saturate(0.65)_grayscale(0.2)] group-hover:[filter:saturate(0.95)] transition-[filter] duration-300 mb-4" src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=500&q=80" alt="Nat" />
+      <h4 class="font-display text-[22px] font-normal text-ink">Nat Pongpat</h4>
+      <div class="text-[11px] tracking-[0.2em] uppercase text-gold mt-1">Sommelier · Friday Wine Host</div>
+      <p class="text-xs text-[#777] mt-2.5 leading-[1.7] font-light">Five years at a wine bar in Bangkok. Came south for the salt air. Stayed for the slower customers.</p>
+    </div>
+  </div>
+</section>
+
+<div data-mount="footer" data-tagline="STILL <em>WIDE OPEN</em>"></div>
+
+<script src="partials.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

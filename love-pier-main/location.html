@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Location — Love Pier Beach Cafe</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg:   '#f5f3ef',
+        ink:  '#1a1a1a',
+        muted:'#888888',
+        gold: '#c9a96e',
+        line: 'rgba(0,0,0,0.1)',
+      },
+      fontFamily: {
+        display: ['"Cormorant Garamond"', 'serif'],
+        sans:    ['Jost', 'sans-serif'],
+      },
+    }
+  }
+}
+</script>
+<script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js" defer></script>
+</head>
+<body data-page="location" class="bg-bg font-sans text-ink overflow-x-hidden">
+
+<div data-mount="nav"></div>
+<div data-mount="menu"></div>
+
+<!-- Page header -->
+<header class="px-10 pt-16 pb-10 text-center border-b border-line reveal sm:px-5 sm:pt-10 sm:pb-7">
+  <div class="text-[10px] tracking-[0.4em] uppercase text-muted mb-3">Find us</div>
+  <h1 class="font-display font-light leading-[0.95] text-ink tracking-[-0.02em] text-[clamp(48px,7vw,88px)]">Two hundred<br/>meters from <em class="italic text-gold">the sea</em></h1>
+  <p class="mt-4 text-sm text-[#666] font-light max-w-[580px] mx-auto leading-[1.8]">We sit at the quiet end of Narathat Beach Road. Easy to find, easier to stay.</p>
+</header>
+
+<!-- Big map (iframe) -->
+<div class="w-full h-[540px] bg-[#dedad3] relative overflow-hidden border-b border-line reveal sm:h-[360px]">
+  <iframe
+    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2189!2d100.9272293!3d13.2520411!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3102b54b8ceda3d5%3A0x6dad4e501d5d1adf!2sLOVE%20PIER%20BEACH%20CAFE!5e1!3m2!1sth!2sth!4v1716000000000"
+    style="position:absolute;inset:0;width:100%;height:100%;border:0;filter:saturate(0.7) contrast(1.05);"
+    allowfullscreen=""
+    loading="lazy"
+    referrerpolicy="no-referrer-when-downgrade"
+    title="Love Pier Beach Cafe location">
+  </iframe>
+</div>
+
+<!-- Info bar -->
+<div class="bg-bg px-10 py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 border-b border-line reveal sm:px-6 sm:py-7 sm:gap-6">
+  <div>
+    <h4 class="text-[10px] tracking-[0.4em] uppercase text-gold mb-3">Address</h4>
+    <p class="text-sm text-ink leading-[1.7] font-light">800 108 Saensuk<br/>Mueang Chonburi, Chonburi 20130<br/><span class="text-muted text-xs">Thailand</span></p>
+  </div>
+  <div>
+    <h4 class="text-[10px] tracking-[0.4em] uppercase text-gold mb-3">Hours</h4>
+    <p class="text-sm text-ink leading-[1.7] font-light">Mon–Fri · 08:00 – 21:00<br/>Sat–Sun · 07:00 – 22:00<br/><span class="text-muted text-xs">Kitchen closes 30 min before</span></p>
+  </div>
+  <div>
+    <h4 class="text-[10px] tracking-[0.4em] uppercase text-gold mb-3">Phone</h4>
+    <p class="text-sm text-ink leading-[1.7] font-light"><a href="tel:+6632123456" class="hover:text-gold transition-colors">+66 32 123 456</a><br/><a href="mailto:hello@lovepier.cafe" class="hover:text-gold transition-colors">hello@lovepier.cafe</a><br/><span class="text-muted text-xs">LINE: @lovepier</span></p>
+  </div>
+  <div>
+    <h4 class="text-[10px] tracking-[0.4em] uppercase text-gold mb-3">Coordinates</h4>
+    <p class="text-sm text-ink leading-[1.7] font-light">13.2537° N<br/>100.9287° E<br/><span class="text-muted text-xs"><a href="https://maps.app.goo.gl/CYDRrd6hoxRv7z4j8" target="_blank" rel="noopener" class="hover:text-gold transition-colors">Open in Google Maps</a></span></p>
+  </div>
+</div>
+
+<!-- Directions -->
+<section class="px-10 py-20 grid grid-cols-1 lg:grid-cols-2 gap-20 border-b border-line reveal sm:px-6 sm:py-14 sm:gap-12">
+  <div>
+    <h2 class="font-display font-light mb-6 leading-[1.05] text-[clamp(36px,4.5vw,56px)]">How to get<br/><em class="italic text-gold">here</em></h2>
+    <p class="text-sm text-[#555] leading-[1.9] font-light mb-8 max-w-[480px]">From Bangkok, head south along the coast. The drive is about 2 hours and 20 minutes — most of it is windows-down beach road.</p>
+    <div class="flex gap-3 flex-wrap">
+      <a href="https://maps.app.goo.gl/CYDRrd6hoxRv7z4j8" target="_blank" rel="noopener" class="inline-block bg-ink text-bg text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-gold hover:text-ink transition-colors duration-300">Open in Google Maps</a>
+      <a href="https://maps.apple.com/?ll=13.2537115,100.9287388&q=Love+Pier+Beach+Cafe" target="_blank" rel="noopener" class="inline-block bg-transparent text-ink text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 border border-black/20 hover:border-gold hover:text-gold transition-colors duration-300">Open in Apple Maps</a>
+    </div>
+  </div>
+  <div class="flex flex-col">
+    <div class="grid grid-cols-[80px_1fr] gap-6 py-6 border-t border-line sm:grid-cols-[60px_1fr] sm:gap-4">
+      <div class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] pt-1">By car</div>
+      <div><strong class="font-display text-lg font-normal text-ink block mb-1">2h 20m from Bangkok</strong><span class="text-[13px] text-[#777] font-light leading-[1.7]">Take Phetkasem Road south. Free parking on site for 18 cars and a small motorbike lot at the rear.</span></div>
+    </div>
+    <div class="grid grid-cols-[80px_1fr] gap-6 py-6 border-b border-line sm:grid-cols-[60px_1fr] sm:gap-4">
+      <div class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] pt-1">By bus</div>
+      <div><strong class="font-display text-lg font-normal text-ink block mb-1">2h 30m from Bangkok Southern Bus Terminal</strong><span class="text-[13px] text-[#777] font-light leading-[1.7]">Direct minivans run hourly. Ask for the Cha-am beach stop.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Parking strip -->
+<section class="bg-ink text-bg px-10 py-20 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center reveal sm:px-6 sm:py-14 sm:gap-9">
+  <div class="reveal-img">
+    <img class="w-full aspect-[4/3] object-cover [filter:saturate(0.55)_brightness(0.8)]" src="https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=900&q=80" alt="exterior" />
+  </div>
+  <div>
+    <h2 class="font-display font-light mb-4 leading-[1.05] text-[clamp(32px,4vw,52px)]">Parking <em class="italic text-gold">&amp; access</em></h2>
+    <p class="text-sm text-[rgba(245,243,239,0.65)] leading-[1.8] mb-4 font-light">We've kept things simple. Free, attended parking on site — and the beach is one short walk away.</p>
+    <ul class="list-none text-[13px] text-[rgba(245,243,239,0.7)] font-light">
+      <li class="py-2.5 border-b border-white/[0.08] before:content-['·'] before:text-gold before:mr-3">18 free car spaces on site</li>
+      <li class="py-2.5 border-b border-white/[0.08] before:content-['·'] before:text-gold before:mr-3">Dedicated motorbike &amp; bicycle racks</li>
+      <li class="py-2.5 border-b border-white/[0.08] before:content-['·'] before:text-gold before:mr-3">Wheelchair-accessible entrance &amp; restroom</li>
+      <li class="py-2.5 border-b border-white/[0.08] before:content-['·'] before:text-gold before:mr-3">Dog-friendly terrace seating</li>
+      <li class="py-2.5 border-b border-white/[0.08] before:content-['·'] before:text-gold before:mr-3">EV charging station (Type 2 · 7kW)</li>
+    </ul>
+  </div>
+</section>
+
+<div data-mount="footer" data-tagline="ALWAYS <em>EASY TO FIND</em>"></div>
+
+<script src="partials.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

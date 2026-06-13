@@ -1,0 +1,63 @@
+/* ──────────────────────────────────────────────────
+   LOVE PIER BEACH CAFE — SHARED STYLES (animation-only)
+   Full layout is now handled by Tailwind CSS.
+   ────────────────────────────────────────────────── */
+
+/* ── LENIS SCROLL ── */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: clip; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+/* ── MENU OPEN LOCK ── */
+body.menu-open { overflow: hidden; }
+
+/* ── REVEAL ANIMATIONS ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1.2s cubic-bezier(0.25,0.1,0.25,1), transform 1.2s cubic-bezier(0.25,0.1,0.25,1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible { opacity: 1; transform: translateY(0); }
+.reveal-img { overflow: hidden; position: relative; }
+.reveal-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #f5f3ef;
+  transform: scaleY(1);
+  transform-origin: bottom;
+  transition: transform 1.4s cubic-bezier(0.77,0,0.175,1);
+  pointer-events: none;
+  z-index: 2;
+}
+.reveal-img.is-visible::after { transform: scaleY(0); }
+.reveal-img img {
+  transform: scale(1.1);
+  transition: transform 1.6s cubic-bezier(0.25,0.1,0.25,1);
+}
+.reveal-img.is-visible img { transform: scale(1); }
+
+/* Footer big tagline — all pages */
+.footer-tagline {
+  width: 100%;
+  text-align: center;
+  font-size: clamp(28px, 7vw, 92px);
+}
+.footer-tagline--long {
+  font-size: clamp(22px, 4.8vw, 72px);
+}
+
+/* ── MENU OVERLAY OPEN STATE ── */
+.menu-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── MAP PIN PULSE ── */
+@keyframes pulse {
+  0%,100% { box-shadow: 0 0 0 8px rgba(26,26,26,0.12), 0 0 0 18px rgba(26,26,26,0.06); }
+  50% { box-shadow: 0 0 0 12px rgba(26,26,26,0.16), 0 0 0 24px rgba(26,26,26,0.04); }
+}

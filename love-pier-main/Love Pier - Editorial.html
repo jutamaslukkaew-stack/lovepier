@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Love Pier Beach Cafe</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: clip; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+html { scroll-behavior: smooth; }
+body {
+  background: #f5f3ef;
+  font-family: 'Jost', sans-serif;
+  color: #1a1a1a;
+  overflow-x: hidden;
+}
+img { display: block; }
+a { text-decoration: none; color: inherit; }
+
+/* ── TOP NAV ── */
+.topnav {
+  width: 100%;
+  padding: 14px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  background: #f5f3ef;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topnav-links {
+  display: flex;
+  gap: 32px;
+}
+.topnav-link {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #888;
+  transition: color 0.2s;
+}
+.topnav-link:hover { color: #1a1a1a; }
+.topnav-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #1a1a1a;
+}
+.topnav-right {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+.topnav-ham {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.topnav-ham span {
+  display: block;
+  width: 20px;
+  height: 1px;
+  background: #1a1a1a;
+}
+
+/* ── HERO HEADER ── */
+.hero-header {
+  padding: 48px 40px 32px;
+  text-align: center;
+  position: relative;
+}
+.hero-header-city {
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 12px;
+}
+.hero-header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(48px, 7vw, 88px);
+  font-weight: 300;
+  line-height: 0.95;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
+}
+.hero-header-title em {
+  font-style: italic;
+}
+.hero-header-meta {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  align-items: start;
+}
+.hero-meta-left { text-align: left; }
+.hero-meta-center { text-align: center; padding: 0 40px; }
+.hero-meta-right { text-align: right; }
+.hero-meta-label {
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #aaa;
+  margin-bottom: 6px;
+  display: block;
+}
+.hero-meta-value {
+  font-size: 12px;
+  color: #444;
+  line-height: 1.6;
+  font-weight: 300;
+}
+.hero-meta-divider {
+  width: 1px;
+  height: 100%;
+  background: rgba(0,0,0,0.1);
+  margin: 0 auto;
+}
+.scroll-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #bbb;
+}
+.scroll-line {
+  width: 32px;
+  height: 1px;
+  background: #ccc;
+}
+
+/* ── FULL HERO IMAGE ── */
+.hero-img-full {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  filter: saturate(0.75);
+  display: block;
+}
+
+/* ── SPLIT IMAGE SECTION ── */
+.split-imgs {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: 3px;
+  margin-top: 3px;
+}
+.split-img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  filter: saturate(0.7);
+  display: block;
+  transition: filter 0.5s;
+}
+.split-img:hover { filter: saturate(1); }
+
+/* ── ABOUT TEXT SECTION ── */
+.about-section {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: 0;
+  padding: 80px 40px;
+  align-items: start;
+}
+.about-left {}
+.about-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 300;
+  line-height: 0.92;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
+}
+.about-title em { font-style: italic; }
+.about-cta {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.about-cta::after {
+  content: '→';
+  font-size: 14px;
+  transition: transform 0.2s;
+}
+.about-cta:hover { color: #1a1a1a; }
+.about-cta:hover::after { transform: translateX(4px); }
+.about-right {
+  padding-top: 8px;
+}
+.about-eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: #bbb;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.about-eyebrow::before {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 1px;
+  background: #bbb;
+}
+.about-body {
+  font-size: 14px;
+  line-height: 1.9;
+  color: #555;
+  font-weight: 300;
+  max-width: 520px;
+  text-wrap: pretty;
+}
+.about-body p { margin-bottom: 16px; }
+
+/* ── FULL-BLEED DARK PHOTO ── */
+.dark-photo-section {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/8;
+  overflow: hidden;
+  margin-top: 3px;
+}
+.dark-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.55) saturate(0.5);
+  display: block;
+}
+.dark-photo-caption {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 300;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+.dark-photo-caption em { font-style: italic; color: #c9a96e; }
+
+/* ── STATS SECTION ── */
+.stats-section {
+  background: #fff;
+  padding: 64px 40px;
+}
+.stats-header {
+  margin-bottom: 48px;
+}
+.stats-header-label {
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: #bbb;
+  margin-bottom: 12px;
+  display: block;
+}
+.stats-header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 300;
+  color: #1a1a1a;
+  line-height: 1.05;
+}
+.stats-header-title em { font-style: italic; }
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1px solid #eee;
+  border-left: 1px solid #eee;
+}
+.stat-cell {
+  padding: 40px 32px;
+  border-right: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+.stat-cell-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 56px;
+  font-weight: 300;
+  color: #1a1a1a;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.stat-cell-label {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #bbb;
+  margin-top: 10px;
+  display: block;
+}
+.stat-cell-desc {
+  font-size: 13px;
+  color: #777;
+  margin-top: 10px;
+  line-height: 1.6;
+  font-weight: 300;
+  max-width: 220px;
+}
+
+/* ── PHOTO MOSAIC ── */
+.mosaic {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: 280px 280px;
+  gap: 3px;
+  margin-top: 3px;
+}
+.mosaic .m0 { grid-column: span 7; grid-row: span 2; }
+.mosaic .m1 { grid-column: span 5; }
+.mosaic .m2 { grid-column: span 3; }
+.mosaic .m3 { grid-column: span 2; }
+.mosaic .m4 { grid-column: span 5; }
+.mosaic-item {
+  overflow: hidden;
+  background: #e8e4de;
+  position: relative;
+}
+.mosaic-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.6);
+  transition: filter 0.6s, transform 0.6s;
+  display: block;
+}
+.mosaic-item:hover img {
+  filter: saturate(0.9);
+  transform: scale(1.03);
+}
+
+/* ── MAP + FOOTER TAGLINE ── */
+.map-section {
+  position: relative;
+  background: #e8e4de;
+  overflow: hidden;
+}
+.map-bg {
+  width: 100%;
+  height: 320px;
+  background: #dedad3;
+  position: relative;
+  overflow: hidden;
+}
+.map-grid-lines {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.map-roads {
+  position: absolute;
+  inset: 0;
+}
+.map-pin-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.map-pin-outer {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  box-shadow: 0 0 0 6px rgba(26,26,26,0.12), 0 0 0 12px rgba(26,26,26,0.06);
+}
+.map-pin-text {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #444;
+  white-space: nowrap;
+  background: rgba(245,243,239,0.9);
+  padding: 4px 12px;
+}
+.map-info-bar {
+  background: #f5f3ef;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  padding: 28px 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 40px;
+  align-items: start;
+}
+.map-info-col-label {
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #bbb;
+  margin-bottom: 8px;
+  display: block;
+}
+.map-info-col-val {
+  font-size: 13px;
+  color: #444;
+  line-height: 1.7;
+  font-weight: 300;
+}
+.map-info-col-val a { color: #888; transition: color 0.2s; }
+.map-info-col-val a:hover { color: #1a1a1a; }
+.map-social-links {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.map-soc {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #888;
+  border: 1px solid rgba(0,0,0,0.12);
+  padding: 8px;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+.map-soc svg { width: 14px; height: 14px; display: block; }
+.map-soc:hover { border-color: #1a1a1a; color: #1a1a1a; background: #1a1a1a; }
+.map-soc:hover svg { color: #f5f3ef; }
+
+/* ── BIG TAGLINE FOOTER ── */
+.big-tagline {
+  background: #1a1a1a;
+  padding: 60px 40px 40px;
+  overflow: hidden;
+}
+.big-tagline-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 7vw, 92px);
+  font-weight: 300;
+  color: #f5f3ef;
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+.big-tagline-text em {
+  font-style: italic;
+  color: #c9a96e;
+}
+.big-tagline-bottom {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.big-tagline-copy {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: rgba(245,243,239,0.3);
+  text-transform: uppercase;
+}
+.big-tagline-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: 300;
+  color: rgba(245,243,239,0.5);
+  letter-spacing: 0.2em;
+}
+
+/* ── ROAD SVG PATTERNS ── */
+.road-h { position: absolute; left: 0; right: 0; height: 8px; background: rgba(255,255,255,0.6); }
+.road-v { position: absolute; top: 0; bottom: 0; width: 8px; background: rgba(255,255,255,0.6); }
+
+/* ── REVEAL ANIMATIONS ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1.2s cubic-bezier(0.25, 0.1, 0.25, 1), transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-img {
+  overflow: hidden;
+  position: relative;
+}
+.reveal-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #f5f3ef;
+  transform: scaleY(1);
+  transform-origin: bottom;
+  transition: transform 1.4s cubic-bezier(0.77, 0, 0.175, 1);
+  pointer-events: none;
+  z-index: 2;
+}
+.reveal-img.is-visible::after {
+  transform: scaleY(0);
+}
+.reveal-img img {
+  transform: scale(1.1);
+  transition: transform 1.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.reveal-img.is-visible img {
+  transform: scale(1);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .topnav { padding: 12px 20px; }
+  .topnav-links { gap: 18px; }
+  .topnav-link { font-size: 9px; letter-spacing: 0.2em; }
+  .topnav-right { gap: 18px; }
+  .topnav-logo img { height: 40px !important; }
+
+  .hero-header { padding: 32px 20px 24px; }
+  .hero-header-title { font-size: clamp(40px, 9vw, 64px) !important; }
+  .hero-header-meta {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    text-align: center !important;
+  }
+  .hero-meta-left, .hero-meta-right, .hero-meta-center { text-align: center !important; padding: 0 !important; }
+
+  .split-imgs { grid-template-columns: 1fr; }
+  .split-img { aspect-ratio: 16/10 !important; }
+
+  .about-section {
+    grid-template-columns: 1fr;
+    padding: 60px 20px;
+    gap: 36px;
+  }
+  .about-title { font-size: clamp(40px, 12vw, 56px); }
+  .about-body { font-size: 14px; max-width: 100%; }
+
+  .dark-photo-section { aspect-ratio: 4/3; }
+  .dark-photo-caption {
+    font-size: clamp(24px, 7vw, 36px);
+    bottom: 24px;
+    left: 24px;
+  }
+
+  .stats-section { padding: 48px 20px; }
+  .stats-header-title { font-size: clamp(26px, 6vw, 36px); }
+  .stats-grid { grid-template-columns: 1fr; }
+  .stat-cell { padding: 28px 24px; }
+  .stat-cell-num { font-size: 44px; }
+
+  .mosaic {
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: auto;
+  }
+  .mosaic .m0 { grid-column: span 6; grid-row: auto; height: 240px; }
+  .mosaic .m1 { grid-column: span 6; height: 200px; }
+  .mosaic .m2 { grid-column: span 3; height: 180px; }
+  .mosaic .m3 { grid-column: span 3; height: 180px; }
+  .mosaic .m4 { grid-column: span 6; height: 200px; }
+  .mosaic-item img { min-height: 100%; }
+
+  .map-bg { height: 220px; }
+  .map-info-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 20px;
+  }
+  .map-info-col-val { font-size: 12px; }
+
+  .big-tagline { padding: 40px 20px 28px; }
+  .big-tagline-text {
+    font-size: clamp(22px, 4.8vw, 72px);
+    white-space: normal;
+    line-height: 1;
+  }
+  .big-tagline-bottom {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 540px) {
+  .topnav-links a:nth-child(3) { display: none; }
+  .topnav-right a { display: none; }
+  .hero-header-title { font-size: 44px !important; }
+  .about-title { font-size: 44px; }
+  .map-info-bar { grid-template-columns: 1fr; }
+  .stat-cell-num { font-size: 38px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="topnav-links">
+    <a href="#" class="topnav-link">Menu</a>
+    <a href="#" class="topnav-link">About</a>
+    <a href="#" class="topnav-link">Events</a>
+  </div>
+  <div class="topnav-logo">
+    <img src="uploads/logo-8dc1f126.png" alt="Love Pier Beach Cafe" style="height: 52px; mix-blend-mode: multiply; display: block" />
+  </div>
+  <div class="topnav-right">
+    <a href="#" class="topnav-link">Location</a>
+    <button class="topnav-ham">
+      <span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO HEADER -->
+<header class="hero-header reveal">
+  <div class="hero-header-city">chonburi . thailand</div>
+  <h1 class="hero-header-title" style="font-family: &quot;Cormorant Garamond&quot;; font-size: 39px">Love Pier<br/>Beach Cafe</h1>
+
+  <div class="hero-header-meta">
+    <div class="hero-meta-left">
+      <span class="hero-meta-label">Hours</span>
+      <div class="hero-meta-value" style="font-size: 25px">Mon–Fri 08:00–21:00<br/>Sat–Sun 07:00–22:00</div>
+    </div>
+    <div class="hero-meta-center">
+      <span class="hero-meta-label">Est.</span>
+      <div class="hero-meta-value" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;">2017</div>
+    </div>
+    <div class="hero-meta-right">
+      <span class="hero-meta-label">Location</span>
+      <div class="hero-meta-value">800 108 Saensuk<br/>Mueang Chonburi, Chonburi 20130</div>
+    </div>
+  </div>
+
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+    scroll
+    <div class="scroll-line"></div>
+  </div>
+</header>
+
+<!-- FULL HERO IMAGE -->
+<img
+  class="hero-img-full reveal-img"
+  src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1600&q=85"
+  alt="Love Pier Beach Cafe"
+/>
+
+<!-- SPLIT IMAGES -->
+<div class="split-imgs reveal">
+  <img class="split-img" src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80" alt="coffee" />
+  <img class="split-img" src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1000&q=80" alt="cafe" style="aspect-ratio:16/10;" />
+</div>
+
+<!-- ABOUT TEXT SECTION -->
+<section class="about-section reveal">
+  <div class="about-left">
+    <h2 class="about-title" style="font-size: 66px">Love<br/>Pier<br/><em>&amp; Coffee</em></h2>
+    <div class="about-cta">Explore Menu</div>
+  </div>
+  <div class="about-right">
+    <div class="about-eyebrow">Since 2017</div>
+    <div class="about-body">
+      <p>Love Pier Beach Cafe sits 200 meters from the shoreline of Cha-am, where the Gulf of Thailand meets a quieter kind of morning. We opened with a single conviction: that great coffee and great views belong together.</p>
+      <p>Our menu is shaped by the sea — cold brews steeped overnight, single-origin pour-overs, and plates built from ingredients sourced the same day from local fishermen and farmers. Every detail is considered, nothing is rushed.</p>
+      <p>We are not just a cafe. We are a place to arrive slowly, stay longer, and leave with a full chest.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FULL-BLEED DARK PHOTO -->
+<div class="dark-photo-section reveal-img">
+  <img
+    class="dark-photo"
+    src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&q=85"
+    alt="atmosphere"
+  />
+  <div class="dark-photo-caption">Where the<br/>shore meets<br/><em>the cup</em></div>
+</div>
+
+<!-- STATS SECTION -->
+<section class="stats-section reveal">
+  <div class="stats-header">
+    <span class="stats-header-label">The Numbers</span>
+    <h3 class="stats-header-title">A little about<br/><em>what we do</em></h3>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-cell">
+      <div class="stat-cell-num">8+</div>
+      <span class="stat-cell-label">Years Open</span>
+      <div class="stat-cell-desc">Serving the beach community since 2017, rain and sun alike.</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-num">200m</div>
+      <span class="stat-cell-label">To the Shore</span>
+      <div class="stat-cell-desc">Walk two minutes and your feet are in the sand.</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-num">70+</div>
+      <span class="stat-cell-label">Menu Items</span>
+      <div class="stat-cell-desc">From specialty coffee to fresh-catch plates, crafted daily.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PHOTO MOSAIC -->
+<div class="mosaic reveal">
+  <div class="mosaic-item m0">
+    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&q=80" alt="beach" />
+  </div>
+  <div class="mosaic-item m1">
+    <img src="https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=600&q=80" alt="cafe" />
+  </div>
+  <div class="mosaic-item m2">
+    <img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&q=80" alt="coffee" />
+  </div>
+  <div class="mosaic-item m3">
+    <img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&q=80" alt="interior" />
+  </div>
+  <div class="mosaic-item m4">
+    <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&q=80" alt="pier" />
+  </div>
+</div>
+
+<!-- MAP SECTION -->
+<div class="map-section reveal">
+  <div class="map-bg">
+    <div class="map-grid-lines"></div>
+    <!-- road pattern SVG -->
+    <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.5" viewBox="0 0 1200 320" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <line x1="0" y1="120" x2="1200" y2="120" stroke="white" stroke-width="8" opacity="0.6"/>
+      <line x1="0" y1="200" x2="1200" y2="200" stroke="white" stroke-width="4" opacity="0.4"/>
+      <line x1="300" y1="0" x2="300" y2="320" stroke="white" stroke-width="6" opacity="0.5"/>
+      <line x1="600" y1="0" x2="600" y2="320" stroke="white" stroke-width="4" opacity="0.4"/>
+      <line x1="900" y1="0" x2="900" y2="320" stroke="white" stroke-width="5" opacity="0.45"/>
+      <line x1="150" y1="0" x2="150" y2="320" stroke="white" stroke-width="3" opacity="0.25"/>
+      <line x1="450" y1="0" x2="580" y2="320" stroke="white" stroke-width="3" opacity="0.2"/>
+      <line x1="0" y1="60" x2="450" y2="60" stroke="white" stroke-width="3" opacity="0.25"/>
+      <line x1="0" y1="260" x2="1200" y2="260" stroke="white" stroke-width="3" opacity="0.3"/>
+    </svg>
+    <div class="map-pin-wrap">
+      <div class="map-pin-outer"></div>
+      <div class="map-pin-text">Love Pier Beach Cafe</div>
+    </div>
+  </div>
+  <div class="map-info-bar">
+    <div>
+      <span class="map-info-col-label">Address</span>
+      <div class="map-info-col-val">800 108 Saensuk<br/>Mueang Chonburi, Chonburi 20130</div>
+    </div>
+    <div>
+      <span class="map-info-col-label">Hours</span>
+      <div class="map-info-col-val">Mon–Fri · 08:00 – 21:00<br/>Sat–Sun · 07:00 – 22:00</div>
+    </div>
+    <div>
+      <span class="map-info-col-label">Contact</span>
+      <div class="map-info-col-val">
+        <a href="tel:+6632123456">+66 32 123 456</a><br/>
+        <a href="mailto:hello@lovepier.cafe">hello@lovepier.cafe</a>
+      </div>
+    </div>
+    <div>
+      <span class="map-info-col-label">Follow</span>
+      <div class="map-social-links">
+        <a href="#" class="map-soc" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=61590549024692" target="_blank" rel="noopener noreferrer" class="map-soc" aria-label="Facebook">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5h2.5l.5-3h-3V8.5c0-.9.3-1.5 1.6-1.5H17V4.3c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1V10.5H8v3h2.5V21h3z"/></svg>
+        </a>
+        <a href="#" class="map-soc" aria-label="LINE">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.5 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6 1.5-1.7 2.6-3.4 2.6-4.9 0-4.4-4.5-8-10-8zM8 13.3H6c-.2 0-.4-.2-.4-.4V9c0-.2.2-.4.4-.4s.4.2.4.4v3.5h1.6c.2 0 .4.2.4.4s-.2.4-.4.4zm1.8-.4c0 .2-.2.4-.4.4s-.4-.2-.4-.4V9c0-.2.2-.4.4-.4s.4.2.4.4v3.9zm4.5 0c0 .2-.1.3-.3.4h-.1c-.1 0-.3-.1-.3-.2l-2-2.7v2.5c0 .2-.2.4-.4.4s-.4-.2-.4-.4V9c0-.2.1-.3.3-.4h.1c.1 0 .3.1.3.2l2 2.7V9c0-.2.2-.4.4-.4s.4.2.4.4v3.9zm3-1.5c.2 0 .4.2.4.4s-.2.4-.4.4h-1.6v1h1.6c.2 0 .4.2.4.4s-.2.4-.4.4h-2c-.2 0-.4-.2-.4-.4V9c0-.2.2-.4.4-.4h2c.2 0 .4.2.4.4s-.2.4-.4.4h-1.6v1h1.6z"/></svg>
+        </a>
+        <a href="#" class="map-soc" aria-label="TikTok">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-2.6-1.6 4.3 4.3 0 0 1-.8-2.2h-3v12c0 1-.8 1.9-1.9 1.9a1.9 1.9 0 0 1-1.9-1.9c0-1 .8-1.9 1.9-1.9.2 0 .4 0 .6.1V9.1a5 5 0 0 0-.6 0 5 5 0 1 0 5 5V8.4a7.4 7.4 0 0 0 4.3 1.4V6.7a4.4 4.4 0 0 1-1-.9z"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BIG TAGLINE FOOTER -->
+<footer class="big-tagline reveal">
+  <div class="big-tagline-text">THE SEA IS <em style="color: rgb(255, 255, 255)">ALWAYS OPEN</em></div>
+  <div class="big-tagline-bottom">
+    <div class="big-tagline-copy">© 2026 Love Pier Beach Cafe · All Rights Reserved</div>
+    <div class="big-tagline-brand">Love Pier</div>
+  </div>
+</footer>
+
+<script>
+  // Lenis smooth scroll
+  const lenis = new Lenis({
+    duration: 1.4,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true,
+    wheelMultiplier: 1,
+    touchMultiplier: 1.2,
+  });
+  function raf(time) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
+  }
+  requestAnimationFrame(raf);
+
+  // Reveal-on-scroll using IntersectionObserver
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+
+  document.querySelectorAll('.reveal, .reveal-img').forEach(el => io.observe(el));
+
+  // Anchor links should respect Lenis
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', (e) => {
+      const href = a.getAttribute('href');
+      if (href && href.length > 1 && document.querySelector(href)) {
+        e.preventDefault();
+        lenis.scrollTo(href, { offset: -60, duration: 1.6 });
+      }
+    });
+  });
+</script>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+    <rect width="120" height="80" fill="#f5f3ef"/>
+    <rect x="0" y="6" width="120" height="8" fill="#ede9e1"/>
+    <rect x="0" y="17" width="120" height="28" fill="#d8d4cc"/>
+    <rect x="5" y="48" width="50" height="18" fill="#e8e4dc"/>
+    <rect x="58" y="48" width="57" height="8" fill="#e8e4dc"/>
+    <rect x="58" y="59" width="57" height="7" fill="#e8e4dc"/>
+    <rect x="0" y="69" width="120" height="11" fill="#1a1a1a"/>
+    <text x="60" y="78" font-size="7" fill="#f5f3ef" text-anchor="middle" font-family="serif" letter-spacing="1">THE SEA IS ALWAYS OPEN</text>
+  </svg>
+</template>
+
+</body>
+</html>

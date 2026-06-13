@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Love Pier Beach Cafe</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg:   '#f5f3ef',
+        ink:  '#1a1a1a',
+        muted:'#888888',
+        gold: '#c9a96e',
+        line: 'rgba(0,0,0,0.1)',
+      },
+      fontFamily: {
+        display: ['"Cormorant Garamond"', 'serif'],
+        sans:    ['Jost', 'sans-serif'],
+      },
+    }
+  }
+}
+</script>
+<script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js" defer></script>
+<style>
+.c-input {
+  font-family: 'Jost', sans-serif;
+  font-size: 14px;
+  border: none;
+  border-bottom: 1px solid rgba(0,0,0,0.15);
+  background: transparent;
+  padding: 8px 0;
+  color: #1a1a1a;
+  outline: none;
+  font-weight: 300;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.c-input:focus { border-bottom-color: #1a1a1a; }
+textarea.c-input { resize: vertical; min-height: 100px; }
+.subject-chip { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; padding: 7px 14px; border: 1px solid rgba(0,0,0,0.12); color: #888; cursor: pointer; background: none; transition: all 0.2s; }
+.subject-chip:hover { border-color: #1a1a1a; color: #1a1a1a; }
+.subject-chip.is-active { background: #1a1a1a; color: #f5f3ef; border-color: #1a1a1a; }
+</style>
+</head>
+<body data-page="contact" class="bg-bg font-sans text-ink overflow-x-hidden">
+
+<div data-mount="nav"></div>
+<div data-mount="menu"></div>
+
+<!-- Contact hero -->
+<section class="px-10 pt-20 pb-16 grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-20 items-start border-b border-line reveal sm:px-6 sm:pt-12 sm:pb-10 sm:gap-9">
+  <div>
+    <span class="block text-[10px] tracking-[0.4em] uppercase text-muted mb-5">Get in touch</span>
+    <h1 class="font-display font-light leading-[0.95] text-ink tracking-[-0.02em] text-[clamp(48px,6vw,80px)]">Say hello,<br/>or <em class="italic text-gold">just visit</em></h1>
+    <p class="mt-6 text-sm text-[#666] leading-[1.9] font-light max-w-[420px]">We answer most messages within a few hours during open hours, and within a morning otherwise. For reservations, please use the booking form — it's faster.</p>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+    <a href="tel:+6632123456" class="flex flex-col gap-2 p-8 bg-white border border-line hover:bg-[#fffdf6] hover:border-gold transition-all duration-200 sm:p-7">
+      <span class="text-[10px] tracking-[0.3em] uppercase text-gold">Phone</span>
+      <div class="font-display text-[22px] font-normal text-ink leading-[1.2]">+66 32 123 456</div>
+      <div class="text-xs text-muted font-light mt-1">Open hours only</div>
+    </a>
+    <a href="mailto:hello@lovepier.cafe" class="flex flex-col gap-2 p-8 bg-white border border-line hover:bg-[#fffdf6] hover:border-gold transition-all duration-200 sm:p-7">
+      <span class="text-[10px] tracking-[0.3em] uppercase text-gold">Email</span>
+      <div class="font-display text-[22px] font-normal text-ink leading-[1.2]">hello@lovepier.cafe</div>
+      <div class="text-xs text-muted font-light mt-1">Reply within 24h</div>
+    </a>
+    <a href="#" class="flex flex-col gap-2 p-8 bg-white border border-line hover:bg-[#fffdf6] hover:border-gold transition-all duration-200 sm:p-7">
+      <span class="text-[10px] tracking-[0.3em] uppercase text-gold">LINE</span>
+      <div class="font-display text-[22px] font-normal text-ink leading-[1.2]">@lovepier</div>
+      <div class="text-xs text-muted font-light mt-1">Fastest for last-minute</div>
+    </a>
+    <a href="reservation.html" class="flex flex-col gap-2 p-8 bg-white border border-line hover:bg-[#fffdf6] hover:border-gold transition-all duration-200 sm:p-7">
+      <span class="text-[10px] tracking-[0.3em] uppercase text-gold">Reservation</span>
+      <div class="font-display text-[22px] font-normal text-ink leading-[1.2]">Book a table →</div>
+      <div class="text-xs text-muted font-light mt-1">Confirmed in 2 hours</div>
+    </a>
+  </div>
+</section>
+
+<!-- Form section -->
+<section class="px-10 py-24 grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-20 items-start border-b border-line bg-white reveal sm:px-6 sm:py-16 sm:gap-9">
+  <div>
+    <h2 class="font-display font-light leading-[1.05] mb-5 text-[clamp(36px,4.5vw,56px)]">Send us a<br/>quick <em class="italic text-gold">note</em></h2>
+    <p class="text-sm text-[#666] leading-[1.9] mb-8 font-light">Whether it's a private event, a press inquiry, a partnership, or just a question — we'll get back to you.</p>
+    <ul class="list-none">
+      <li class="flex items-baseline gap-4 py-3.5 border-b border-line text-[13px] text-[#555] font-light before:content-['·'] before:text-gold before:text-2xl"><strong class="text-ink font-medium min-w-[100px] inline-block">Private events</strong>The whole cafe sleeps 60 standing, 38 seated.</li>
+      <li class="flex items-baseline gap-4 py-3.5 border-b border-line text-[13px] text-[#555] font-light before:content-['·'] before:text-gold before:text-2xl"><strong class="text-ink font-medium min-w-[100px] inline-block">Press &amp; media</strong>Photo permits, features, interviews welcome.</li>
+      <li class="flex items-baseline gap-4 py-3.5 border-b border-line text-[13px] text-[#555] font-light before:content-['·'] before:text-gold before:text-2xl"><strong class="text-ink font-medium min-w-[100px] inline-block">Wholesale</strong>Our beans available to hotels &amp; small shops.</li>
+      <li class="flex items-baseline gap-4 py-3.5 border-b border-line text-[13px] text-[#555] font-light before:content-['·'] before:text-gold before:text-2xl"><strong class="text-ink font-medium min-w-[100px] inline-block">Careers</strong>Open positions posted via LINE Official.</li>
+    </ul>
+  </div>
+  <form class="grid grid-cols-1 lg:grid-cols-2 gap-6 gap-x-5" onsubmit="event.preventDefault(); alert('Message sent.');">
+    <div class="flex flex-col lg:col-span-2">
+      <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2">Subject</label>
+      <div class="flex gap-2 flex-wrap">
+        <button type="button" class="subject-chip is-active">General</button>
+        <button type="button" class="subject-chip">Private Event</button>
+        <button type="button" class="subject-chip">Press</button>
+        <button type="button" class="subject-chip">Wholesale</button>
+        <button type="button" class="subject-chip">Careers</button>
+      </div>
+    </div>
+    <div class="flex flex-col">
+      <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="cname">Full name</label>
+      <input class="c-input" type="text" id="cname" placeholder="Your name" required />
+    </div>
+    <div class="flex flex-col">
+      <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="cemail">Email</label>
+      <input class="c-input" type="email" id="cemail" placeholder="you@example.com" required />
+    </div>
+    <div class="flex flex-col">
+      <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="cphone">Phone (optional)</label>
+      <input class="c-input" type="tel" id="cphone" placeholder="+66" />
+    </div>
+    <div class="flex flex-col">
+      <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="ccompany">Company (optional)</label>
+      <input class="c-input" type="text" id="ccompany" placeholder="If applicable" />
+    </div>
+    <div class="flex flex-col lg:col-span-2">
+      <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="cmessage">Your message</label>
+      <textarea class="c-input" id="cmessage" placeholder="Tell us what you have in mind…" required></textarea>
+    </div>
+    <div class="lg:col-span-2 flex flex-wrap sm:flex-col justify-between items-center sm:items-start gap-6 mt-4 sm:gap-3.5">
+      <span class="text-[11px] text-[#aaa] tracking-[0.1em]">By submitting you agree to our privacy policy.</span>
+      <button type="submit" class="inline-block bg-ink text-bg text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-gold hover:text-ink transition-colors duration-300 cursor-pointer">Send Message</button>
+    </div>
+  </form>
+</section>
+
+<!-- Socials block -->
+<section class="px-10 py-20 border-b border-line text-center reveal sm:px-6 sm:py-14">
+  <h3 class="font-display font-light mb-4 text-[clamp(32px,4vw,48px)]">Follow us, <em class="italic text-gold">say hello</em></h3>
+  <p class="text-sm text-[#777] mb-9 font-light">Our days, lit by good light and good coffee. Tag #lovepiercafe to be featured.</p>
+  <div class="flex justify-center gap-4 flex-wrap">
+    <a href="#" class="flex items-center gap-3 px-6 py-3.5 border border-black/[0.12] text-[11px] tracking-[0.25em] uppercase text-[#555] hover:bg-ink hover:text-bg hover:border-ink transition-all duration-200"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>Instagram</a>
+    <a href="https://www.facebook.com/profile.php?id=61590549024692" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 px-6 py-3.5 border border-black/[0.12] text-[11px] tracking-[0.25em] uppercase text-[#555] hover:bg-ink hover:text-bg hover:border-ink transition-all duration-200"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5h2.5l.5-3h-3V8.5c0-.9.3-1.5 1.6-1.5H17V4.3c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1V10.5H8v3h2.5V21h3z"/></svg>Facebook</a>
+    <a href="#" class="flex items-center gap-3 px-6 py-3.5 border border-black/[0.12] text-[11px] tracking-[0.25em] uppercase text-[#555] hover:bg-ink hover:text-bg hover:border-ink transition-all duration-200"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.5 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6 1.5-1.7 2.6-3.4 2.6-4.9 0-4.4-4.5-8-10-8z"/></svg>LINE Official</a>
+    <a href="#" class="flex items-center gap-3 px-6 py-3.5 border border-black/[0.12] text-[11px] tracking-[0.25em] uppercase text-[#555] hover:bg-ink hover:text-bg hover:border-ink transition-all duration-200"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-2.6-1.6 4.3 4.3 0 0 1-.8-2.2h-3v12c0 1-.8 1.9-1.9 1.9a1.9 1.9 0 0 1-1.9-1.9c0-1 .8-1.9 1.9-1.9.2 0 .4 0 .6.1V9.1a5 5 0 0 0-.6 0 5 5 0 1 0 5 5V8.4a7.4 7.4 0 0 0 4.3 1.4V6.7a4.4 4.4 0 0 1-1-.9z"/></svg>TikTok</a>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="px-10 py-20 border-b border-line reveal sm:px-6 sm:py-14">
+  <div class="mb-12">
+    <h3 class="font-display font-light leading-[1.05] text-[clamp(32px,4vw,48px)]">Quick <em class="italic text-gold">answers</em></h3>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-16">
+    <div class="py-6 border-b border-line">
+      <h4 class="font-display text-[20px] font-normal text-ink mb-2">Do I need a reservation?</h4>
+      <p class="text-[13px] text-[#666] leading-[1.8] font-light">Walk-ins are always welcome. Reservations are recommended for weekends, sunset hour, and groups larger than four.</p>
+    </div>
+    <div class="py-6 border-b border-line">
+      <h4 class="font-display text-[20px] font-normal text-ink mb-2">Are you dog-friendly?</h4>
+      <p class="text-[13px] text-[#666] leading-[1.8] font-light">Yes — well-behaved dogs are welcome on the outdoor terrace. We even keep a water bowl by the door.</p>
+    </div>
+    <div class="py-6 border-b border-line">
+      <h4 class="font-display text-[20px] font-normal text-ink mb-2">Do you have parking?</h4>
+      <p class="text-[13px] text-[#666] leading-[1.8] font-light">Free on-site parking for 18 cars, with separate motorbike and bicycle racks. EV charging available.</p>
+    </div>
+    <div class="py-6 border-b border-line">
+      <h4 class="font-display text-[20px] font-normal text-ink mb-2">Is the cafe accessible?</h4>
+      <p class="text-[13px] text-[#666] leading-[1.8] font-light">The main floor and terrace are step-free with a wheelchair-accessible restroom. Please call ahead for group bookings.</p>
+    </div>
+    <div class="py-6 border-b border-line">
+      <h4 class="font-display text-[20px] font-normal text-ink mb-2">Can I host a private event?</h4>
+      <p class="text-[13px] text-[#666] leading-[1.8] font-light">Yes — the whole cafe is available for private bookings on Mondays. Capacity is 60 standing, 38 seated.</p>
+    </div>
+    <div class="py-6 border-b border-line">
+      <h4 class="font-display text-[20px] font-normal text-ink mb-2">Do you have vegetarian options?</h4>
+      <p class="text-[13px] text-[#666] leading-[1.8] font-light">About half of our menu is vegetarian; we mark vegan and gluten-free options clearly. Anything else can usually be adjusted.</p>
+    </div>
+  </div>
+</section>
+
+<div data-mount="footer" data-tagline="WE'LL <em>ANSWER SOON</em>"></div>
+
+<script src="partials.js"></script>
+<script src="site.js"></script>
+<script>
+  document.querySelectorAll('.subject-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.subject-chip').forEach(x => x.classList.remove('is-active'));
+      c.classList.add('is-active');
+    });
+  });
+</script>
+</body>
+</html>

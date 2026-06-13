@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu — Love Pier Beach Cafe</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg:   '#f5f3ef',
+        ink:  '#1a1a1a',
+        muted:'#888888',
+        gold: '#c9a96e',
+        line: 'rgba(0,0,0,0.1)',
+      },
+      fontFamily: {
+        display: ['"Cormorant Garamond"', 'serif'],
+        sans:    ['Jost', 'sans-serif'],
+      },
+    }
+  }
+}
+</script>
+<script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js" defer></script>
+</head>
+<body data-page="menu" class="bg-bg font-sans text-ink overflow-x-hidden">
+
+<div data-mount="nav"></div>
+<div data-mount="menu"></div>
+
+<!-- Menu Hero -->
+<section class="grid grid-cols-1 lg:grid-cols-2 border-b border-line reveal">
+  <div class="px-16 py-20 flex flex-col justify-center sm:px-6 sm:py-12">
+    <h1 class="font-display font-light leading-[0.95] text-ink tracking-[-0.02em] mb-5 text-[clamp(48px,6vw,76px)]">Menu <em class="italic text-gold">Love Pier Beach Cafe</em></h1>
+    <p class="text-[15px] leading-[1.9] text-[#555] font-light max-w-[480px]">Every drink and dish on our menu is built around what's growing, swimming, and being roasted at this moment. Sourcing changes weekly; care is constant.</p>
+  </div>
+  <img class="w-full aspect-[4/5] object-cover [filter:saturate(0.7)]" src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1000&q=85" alt="menu hero" />
+</section>
+
+<!-- Category tabs -->
+<div class="flex gap-7 px-10 py-8 border-b border-line overflow-x-auto [scrollbar-width:none] bg-white sticky top-[67px] z-50 reveal sm:px-6 sm:py-5 sm:gap-4 sm:top-[60px]">
+  <button class="menu-tab font-display text-[22px] font-light text-[#aaa] whitespace-nowrap cursor-pointer border-none bg-transparent px-0 py-1 border-b border-transparent is-active sm:text-lg" style="transition:color 0.2s,border-color 0.2s">All</button>
+  <button class="menu-tab font-display text-[22px] font-light text-[#aaa] whitespace-nowrap cursor-pointer border-none bg-transparent px-0 py-1 border-b border-transparent sm:text-lg" style="transition:color 0.2s,border-color 0.2s">Coffee</button>
+  <button class="menu-tab font-display text-[22px] font-light text-[#aaa] whitespace-nowrap cursor-pointer border-none bg-transparent px-0 py-1 border-b border-transparent sm:text-lg" style="transition:color 0.2s,border-color 0.2s">Tea &amp; Refreshers</button>
+  <button class="menu-tab font-display text-[22px] font-light text-[#aaa] whitespace-nowrap cursor-pointer border-none bg-transparent px-0 py-1 border-b border-transparent sm:text-lg" style="transition:color 0.2s,border-color 0.2s">Breakfast</button>
+  <button class="menu-tab font-display text-[22px] font-light text-[#aaa] whitespace-nowrap cursor-pointer border-none bg-transparent px-0 py-1 border-b border-transparent sm:text-lg" style="transition:color 0.2s,border-color 0.2s">Mains</button>
+  <button class="menu-tab font-display text-[22px] font-light text-[#aaa] whitespace-nowrap cursor-pointer border-none bg-transparent px-0 py-1 border-b border-transparent sm:text-lg" style="transition:color 0.2s,border-color 0.2s">Sweets</button>
+  <button class="menu-tab font-display text-[22px] font-light text-[#aaa] whitespace-nowrap cursor-pointer border-none bg-transparent px-0 py-1 border-b border-transparent sm:text-lg" style="transition:color 0.2s,border-color 0.2s">Drinks</button>
+</div>
+<style>
+.menu-tab.is-active { color: #1a1a1a; border-bottom-color: #c9a96e; }
+.menu-tab:hover { color: #1a1a1a; }
+</style>
+
+<!-- Helper macro for menu item rows -->
+<!-- COFFEE -->
+<section class="px-10 py-20 border-b border-line reveal sm:px-6 sm:py-14 menu-cat" data-cat="coffee">
+  <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-16 mb-16 sm:gap-4 sm:mb-9">
+    <div><div class="font-display text-[80px] text-black/[0.08] leading-none font-light sm:text-5xl">01</div></div>
+    <div>
+      <h2 class="font-display font-light leading-[1.05] text-ink text-[clamp(36px,4vw,52px)]">Coffee <em class="italic text-gold">&amp; Espresso</em></h2>
+      <p class="text-sm text-[#777] leading-[1.8] font-light mt-3.5 max-w-[540px]">Single-origin beans sourced from Chiang Rai and roasted weekly. Pulled and steeped with precision.</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-16">
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">01</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Cold Brew Sunrise <span class="font-sans text-[9px] tracking-[0.25em] text-gold uppercase ml-2 align-middle">Signature</span></div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Steeped 12 hours, served with house syrup &amp; orange peel.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">120</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">02</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Sea Breeze Latte</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Double espresso, steamed milk, a whisper of sea salt.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">140</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">03</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Espresso Tonic</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Espresso poured over tonic, ice, and a slice of lime.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">130</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">04</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Pour-Over of the Week</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Ask the barista. Single origin, hand-poured.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">160</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">05</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Cappuccino</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Classic 1:1:1 ratio. Served small, served hot.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">110</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">06</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Thai Iced Coffee</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Strong, sweetened, and served the way it should be.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">90</div>
+    </div>
+  </div>
+</section>
+
+<!-- TEA -->
+<section class="px-10 py-20 border-b border-line bg-white reveal sm:px-6 sm:py-14 menu-cat" data-cat="tea">
+  <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-16 mb-16 sm:gap-4 sm:mb-9">
+    <div><div class="font-display text-[80px] text-black/[0.08] leading-none font-light sm:text-5xl">02</div></div>
+    <div>
+      <h2 class="font-display font-light leading-[1.05] text-ink text-[clamp(36px,4vw,52px)]">Tea <em class="italic text-gold">&amp; Refreshers</em></h2>
+      <p class="text-sm text-[#777] leading-[1.8] font-light mt-3.5 max-w-[540px]">Loose-leaf teas, herbal infusions, and seasonal coolers built for warm afternoons by the shore.</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-16">
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">07</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Matcha Serenity <span class="font-sans text-[9px] tracking-[0.25em] text-gold uppercase ml-2 align-middle">Signature</span></div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Ceremonial-grade matcha, oat milk, raw honey.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">140</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">08</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Coconut Pandan Cooler</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Pandan-infused coconut water, lime, mint.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">120</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">09</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Butterfly Lemonade</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Butterfly pea flower, soda, lemon. Color-changing.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">110</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">10</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Earl Grey Foam</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Cold-steeped earl grey, salted cream cap.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">130</div>
+    </div>
+  </div>
+</section>
+
+<!-- BREAKFAST -->
+<section class="px-10 py-20 border-b border-line reveal sm:px-6 sm:py-14 menu-cat" data-cat="breakfast">
+  <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-16 mb-16 sm:gap-4 sm:mb-9">
+    <div><div class="font-display text-[80px] text-black/[0.08] leading-none font-light sm:text-5xl">03</div></div>
+    <div>
+      <h2 class="font-display font-light leading-[1.05] text-ink text-[clamp(36px,4vw,52px)]">Breakfast <em class="italic text-gold">all day</em></h2>
+      <p class="text-sm text-[#777] leading-[1.8] font-light mt-3.5 max-w-[540px]">Slow mornings deserve good food. Served from open to close.</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-16">
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">11</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Pier Breakfast Plate <span class="font-sans text-[9px] tracking-[0.25em] text-gold uppercase ml-2 align-middle">Signature</span></div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Two eggs, sourdough, avocado, smoked salmon, garden greens.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">280</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">12</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Coconut Granola Bowl</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">House granola, coconut yogurt, seasonal fruit, honey.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">220</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">13</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Eggs Benedict</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Poached eggs, brioche, ham, lemon hollandaise.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">260</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">14</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Rice Porridge with Prawn</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Fresh prawns, ginger, fried garlic, soft-boiled egg.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">240</div>
+    </div>
+  </div>
+</section>
+
+<!-- MAINS -->
+<section class="px-10 py-20 border-b border-line bg-white reveal sm:px-6 sm:py-14 menu-cat" data-cat="mains">
+  <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-16 mb-16 sm:gap-4 sm:mb-9">
+    <div><div class="font-display text-[80px] text-black/[0.08] leading-none font-light sm:text-5xl">04</div></div>
+    <div>
+      <h2 class="font-display font-light leading-[1.05] text-ink text-[clamp(36px,4vw,52px)]">Mains <em class="italic text-gold">&amp; the Sea</em></h2>
+      <p class="text-sm text-[#777] leading-[1.8] font-light mt-3.5 max-w-[540px]">Catch of the day, slow-cooked plates, and bowls built around what came in this morning. Substantial, unhurried, honest.</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-16">
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">15</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Grilled Sea Bass <span class="font-sans text-[9px] tracking-[0.25em] text-gold uppercase ml-2 align-middle">Signature</span></div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Whole fish, lemon-herb butter, sea salt potatoes, house salad.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">420</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">16</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Pier Prawn Pasta</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Tiger prawns, cherry tomato, garlic, chilli, linguine, basil oil.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">360</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">17</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Thai Basil Fish Bowl</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Flash-fried barramundi, holy basil, jasmine rice, fried egg.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">280</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">18</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Mushroom Risotto</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Porcini, oyster mushroom, parmesan, truffle oil, fresh herb.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">320</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">19</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Beach BBQ Plate</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Mixed grill — chicken thigh, corn, sweet potato, slaw, BBQ glaze.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">380</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">20</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Som Tum Salad Bowl</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Green papaya, peanuts, dried shrimp, cherry tomato, lime dressing.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">220</div>
+    </div>
+  </div>
+</section>
+
+<!-- SWEETS -->
+<section class="px-10 py-20 border-b border-line reveal sm:px-6 sm:py-14 menu-cat" data-cat="sweets">
+  <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-16 mb-16 sm:gap-4 sm:mb-9">
+    <div><div class="font-display text-[80px] text-black/[0.08] leading-none font-light sm:text-5xl">05</div></div>
+    <div>
+      <h2 class="font-display font-light leading-[1.05] text-ink text-[clamp(36px,4vw,52px)]">Sweets <em class="italic text-gold">&amp; endings</em></h2>
+      <p class="text-sm text-[#777] leading-[1.8] font-light mt-3.5 max-w-[540px]">Small plates to close on — local fruit, house-made pastries, and things that go well with a last cup of coffee.</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-16">
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">21</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Coconut Panna Cotta <span class="font-sans text-[9px] tracking-[0.25em] text-gold uppercase ml-2 align-middle">Signature</span></div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Kaffir lime infusion, mango coulis, sesame tuile.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">180</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">22</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Thai Tea Crème Brûlée</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Classic custard steeped with Thai tea, caramelised crust.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">160</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">23</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Banana Foster Waffle</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Brioche waffle, caramelised banana, rum butter, vanilla cream.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">200</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">24</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Seasonal Fruit Plate</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Whatever is ripe today — sliced and served with honey yogurt dip.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">120</div>
+    </div>
+  </div>
+</section>
+
+<!-- DRINKS -->
+<section class="px-10 py-20 border-b border-line bg-white reveal sm:px-6 sm:py-14 menu-cat" data-cat="drinks">
+  <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-16 mb-16 sm:gap-4 sm:mb-9">
+    <div><div class="font-display text-[80px] text-black/[0.08] leading-none font-light sm:text-5xl">06</div></div>
+    <div>
+      <h2 class="font-display font-light leading-[1.05] text-ink text-[clamp(36px,4vw,52px)]">Drinks <em class="italic text-gold">&amp; mocktails</em></h2>
+      <p class="text-sm text-[#777] leading-[1.8] font-light mt-3.5 max-w-[540px]">From freshly pressed juices and craft sodas to alcohol-free cocktails that taste like the coast smells.</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-16">
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">25</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Pier Lemonade <span class="font-sans text-[9px] tracking-[0.25em] text-gold uppercase ml-2 align-middle">Signature</span></div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">House lemon syrup, soda, fresh mint, salted rim.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">90</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">26</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Green Mango Soda</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Pressed green mango, ginger syrup, sparkling water.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">95</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">27</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Young Coconut</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Straight from the shell, served with a straw and a spoon.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">80</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">28</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Watermelon Fizz</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Fresh watermelon, lime, basil seed, lychee soda.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">100</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">29</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Fresh Orange &amp; Ginger</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Cold-pressed, no sugar added. Served over ice.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">110</div>
+    </div>
+    <div class="grid grid-cols-[60px_1fr_auto] gap-5 py-6 border-b border-dashed border-black/[0.08] items-start cursor-pointer">
+      <span class="text-[10px] tracking-[0.25em] text-[#bbb] pt-1">30</span>
+      <div><div class="font-display text-[22px] font-light text-ink leading-[1.1]">Sparkling Water</div><div class="text-xs text-muted mt-1.5 leading-relaxed font-light">Perrier or S.Pellegrino, 330ml.</div></div>
+      <div class="font-display text-[22px] text-gold whitespace-nowrap pt-0.5">60</div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured -->
+<section class="bg-ink text-bg px-10 py-20 reveal sm:px-6 sm:py-14">
+  <div class="text-[10px] tracking-[0.4em] uppercase text-gold mb-4">Today's Specials</div>
+  <h2 class="font-display font-light leading-[1.1] mb-12 max-w-[800px] text-[clamp(36px,5vw,60px)]">Chef's choice<br/>of the <em class="italic text-gold">season</em></h2>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+    <div class="group flex flex-col gap-3">
+      <img class="w-full aspect-[4/5] object-cover [filter:saturate(0.6)] group-hover:[filter:saturate(1)] transition-[filter] duration-500" src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=600&q=80" alt="grilled" />
+      <div class="font-display text-[22px] font-light mt-1.5">Grilled Sea Bass</div>
+      <div class="text-[11px] tracking-[0.15em] text-[rgba(245,243,239,0.5)] uppercase mt-0.5">Whole, lemon, herbs</div>
+      <div class="font-display text-lg text-gold mt-1.5">฿420</div>
+    </div>
+    <div class="group flex flex-col gap-3">
+      <img class="w-full aspect-[4/5] object-cover [filter:saturate(0.6)] group-hover:[filter:saturate(1)] transition-[filter] duration-500" src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&q=80" alt="brunch" />
+      <div class="font-display text-[22px] font-light mt-1.5">Weekend Brunch Plate</div>
+      <div class="text-[11px] tracking-[0.15em] text-[rgba(245,243,239,0.5)] uppercase mt-0.5">Sat–Sun only · until 14:00</div>
+      <div class="font-display text-lg text-gold mt-1.5">฿380</div>
+    </div>
+    <div class="group flex flex-col gap-3">
+      <img class="w-full aspect-[4/5] object-cover [filter:saturate(0.6)] group-hover:[filter:saturate(1)] transition-[filter] duration-500" src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&q=80" alt="caramel coffee" />
+      <div class="font-display text-[22px] font-light mt-1.5">Caramel Sea Salt Latte</div>
+      <div class="text-[11px] tracking-[0.15em] text-[rgba(245,243,239,0.5)] uppercase mt-0.5">Limited edition · May</div>
+      <div class="font-display text-lg text-gold mt-1.5">฿150</div>
+    </div>
+  </div>
+</section>
+
+<div data-mount="footer" data-tagline="EAT WELL, <em>STAY LONGER</em>"></div>
+
+<script src="partials.js"></script>
+<script src="site.js"></script>
+<script>
+  const TAB_MAP = {
+    'All': null,
+    'Coffee': 'coffee',
+    'Tea & Refreshers': 'tea',
+    'Breakfast': 'breakfast',
+    'Mains': 'mains',
+    'Sweets': 'sweets',
+    'Drinks': 'drinks',
+  };
+
+  const tabs = document.querySelectorAll('.menu-tab');
+  const sections = document.querySelectorAll('.menu-cat');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('is-active'));
+      tab.classList.add('is-active');
+
+      const cat = TAB_MAP[tab.textContent.trim()];
+      sections.forEach(sec => {
+        if (!cat || sec.dataset.cat === cat) {
+          sec.style.display = '';
+        } else {
+          sec.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
+</body>
+</html>

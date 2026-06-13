@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reservation — Love Pier Beach Cafe</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg:   '#f5f3ef',
+        ink:  '#1a1a1a',
+        muted:'#888888',
+        gold: '#c9a96e',
+        line: 'rgba(0,0,0,0.1)',
+      },
+      fontFamily: {
+        display: ['"Cormorant Garamond"', 'serif'],
+        sans:    ['Jost', 'sans-serif'],
+      },
+    }
+  }
+}
+</script>
+<script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js" defer></script>
+<style>
+/* Form input underline style — hard to fully express in Tailwind without @apply */
+.res-input {
+  font-family: 'Jost', sans-serif;
+  font-size: 14px;
+  border: none;
+  border-bottom: 1px solid rgba(0,0,0,0.15);
+  background: transparent;
+  padding: 8px 0;
+  color: #1a1a1a;
+  outline: none;
+  font-weight: 300;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.res-input:focus { border-bottom-color: #1a1a1a; }
+textarea.res-input { resize: vertical; min-height: 80px; }
+.occasion-chip { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; padding: 7px 14px; border: 1px solid rgba(0,0,0,0.12); color: #888; cursor: pointer; background: none; transition: all 0.2s; }
+.occasion-chip:hover { border-color: #1a1a1a; color: #1a1a1a; }
+.occasion-chip.is-active { background: #1a1a1a; color: #f5f3ef; border-color: #1a1a1a; }
+</style>
+</head>
+<body data-page="reservation" class="bg-bg font-sans text-ink overflow-x-hidden">
+
+<div data-mount="nav"></div>
+<div data-mount="menu"></div>
+
+<section class="grid grid-cols-1 lg:grid-cols-[5fr_7fr] min-h-screen border-b border-line lg:min-h-screen min-h-auto">
+  <!-- Image side -->
+  <div class="relative overflow-hidden aspect-[16/10] lg:aspect-auto reveal-img">
+    <img class="w-full h-full object-cover [filter:saturate(0.7)]" src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=900&q=85" alt="cafe interior" />
+    <div class="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent/0"></div>
+    <div class="absolute bottom-10 left-10 text-bg max-w-[80%] sm:bottom-6 sm:left-6">
+      <span class="block text-[10px] tracking-[0.4em] uppercase text-[rgba(245,243,239,0.6)] mb-3">Reserve a table</span>
+      <h1 class="font-display font-light leading-none tracking-[-0.02em] text-[clamp(40px,5vw,60px)]">Save a seat<br/>by the <em class="italic text-gold">sea</em></h1>
+    </div>
+  </div>
+  <!-- Form side -->
+  <div class="px-16 py-20 flex flex-col justify-center reveal sm:px-6 sm:py-12">
+    <div class="text-[10px] tracking-[0.4em] uppercase text-gold mb-4">— Reserve a table</div>
+    <h2 class="font-display font-light mb-3 leading-[1.1] text-[clamp(32px,3.5vw,44px)]">Tell us when<br/>you're <em class="italic">coming</em></h2>
+    <p class="text-[13px] text-[#777] font-light mb-10 leading-[1.7] max-w-[420px]">Reservations are confirmed within 2 hours by email or LINE. Walk-ins are always welcome, but a table by the window is best booked.</p>
+
+    <form class="grid grid-cols-1 lg:grid-cols-2 gap-6 gap-x-5 max-w-[560px] sm:max-w-none" onsubmit="event.preventDefault(); alert('Reservation request sent.');">
+      <div class="flex flex-col">
+        <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="name">Full name</label>
+        <input class="res-input" type="text" id="name" placeholder="Your name" required />
+      </div>
+      <div class="flex flex-col">
+        <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="phone">Phone</label>
+        <input class="res-input" type="tel" id="phone" placeholder="+66" required />
+      </div>
+      <div class="flex flex-col lg:col-span-2">
+        <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="email">Email</label>
+        <input class="res-input" type="email" id="email" placeholder="you@example.com" required />
+      </div>
+      <div class="flex flex-col">
+        <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="date">Date</label>
+        <input class="res-input" type="date" id="date" required />
+      </div>
+      <div class="flex flex-col">
+        <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="time">Time</label>
+        <select class="res-input" id="time" required>
+          <option value="">Select time</option>
+          <option>08:00</option><option>09:00</option><option>10:00</option>
+          <option>11:00</option><option>12:00</option><option>13:00</option>
+          <option>14:00</option><option>15:00</option><option>16:00</option>
+          <option>17:00</option><option>18:00</option><option>19:00</option>
+          <option>20:00</option>
+        </select>
+      </div>
+      <div class="flex flex-col">
+        <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="guests">Guests</label>
+        <select class="res-input" id="guests" required>
+          <option>1 person</option>
+          <option>2 people</option>
+          <option>3 people</option>
+          <option>4 people</option>
+          <option>5–6 people</option>
+          <option>7+ people (group)</option>
+        </select>
+      </div>
+      <div class="flex flex-col">
+        <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="seating">Seating preference</label>
+        <select class="res-input" id="seating">
+          <option>No preference</option>
+          <option>Window seat</option>
+          <option>Outdoor terrace</option>
+          <option>Counter / bar</option>
+          <option>Private corner</option>
+        </select>
+      </div>
+      <div class="flex flex-col lg:col-span-2">
+        <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2">Occasion</label>
+        <div class="flex gap-2 flex-wrap">
+          <button type="button" class="occasion-chip is-active">Just visiting</button>
+          <button type="button" class="occasion-chip">Birthday</button>
+          <button type="button" class="occasion-chip">Anniversary</button>
+          <button type="button" class="occasion-chip">Date</button>
+          <button type="button" class="occasion-chip">Business</button>
+          <button type="button" class="occasion-chip">Other</button>
+        </div>
+      </div>
+      <div class="flex flex-col lg:col-span-2">
+        <label class="text-[10px] tracking-[0.3em] uppercase text-[#aaa] mb-2" for="notes">Special requests</label>
+        <textarea class="res-input" id="notes" placeholder="Allergies, dietary needs, special arrangements…"></textarea>
+      </div>
+      <div class="lg:col-span-2 flex flex-wrap items-center gap-6 mt-9 sm:flex-col sm:items-start sm:gap-3.5">
+        <button type="submit" class="inline-block bg-ink text-bg text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 border-none hover:bg-gold hover:text-ink transition-colors duration-300 cursor-pointer">Request Table</button>
+        <div class="text-[11px] text-[#aaa] tracking-[0.1em] leading-relaxed">By submitting you agree to our<br/>cancellation &amp; privacy policy.</div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- Policy strip -->
+<section class="bg-white px-10 py-16 border-b border-line reveal sm:px-6 sm:py-12">
+  <h3 class="font-display font-light mb-8 text-[clamp(28px,3vw,40px)]">The fine <em class="italic text-gold">print</em></h3>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-7">
+    <div>
+      <div class="font-display text-[36px] text-gold font-light leading-none">01</div>
+      <h4 class="font-display text-lg font-normal mt-3.5 mb-2">Confirmation</h4>
+      <p class="text-[13px] text-[#777] leading-[1.7] font-light">You'll receive an email or LINE message within 2 hours confirming your reservation. If we miss you, we'll call.</p>
+    </div>
+    <div>
+      <div class="font-display text-[36px] text-gold font-light leading-none">02</div>
+      <h4 class="font-display text-lg font-normal mt-3.5 mb-2">Group bookings</h4>
+      <p class="text-[13px] text-[#777] leading-[1.7] font-light">For groups of 7 or more, please call us directly. We hold a private corner for parties up to 24.</p>
+    </div>
+    <div>
+      <div class="font-display text-[36px] text-gold font-light leading-none">03</div>
+      <h4 class="font-display text-lg font-normal mt-3.5 mb-2">Late arrivals</h4>
+      <p class="text-[13px] text-[#777] leading-[1.7] font-light">We hold your table for 15 minutes past the reserved time. After that, we may offer it to walk-ins.</p>
+    </div>
+    <div>
+      <div class="font-display text-[36px] text-gold font-light leading-none">04</div>
+      <h4 class="font-display text-lg font-normal mt-3.5 mb-2">Cancellations</h4>
+      <p class="text-[13px] text-[#777] leading-[1.7] font-light">Free cancellation up to 4 hours before. Same-day no-shows may affect future reservation priority.</p>
+    </div>
+  </div>
+</section>
+
+<div data-mount="footer" data-tagline="A SEAT, <em>WAITING FOR YOU</em>"></div>
+
+<script src="partials.js"></script>
+<script src="site.js"></script>
+<script>
+  // occasion chips
+  document.querySelectorAll('.occasion-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.occasion-chip').forEach(x => x.classList.remove('is-active'));
+      c.classList.add('is-active');
+    });
+  });
+</script>
+</body>
+</html>

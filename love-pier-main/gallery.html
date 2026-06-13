@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gallery — Love Pier Beach Cafe</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg:   '#f5f3ef',
+        ink:  '#1a1a1a',
+        muted:'#888888',
+        gold: '#c9a96e',
+        line: 'rgba(0,0,0,0.1)',
+      },
+      fontFamily: {
+        display: ['"Cormorant Garamond"', 'serif'],
+        sans:    ['Jost', 'sans-serif'],
+      },
+    }
+  }
+}
+</script>
+<script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js" defer></script>
+<style>
+/* Gallery tile caption overlay */
+.g-tile { overflow: hidden; background: #e8e4de; position: relative; cursor: pointer; }
+.g-tile img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.6); transition: transform 0.6s, filter 0.6s; }
+.g-tile:hover img { transform: scale(1.04); filter: saturate(0.95); }
+.g-tile-caption { position: absolute; inset: auto 0 0 0; padding: 14px 16px; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); color: #f5f3ef; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 300; opacity: 0; transition: opacity 0.3s; }
+.g-tile:hover .g-tile-caption { opacity: 1; }
+/* Gallery filter active state */
+.gallery-filter.is-active { color: #1a1a1a; border-bottom-color: #c9a96e; }
+.gallery-filter:hover { color: #1a1a1a; }
+</style>
+</head>
+<body data-page="gallery" class="bg-bg font-sans text-ink overflow-x-hidden">
+
+<div data-mount="nav"></div>
+<div data-mount="menu"></div>
+
+<!-- Page header -->
+<header class="px-10 pt-16 pb-10 text-center border-b border-line reveal sm:px-5 sm:pt-10 sm:pb-7">
+  <div class="text-[10px] tracking-[0.4em] uppercase text-muted mb-3">Gallery</div>
+  <h1 class="font-display font-light leading-[0.95] text-ink tracking-[-0.02em] text-[clamp(48px,7vw,88px)]">Moments by<br/><em class="italic text-gold">the shore</em></h1>
+  <p class="mt-4 text-sm text-[#666] font-light max-w-[580px] mx-auto leading-[1.8]">Eight years of mornings, sunsets, lattes, and a community that keeps returning. Browse a slice of life at Love Pier.</p>
+</header>
+
+<!-- Gallery filters -->
+<div class="flex gap-6 px-10 py-8 border-b border-line bg-white flex-wrap reveal sm:px-6 sm:py-5 sm:gap-3.5">
+  <button class="gallery-filter text-[11px] tracking-[0.25em] uppercase text-[#aaa] bg-transparent border-none px-0 py-1.5 border-b border-transparent cursor-pointer is-active" style="transition:color 0.2s,border-color 0.2s">All</button>
+  <button class="gallery-filter text-[11px] tracking-[0.25em] uppercase text-[#aaa] bg-transparent border-none px-0 py-1.5 border-b border-transparent cursor-pointer" style="transition:color 0.2s,border-color 0.2s">Interior</button>
+  <button class="gallery-filter text-[11px] tracking-[0.25em] uppercase text-[#aaa] bg-transparent border-none px-0 py-1.5 border-b border-transparent cursor-pointer" style="transition:color 0.2s,border-color 0.2s">Food &amp; Drink</button>
+  <button class="gallery-filter text-[11px] tracking-[0.25em] uppercase text-[#aaa] bg-transparent border-none px-0 py-1.5 border-b border-transparent cursor-pointer" style="transition:color 0.2s,border-color 0.2s">Beach</button>
+  <button class="gallery-filter text-[11px] tracking-[0.25em] uppercase text-[#aaa] bg-transparent border-none px-0 py-1.5 border-b border-transparent cursor-pointer" style="transition:color 0.2s,border-color 0.2s">Events</button>
+  <button class="gallery-filter text-[11px] tracking-[0.25em] uppercase text-[#aaa] bg-transparent border-none px-0 py-1.5 border-b border-transparent cursor-pointer" style="transition:color 0.2s,border-color 0.2s">Guests</button>
+</div>
+
+<!-- Gallery grid -->
+<div class="gallery-grid p-1.5 reveal" style="display:grid;grid-template-columns:repeat(12,1fr);gap:6px;">
+  <div class="g-tile" style="grid-column:span 6;grid-row:span 2;aspect-ratio:4/5;" data-cat="beach"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900&q=80" alt=""/><div class="g-tile-caption">Morning by the pier</div></div>
+  <div class="g-tile" style="grid-column:span 3;aspect-ratio:1;" data-cat="food"><img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&q=80" alt=""/><div class="g-tile-caption">Cold brew</div></div>
+  <div class="g-tile" style="grid-column:span 3;aspect-ratio:1;" data-cat="food"><img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=500&q=80" alt=""/><div class="g-tile-caption">Espresso pour</div></div>
+  <div class="g-tile" style="grid-column:span 4;aspect-ratio:1;" data-cat="interior"><img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500&q=80" alt=""/><div class="g-tile-caption">Interior</div></div>
+  <div class="g-tile" style="grid-column:span 4;aspect-ratio:1;" data-cat="interior"><img src="https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=500&q=80" alt=""/><div class="g-tile-caption">Corner seat</div></div>
+  <div class="g-tile" style="grid-column:span 4;aspect-ratio:1;" data-cat="food"><img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&q=80" alt=""/><div class="g-tile-caption">Caramel latte</div></div>
+  <div class="g-tile" style="grid-column:span 5;aspect-ratio:16/9;" data-cat="beach"><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900&q=80" alt=""/><div class="g-tile-caption">The old pier</div></div>
+  <div class="g-tile" style="grid-column:span 7;aspect-ratio:16/9;" data-cat="events"><img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000&q=80" alt=""/><div class="g-tile-caption">Evening lights</div></div>
+  <div class="g-tile" style="grid-column:span 4;aspect-ratio:4/5;" data-cat="food"><img src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=600&q=80" alt=""/><div class="g-tile-caption">Brunch plate</div></div>
+  <div class="g-tile" style="grid-column:span 4;aspect-ratio:4/5;" data-cat="guests"><img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=80" alt=""/><div class="g-tile-caption">Beach walk</div></div>
+  <div class="g-tile" style="grid-column:span 4;aspect-ratio:4/5;" data-cat="beach"><img src="https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=600&q=80" alt=""/><div class="g-tile-caption">Sand &amp; surf</div></div>
+</div>
+
+<!-- CTA strip -->
+<section class="bg-ink text-bg px-10 py-20 text-center reveal sm:px-6 sm:py-14">
+  <h2 class="font-display font-light mb-7 leading-[1.05] text-[clamp(40px,5vw,64px)]">Share <em class="italic text-gold">your moment</em><br/>with us</h2>
+  <p class="text-sm text-[rgba(245,243,239,0.6)] mb-8 max-w-[480px] mx-auto leading-[1.8]">Tag #lovepiercafe on Instagram. We re-share our favorites every week and feature one guest each month in our window display.</p>
+  <a href="#" class="inline-block bg-gold text-ink text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-bg transition-colors duration-300">@lovepier.cafe</a>
+</section>
+
+<div data-mount="footer" data-tagline="EVERY VISIT, <em>A NEW VIEW</em>"></div>
+
+<script src="partials.js"></script>
+<script src="site.js"></script>
+<script>
+  const FILTER_MAP = {
+    'All': null,
+    'Interior': 'interior',
+    'Food & Drink': 'food',
+    'Beach': 'beach',
+    'Events': 'events',
+    'Guests': 'guests',
+  };
+
+  const filters = document.querySelectorAll('.gallery-filter');
+  const tiles = document.querySelectorAll('.g-tile');
+
+  filters.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filters.forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+
+      const cat = FILTER_MAP[btn.textContent.trim()];
+      tiles.forEach(tile => {
+        if (!cat || tile.dataset.cat === cat) {
+          tile.style.display = '';
+        } else {
+          tile.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
+</body>
+</html>

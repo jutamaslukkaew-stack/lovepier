@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Love Pier Beach Cafe — Print</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #f5f3ef;
+  font-family: 'Jost', sans-serif;
+  color: #1a1a1a;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+img { display: block; }
+a { text-decoration: none; color: inherit; }
+
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  body { background: #f5f3ef; }
+  .page-break { break-before: page; }
+  .no-print { display: none !important; }
+}
+
+/* ── PAGE 1: NAV + HEADER + HERO ── */
+.page-1 {
+  width: 100%;
+  background: #f5f3ef;
+}
+
+/* TOP NAV */
+.topnav {
+  width: 100%;
+  padding: 14px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  background: #f5f3ef;
+}
+.topnav-links { display: flex; gap: 32px; }
+.topnav-link {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #888;
+}
+.topnav-right { display: flex; gap: 32px; align-items: center; }
+
+/* HERO HEADER */
+.hero-header {
+  padding: 40px 40px 28px;
+  text-align: center;
+}
+.hero-header-city {
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 12px;
+}
+.hero-header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 72px;
+  font-weight: 300;
+  line-height: 0.95;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
+}
+.hero-header-title em { font-style: italic; }
+.hero-header-meta {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  align-items: start;
+}
+.hero-meta-left { text-align: left; }
+.hero-meta-center { text-align: center; padding: 0 40px; }
+.hero-meta-right { text-align: right; }
+.hero-meta-label {
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #aaa;
+  margin-bottom: 6px;
+  display: block;
+}
+.hero-meta-value {
+  font-size: 12px;
+  color: #444;
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+/* FULL HERO IMAGE */
+.hero-img-full {
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+  filter: saturate(0.75);
+  display: block;
+}
+
+/* ── PAGE 2: SPLIT IMAGES + ABOUT ── */
+.page-2 {
+  background: #f5f3ef;
+}
+.split-imgs {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: 3px;
+}
+.split-img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  filter: saturate(0.7);
+  display: block;
+}
+.about-section {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: 0;
+  padding: 60px 40px;
+  align-items: start;
+}
+.about-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 64px;
+  font-weight: 300;
+  line-height: 0.92;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
+}
+.about-title em { font-style: italic; }
+.about-cta {
+  margin-top: 28px;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.about-cta::after { content: '→'; font-size: 14px; }
+.about-right { padding-top: 8px; }
+.about-eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: #bbb;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.about-eyebrow::before { content: ''; display: block; width: 24px; height: 1px; background: #bbb; }
+.about-body {
+  font-size: 13px;
+  line-height: 1.85;
+  color: #555;
+  font-weight: 300;
+  max-width: 480px;
+}
+.about-body p { margin-bottom: 14px; }
+
+/* ── PAGE 3: DARK PHOTO + STATS ── */
+.page-3 { background: #f5f3ef; }
+.dark-photo-section {
+  position: relative;
+  width: 100%;
+  height: 360px;
+  overflow: hidden;
+}
+.dark-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.55) saturate(0.5);
+  display: block;
+}
+.dark-photo-caption {
+  position: absolute;
+  bottom: 36px;
+  left: 40px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 44px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+.dark-photo-caption em { font-style: italic; color: #c9a96e; }
+.stats-section {
+  background: #fff;
+  padding: 52px 40px;
+}
+.stats-header { margin-bottom: 40px; }
+.stats-header-label {
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: #bbb;
+  margin-bottom: 10px;
+  display: block;
+}
+.stats-header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 40px;
+  font-weight: 300;
+  color: #1a1a1a;
+  line-height: 1.05;
+}
+.stats-header-title em { font-style: italic; }
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid #eee;
+  border-left: 1px solid #eee;
+}
+.stat-cell {
+  padding: 36px 28px;
+  border-right: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+.stat-cell-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 52px;
+  font-weight: 300;
+  color: #1a1a1a;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.stat-cell-label {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #bbb;
+  margin-top: 8px;
+  display: block;
+}
+.stat-cell-desc {
+  font-size: 12px;
+  color: #777;
+  margin-top: 8px;
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+/* ── PAGE 4: MOSAIC + MAP + FOOTER ── */
+.page-4 { background: #f5f3ef; }
+.mosaic {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: 240px 240px;
+  gap: 3px;
+}
+.mosaic .m0 { grid-column: span 7; grid-row: span 2; }
+.mosaic .m1 { grid-column: span 5; }
+.mosaic .m2 { grid-column: span 3; }
+.mosaic .m3 { grid-column: span 2; }
+.mosaic .m4 { grid-column: span 5; }
+.mosaic-item { overflow: hidden; background: #e8e4de; }
+.mosaic-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.6);
+  display: block;
+}
+.map-bg {
+  width: 100%;
+  height: 240px;
+  background: #dedad3;
+  position: relative;
+  overflow: hidden;
+}
+.map-grid-lines {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.map-pin-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.map-pin-outer {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  box-shadow: 0 0 0 6px rgba(26,26,26,0.12), 0 0 0 12px rgba(26,26,26,0.06);
+}
+.map-pin-text {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #444;
+  white-space: nowrap;
+  background: rgba(245,243,239,0.9);
+  padding: 4px 12px;
+}
+.map-info-bar {
+  background: #f5f3ef;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  padding: 24px 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 40px;
+  align-items: start;
+}
+.map-info-col-label {
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #bbb;
+  margin-bottom: 8px;
+  display: block;
+}
+.map-info-col-val {
+  font-size: 12px;
+  color: #444;
+  line-height: 1.7;
+  font-weight: 300;
+}
+.map-social-links { display: flex; gap: 10px; flex-wrap: wrap; }
+.map-soc {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #888;
+  border: 1px solid rgba(0,0,0,0.12);
+  padding: 5px 12px;
+}
+.big-tagline {
+  background: #1a1a1a;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  padding: 48px 40px 36px;
+  overflow: hidden;
+}
+.big-tagline-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 96px;
+  font-weight: 300;
+  color: #f5f3ef;
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+}
+.big-tagline-text em { font-style: italic; color: #c9a96e; }
+.big-tagline-bottom {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.big-tagline-copy {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: rgba(245,243,239,0.3);
+  text-transform: uppercase;
+}
+.big-tagline-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  font-weight: 300;
+  color: rgba(245,243,239,0.5);
+  letter-spacing: 0.2em;
+}
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: NAV + HEADER + HERO IMAGE -->
+<div class="page-1">
+  <nav class="topnav">
+    <div class="topnav-links">
+      <a href="#" class="topnav-link">Menu</a>
+      <a href="#" class="topnav-link">About</a>
+      <a href="#" class="topnav-link">Events</a>
+    </div>
+    <div>
+      <img src="uploads/logo-8dc1f126.png" alt="Love Pier Beach Cafe" style="height: 54px; mix-blend-mode: multiply; display: block" />
+    </div>
+    <div class="topnav-right">
+      <a href="#" class="topnav-link">Location</a>
+    </div>
+  </nav>
+  <header class="hero-header">
+    <div class="hero-header-city">chonburi . thailand</div>
+    <h1 class="hero-header-title">Love Pier<br/><em>Beach Cafe</em></h1>
+    <div class="hero-header-meta">
+      <div class="hero-meta-left">
+        <span class="hero-meta-label">Hours</span>
+        <div class="hero-meta-value">Mon–Fri 08:00–21:00<br/>Sat–Sun 07:00–22:00</div>
+      </div>
+      <div class="hero-meta-center">
+        <span class="hero-meta-label">Est.</span>
+        <div class="hero-meta-value" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;">2017</div>
+      </div>
+      <div class="hero-meta-right">
+        <span class="hero-meta-label">Location</span>
+        <div class="hero-meta-value">800 108 Saensuk<br/>Mueang Chonburi, Chonburi 20130</div>
+      </div>
+    </div>
+  </header>
+  <img class="hero-img-full" src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1600&q=85" alt="Love Pier Beach Cafe" />
+</div>
+
+<!-- PAGE 2: SPLIT IMAGES + ABOUT -->
+<div class="page-2 page-break">
+  <div class="split-imgs">
+    <img class="split-img" src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80" alt="coffee" />
+    <img class="split-img" src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1000&q=80" alt="cafe" />
+  </div>
+  <section class="about-section">
+    <div>
+      <h2 class="about-title">Love<br/>Pier<br/><em>&amp; Coffee</em></h2>
+      <div class="about-cta">Explore Menu</div>
+    </div>
+    <div class="about-right">
+      <div class="about-eyebrow">Since 2017</div>
+      <div class="about-body">
+        <p>Love Pier Beach Cafe sits 200 meters from the shoreline of Cha-am, where the Gulf of Thailand meets a quieter kind of morning. We opened with a single conviction: that great coffee and great views belong together.</p>
+        <p>Our menu is shaped by the sea — cold brews steeped overnight, single-origin pour-overs, and plates built from ingredients sourced the same day from local fishermen and farmers. Every detail is considered, nothing is rushed.</p>
+        <p>We are not just a cafe. We are a place to arrive slowly, stay longer, and leave with a full chest.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- PAGE 3: DARK PHOTO + STATS -->
+<div class="page-3 page-break">
+  <div class="dark-photo-section">
+    <img class="dark-photo" src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&q=85" alt="atmosphere" />
+    <div class="dark-photo-caption">Where the<br/>shore meets<br/><em>the cup</em></div>
+  </div>
+  <section class="stats-section">
+    <div class="stats-header">
+      <span class="stats-header-label">The Numbers</span>
+      <h3 class="stats-header-title">A little about<br/><em>what we do</em></h3>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-cell">
+        <div class="stat-cell-num">8+</div>
+        <span class="stat-cell-label">Years Open</span>
+        <div class="stat-cell-desc">Serving the beach community since 2017, rain and sun alike.</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-num">200m</div>
+        <span class="stat-cell-label">To the Shore</span>
+        <div class="stat-cell-desc">Walk two minutes and your feet are in the sand.</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-num">70+</div>
+        <span class="stat-cell-label">Menu Items</span>
+        <div class="stat-cell-desc">From specialty coffee to fresh-catch plates, crafted daily.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- PAGE 4: MOSAIC + MAP + FOOTER -->
+<div class="page-4 page-break">
+  <div class="mosaic">
+    <div class="mosaic-item m0"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&q=80" alt="beach" /></div>
+    <div class="mosaic-item m1"><img src="https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=600&q=80" alt="cafe" /></div>
+    <div class="mosaic-item m2"><img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&q=80" alt="coffee" /></div>
+    <div class="mosaic-item m3"><img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&q=80" alt="interior" /></div>
+    <div class="mosaic-item m4"><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&q=80" alt="pier" /></div>
+  </div>
+  <div class="map-bg">
+    <div class="map-grid-lines"></div>
+    <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.5" viewBox="0 0 1200 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <line x1="0" y1="90" x2="1200" y2="90" stroke="white" stroke-width="8" opacity="0.6"/>
+      <line x1="0" y1="150" x2="1200" y2="150" stroke="white" stroke-width="4" opacity="0.4"/>
+      <line x1="300" y1="0" x2="300" y2="240" stroke="white" stroke-width="6" opacity="0.5"/>
+      <line x1="600" y1="0" x2="600" y2="240" stroke="white" stroke-width="4" opacity="0.4"/>
+      <line x1="900" y1="0" x2="900" y2="240" stroke="white" stroke-width="5" opacity="0.45"/>
+      <line x1="0" y1="200" x2="1200" y2="200" stroke="white" stroke-width="3" opacity="0.3"/>
+    </svg>
+    <div class="map-pin-wrap">
+      <div class="map-pin-outer"></div>
+      <div class="map-pin-text">Love Pier Beach Cafe</div>
+    </div>
+  </div>
+  <div class="map-info-bar">
+    <div>
+      <span class="map-info-col-label">Address</span>
+      <div class="map-info-col-val">800 108 Saensuk<br/>Mueang Chonburi, Chonburi 20130</div>
+    </div>
+    <div>
+      <span class="map-info-col-label">Hours</span>
+      <div class="map-info-col-val">Mon–Fri · 08:00 – 21:00<br/>Sat–Sun · 07:00 – 22:00</div>
+    </div>
+    <div>
+      <span class="map-info-col-label">Contact</span>
+      <div class="map-info-col-val">+66 32 123 456<br/>hello@lovepier.cafe</div>
+    </div>
+    <div>
+      <span class="map-info-col-label">Follow</span>
+      <div class="map-social-links">
+        <span class="map-soc">IG</span>
+        <span class="map-soc">FB</span>
+        <span class="map-soc">LINE</span>
+        <span class="map-soc">TK</span>
+      </div>
+    </div>
+  </div>
+  <footer class="big-tagline">
+    <div class="big-tagline-text">THE SEA IS <em>ALWAYS OPEN</em></div>
+    <div class="big-tagline-bottom">
+      <div class="big-tagline-copy">© 2026 Love Pier Beach Cafe · All Rights Reserved</div>
+      <div class="big-tagline-brand">Love Pier</div>
+    </div>
+  </footer>
+</div>
+
+<script>
+document.fonts.ready.then(function() {
+  var imgs = document.querySelectorAll('img');
+  var loaded = 0;
+  var total = imgs.length;
+  if (total === 0) { setTimeout(function(){ window.print(); }, 500); return; }
+  imgs.forEach(function(img) {
+    if (img.complete) {
+      loaded++;
+      if (loaded === total) setTimeout(function(){ window.print(); }, 500);
+    } else {
+      img.addEventListener('load', function() {
+        loaded++;
+        if (loaded === total) setTimeout(function(){ window.print(); }, 500);
+      });
+      img.addEventListener('error', function() {
+        loaded++;
+        if (loaded === total) setTimeout(function(){ window.print(); }, 500);
+      });
+    }
+  });
+});
+</script>
+
+</body>
+</html>
