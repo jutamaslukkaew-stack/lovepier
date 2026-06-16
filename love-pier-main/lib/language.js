@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 const LanguageContext = createContext({
   lang: 'en',
@@ -6,19 +6,20 @@ const LanguageContext = createContext({
 })
 
 export function LanguageProvider({ children }) {
-  const [lang, setLangState] = useState(() => {
-    if (typeof window === 'undefined') return 'en'
-    const saved = window.localStorage.getItem('lp_lang')
-    return saved === 'th' || saved === 'en' || saved === 'zh' ? saved : 'en'
-  })
+  const [lang, setLangState] = useState('en')
 
-  const setLang = (nextLang) => {
+  useEffect(() => {
+    const saved = window.localStorage.getItem('lp_lang')
+    if (saved === 'th' || saved === 'en' || saved === 'zh') setLangState(saved)
+  }, [])
+
+  const setLang = useCallback((nextLang) => {
     if (nextLang !== 'th' && nextLang !== 'en' && nextLang !== 'zh') return
     setLangState(nextLang)
-    if (typeof window !== 'undefined') window.localStorage.setItem('lp_lang', nextLang)
-  }
+    window.localStorage.setItem('lp_lang', nextLang)
+  }, [])
 
-  const value = useMemo(() => ({ lang, setLang }), [lang])
+  const value = useMemo(() => ({ lang, setLang }), [lang, setLang])
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
 }
 
