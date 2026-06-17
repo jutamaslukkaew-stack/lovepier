@@ -79,6 +79,13 @@ export default function Home() {
     <>
       <Head>
         <title>{t.title}</title>
+        <meta property="og:title" content="Love Pier Beach Cafe — คาเฟ่ริมทะเลบางแสน" />
+        <meta property="og:description" content="Beach Vibes • Cafe by the Sea — บางแสน ชลบุรี" />
+        <meta property="og:image" content="https://www.lovepier.cafe/og-home.png" />
+        <meta property="og:url" content="https://www.lovepier.cafe/" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="https://www.lovepier.cafe/og-home.png" />
       </Head>
 
       <ScrollStack>

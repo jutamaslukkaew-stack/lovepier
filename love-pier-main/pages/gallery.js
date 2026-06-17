@@ -193,6 +193,13 @@ export default function Gallery() {
     <>
       <Head>
         <title>{t.title}</title>
+        <meta property="og:title" content="แกลเลอรี — Love Pier Beach Cafe" />
+        <meta property="og:description" content="มุมถ่ายรูปปริมทะเล บรรยากาศดีทุกช่วงเวลา" />
+        <meta property="og:image" content="https://www.lovepier.cafe/og-gallery.png" />
+        <meta property="og:url" content="https://www.lovepier.cafe/gallery" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="https://www.lovepier.cafe/og-gallery.png" />
       </Head>
 
       <header className="px-4 pt-12 pb-8 text-center border-b border-black/10 reveal sm:px-6 lg:px-10 lg:pt-16 lg:pb-10">

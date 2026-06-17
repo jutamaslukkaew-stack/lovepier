@@ -187,6 +187,13 @@ export default function Contact() {
     <>
       <Head>
         <title>{t.title}</title>
+        <meta property="og:title" content="ติดต่อเรา — Love Pier Beach Cafe" />
+        <meta property="og:description" content="พบเราได้ที่บางแสน • 800 108 แสนสุข อำเภอเมือง ชลบุรี" />
+        <meta property="og:image" content="https://www.lovepier.cafe/og-contact.png" />
+        <meta property="og:url" content="https://www.lovepier.cafe/contact" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="https://www.lovepier.cafe/og-contact.png" />
       </Head>
 
       <FormFeedbackModal

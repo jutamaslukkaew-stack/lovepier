@@ -250,6 +250,13 @@ export default function Promotion() {
     <>
       <Head>
         <title>{t.title}</title>
+        <meta property="og:title" content="โปรโมชันพิเศษ — Love Pier Beach Cafe" />
+        <meta property="og:description" content="อัปเดตดีลใหม่จาก Love Pier — บางแสน ชลบุรี" />
+        <meta property="og:image" content="https://www.lovepier.cafe/og-promotion.png" />
+        <meta property="og:url" content="https://www.lovepier.cafe/promotion" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="https://www.lovepier.cafe/og-promotion.png" />
       </Head>
 
       <section className="relative w-full h-[420px] lg:h-[480px] overflow-hidden border-b border-black/10 reveal-img sm:h-[380px]">

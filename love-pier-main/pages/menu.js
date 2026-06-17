@@ -776,6 +776,13 @@ export default function Menu() {
     <>
       <Head>
         <title>{t.title}</title>
+        <meta property="og:title" content="เมนูแนะนำ — Love Pier Beach Cafe" />
+        <meta property="og:description" content="กาแฟ • ขนม • ข้าวมันไก่ — คาเฟ่ริมทะเลบางแสน" />
+        <meta property="og:image" content="https://www.lovepier.cafe/og-menu.png" />
+        <meta property="og:url" content="https://www.lovepier.cafe/menu" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="https://www.lovepier.cafe/og-menu.png" />
       </Head>
 
       {/* Menu Hero */}
