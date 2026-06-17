@@ -77,6 +77,9 @@ function Lightbox({ image, name, onClose }) {
         onClick={(e) => e.stopPropagation()}
         className="max-w-full max-h-[75vh] object-contain rounded shadow-2xl"
       />
+      <p style={{fontFamily:'system-ui,-apple-system,sans-serif'}} className="mt-4 text-white text-sm sm:text-base font-semibold text-center">
+        {name}
+      </p>
     </div>
   )
 }
