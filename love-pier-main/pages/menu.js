@@ -106,16 +106,16 @@ function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, imag
   )
 
   return (
-    <div className="py-3.5 sm:py-4 border-b border-dotted border-black/15 last:border-b-0">
+    <div className={`border-b border-dotted border-black/15 last:border-b-0 ${image ? 'py-3 sm:py-3.5' : 'py-3.5 sm:py-4'}`}>
       {lightboxOpen && <Lightbox image={image} name={name} onClose={closeLightbox} />}
-      <div className={`flex items-start gap-3 min-w-0 ${showDrinkPrices ? 'pr-0' : ''}`}>
+      <div className={`flex items-center gap-4 min-w-0 ${showDrinkPrices ? 'pr-0' : ''}`}>
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image}
             alt={name}
             onClick={openLightbox}
-            className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded shrink-0 border border-black/[0.07] cursor-zoom-in hover:opacity-80 transition-opacity mt-0.5"
+            className="w-12 h-12 sm:w-14 sm:h-14 object-cover rounded shrink-0 border border-black/[0.07] cursor-zoom-in hover:opacity-80 transition-opacity"
           />
         ) : null}
         <div className="flex-1 min-w-0">
