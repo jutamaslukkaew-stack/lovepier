@@ -108,36 +108,38 @@ function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, imag
   return (
     <div className="py-3.5 sm:py-4 border-b border-dotted border-black/15 last:border-b-0">
       {lightboxOpen && <Lightbox image={image} name={name} onClose={closeLightbox} />}
-      <div className={`flex items-center gap-3 min-w-0 ${showDrinkPrices ? 'pr-0' : ''}`}>
+      <div className={`flex items-start gap-3 min-w-0 ${showDrinkPrices ? 'pr-0' : ''}`}>
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image}
             alt={name}
             onClick={openLightbox}
-            className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded shrink-0 border border-black/[0.07] cursor-zoom-in hover:opacity-80 transition-opacity"
+            className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded shrink-0 border border-black/[0.07] cursor-zoom-in hover:opacity-80 transition-opacity mt-0.5"
           />
         ) : null}
-        <div className="flex items-baseline gap-2 min-w-0 flex-1">
-          <span className="shrink-0 max-w-[58%] sm:max-w-none text-[11px] sm:text-[12px] font-semibold tracking-[0.1em] uppercase text-ink leading-snug">
-            {name}
-            {badge ? (
-              <span className="font-sans text-[8px] tracking-[0.18em] text-gold uppercase ml-2 align-middle font-medium">
-                {badge}
-              </span>
-            ) : null}
-            {desc ? (
-              <p className="mt-1 text-[11px] sm:text-xs italic text-[#888] font-light leading-relaxed normal-case tracking-normal">
-                {desc}
-              </p>
-            ) : null}
-          </span>
-          {!showDrinkPrices ? (
-            <span className="flore-menu-leader flex-1 min-w-[12px] mb-[3px]" aria-hidden />
-          ) : (
-            <span className="flex-1 min-w-[8px]" aria-hidden />
-          )}
-          {priceCell}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 min-w-0">
+            <span className="shrink-0 max-w-[58%] sm:max-w-none text-[11px] sm:text-[12px] font-semibold tracking-[0.1em] uppercase text-ink leading-snug">
+              {name}
+              {badge ? (
+                <span className="font-sans text-[8px] tracking-[0.18em] text-gold uppercase ml-2 align-middle font-medium">
+                  {badge}
+                </span>
+              ) : null}
+            </span>
+            {!showDrinkPrices ? (
+              <span className="flore-menu-leader flex-1 min-w-[12px] mb-[3px]" aria-hidden />
+            ) : (
+              <span className="flex-1 min-w-[8px]" aria-hidden />
+            )}
+            {priceCell}
+          </div>
+          {desc ? (
+            <p className="mt-1 text-[11px] sm:text-xs italic text-[#888] font-light leading-relaxed normal-case tracking-normal">
+              {desc}
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
