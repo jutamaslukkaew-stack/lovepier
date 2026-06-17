@@ -858,7 +858,7 @@ export default function Menu() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {[
             {
-              img: '/uploads/menu-chicken-rice-set.png',
+              img: '/menu/singaporean-chicken-rice.png',
               imgClass: 'w-full aspect-[4/5] object-cover object-[50%_52%] [filter:saturate(0.58)_brightness(0.74)_contrast(1.06)] group-hover:[filter:saturate(0.92)_brightness(0.88)] transition-[filter] duration-500',
               ...featured[0],
             },
