@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Footer from '../components/Footer'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
@@ -48,7 +48,46 @@ function CoffeePriceHeader({ priceLabels }) {
   )
 }
 
+function Lightbox({ image, name, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white/70 hover:text-white text-3xl leading-none"
+        aria-label="Close"
+      >✕</button>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={image}
+        alt={name}
+        onClick={(e) => e.stopPropagation()}
+        className="max-w-full max-h-[75vh] object-contain rounded shadow-2xl"
+      />
+      <p className="mt-4 text-white text-sm sm:text-base tracking-[0.12em] uppercase font-semibold text-center">
+        {name}
+      </p>
+    </div>
+  )
+}
+
 function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, image }) {
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const openLightbox = useCallback(() => { if (image) setLightboxOpen(true) }, [image])
+  const closeLightbox = useCallback(() => setLightboxOpen(false), [])
   const priceCell = prices && showDrinkPrices ? (
     <div className="flex justify-end gap-5 sm:gap-6 shrink-0 min-w-[120px]">
       {COFFEE_PRICE_KEYS.map((key) => (
@@ -68,10 +107,16 @@ function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, imag
 
   return (
     <div className="py-3.5 sm:py-4 border-b border-dotted border-black/15 last:border-b-0">
+      {lightboxOpen && <Lightbox image={image} name={name} onClose={closeLightbox} />}
       <div className={`flex items-center gap-3 min-w-0 ${showDrinkPrices ? 'pr-0' : ''}`}>
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt={name} className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded shrink-0 border border-black/[0.07]" />
+          <img
+            src={image}
+            alt={name}
+            onClick={openLightbox}
+            className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded shrink-0 border border-black/[0.07] cursor-zoom-in hover:opacity-80 transition-opacity"
+          />
         ) : null}
         <div className="flex items-baseline gap-2 min-w-0 flex-1">
           <span className="shrink-0 max-w-[58%] sm:max-w-none text-[11px] sm:text-[12px] font-semibold tracking-[0.1em] uppercase text-ink leading-snug">
