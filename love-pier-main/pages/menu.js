@@ -77,7 +77,7 @@ function Lightbox({ image, name, onClose }) {
         alt={name}
         onClick={(e) => e.stopPropagation()}
         className="w-auto object-contain"
-        style={{ maxHeight: 'calc(100dvh - 60px)', maxWidth: 'min(90vw, 520px)', clipPath: 'inset(0 0 22% 0)' }}
+        style={{ maxHeight: 'calc(100dvh - 60px)', maxWidth: 'min(90vw, 520px)' }}
       />
     </div>,
     document.body
