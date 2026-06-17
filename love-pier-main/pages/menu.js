@@ -79,13 +79,6 @@ function Lightbox({ image, name, onClose }) {
         className="w-auto object-contain"
         style={{ maxHeight: 'calc(100dvh - 90px)', maxWidth: 'min(90vw, 520px)' }}
       />
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="mt-4 px-6 py-3 text-center"
-        style={{fontFamily:'system-ui,-apple-system,sans-serif'}}
-      >
-        <p className="text-white text-sm sm:text-base font-semibold tracking-widest uppercase">{name}</p>
-      </div>
     </div>,
     document.body
   )
