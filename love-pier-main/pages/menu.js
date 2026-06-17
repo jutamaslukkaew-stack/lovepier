@@ -77,7 +77,7 @@ function Lightbox({ image, name, onClose }) {
         onClick={(e) => e.stopPropagation()}
         className="max-w-full max-h-[75vh] object-contain rounded shadow-2xl"
       />
-      <p className="mt-4 text-white text-sm sm:text-base tracking-[0.12em] uppercase font-semibold text-center">
+      <p className="mt-4 text-white text-sm sm:text-base tracking-[0.06em] font-sans font-semibold text-center">
         {name}
       </p>
     </div>
