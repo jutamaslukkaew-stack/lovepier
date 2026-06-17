@@ -846,8 +846,8 @@ export default function Menu() {
       </section>
 
       {/* Flore-style tabbed menu */}
-      <section className="px-3 py-6 sm:px-4 sm:py-8 lg:px-6 lg:py-10 border-b border-black/10 bg-[#e8e4de] reveal min-h-[calc(100svh-4.25rem)] flex flex-col justify-center">
-        <div className="w-full max-w-7xl mx-auto flore-menu overflow-hidden border border-black/20 bg-white shadow-[0_8px_32px_rgba(26,26,26,0.08)]">
+      <section className="border-b border-black/10 reveal">
+        <div className="w-full flore-menu overflow-hidden bg-white">
           <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-b border-black/15 bg-[#ddd8d0]">
             {primaryTabs.map(({ id, label }) => (
               <button
