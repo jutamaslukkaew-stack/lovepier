@@ -1,5 +1,6 @@
 import Head from 'next/head'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Footer from '../components/Footer'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
@@ -59,9 +60,9 @@ function Lightbox({ image, name, onClose }) {
     }
   }, [onClose])
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex flex-col items-center justify-end bg-black/90 backdrop-blur-md"
+      className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md"
       onClick={onClose}
     >
       <button
@@ -75,17 +76,18 @@ function Lightbox({ image, name, onClose }) {
         src={image}
         alt={name}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm sm:max-w-md object-contain"
-        style={{ maxHeight: 'calc(100dvh - 80px)' }}
+        className="w-auto object-contain"
+        style={{ maxHeight: 'calc(100dvh - 90px)', maxWidth: 'min(90vw, 520px)' }}
       />
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm sm:max-w-md px-6 py-5 bg-black/60"
+        className="mt-4 px-6 py-3 text-center"
         style={{fontFamily:'system-ui,-apple-system,sans-serif'}}
       >
-        <p className="text-white text-base sm:text-lg font-semibold tracking-wide">{name}</p>
+        <p className="text-white text-sm sm:text-base font-semibold tracking-widest uppercase">{name}</p>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
