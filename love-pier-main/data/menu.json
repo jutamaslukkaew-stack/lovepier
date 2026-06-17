@@ -136,7 +136,8 @@
       "price": "90",
       "visible": true,
       "badge": "",
-      "sortOrder": 1
+      "sortOrder": 1,
+      "image": "/menu/singaporean-chicken-rice.png"
     },
     {
       "id": "ch-002",
@@ -1556,7 +1557,8 @@
       "priceBlended": null,
       "visible": true,
       "badge": "",
-      "sortOrder": 1
+      "sortOrder": 1,
+      "image": "/menu/iced-americano.jpg"
     },
     {
       "id": "cf-002",
@@ -1572,7 +1574,8 @@
       "priceBlended": "130",
       "visible": true,
       "badge": "",
-      "sortOrder": 2
+      "sortOrder": 2,
+      "image": "/menu/espresso.jpg"
     },
     {
       "id": "cf-003",
@@ -1588,7 +1591,8 @@
       "priceBlended": "120",
       "visible": true,
       "badge": "",
-      "sortOrder": 3
+      "sortOrder": 3,
+      "image": "/menu/cappuccino.jpg"
     },
     {
       "id": "cf-004",
@@ -1604,7 +1608,8 @@
       "priceBlended": "120",
       "visible": true,
       "badge": "",
-      "sortOrder": 4
+      "sortOrder": 4,
+      "image": "/menu/iced-latte.jpg"
     },
     {
       "id": "cf-005",
@@ -1636,7 +1641,8 @@
       "priceBlended": "140",
       "visible": true,
       "badge": "",
-      "sortOrder": 6
+      "sortOrder": 6,
+      "image": "/menu/caramel-macchiato.jpg"
     },
     {
       "id": "cf-007",
@@ -1652,7 +1658,8 @@
       "priceBlended": null,
       "visible": true,
       "badge": "Signature",
-      "sortOrder": 7
+      "sortOrder": 7,
+      "image": "/menu/dirty-coffee.jpg"
     },
     {
       "id": "cf-008",
@@ -1668,7 +1675,8 @@
       "priceBlended": null,
       "visible": true,
       "badge": "",
-      "sortOrder": 8
+      "sortOrder": 8,
+      "image": "/menu/soft-coffee-latte.jpg"
     },
     {
       "id": "cf-009",
@@ -1700,7 +1708,8 @@
       "priceBlended": null,
       "visible": true,
       "badge": "",
-      "sortOrder": 10
+      "sortOrder": 10,
+      "image": "/menu/yuzu-americano.jpg"
     },
     {
       "id": "cf-011",
@@ -1716,7 +1725,8 @@
       "priceBlended": null,
       "visible": true,
       "badge": "",
-      "sortOrder": 11
+      "sortOrder": 11,
+      "image": "/menu/coconut-americano.jpg"
     },
     {
       "id": "cf-012",
@@ -1732,7 +1742,8 @@
       "priceBlended": null,
       "visible": true,
       "badge": "",
-      "sortOrder": 12
+      "sortOrder": 12,
+      "image": "/menu/orange-americano.jpg"
     },
     {
       "id": "mt-001",
@@ -1745,7 +1756,8 @@
       "price": "120",
       "visible": true,
       "badge": "",
-      "sortOrder": 1
+      "sortOrder": 1,
+      "image": "/menu/iced-pure-matcha.jpg"
     },
     {
       "id": "mt-002",
@@ -1758,7 +1770,8 @@
       "price": "120",
       "visible": true,
       "badge": "",
-      "sortOrder": 2
+      "sortOrder": 2,
+      "image": "/menu/iced-matcha-latte.jpg"
     },
     {
       "id": "mt-003",
@@ -1784,7 +1797,8 @@
       "price": "130",
       "visible": true,
       "badge": "",
-      "sortOrder": 4
+      "sortOrder": 4,
+      "image": "/menu/matcha-coconut.jpg"
     },
     {
       "id": "mt-005",
@@ -1797,7 +1811,8 @@
       "price": "130",
       "visible": true,
       "badge": "",
-      "sortOrder": 5
+      "sortOrder": 5,
+      "image": "/menu/matcha-orange.jpg"
     },
     {
       "id": "mt-006",
@@ -1810,7 +1825,8 @@
       "price": "130",
       "visible": true,
       "badge": "",
-      "sortOrder": 6
+      "sortOrder": 6,
+      "image": "/menu/matcha-yuzu.jpg"
     },
     {
       "id": "mt-007",
@@ -1875,7 +1891,8 @@
       "price": "120",
       "visible": true,
       "badge": "",
-      "sortOrder": 3
+      "sortOrder": 3,
+      "image": "/menu/orange-smoothie.jpg"
     },
     {
       "id": "nc-004",
@@ -1888,7 +1905,8 @@
       "price": "110",
       "visible": true,
       "badge": "",
-      "sortOrder": 4
+      "sortOrder": 4,
+      "image": "/menu/watermelon-smoothie.jpg"
     },
     {
       "id": "nc-005",
@@ -1901,7 +1919,8 @@
       "price": "140",
       "visible": true,
       "badge": "",
-      "sortOrder": 5
+      "sortOrder": 5,
+      "image": "/menu/strawberry-yogurt-smoothie.jpg"
     },
     {
       "id": "nc-006",
@@ -1914,7 +1933,8 @@
       "price": "130",
       "visible": true,
       "badge": "",
-      "sortOrder": 6
+      "sortOrder": 6,
+      "image": "/menu/coconut-milk-smoothie.jpg"
     },
     {
       "id": "nc-007",
@@ -1927,7 +1947,8 @@
       "price": "110",
       "visible": true,
       "badge": "",
-      "sortOrder": 7
+      "sortOrder": 7,
+      "image": "/menu/thai-iced-tea.jpg"
     },
     {
       "id": "nc-008",
@@ -1994,7 +2015,8 @@
       "priceBlended": "130",
       "visible": true,
       "badge": "",
-      "sortOrder": 12
+      "sortOrder": 12,
+      "image": "/menu/iced-chocolate-drink.jpg"
     },
     {
       "id": "nc-013",
@@ -2007,7 +2029,8 @@
       "price": "100",
       "visible": true,
       "badge": "",
-      "sortOrder": 13
+      "sortOrder": 13,
+      "image": "/menu/blue-ocean-soda.jpg"
     },
     {
       "id": "nc-014",
@@ -2020,7 +2043,8 @@
       "price": "100",
       "visible": true,
       "badge": "",
-      "sortOrder": 14
+      "sortOrder": 14,
+      "image": "/menu/honey-lemon-soda.jpg"
     },
     {
       "id": "nc-015",
@@ -2033,7 +2057,8 @@
       "price": "100",
       "visible": true,
       "badge": "",
-      "sortOrder": 15
+      "sortOrder": 15,
+      "image": "/menu/yuzu-soda.jpg"
     },
     {
       "id": "nc-016",
@@ -2046,7 +2071,8 @@
       "price": "100",
       "visible": true,
       "badge": "",
-      "sortOrder": 16
+      "sortOrder": 16,
+      "image": "/menu/strawberry-soda.jpg"
     },
     {
       "id": "nc-017",
@@ -2059,7 +2085,8 @@
       "price": "125",
       "visible": true,
       "badge": "",
-      "sortOrder": 17
+      "sortOrder": 17,
+      "image": "/menu/thai-tea-whey-protein.jpg"
     },
     {
       "id": "nc-018",
@@ -2072,7 +2099,8 @@
       "price": "125",
       "visible": true,
       "badge": "",
-      "sortOrder": 18
+      "sortOrder": 18,
+      "image": "/menu/chocolate-whey-protein.jpg"
     },
     {
       "id": "nc-019",

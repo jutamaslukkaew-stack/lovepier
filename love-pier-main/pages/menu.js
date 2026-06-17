@@ -48,7 +48,7 @@ function CoffeePriceHeader({ priceLabels }) {
   )
 }
 
-function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices }) {
+function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, image }) {
   const priceCell = prices && showDrinkPrices ? (
     <div className="flex justify-end gap-5 sm:gap-6 shrink-0 min-w-[120px]">
       {COFFEE_PRICE_KEYS.map((key) => (
@@ -68,27 +68,33 @@ function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices }) {
 
   return (
     <div className="py-3.5 sm:py-4 border-b border-dotted border-black/15 last:border-b-0">
-      <div className={`flex items-baseline gap-2 min-w-0 ${showDrinkPrices ? 'pr-0' : ''}`}>
-        <span className="shrink-0 max-w-[58%] sm:max-w-none text-[11px] sm:text-[12px] font-semibold tracking-[0.1em] uppercase text-ink leading-snug">
-          {name}
-          {badge ? (
-            <span className="font-sans text-[8px] tracking-[0.18em] text-gold uppercase ml-2 align-middle font-medium">
-              {badge}
-            </span>
-          ) : null}
-        </span>
-        {!showDrinkPrices ? (
-          <span className="flore-menu-leader flex-1 min-w-[12px] mb-[3px]" aria-hidden />
-        ) : (
-          <span className="flex-1 min-w-[8px]" aria-hidden />
-        )}
-        {priceCell}
+      <div className={`flex items-center gap-3 min-w-0 ${showDrinkPrices ? 'pr-0' : ''}`}>
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image} alt={name} className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded shrink-0 border border-black/[0.07]" />
+        ) : null}
+        <div className="flex items-baseline gap-2 min-w-0 flex-1">
+          <span className="shrink-0 max-w-[58%] sm:max-w-none text-[11px] sm:text-[12px] font-semibold tracking-[0.1em] uppercase text-ink leading-snug">
+            {name}
+            {badge ? (
+              <span className="font-sans text-[8px] tracking-[0.18em] text-gold uppercase ml-2 align-middle font-medium">
+                {badge}
+              </span>
+            ) : null}
+            {desc ? (
+              <p className="mt-1 text-[11px] sm:text-xs italic text-[#888] font-light leading-relaxed normal-case tracking-normal">
+                {desc}
+              </p>
+            ) : null}
+          </span>
+          {!showDrinkPrices ? (
+            <span className="flore-menu-leader flex-1 min-w-[12px] mb-[3px]" aria-hidden />
+          ) : (
+            <span className="flex-1 min-w-[8px]" aria-hidden />
+          )}
+          {priceCell}
+        </div>
       </div>
-      {desc ? (
-        <p className="mt-1.5 text-[11px] sm:text-xs italic text-[#888] font-light leading-relaxed pr-2">
-          {desc}
-        </p>
-      ) : null}
     </div>
   )
 }
@@ -183,7 +189,7 @@ const MENU_DATA = [
       { num:'01', name:'Set — Mixed Chicken · Small', desc:'1 plate of rice · mixed parts', price:'150' },
       { num:'02', name:'Set — Mixed Chicken · Medium', desc:'2 plates of rice · mixed parts', price:'280' },
       { num:'03', name:'Set — Mixed Chicken · Large', desc:'4 plates of rice · mixed parts', price:'550' },
-      { num:'04', name:'Signature Chicken Rice Tray', badge:'Signature', desc:'4 plates of rice · thigh or breast', price:'670' },
+      { num:'04', name:'Signature Chicken Rice Tray', badge:'Signature', desc:'4 plates of rice · thigh or breast', price:'670', image:'/menu/singaporean-chicken-rice.png' },
       { num:'05', name:'Sesame Oil Liver', desc:'Plate', price:'150' },
       { num:'06', name:'Boiled Chicken Blood', desc:'Plate', price:'100' },
       { num:'07', name:'Chicken Rice', desc:'Bowl', price:'35' },
@@ -208,17 +214,17 @@ const MENU_DATA = [
     num: '03', cat: 'coffee', title: 'Coffee', titleEm: '', bg: false,
     subtitle: 'Hot, iced, and frappe — prices per menu.',
     items: [
-      { num:'01', name:'Americano', prices:{ hot:'90', iced:'100', blended:null } },
-      { num:'02', name:'Espresso', prices:{ hot:'80', iced:'120', blended:'135' } },
-      { num:'03', name:'Cappuccino', prices:{ hot:'90', iced:'120', blended:'135' } },
-      { num:'04', name:'Latte', prices:{ hot:'90', iced:'120', blended:'135' } },
+      { num:'01', name:'Americano', prices:{ hot:'90', iced:'100', blended:null }, image:'/menu/iced-americano.jpg' },
+      { num:'02', name:'Espresso', prices:{ hot:'80', iced:'120', blended:'135' }, image:'/menu/espresso.jpg' },
+      { num:'03', name:'Cappuccino', prices:{ hot:'90', iced:'120', blended:'135' }, image:'/menu/cappuccino.jpg' },
+      { num:'04', name:'Latte', prices:{ hot:'90', iced:'120', blended:'135' }, image:'/menu/iced-latte.jpg' },
       { num:'05', name:'Mocca', prices:{ hot:'90', iced:'120', blended:'135' } },
-      { num:'06', name:'Caramel Macchiato', prices:{ hot:'100', iced:'130', blended:'145' } },
-      { num:'07', name:'Dirty', badge:'Signature', prices:{ hot:null, iced:'130', blended:null } },
-      { num:'08', name:'Soft Coffee Latte', prices:{ hot:null, iced:'150', blended:null } },
-      { num:'09', name:'Yuzu Black Coffee', prices:{ hot:null, iced:'140', blended:null } },
-      { num:'10', name:'Orange Black Coffee', prices:{ hot:null, iced:'140', blended:null } },
-      { num:'11', name:'Coconut Coffee', prices:{ hot:null, iced:'140', blended:null } },
+      { num:'06', name:'Caramel Macchiato', prices:{ hot:'100', iced:'130', blended:'145' }, image:'/menu/caramel-macchiato.jpg' },
+      { num:'07', name:'Dirty', badge:'Signature', prices:{ hot:null, iced:'130', blended:null }, image:'/menu/dirty-coffee.jpg' },
+      { num:'08', name:'Soft Coffee Latte', prices:{ hot:null, iced:'150', blended:null }, image:'/menu/soft-coffee-latte.jpg' },
+      { num:'09', name:'Yuzu Black Coffee', prices:{ hot:null, iced:'140', blended:null }, image:'/menu/yuzu-americano.jpg' },
+      { num:'10', name:'Orange Black Coffee', prices:{ hot:null, iced:'140', blended:null }, image:'/menu/orange-americano.jpg' },
+      { num:'11', name:'Coconut Coffee', prices:{ hot:null, iced:'140', blended:null }, image:'/menu/coconut-americano.jpg' },
     ],
   },
   {
@@ -226,12 +232,12 @@ const MENU_DATA = [
     subtitle: 'Stone-ground matcha whisked to order — pure, creamy, and gently sweet.',
     items: [
       { num:'00', name:'PANG Signature', badge:'Signature', desc:'Matcha x Khao Lam Latte', price:'179' },
-      { num:'01', name:'Pure Matcha', price:'140' },
-      { num:'02', name:'Matcha Latte', price:'150' },
+      { num:'01', name:'Pure Matcha', price:'140', image:'/menu/iced-pure-matcha.jpg' },
+      { num:'02', name:'Matcha Latte', price:'150', image:'/menu/iced-matcha-latte.jpg' },
       { num:'03', name:'Dirty Matcha', price:'150' },
-      { num:'04', name:'Coconut Matcha', price:'150' },
-      { num:'05', name:'Orange Matcha', price:'150' },
-      { num:'06', name:'Matcha Yuzu', price:'150' },
+      { num:'04', name:'Coconut Matcha', price:'150', image:'/menu/matcha-coconut.jpg' },
+      { num:'05', name:'Orange Matcha', price:'150', image:'/menu/matcha-orange.jpg' },
+      { num:'06', name:'Matcha Yuzu', price:'150', image:'/menu/matcha-yuzu.jpg' },
       { num:'07', name:'Soft Matcha', price:'160' },
     ],
   },
@@ -239,22 +245,22 @@ const MENU_DATA = [
     num: '05', cat: 'nonCoffee', title: 'Non Coffee', titleEm: '', bg: true,
     subtitle: 'Thai tea, chocolate, and creamy frappes — no espresso.',
     items: [
-      { num:'01', name:'Premium Thai Tea', price:'100' },
-      { num:'02', name:'Thai Tea Frappe', price:'120' },
-      { num:'03', name:'Chocolate', price:'100' },
+      { num:'01', name:'Premium Thai Tea', price:'100', image:'/menu/thai-iced-tea.jpg' },
+      { num:'02', name:'Thai Tea Frappe', price:'120', image:'/menu/thai-iced-tea-frappe.jpg' },
+      { num:'03', name:'Chocolate', price:'100', image:'/menu/iced-chocolate-drink.jpg' },
       { num:'04', name:'Chocolate Frappe', price:'120' },
-      { num:'05', name:'Coconut Milk Frappe', price:'120' },
+      { num:'05', name:'Coconut Milk Frappe', price:'120', image:'/menu/coconut-milk-smoothie.jpg' },
     ],
   },
   {
     num: '06', cat: 'italianSoda', title: 'Italian Soda', titleEm: '', bg: false,
     subtitle: 'Sparkling sodas with fruit, honey, and coastal brightness.',
     items: [
-      { num:'01', name:'Lemon Honey Soda', price:'120' },
-      { num:'02', name:'Yuzu Soda', price:'120' },
-      { num:'03', name:'Strawberry Soda', price:'120' },
+      { num:'01', name:'Lemon Honey Soda', price:'120', image:'/menu/honey-lemon-soda.jpg' },
+      { num:'02', name:'Yuzu Soda', price:'120', image:'/menu/yuzu-soda.jpg' },
+      { num:'03', name:'Strawberry Soda', price:'120', image:'/menu/strawberry-soda.jpg' },
       { num:'04', name:'Lychee Soda', price:'120' },
-      { num:'05', name:'Blue Ocean Soda', price:'120' },
+      { num:'05', name:'Blue Ocean Soda', price:'120', image:'/menu/blue-ocean-soda.jpg' },
     ],
   },
   {
