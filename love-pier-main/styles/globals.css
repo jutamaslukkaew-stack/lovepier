@@ -161,15 +161,7 @@ select.flore-input option {
 }
 
 .flore-menu-panel {
-  max-height: min(88vh, 1200px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-@media (min-width: 1024px) {
-  .flore-menu-panel {
-    max-height: min(90vh, 1400px);
-  }
+  /* no nested scroll — let the page scroll as one context to avoid bounce */
 }
 
 .flore-menu-tab + .flore-menu-tab {

@@ -252,7 +252,7 @@ function FloreMenuPanel({ section, items, priceLabels, menuAddOns, tasteNotes })
 
   if (!section) return null
   return (
-    <div className="flore-menu-panel px-6 sm:px-10 lg:px-12 py-7 sm:py-9" data-lenis-prevent>
+    <div className="flore-menu-panel px-6 sm:px-10 lg:px-12 py-7 sm:py-9">
       {section.subtitle ? (
         <p className="text-[11px] sm:text-xs italic text-[#888] font-light leading-relaxed mb-5 max-w-xl">
           {section.subtitle}
@@ -296,7 +296,7 @@ function FloreSignaturePanel({ menuData }) {
   allItems.forEach((i) => { if (i.image) imageKeyToIndex[`${i.num}-${i.name}`] = ++gi })
 
   return (
-    <div className="flore-menu-panel px-6 sm:px-10 lg:px-12 py-7 sm:py-9" data-lenis-prevent>
+    <div className="flore-menu-panel px-6 sm:px-10 lg:px-12 py-7 sm:py-9">
       {groups.map(({ section, items }) => (
         <div key={section.cat} className="mb-6 last:mb-0">
           <h3 className="text-[10px] tracking-[0.2em] uppercase text-gold mb-3">
