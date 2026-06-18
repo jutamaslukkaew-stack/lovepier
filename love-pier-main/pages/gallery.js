@@ -257,12 +257,12 @@ export default function Gallery() {
         <h2 className="font-display font-light mb-7 leading-[1.05] text-[clamp(40px,5vw,64px)]">{t.share}</h2>
         <p className="text-sm text-[rgba(245,243,239,0.6)] mb-8 max-w-[480px] mx-auto leading-[1.8]">{t.shareD}</p>
         <a
-          href="https://www.instagram.com/lovepier.cafe"
+          href="https://www.instagram.com/lovepiercafe/"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block bg-gold text-ink text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-bg transition-colors duration-300"
         >
-          @lovepier.cafe
+          @lovepiercafe
         </a>
       </section>
 
