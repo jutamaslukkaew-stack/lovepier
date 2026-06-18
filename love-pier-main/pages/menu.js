@@ -385,8 +385,8 @@ const MENU_DATA = [
     num: '05', cat: 'nonCoffee', title: 'Non Coffee', titleEm: '', bg: true,
     subtitle: 'Thai tea, chocolate, and creamy frappes — no espresso.',
     items: [
-      { num:'01', name:'Premium Thai Tea', price:'100', image:'/menu/thai-iced-tea.jpg' },
-      { num:'02', name:'Thai Tea Frappe', price:'120', image:'/menu/thai-iced-tea-frappe.jpg' },
+      { num:'01', name:'Premium Thai Tea', price:'100', image:'/menu/real-thai-tea.jpg' },
+      { num:'02', name:'Thai Tea Frappe', price:'120', image:'/menu/real-thai-tea-frappe.jpg' },
       { num:'03', name:'Chocolate', price:'100', image:'/menu/real-chocolate.jpg' },
       { num:'04', name:'Chocolate Frappe', price:'120' },
       { num:'05', name:'Coconut Milk Frappe', price:'120', image:'/menu/coconut-milk-smoothie.jpg' },
