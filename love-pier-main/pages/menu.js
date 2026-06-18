@@ -947,7 +947,7 @@ export default function Menu() {
                 key={id}
                 type="button"
                 onClick={() => handlePrimaryTab(id)}
-                className={`flore-menu-tab flex-1 min-w-[5.5rem] px-4 sm:px-5 py-4 sm:py-[1.125rem] text-[10px] sm:text-xs tracking-[0.16em] uppercase font-semibold transition-colors cursor-pointer border-none ${
+                className={`flore-menu-tab flex-1 min-w-[7rem] px-5 sm:px-6 py-4 sm:py-[1.125rem] text-[10px] sm:text-xs tracking-[0.16em] uppercase font-semibold whitespace-nowrap transition-colors cursor-pointer border-none ${
                   activeTab === id
                     ? 'bg-white text-ink'
                     : 'bg-transparent text-gold hover:text-ink'
