@@ -176,7 +176,7 @@ function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, imag
             src={image}
             alt={name}
             onClick={onImageClick}
-            className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-md shrink-0 border border-black/[0.07] cursor-zoom-in hover:opacity-80 transition-opacity"
+            className="w-28 h-28 sm:w-[150px] sm:h-[150px] object-cover rounded-lg shrink-0 border border-black/[0.07] cursor-zoom-in hover:opacity-80 transition-opacity"
           />
         ) : null}
         <div className="flex-1 min-w-0">
