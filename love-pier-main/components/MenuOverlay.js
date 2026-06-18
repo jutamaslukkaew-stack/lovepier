@@ -93,7 +93,7 @@ export default function MenuOverlay({ isOpen, onClose }) {
                   title={label}
                   className={`px-3 py-2 text-[20px] leading-none transition-colors cursor-pointer ${
                     lang === value
-                      ? 'bg-white/95 shadow-[inset_0_-2px_0_0_#c9a84c]'
+                      ? 'bg-black shadow-[inset_0_-2px_0_0_#c9a84c]'
                       : 'text-white/80 hover:bg-white/10'
                   }`}
                 >
