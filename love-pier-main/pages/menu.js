@@ -377,7 +377,7 @@ const MENU_DATA = [
       { num:'03', name:'Dirty Matcha', price:'150', image:'/menu/real-dirty-matcha-v2.jpg' },
       { num:'04', name:'Coconut Matcha', price:'150', image:'/menu/real-matcha-coconut.jpg' },
       { num:'05', name:'Orange Matcha', price:'150', image:'/menu/matcha-orange.jpg' },
-      { num:'06', name:'Matcha Yuzu', price:'150', image:'/menu/matcha-yuzu.jpg' },
+      { num:'06', name:'Matcha Yuzu', price:'150', image:'/menu/real-matcha-yuzu.jpg' },
       { num:'07', name:'Soft Matcha', price:'160', image:'/menu/real-soft-matcha.jpg' },
     ],
   },
