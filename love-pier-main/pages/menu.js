@@ -49,16 +49,44 @@ function CoffeePriceHeader({ priceLabels }) {
   )
 }
 
-function Lightbox({ image, name, priceText, onClose }) {
+function getLightboxPrice(item, showDrinkPrices, priceLabels) {
+  return item.prices && showDrinkPrices && priceLabels
+    ? COFFEE_PRICE_KEYS.filter((k) => item.prices[k]).map((k) => `${priceLabels[k]} ฿${item.prices[k]}`).join('  ·  ')
+    : formatMenuPrice(item.price)
+}
+
+function Lightbox({ items, index, onIndexChange, onClose }) {
+  const hasPrev = index > 0
+  const hasNext = index < items.length - 1
+  const goPrev = useCallback(() => { onIndexChange((i) => (i > 0 ? i - 1 : i)) }, [onIndexChange])
+  const goNext = useCallback(() => { onIndexChange((i) => (i < items.length - 1 ? i + 1 : i)) }, [onIndexChange, items.length])
+
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose()
+      else if (e.key === 'ArrowLeft') goPrev()
+      else if (e.key === 'ArrowRight') goNext()
+    }
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
     }
-  }, [onClose])
+  }, [onClose, goPrev, goNext])
+
+  const touchX = useRef(null)
+  const onTouchStart = (e) => { touchX.current = e.touches[0].clientX }
+  const onTouchEnd = (e) => {
+    if (touchX.current == null) return
+    const dx = e.changedTouches[0].clientX - touchX.current
+    if (dx > 45) goPrev()
+    else if (dx < -45) goNext()
+    touchX.current = null
+  }
+
+  const current = items[index]
+  if (!current) return null
 
   return createPortal(
     <div
@@ -71,15 +99,33 @@ function Lightbox({ image, name, priceText, onClose }) {
         className="absolute top-4 right-5 text-white/60 hover:text-white text-3xl leading-none z-10"
         aria-label="Close"
       >✕</button>
+      {hasPrev ? (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); goPrev() }}
+          className="absolute left-2 sm:left-5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl leading-none"
+          aria-label="Previous"
+        >‹</button>
+      ) : null}
+      {hasNext ? (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); goNext() }}
+          className="absolute right-2 sm:right-5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl leading-none"
+          aria-label="Next"
+        >›</button>
+      ) : null}
       <div
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
         className="flex flex-col items-center"
         style={{ maxWidth: 'min(92vw, 560px)' }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={image}
-          alt={name}
+          src={current.image}
+          alt={current.name}
           className="rounded-2xl shadow-2xl"
           style={{
             maxWidth: '100%',
@@ -92,9 +138,9 @@ function Lightbox({ image, name, priceText, onClose }) {
           className="w-full px-5 py-4 text-center"
           style={{ fontFamily: 'system-ui,-apple-system,sans-serif' }}
         >
-          <p className="text-white text-base sm:text-lg font-semibold tracking-wide">{name}</p>
-          {priceText ? (
-            <p className="mt-1 text-[#e3c77a] text-sm sm:text-base tabular-nums">{priceText}</p>
+          <p className="text-white text-base sm:text-lg font-semibold tracking-wide">{current.name}</p>
+          {current.priceText ? (
+            <p className="mt-1 text-[#e3c77a] text-sm sm:text-base tabular-nums">{current.priceText}</p>
           ) : null}
         </div>
       </div>
@@ -103,13 +149,7 @@ function Lightbox({ image, name, priceText, onClose }) {
   )
 }
 
-function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, image, priceLabels }) {
-  const [lightboxOpen, setLightboxOpen] = useState(false)
-  const lightboxPrice = prices && showDrinkPrices && priceLabels
-    ? COFFEE_PRICE_KEYS.filter((k) => prices[k]).map((k) => `${priceLabels[k]} ฿${prices[k]}`).join('  ·  ')
-    : formatMenuPrice(price)
-  const openLightbox = useCallback(() => { if (image) setLightboxOpen(true) }, [image])
-  const closeLightbox = useCallback(() => setLightboxOpen(false), [])
+function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, image, onImageClick }) {
   const priceCell = prices && showDrinkPrices ? (
     <div className="flex justify-end gap-5 sm:gap-6 shrink-0 min-w-[120px]">
       {COFFEE_PRICE_KEYS.map((key) => (
@@ -129,14 +169,13 @@ function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, imag
 
   return (
     <div className={`border-b border-dotted border-black/15 last:border-b-0 ${image ? 'py-3 sm:py-3.5' : 'py-3.5 sm:py-4'}`}>
-      {lightboxOpen && <Lightbox image={image} name={name} priceText={lightboxPrice} onClose={closeLightbox} />}
       <div className={`flex items-center gap-4 min-w-0 ${showDrinkPrices ? 'pr-0' : ''}`}>
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image}
             alt={name}
-            onClick={openLightbox}
+            onClick={onImageClick}
             className="w-12 h-12 sm:w-14 sm:h-14 object-cover rounded shrink-0 border border-black/[0.07] cursor-zoom-in hover:opacity-80 transition-opacity"
           />
         ) : null}
@@ -203,6 +242,14 @@ function MatchaTasteNotes({ notes }) {
 const TIERED_PRICE_CATEGORIES = ['coffee']
 
 function FloreMenuPanel({ section, items, priceLabels, menuAddOns, tasteNotes }) {
+  const [lbIndex, setLbIndex] = useState(-1)
+  const showDrinkPrices = !!priceLabels
+  const gallery = items
+    .filter((i) => i.image)
+    .map((i) => ({ image: i.image, name: i.name, priceText: getLightboxPrice(i, showDrinkPrices, priceLabels) }))
+  let gi = -1
+  const galleryIndex = items.map((i) => (i.image ? ++gi : -1))
+
   if (!section) return null
   return (
     <div className="flore-menu-panel px-6 sm:px-10 lg:px-12 py-7 sm:py-9" data-lenis-prevent>
@@ -213,23 +260,40 @@ function FloreMenuPanel({ section, items, priceLabels, menuAddOns, tasteNotes })
       ) : null}
       {priceLabels ? <CoffeePriceHeader priceLabels={priceLabels} /> : null}
       <div>
-        {items.map((item) => (
-          <FloreMenuItem key={`${section.cat}-${item.num}`} {...item} showDrinkPrices={!!priceLabels} priceLabels={priceLabels} />
+        {items.map((item, idx) => (
+          <FloreMenuItem
+            key={`${section.cat}-${item.num}`}
+            {...item}
+            showDrinkPrices={showDrinkPrices}
+            onImageClick={item.image ? () => setLbIndex(galleryIndex[idx]) : undefined}
+          />
         ))}
       </div>
       {menuAddOns?.length ? <CoffeeAddOns items={menuAddOns} /> : null}
       {tasteNotes?.length ? <MatchaTasteNotes notes={tasteNotes} /> : null}
+      {lbIndex >= 0 ? (
+        <Lightbox items={gallery} index={lbIndex} onIndexChange={setLbIndex} onClose={() => setLbIndex(-1)} />
+      ) : null}
     </div>
   )
 }
 
 function FloreSignaturePanel({ menuData }) {
+  const [lbIndex, setLbIndex] = useState(-1)
   const groups = menuData
     .map((section) => ({
       section,
       items: section.items.filter((item) => item.badge),
     }))
     .filter((group) => group.items.length > 0)
+
+  const allItems = groups.flatMap(({ items }) => items)
+  const gallery = allItems
+    .filter((i) => i.image)
+    .map((i) => ({ image: i.image, name: i.name, priceText: getLightboxPrice(i, false, null) }))
+  const imageKeyToIndex = {}
+  let gi = -1
+  allItems.forEach((i) => { if (i.image) imageKeyToIndex[`${i.num}-${i.name}`] = ++gi })
 
   return (
     <div className="flore-menu-panel px-6 sm:px-10 lg:px-12 py-7 sm:py-9" data-lenis-prevent>
@@ -241,11 +305,18 @@ function FloreSignaturePanel({ menuData }) {
           </h3>
           <div>
             {items.map((item) => (
-              <FloreMenuItem key={`${section.cat}-${item.num}`} {...item} />
+              <FloreMenuItem
+                key={`${section.cat}-${item.num}`}
+                {...item}
+                onImageClick={item.image ? () => setLbIndex(imageKeyToIndex[`${item.num}-${item.name}`]) : undefined}
+              />
             ))}
           </div>
         </div>
       ))}
+      {lbIndex >= 0 ? (
+        <Lightbox items={gallery} index={lbIndex} onIndexChange={setLbIndex} onClose={() => setLbIndex(-1)} />
+      ) : null}
     </div>
   )
 }
