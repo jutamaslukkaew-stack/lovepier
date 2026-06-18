@@ -78,10 +78,8 @@ function Lightbox({ image, name, onClose }) {
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: 'min(92vw, 560px)',
-          maxHeight: '100dvh',
+          maxHeight: 'calc(100dvh - 40px)',
           objectFit: 'contain',
-          objectPosition: 'top center',
-          clipPath: 'inset(0 0 26% 0)',
           display: 'block',
         }}
       />
