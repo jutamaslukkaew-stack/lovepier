@@ -371,10 +371,10 @@ const MENU_DATA = [
     num: '04', cat: 'matcha', title: 'Matcha', titleEm: '', bg: true,
     subtitle: 'Stone-ground matcha whisked to order — pure, creamy, and gently sweet.',
     items: [
-      { num:'00', name:'PANG Signature', badge:'Signature', desc:'Matcha x Khao Lam Latte', price:'179', image:'/menu/matcha-coconut.jpg' },
+      { num:'00', name:'PANG Signature', badge:'Signature', desc:'Matcha x Khao Lam Latte', price:'179', image:'/menu/real-pang-signature.jpg' },
       { num:'01', name:'Pure Matcha', price:'140', image:'/menu/real-pure-matcha.jpg' },
       { num:'02', name:'Matcha Latte', price:'150', image:'/menu/real-matcha-latte.jpg' },
-      { num:'03', name:'Dirty Matcha', price:'150', image:'/menu/real-dirty-matcha.jpg' },
+      { num:'03', name:'Dirty Matcha', price:'150', image:'/menu/real-dirty-matcha-v2.jpg' },
       { num:'04', name:'Coconut Matcha', price:'150', image:'/menu/real-matcha-coconut.jpg' },
       { num:'05', name:'Orange Matcha', price:'150', image:'/menu/matcha-orange.jpg' },
       { num:'06', name:'Matcha Yuzu', price:'150', image:'/menu/matcha-yuzu.jpg' },
