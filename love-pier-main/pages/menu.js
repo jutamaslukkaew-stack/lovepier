@@ -288,7 +288,7 @@ const MENU_DATA = [
       { num:'04', name:'Latte', prices:{ hot:'90', iced:'120', blended:'135' }, image:'/menu/iced-latte.jpg' },
       { num:'05', name:'Mocca', prices:{ hot:'90', iced:'120', blended:'135' } },
       { num:'06', name:'Caramel Macchiato', prices:{ hot:'100', iced:'130', blended:'145' }, image:'/menu/caramel-macchiato.jpg' },
-      { num:'07', name:'Dirty', badge:'Signature', prices:{ hot:null, iced:'130', blended:null }, image:'/menu/dirty-coffee.jpg' },
+      { num:'07', name:'Dirty', badge:'Signature', price:'179', prices:{ hot:null, iced:'179', blended:null }, image:'/menu/dirty-coffee.jpg' },
       { num:'08', name:'Soft Coffee Latte', prices:{ hot:null, iced:'150', blended:null }, image:'/menu/soft-coffee-latte.jpg' },
       { num:'09', name:'Yuzu Black Coffee', prices:{ hot:null, iced:'140', blended:null }, image:'/menu/yuzu-americano.jpg' },
       { num:'10', name:'Orange Black Coffee', prices:{ hot:null, iced:'140', blended:null }, image:'/menu/orange-americano.jpg' },
