@@ -80,6 +80,7 @@ function Lightbox({ image, name, priceText, onClose }) {
         <img
           src={image}
           alt={name}
+          className="rounded-2xl shadow-2xl"
           style={{
             maxWidth: '100%',
             maxHeight: 'calc(100dvh - 120px)',
