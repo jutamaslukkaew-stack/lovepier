@@ -176,15 +176,15 @@ function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, imag
             src={image}
             alt={name}
             onClick={onImageClick}
-            className="w-12 h-12 sm:w-14 sm:h-14 object-cover rounded shrink-0 border border-black/[0.07] cursor-zoom-in hover:opacity-80 transition-opacity"
+            className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-md shrink-0 border border-black/[0.07] cursor-zoom-in hover:opacity-80 transition-opacity"
           />
         ) : null}
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 min-w-0">
-            <span className="shrink-0 max-w-[58%] sm:max-w-none text-[11px] sm:text-[12px] font-semibold tracking-[0.1em] uppercase text-ink leading-snug">
+            <span className="shrink-0 max-w-[58%] sm:max-w-none text-[13px] sm:text-[15px] font-semibold tracking-[0.1em] uppercase text-ink leading-snug">
               {name}
               {badge ? (
-                <span className="font-sans text-[8px] tracking-[0.18em] text-gold uppercase ml-2 align-middle font-medium">
+                <span className="font-sans text-[9px] tracking-[0.18em] text-gold uppercase ml-2 align-middle font-medium">
                   {badge}
                 </span>
               ) : null}
@@ -197,7 +197,7 @@ function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, imag
             {priceCell}
           </div>
           {desc ? (
-            <p className="mt-1 text-[11px] sm:text-xs italic text-[#888] font-light leading-relaxed normal-case tracking-normal">
+            <p className="mt-1.5 text-[12px] sm:text-[13px] italic text-[#888] font-light leading-relaxed normal-case tracking-normal">
               {desc}
             </p>
           ) : null}
