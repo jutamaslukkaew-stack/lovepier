@@ -49,7 +49,7 @@ function CoffeePriceHeader({ priceLabels }) {
   )
 }
 
-function Lightbox({ image, name, onClose }) {
+function Lightbox({ image, name, priceText, onClose }) {
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
@@ -71,25 +71,42 @@ function Lightbox({ image, name, onClose }) {
         className="absolute top-4 right-5 text-white/60 hover:text-white text-3xl leading-none z-10"
         aria-label="Close"
       >✕</button>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={image}
-        alt={name}
+      <div
         onClick={(e) => e.stopPropagation()}
-        style={{
-          maxWidth: 'min(92vw, 560px)',
-          maxHeight: 'calc(100dvh - 40px)',
-          objectFit: 'contain',
-          display: 'block',
-        }}
-      />
+        className="flex flex-col items-center"
+        style={{ maxWidth: 'min(92vw, 560px)' }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={image}
+          alt={name}
+          style={{
+            maxWidth: '100%',
+            maxHeight: 'calc(100dvh - 120px)',
+            objectFit: 'contain',
+            display: 'block',
+          }}
+        />
+        <div
+          className="w-full px-5 py-4 text-center"
+          style={{ fontFamily: 'system-ui,-apple-system,sans-serif' }}
+        >
+          <p className="text-white text-base sm:text-lg font-semibold tracking-wide">{name}</p>
+          {priceText ? (
+            <p className="mt-1 text-[#e3c77a] text-sm sm:text-base tabular-nums">{priceText}</p>
+          ) : null}
+        </div>
+      </div>
     </div>,
     document.body
   )
 }
 
-function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, image }) {
+function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, image, priceLabels }) {
   const [lightboxOpen, setLightboxOpen] = useState(false)
+  const lightboxPrice = prices && showDrinkPrices && priceLabels
+    ? COFFEE_PRICE_KEYS.filter((k) => prices[k]).map((k) => `${priceLabels[k]} ฿${prices[k]}`).join('  ·  ')
+    : formatMenuPrice(price)
   const openLightbox = useCallback(() => { if (image) setLightboxOpen(true) }, [image])
   const closeLightbox = useCallback(() => setLightboxOpen(false), [])
   const priceCell = prices && showDrinkPrices ? (
@@ -111,7 +128,7 @@ function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, imag
 
   return (
     <div className={`border-b border-dotted border-black/15 last:border-b-0 ${image ? 'py-3 sm:py-3.5' : 'py-3.5 sm:py-4'}`}>
-      {lightboxOpen && <Lightbox image={image} name={name} onClose={closeLightbox} />}
+      {lightboxOpen && <Lightbox image={image} name={name} priceText={lightboxPrice} onClose={closeLightbox} />}
       <div className={`flex items-center gap-4 min-w-0 ${showDrinkPrices ? 'pr-0' : ''}`}>
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -196,7 +213,7 @@ function FloreMenuPanel({ section, items, priceLabels, menuAddOns, tasteNotes })
       {priceLabels ? <CoffeePriceHeader priceLabels={priceLabels} /> : null}
       <div>
         {items.map((item) => (
-          <FloreMenuItem key={`${section.cat}-${item.num}`} {...item} showDrinkPrices={!!priceLabels} />
+          <FloreMenuItem key={`${section.cat}-${item.num}`} {...item} showDrinkPrices={!!priceLabels} priceLabels={priceLabels} />
         ))}
       </div>
       {menuAddOns?.length ? <CoffeeAddOns items={menuAddOns} /> : null}
