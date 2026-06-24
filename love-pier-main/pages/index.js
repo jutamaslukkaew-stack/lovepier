@@ -5,7 +5,7 @@ import { ScrollStack, ScrollStackPanel } from '../components/ScrollStack'
 import { useLanguage } from '../lib/language'
 
 const HOME_SPECIALS = [
-  { img: '/menu/singaporean-chicken-rice.png', name: 'Singapore Chicken Rice & Hainanese Chicken Rice', sub: 'A classic chicken rice', price: '฿150-฿670', imgClass: 'object-[50%_55%] [filter:saturate(0.6)_brightness(0.85)] group-hover:[filter:saturate(0.95)_brightness(0.95)]' },
+  { img: '/menu/food-set-small.png', name: 'Singapore Chicken Rice & Hainanese Chicken Rice', sub: 'A classic chicken rice', price: '฿150-฿670', imgClass: 'object-[60%_50%] [filter:saturate(0.78)] group-hover:[filter:saturate(1)]' },
   { img: '/menu/real-pang-signature.jpg', name: 'PANG Signature', sub: 'Matcha x Khao Lam Latte', price: '฿179' },
   { img: '/menu/real-dirty-coffee.jpg', name: 'DIRTY COFFEE', sub: 'Limited Edition : Coffee', price: '฿130' },
 ]
