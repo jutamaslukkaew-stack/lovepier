@@ -141,8 +141,8 @@ export default function Nav({ onOpenMenu }) {
           />
         </Link>
 
-        {/* Hamburger (mobile only) — right */}
-        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 md:hidden">
+        {/* Hamburger (mobile only) — left */}
+        <div className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 md:hidden">
           <button
             type="button"
             onClick={onOpenMenu}
@@ -153,6 +153,11 @@ export default function Nav({ onOpenMenu }) {
             <span className="block w-4 h-px bg-ink" />
             <span className="block w-4 h-px bg-ink" />
           </button>
+        </div>
+
+        {/* Lang flag (mobile only) — right */}
+        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 md:hidden">
+          <LangFlagDropdown lang={lang} setLang={setLang} />
         </div>
       </div>
 

@@ -78,10 +78,10 @@ export default function MenuOverlay({ isOpen, onClose }) {
         <button onClick={onClose} className="ml-auto bg-transparent border border-white/[0.15] w-9 h-9 sm:w-[38px] sm:h-[38px] flex items-center justify-center text-white/70 text-lg hover:border-white hover:text-white transition-colors shrink-0" aria-label="Close menu">✕</button>
       </div>
       {/* body */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 md:items-stretch content-start md:content-center px-4 py-5 sm:px-6 sm:py-7 md:px-8 md:py-8 lg:px-10 lg:py-10 gap-6 sm:gap-8 md:gap-10 lg:gap-14 xl:gap-20 overflow-y-auto overscroll-contain">
+      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 md:items-stretch content-start md:content-center px-4 py-3 sm:px-6 sm:py-5 md:px-8 md:py-8 lg:px-10 lg:py-10 gap-4 sm:gap-8 md:gap-10 lg:gap-14 xl:gap-20 overflow-y-auto overscroll-contain">
         <nav className="flex min-w-0 flex-col gap-0 sm:gap-0.5 md:justify-center md:py-4">
-          <div className="mb-6 pb-6 border-b border-white/[0.08]">
-            <h4 className="text-[10px] tracking-[0.35em] uppercase text-white/40 mb-3">{dict.language}</h4>
+          <div className="mb-4 pb-4 sm:mb-6 sm:pb-6 border-b border-white/[0.08]">
+            <h4 className="text-[10px] tracking-[0.35em] uppercase text-white/40 mb-2 sm:mb-3">{dict.language}</h4>
             <div className="flex items-center border border-white/[0.2] w-fit">
               {LANG_OPTIONS.map(({ value, flag, label }) => (
                 <button
@@ -107,7 +107,7 @@ export default function MenuOverlay({ isOpen, onClose }) {
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className={`font-display font-light leading-[1.05] tracking-[-0.02em] flex items-baseline gap-3 sm:gap-4 md:gap-5 transition-all duration-200 hover:text-bg hover:translate-x-1 sm:hover:translate-x-2 text-[clamp(26px,7.2vw,40px)] sm:text-[clamp(30px,5.5vw,48px)] lg:text-[clamp(34px,3.8vw,56px)] ${pathname === item.href ? 'text-gold' : 'text-white/45'}`}
+              className={`font-display font-light leading-[1.1] tracking-[-0.02em] flex items-baseline gap-3 sm:gap-4 md:gap-5 transition-all duration-200 hover:text-bg hover:translate-x-1 sm:hover:translate-x-2 text-[clamp(20px,5.5vw,32px)] sm:text-[clamp(28px,5vw,44px)] lg:text-[clamp(32px,3.5vw,52px)] ${pathname === item.href ? 'text-gold' : 'text-white/45'}`}
             >
               <span className="font-sans text-[10px] sm:text-[11px] tracking-[0.2em] font-light text-white/30 -translate-y-1 sm:-translate-y-2 shrink-0">{String(i + 1).padStart(2, '0')}</span>
               {item.label}

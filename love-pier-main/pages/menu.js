@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Footer from '../components/Footer'
@@ -363,7 +364,7 @@ const MENU_DATA = [
       { num:'02', name:'Espresso', prices:{ hot:'80', iced:'120', blended:'135' }, image:'/menu/real-espresso.jpg' },
       { num:'03', name:'Cappuccino', prices:{ hot:'90', iced:'120', blended:'135' }, image:'/menu/real-cappuccino.jpg' },
       { num:'04', name:'Latte', prices:{ hot:'90', iced:'120', blended:'135' }, image:'/menu/real-latte.jpg' },
-      { num:'05', name:'Mocca', prices:{ hot:'90', iced:'120', blended:'135' }, image:'/menu/drink-mocca.png' },
+      { num:'05', name:'Mocca', prices:{ hot:'90', iced:'120', blended:'135' }, image:'/menu/drink-mocca-2.png' },
       { num:'06', name:'Caramel Macchiato', prices:{ hot:'100', iced:'130', blended:'145' }, image:'/menu/caramel-macchiato.jpg' },
       { num:'07', name:'Dirty', badge:'Signature', price:'179', prices:{ hot:null, iced:'179', blended:null }, image:'/menu/real-dirty-coffee.jpg' },
       { num:'08', name:'Soft Coffee Latte', prices:{ hot:null, iced:'150', blended:null }, image:'/menu/soft-coffee-latte.jpg' },
@@ -765,6 +766,87 @@ const ITEM_COPY = {
   },
 }
 
+const PROMO_DEALS = {
+  th: {
+    heading: 'โปรจากเมนู Love Pier',
+    note: 'ราคาอ้างอิงจากเมนูปัจจุบัน · ใช้ทานที่ร้าน · ไม่รวมกับโปรอื่น',
+    viewAll: 'ดูโปรทั้งหมด',
+    deals: [
+      { badge: 'ข้าวมันไก่', title: 'เซตใหญ่ + เครื่องดื่มฟรี', price: '฿550', orig: '฿670', disc: 'ฟรี 1 แก้ว', desc: 'เซตข้าวมันไก่ขนาดใหญ่ (เมนู ฿550) รับเครื่องดื่มเย็น 1 แก้วฟรี — เลือก Americano / Latte / ชาไทยพรีเมียม (สูงสุด ฿120)', validity: 'ทานที่ร้าน · ทุกวัน', img: '/uploads/promotion-large-chicken-rice-set.png' },
+      { badge: 'ข้าวมันไก่', title: 'เซตกลาง + ลาเต้เย็น ฿50', price: '฿330', orig: '฿400', disc: '−18%', desc: 'เซตขนาดกลาง (฿280) + ลาเต้เย็นเพิ่มเพียง ฿50 (ปกติในเมนู ฿120)', validity: 'ทานที่ร้าน · ทุกวัน', img: '/uploads/promotion-medium-set-iced-latte.png' },
+      { badge: 'ซิกเนเจอร์', title: 'ถาดซิกเนเจอร์ + ชาไทย 2 แก้ว', price: '฿670', orig: '฿870', disc: '−23%', desc: 'ข้าวมันไก่ซิกเนเจอร์เสิร์ฟเป็นถาด (฿670) พร้อมชาไทยพรีเมียม 2 แก้วฟรี (฿100/แก้ว)', validity: 'ทานที่ร้าน · แชร์ได้', img: '/uploads/promotion-signature-tray.png' },
+      { badge: 'บรันช์', title: 'Pier Breakfast + กาแฟร้อนฟรี', price: '฿280', orig: '฿370', disc: 'ฟรีกาแฟ', desc: 'จาน Pier Breakfast (฿280) รับอเมริกาโน่ร้อนฟรี 1 แก้ว (เมนู ฿90)', validity: 'ทานที่ร้าน · 09:00–18:00', img: '/uploads/promotion-pier-breakfast.png' },
+      { badge: 'มัทฉะ', title: 'มัทฉะลาเต้ + ทาร์ตไข่', price: '฿185', orig: '฿205', disc: '−10%', desc: 'มัทฉะลาเต้ (฿150) + ทาร์ตไข่ (฿55) ในราคาชุดเดียว', validity: 'ทานที่ร้าน · ทุกวัน', img: '/uploads/promotion-matcha-tart.png' },
+      { badge: 'คอมโบ', title: 'เซตเล็ก + ชาไทยพรีเมียม', price: '฿220', orig: '฿250', disc: '−12%', desc: 'เซตข้าวมันไก่เล็ก (฿150) + ชาไทยพรีเมียม (฿100) จ่ายรวม ฿220', validity: 'ทานที่ร้าน · มื้อเบา', img: '/uploads/promotion-small-set-thai-tea.png' },
+    ],
+  },
+  zh: {
+    heading: 'Love Pier\n菜单优惠',
+    note: '价格以当前菜单为准 · 仅限堂食 · 不可与其他优惠同享',
+    viewAll: '查看全部优惠',
+    deals: [
+      { badge: '鸡饭', title: '大份套餐 + 免费饮品', price: '฿550', orig: '฿670', disc: '赠 1 杯', desc: '大份混合鸡饭套餐（菜单 ฿550）赠冰饮 1 杯', validity: '堂食 · 每日', img: '/uploads/promotion-large-chicken-rice-set.png' },
+      { badge: '鸡饭', title: '中份套餐 + 冰拿铁 ฿50', price: '฿330', orig: '฿400', disc: '−18%', desc: '中份套餐（฿280）+ 冰拿铁仅需加 ฿50', validity: '堂食 · 每日', img: '/uploads/promotion-medium-set-iced-latte.png' },
+      { badge: '招牌', title: '招牌鸡饭盘 + 泰茶 2 杯', price: '฿670', orig: '฿870', disc: '−23%', desc: '招牌鸡饭大盘（฿670）附赠泰式奶茶 2 杯', validity: '堂食 · 适合分享', img: '/uploads/promotion-signature-tray.png' },
+      { badge: '早午餐', title: 'Pier Breakfast + 免费热美式', price: '฿280', orig: '฿370', disc: '赠咖啡', desc: 'Pier Breakfast 招牌盘（฿280）赠热美式 1 杯', validity: '堂食 · 09:00–18:00', img: '/uploads/promotion-pier-breakfast.png' },
+      { badge: '抹茶', title: '抹茶拿铁 + 蛋挞', price: '฿185', orig: '฿205', disc: '−10%', desc: '抹茶拿铁（฿150）+ 蛋挞（฿55）组合价', validity: '堂食 · 每日', img: '/uploads/promotion-matcha-tart.png' },
+      { badge: '组合', title: '小份套餐 + 泰式奶茶', price: '฿220', orig: '฿250', disc: '−12%', desc: '小份鸡饭套餐（฿150）+ 泰式奶茶（฿100）合计 ฿220', validity: '堂食 · 轻食', img: '/uploads/promotion-small-set-thai-tea.png' },
+    ],
+  },
+  en: {
+    heading: 'Promos from our menu',
+    note: 'Prices match the menu · Dine-in only · One promo per order',
+    viewAll: 'View all promotions',
+    deals: [
+      { badge: 'Chicken rice', title: 'Large set + free drink', price: '฿550', orig: '฿670', disc: 'Free drink', desc: 'Large mixed chicken rice set (menu ฿550) — get one free iced drink (up to ฿120)', validity: 'Dine-in · Daily', img: '/uploads/promotion-large-chicken-rice-set.png' },
+      { badge: 'Chicken rice', title: 'Medium set + iced latte ฿50', price: '฿330', orig: '฿400', disc: '−18%', desc: 'Medium set (฿280) + iced latte for only ฿50 add-on (menu price ฿120)', validity: 'Dine-in · Daily', img: '/uploads/promotion-medium-set-iced-latte.png' },
+      { badge: 'Signature', title: 'Signature tray + 2 Thai teas', price: '฿670', orig: '฿870', disc: '−23%', desc: 'Signature chicken rice tray (฿670) with 2 free premium Thai teas (฿100 each)', validity: 'Dine-in · Great for sharing', img: '/uploads/promotion-signature-tray.png' },
+      { badge: 'Brunch', title: 'Pier Breakfast + free hot coffee', price: '฿280', orig: '฿370', disc: 'Free coffee', desc: 'Pier Breakfast plate (฿280) with a free hot Americano (menu ฿90)', validity: 'Dine-in · 09:00–18:00', img: '/uploads/promotion-pier-breakfast.png' },
+      { badge: 'Matcha', title: 'Matcha latte + egg tart', price: '฿185', orig: '฿205', disc: '−10%', desc: 'Matcha latte (฿150) + egg tart (฿55) as a combo', validity: 'Dine-in · Daily', img: '/uploads/promotion-matcha-tart.png' },
+      { badge: 'Combo', title: 'Small set + Thai tea', price: '฿220', orig: '฿250', disc: '−12%', desc: 'Small chicken rice set (฿150) + premium Thai tea (฿100) total ฿220', validity: 'Dine-in · Light meal', img: '/uploads/promotion-small-set-thai-tea.png' },
+    ],
+  },
+}
+
+function PromotionPanel({ lang }) {
+  const t = PROMO_DEALS[lang] || PROMO_DEALS.en
+  return (
+    <div className="px-6 sm:px-10 lg:px-12 py-7 sm:py-9">
+      <div className="flex items-baseline justify-between mb-6 gap-4">
+        <p className="text-[10px] tracking-[0.16em] uppercase text-muted">{t.note}</p>
+        <Link href="/promotion" className="shrink-0 text-[10px] tracking-[0.2em] uppercase text-gold hover:text-ink transition-colors whitespace-nowrap">
+          {t.viewAll} →
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+        {t.deals.map((deal, i) => (
+          <div key={i} className="border border-black/10 rounded-xl overflow-hidden bg-white flex flex-col">
+            {deal.img ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={deal.img} alt={deal.title} className="w-full h-44 object-cover" />
+            ) : null}
+            <div className="p-4 flex flex-col flex-1">
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <span className="text-[9px] tracking-[0.18em] uppercase text-gold font-medium">{deal.badge}</span>
+                <span className="text-[11px] font-semibold text-[#c0392b] tabular-nums shrink-0">{deal.disc}</span>
+              </div>
+              <h3 className="text-[13px] font-semibold tracking-[0.06em] uppercase text-ink leading-snug mb-1.5">{deal.title}</h3>
+              <p className="text-[11px] text-[#888] font-light leading-relaxed flex-1 mb-3">{deal.desc}</p>
+              <div className="flex items-baseline justify-between pt-3 border-t border-black/10">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-display text-[17px] text-gold tabular-nums">{deal.price}</span>
+                  <span className="text-[11px] text-[#bbb] line-through tabular-nums">{deal.orig}</span>
+                </div>
+                <span className="text-[9px] tracking-[0.12em] uppercase text-[#999]">{deal.validity}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const MENU_PAGE_COPY = {
   en: {
     title: 'Menu — Love Pier Beach Cafe',
@@ -803,6 +885,7 @@ function primaryTabsForLang(lang) {
       { id: 'matcha', label: 'มัทฉะ' },
       { id: 'drinks', label: 'เครื่องดื่ม' },
       { id: 'sweets', label: 'ของหวาน' },
+      { id: 'promotion', label: 'โปรโมชัน' },
     ]
   }
   if (lang === 'zh') {
@@ -813,6 +896,7 @@ function primaryTabsForLang(lang) {
       { id: 'matcha', label: '抹茶' },
       { id: 'drinks', label: '饮品' },
       { id: 'sweets', label: '甜品' },
+      { id: 'promotion', label: '优惠' },
     ]
   }
   return [
@@ -822,6 +906,7 @@ function primaryTabsForLang(lang) {
     { id: 'matcha', label: 'Matcha' },
     { id: 'drinks', label: 'Drinks' },
     { id: 'sweets', label: 'Sweets' },
+    { id: 'promotion', label: 'Promotion' },
   ]
 }
 
@@ -965,6 +1050,8 @@ export default function Menu() {
           <div className="bg-white">
             {activeTab === 'signature' ? (
               <FloreSignaturePanel menuData={menuData} />
+            ) : activeTab === 'promotion' ? (
+              <PromotionPanel lang={lang} />
             ) : (
               <FloreMenuPanel
                 section={activeSection}

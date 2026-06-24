@@ -39,6 +39,7 @@ export default function Home() {
         hoursCompact: 'เปิดทุกวัน (ยกเว้นวันพุธ) · 09:00-18:00',
         contact: 'ติดต่อ',
         follow: 'ติดตาม',
+        openInMaps: 'เปิดใน Google Maps',
       }
     : lang === 'zh'
       ? {
@@ -60,6 +61,7 @@ export default function Home() {
           hoursCompact: '每日营业（周三除外） · 09:00-18:00',
           contact: '联系',
           follow: '关注我们',
+          openInMaps: '在 Google 地图中打开',
         }
       : {
         title: 'Love Pier Beach Cafe — Home',
@@ -80,6 +82,7 @@ export default function Home() {
       hoursCompact: 'Open daily (except Wednesday) · 09:00-18:00',
         contact: 'Contact',
         follow: 'Follow',
+        openInMaps: 'Open in Google Maps',
       }
   const renderLines = (text) => text.split('\n').map((line, idx, arr) => (
     <span key={`${line}-${idx}`}>
@@ -106,7 +109,10 @@ export default function Home() {
       {/* HERO HEADER */}
       <header className="px-4 pt-10 pb-7 text-center reveal sm:px-6 lg:px-10 lg:pt-12 lg:pb-8">
         <div className="text-[10px] tracking-[0.4em] uppercase text-muted mb-3">{t.city}</div>
-        <h1 className="font-display font-light leading-[0.95] text-ink tracking-[-0.02em] text-[clamp(40px,7vw,88px)]">Love Pier<br/>Beach Cafe</h1>
+        <h1 className="font-display font-light text-ink tracking-[-0.02em]">
+          <span className="block leading-[0.95] text-[clamp(40px,7vw,88px)]">Love Pier</span>
+          <span className="block leading-[1.1] text-[clamp(13px,2.3vw,29px)]">Beach Cafe</span>
+        </h1>
         <div className="grid grid-cols-1 lg:grid-cols-2 mt-8 pt-5 border-t border-black/10 items-start gap-4 lg:gap-0">
           <div className="text-left">
             <span className="block text-[9px] tracking-[0.35em] uppercase text-[#aaa] mb-1.5">{t.hoursLabel}</span>
@@ -184,7 +190,6 @@ export default function Home() {
       <ScrollStackPanel>
       {/* Recommended Specials */}
       <section className="bg-ink text-bg px-4 py-14 reveal sm:px-6 sm:py-16 lg:px-10 lg:py-20">
-        <div className="text-[10px] tracking-[0.4em] uppercase text-gold mb-4">{sp.kicker}</div>
         <h2 className="font-display font-light leading-[1.1] mb-12 max-w-[800px] text-[clamp(36px,5vw,60px)]">{sp.title}</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {HOME_SPECIALS.map(({ img, imgClass, name, sub, price }) => (
@@ -206,73 +211,86 @@ export default function Home() {
 
       <ScrollStackPanel>
       {/* Map section */}
-      <div className="reveal">
-        <div className="w-full h-72 sm:h-80 bg-[#d9d7d1] relative overflow-hidden">
-          <div className="absolute inset-0 opacity-55" style={{ backgroundImage:'linear-gradient(rgba(255,255,255,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.3) 1px,transparent 1px)', backgroundSize:'44px 44px' }}></div>
-          <svg style={{ position:'absolute', inset:0, width:'100%', height:'100%', opacity:0.96 }} viewBox="0 0 1200 320" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0" y="0" width="1200" height="320" fill="#d9d7d1" />
-            <path d="M0 0 H430 C470 35, 472 82, 448 116 C430 143, 430 172, 448 201 C471 239, 468 287, 430 320 H0 Z" fill="#9fc4ce" />
-            <path d="M430 0 C470 35, 472 82, 448 116 C430 143, 430 172, 448 201 C471 239, 468 287, 430 320" fill="none" stroke="#c9a96e" strokeWidth="10" opacity="0.36" />
-
-            <path d="M160 -20 V360" stroke="#b8b1a8" strokeWidth="8" />
-            <path d="M640 -20 V360" stroke="#b4ada4" strokeWidth="9" />
-            <path d="M960 -20 V360" stroke="#b4ada4" strokeWidth="9" />
-            <path d="M-20 86 H1220" stroke="#b9b2a9" strokeWidth="7" />
-            <path d="M-20 214 H1220" stroke="#b9b2a9" strokeWidth="6" />
-
-            <g stroke="#b2aca2" strokeWidth="4" fill="none" opacity="0.95">
-              <path d="M520 62 L580 62 L580 122 L700 122 L700 84 L760 84" />
-              <path d="M548 154 L618 154 L618 198 L710 198" />
-              <path d="M520 246 L606 246 L606 286 L742 286" />
-              <path d="M792 52 L842 52 L842 132 L932 132 L932 92 L1010 92" />
-              <path d="M794 176 L860 176 L860 236 L938 236 L938 270 L1032 270" />
-              <path d="M690 236 L732 236 L732 270 L780 270" />
-            </g>
-
-            <g stroke="#94bcc7" strokeWidth="4" fill="none" opacity="0.82">
-              <path d="M474 134 C512 150, 538 166, 560 188 C584 212, 604 238, 626 264" />
-              <path d="M516 106 C546 116, 572 132, 598 158" />
-            </g>
-
-            <g fontFamily="Jost, sans-serif" fontSize="11" letterSpacing="1" fill="#736e66" opacity="0.78">
-              <text x="72" y="52">GULF OF THAILAND</text>
-              <text x="742" y="58">SAENSUK ROAD</text>
-              <text x="986" y="166" transform="rotate(-90 986,166)">SUKHUMVIT ROAD</text>
-              <text x="700" y="304">MUEANG CHONBURI</text>
-            </g>
-          </svg>
-          <a
-            href="https://maps.app.goo.gl/CYDRrd6hoxRv7z4j8"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Open Love Pier Beach Cafe in Google Maps"
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 group max-w-[90vw]"
-          >
-            <div className="w-5 h-5 rounded-full bg-ink group-hover:scale-110 transition-transform" style={{ boxShadow:'0 0 0 6px rgba(26,26,26,0.12),0 0 0 12px rgba(26,26,26,0.06)' }}></div>
-            <div className="text-[10px] sm:text-[11px] tracking-[0.16em] sm:tracking-[0.2em] uppercase text-[#444] bg-[rgba(245,243,239,0.9)] px-3 py-1 group-hover:bg-[rgba(245,243,239,1)] transition-colors text-center">Love Pier Beach Cafe</div>
-          </a>
-        </div>
-        <div className="bg-bg border-t border-black/10 px-4 py-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] gap-8 lg:gap-10 items-start sm:px-6">
-          <div>
-            <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.address}</span>
-            <div className="text-[13px] text-[#444] leading-[1.7] font-light">{renderLines(t.addressValue)}</div>
+      <div className="reveal border-t border-black/10 bg-bg px-4 py-10 sm:px-6 lg:px-10 lg:py-14">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 lg:gap-12 items-start">
+          {/* Map */}
+          <div className="relative overflow-hidden rounded-xl border border-black/10 bg-[#d9d7d1]" style={{ aspectRatio: '16/9' }}>
+            <div className="absolute inset-0 opacity-55" style={{ backgroundImage:'linear-gradient(rgba(255,255,255,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.3) 1px,transparent 1px)', backgroundSize:'44px 44px' }}></div>
+            <svg style={{ position:'absolute', inset:0, width:'100%', height:'100%', opacity:0.96 }} viewBox="0 0 1200 320" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+              <rect x="0" y="0" width="1200" height="320" fill="#d9d7d1" />
+              <path d="M0 0 H430 C470 35, 472 82, 448 116 C430 143, 430 172, 448 201 C471 239, 468 287, 430 320 H0 Z" fill="#9fc4ce" />
+              <path d="M430 0 C470 35, 472 82, 448 116 C430 143, 430 172, 448 201 C471 239, 468 287, 430 320" fill="none" stroke="#c9a96e" strokeWidth="10" opacity="0.36" />
+              <path d="M160 -20 V360" stroke="#b8b1a8" strokeWidth="8" />
+              <path d="M640 -20 V360" stroke="#b4ada4" strokeWidth="9" />
+              <path d="M960 -20 V360" stroke="#b4ada4" strokeWidth="9" />
+              <path d="M-20 86 H1220" stroke="#b9b2a9" strokeWidth="7" />
+              <path d="M-20 214 H1220" stroke="#b9b2a9" strokeWidth="6" />
+              <g stroke="#b2aca2" strokeWidth="4" fill="none" opacity="0.95">
+                <path d="M520 62 L580 62 L580 122 L700 122 L700 84 L760 84" />
+                <path d="M548 154 L618 154 L618 198 L710 198" />
+                <path d="M520 246 L606 246 L606 286 L742 286" />
+                <path d="M792 52 L842 52 L842 132 L932 132 L932 92 L1010 92" />
+                <path d="M794 176 L860 176 L860 236 L938 236 L938 270 L1032 270" />
+                <path d="M690 236 L732 236 L732 270 L780 270" />
+              </g>
+              <g stroke="#94bcc7" strokeWidth="4" fill="none" opacity="0.82">
+                <path d="M474 134 C512 150, 538 166, 560 188 C584 212, 604 238, 626 264" />
+                <path d="M516 106 C546 116, 572 132, 598 158" />
+              </g>
+              <g fontFamily="Jost, sans-serif" fontSize="11" letterSpacing="1" fill="#736e66" opacity="0.78">
+                <text x="72" y="52">GULF OF THAILAND</text>
+                <text x="742" y="58">SAENSUK ROAD</text>
+                <text x="986" y="166" transform="rotate(-90 986,166)">SUKHUMVIT ROAD</text>
+                <text x="700" y="304">MUEANG CHONBURI</text>
+              </g>
+            </svg>
+            <a
+              href="https://maps.app.goo.gl/CYDRrd6hoxRv7z4j8"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open Love Pier Beach Cafe in Google Maps"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 group max-w-[90%]"
+            >
+              <div className="w-5 h-5 rounded-full bg-ink group-hover:scale-110 transition-transform" style={{ boxShadow:'0 0 0 6px rgba(26,26,26,0.12),0 0 0 12px rgba(26,26,26,0.06)' }}></div>
+              <div className="text-[10px] sm:text-[11px] tracking-[0.16em] sm:tracking-[0.2em] uppercase text-[#444] bg-[rgba(245,243,239,0.9)] px-3 py-1 group-hover:bg-[rgba(245,243,239,1)] transition-colors text-center">Love Pier Beach Cafe</div>
+            </a>
           </div>
-          <div>
-            <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.hoursLabel}</span>
-            <div className="text-[13px] text-[#444] leading-[1.7] font-light">{t.hoursCompact}</div>
-          </div>
-          <div>
-            <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.contact}</span>
-            <div className="text-[13px] text-[#444] leading-[1.7] font-light"><a href="tel:0642523293" className="text-muted hover:text-ink transition-colors">064-252-3293</a><br/><a href="mailto:cafe.lovepier@gmail.com" className="text-muted hover:text-ink transition-colors break-all">cafe.lovepier@gmail.com</a></div>
-          </div>
-          <div>
-            <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.follow}</span>
-            <div className="flex gap-3 items-center flex-wrap">
-              <a href="https://www.instagram.com/lovepiercafe/" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink hover:[&_svg]:text-bg transition-all flex items-center justify-center w-8 h-8" aria-label="Instagram"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg></a>
-              <a href="https://www.facebook.com/profile.php?id=61590549024692&locale=th_TH" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="Facebook"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5h2.5l.5-3h-3V8.5c0-.9.3-1.5 1.6-1.5H17V4.3c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1V10.5H8v3h2.5V21h3z"/></svg></a>
-              <a href="https://lin.ee/QmClT2h" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="LINE"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.5 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6 1.5-1.7 2.6-3.4 2.6-4.9 0-4.4-4.5-8-10-8z"/></svg></a>
-              <a href="https://vt.tiktok.com/ZSQtps3yE/" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="TikTok"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-2.6-1.6 4.3 4.3 0 0 1-.8-2.2h-3v12c0 1-.8 1.9-1.9 1.9a1.9 1.9 0 0 1-1.9-1.9c0-1 .8-1.9 1.9-1.9.2 0 .4 0 .6.1V9.1a5 5 0 0 0-.6 0 5 5 0 1 0 5 5V8.4a7.4 7.4 0 0 0 4.3 1.4V6.7a4.4 4.4 0 0 1-1-.9z"/></svg></a>
+
+          {/* Info */}
+          <div className="flex flex-col gap-6 lg:py-2">
+            <div>
+              <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.address}</span>
+              <div className="text-[13px] text-[#444] leading-[1.7] font-light">{renderLines(t.addressValue)}</div>
             </div>
+            <div>
+              <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.hoursLabel}</span>
+              <div className="text-[13px] text-[#444] leading-[1.7] font-light">{t.hoursCompact}</div>
+            </div>
+            <div>
+              <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.contact}</span>
+              <div className="text-[13px] text-[#444] leading-[1.7] font-light">
+                <a href="tel:0642523293" className="text-muted hover:text-ink transition-colors">064-252-3293</a><br/>
+                <a href="mailto:cafe.lovepier@gmail.com" className="text-muted hover:text-ink transition-colors break-all">cafe.lovepier@gmail.com</a>
+              </div>
+            </div>
+            <div>
+              <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.follow}</span>
+              <div className="flex gap-3 items-center flex-wrap">
+                <a href="https://www.instagram.com/lovepiercafe/" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink hover:[&_svg]:text-bg transition-all flex items-center justify-center w-8 h-8" aria-label="Instagram"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg></a>
+                <a href="https://www.facebook.com/profile.php?id=61590549024692&locale=th_TH" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="Facebook"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5h2.5l.5-3h-3V8.5c0-.9.3-1.5 1.6-1.5H17V4.3c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1V10.5H8v3h2.5V21h3z"/></svg></a>
+                <a href="https://lin.ee/QmClT2h" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="LINE"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.5 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6 1.5-1.7 2.6-3.4 2.6-4.9 0-4.4-4.5-8-10-8z"/></svg></a>
+                <a href="https://vt.tiktok.com/ZSQtps3yE/" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="TikTok"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-2.6-1.6 4.3 4.3 0 0 1-.8-2.2h-3v12c0 1-.8 1.9-1.9 1.9a1.9 1.9 0 0 1-1.9-1.9c0-1 .8-1.9 1.9-1.9.2 0 .4 0 .6.1V9.1a5 5 0 0 0-.6 0 5 5 0 1 0 5 5V8.4a7.4 7.4 0 0 0 4.3 1.4V6.7a4.4 4.4 0 0 1-1-.9z"/></svg></a>
+              </div>
+            </div>
+            <a
+              href="https://maps.app.goo.gl/CYDRrd6hoxRv7z4j8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-[10px] tracking-[0.25em] uppercase text-[#666] hover:text-ink transition-colors mt-1"
+            >
+              <span>{t.openInMaps || 'Open in Google Maps'}</span>
+              <span className="text-sm">→</span>
+            </a>
           </div>
         </div>
       </div>
