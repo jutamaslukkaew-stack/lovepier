@@ -1,10 +1,13 @@
+import { and, asc, eq } from 'drizzle-orm'
 import Head from 'next/head'
 import Link from 'next/link'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Footer from '../components/Footer'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
+import { db } from '../lib/db'
+import { categories, menuItems } from '../lib/db/schema'
 
 const COFFEE_PRICE_KEYS = ['hot', 'iced', 'blended']
 
@@ -245,7 +248,7 @@ function MatchaTasteNotes({ notes }) {
   )
 }
 
-const TIERED_PRICE_CATEGORIES = ['coffee']
+const TIERED_PRICE_CATEGORIES = []
 
 function FloreMenuPanel({ section, items, priceLabels, menuAddOns, tasteNotes }) {
   const [lbIndex, setLbIndex] = useState(-1)
@@ -923,52 +926,51 @@ function matchaTasteNotes(lang) {
   return MATCHA_TASTE_NOTES[lang] || MATCHA_TASTE_NOTES.en
 }
 
-function localizeMenuData(data, lang) {
-  if (!ITEM_COPY[lang] && !SECTION_COPY[lang] && !COFFEE_DESC_COPY[lang] && !MATCHA_DESC_COPY[lang] && !SWEETS_DESC_COPY[lang] && !CHICKEN_RICE_DESC_COPY[lang] && !BREAKFAST_DESC_COPY[lang] && !DRINK_MENU_DESC_COPY.nonCoffee[lang]) return data
-  return data.map((section) => {
-    const sectionCopy = SECTION_COPY[lang]?.[section.cat] || {}
+const SLUG_TO_CAT = {
+  'chicken-rice': 'chickenRice',
+  'breakfast': 'breakfast',
+  'coffee': 'coffee',
+  'matcha': 'matcha',
+  'non-coffee': 'nonCoffee',
+  'italian-soda': 'italianSoda',
+  'other': 'other',
+  'sweets': 'sweets',
+}
+
+function buildMenuDataFromDB(dbData, lang) {
+  const nameField = lang === 'th' ? 'nameTh' : lang === 'zh' ? 'nameZh' : 'nameEn'
+  const descField = lang === 'th' ? 'descriptionTh' : lang === 'zh' ? 'descriptionZh' : 'descriptionEn'
+  return dbData.map((cat, catIdx) => {
+    const catKey = SLUG_TO_CAT[cat.slug] || cat.slug
+    const sectionCopy = SECTION_COPY[lang]?.[catKey] || {}
     return {
-      ...section,
-      ...sectionCopy,
-      items: section.items.map((item) => {
-        if (section.cat === 'coffee' || section.cat === 'matcha' || section.cat === 'sweets' || section.cat === 'chickenRice' || section.cat === 'breakfast') {
-          const copySource =
-            section.cat === 'coffee' ? COFFEE_DESC_COPY
-            : section.cat === 'matcha' ? MATCHA_DESC_COPY
-            : section.cat === 'sweets' ? SWEETS_DESC_COPY
-            : section.cat === 'breakfast' ? BREAKFAST_DESC_COPY
-            : CHICKEN_RICE_DESC_COPY
-          const copy = copySource[lang]?.[item.num] || copySource.en?.[item.num] || {}
-          return { ...item, ...copy }
-        }
-        if (DRINK_MENU_CATS.includes(section.cat)) {
-          const copySource = DRINK_MENU_DESC_COPY[section.cat]
-          const copy = copySource[lang]?.[item.num] || copySource.en?.[item.num] || {}
-          return { ...item, ...copy }
-        }
-        return {
-          ...item,
-          ...(lang === 'th'
-            ? (() => {
-                const localized = ITEM_COPY[lang]?.[item.num] || {}
-                if (section.cat === 'mains') return localized
-                const { name, ...rest } = localized
-                return rest
-              })()
-            : (ITEM_COPY[lang]?.[item.num] || {})),
-        }
-      }),
+      num: String(catIdx + 1).padStart(2, '0'),
+      cat: catKey,
+      title: sectionCopy.title ?? cat[nameField] ?? cat.nameEn,
+      titleEm: sectionCopy.titleEm ?? '',
+      subtitle: sectionCopy.subtitle ?? '',
+      bg: false,
+      items: cat.items.map((item, idx) => ({
+        num: String(idx + 1).padStart(2, '0'),
+        name: item[nameField] || item.nameEn,
+        desc: item[descField] || item.descriptionEn || '',
+        price: item.price === '0' ? 'Free' : (item.price ?? ''),
+        priceMax: item.priceMax ?? null,
+        badge: item.badge ?? null,
+        image: item.imageUrl ?? null,
+        featured: item.isFeatured ?? false,
+      })),
     }
   })
 }
 
-export default function Menu() {
+export default function Menu({ dbMenuData }) {
   const { lang } = useLanguage()
   const primaryTabs = primaryTabsForLang(lang)
   const t = MENU_PAGE_COPY[lang] || MENU_PAGE_COPY.en
   const [activeTab, setActiveTab] = useState('signature')
   const [activeSubCat, setActiveSubCat] = useState('chickenRice')
-  const menuData = localizeMenuData(MENU_DATA, lang)
+  const menuData = useMemo(() => buildMenuDataFromDB(dbMenuData, lang), [dbMenuData, lang])
 
   const subSections = activeTab === 'signature'
     ? []
@@ -1068,4 +1070,46 @@ export default function Menu() {
       <Footer tagline={FOOTER_TAGLINES.menu} />
     </>
   )
+}
+
+export async function getServerSideProps() {
+  const cats = await db
+    .select()
+    .from(categories)
+    .where(eq(categories.isActive, true))
+    .orderBy(asc(categories.sortOrder))
+
+  const items = await db
+    .select()
+    .from(menuItems)
+    .where(and(eq(menuItems.isAvailable, true), eq(menuItems.isDeleted, false)))
+    .orderBy(asc(menuItems.sortOrder))
+
+  const dbMenuData = cats.map((cat) => ({
+    id: cat.id,
+    slug: cat.slug,
+    nameTh: cat.nameTh,
+    nameEn: cat.nameEn,
+    nameZh: cat.nameZh,
+    sortOrder: cat.sortOrder,
+    items: items
+      .filter((i) => i.categoryId === cat.id)
+      .map((i) => ({
+        id: i.id,
+        nameTh: i.nameTh,
+        nameEn: i.nameEn,
+        nameZh: i.nameZh,
+        descriptionTh: i.descriptionTh,
+        descriptionEn: i.descriptionEn,
+        descriptionZh: i.descriptionZh,
+        price: i.price != null ? String(i.price) : null,
+        priceMax: i.priceMax != null ? String(i.priceMax) : null,
+        badge: i.badge,
+        imageUrl: i.imageUrl,
+        isFeatured: i.isFeatured,
+        sortOrder: i.sortOrder,
+      })),
+  }))
+
+  return { props: { dbMenuData } }
 }

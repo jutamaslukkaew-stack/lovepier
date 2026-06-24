@@ -13,6 +13,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx --env-file=.env.local lib/db/seed.ts",
+    "db:seed-full": "tsx --env-file=.env.local lib/db/seed-full.ts",
     "create-admin": "tsx --env-file=.env.local scripts/create-admin.ts"
   },
   "dependencies": {
