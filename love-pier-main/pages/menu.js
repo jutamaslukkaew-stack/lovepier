@@ -326,9 +326,9 @@ const MENU_DATA = [
     num: '01', cat: 'chickenRice', title: 'Singapore', titleEm: 'Chicken Rice', bg: false,
     subtitle: 'Tender poached chicken with fragrant chicken rice, three signature sauces, and warm chicken soup.',
     items: [
-      { num:'01', name:'Set — Mixed Chicken · Small', desc:'1 plate of rice · mixed parts', price:'150', image:'/menu/chicken-rice-set-2.png' },
-      { num:'02', name:'Set — Mixed Chicken · Medium', desc:'2 plates of rice · mixed parts', price:'280', image:'/menu/singaporean-chicken-rice.png' },
-      { num:'03', name:'Set — Mixed Chicken · Large', desc:'4 plates of rice · mixed parts', price:'550', image:'/menu/chicken-rice-full-set.png' },
+      { num:'01', name:'Set — Mixed Chicken · Small', desc:'1 plate of rice · mixed parts', price:'150', image:'/menu/food-set-small.png' },
+      { num:'02', name:'Set — Mixed Chicken · Medium', desc:'2 plates of rice · mixed parts', price:'280', image:'/menu/chicken-rice-full-set.png' },
+      { num:'03', name:'Set — Mixed Chicken · Large', desc:'4 plates of rice · mixed parts', price:'550', image:'/menu/food-set-large.png' },
       { num:'04', name:'Signature Chicken Rice Tray', badge:'Signature', desc:'4 plates of rice · thigh or breast', price:'670', image:'/menu/singaporean-chicken-rice.png' },
       { num:'05', name:'Sesame Oil Liver', desc:'Plate', price:'150', image:'/menu/food-sesame-oil-liver.png' },
       { num:'06', name:'Boiled Chicken Blood', desc:'Plate', price:'100', image:'/menu/food-chicken-blood.png' },
