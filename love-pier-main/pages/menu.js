@@ -786,24 +786,6 @@ const MENU_PAGE_COPY = {
   },
 }
 
-const FEATURED_COPY = {
-  en: [
-    { name: 'Singapore Chicken Rice & Hainanese Chicken Rice', sub: 'A classic chicken rice', price: '฿150-฿670' },
-    { name: 'PANG Signature', sub: 'Matcha x Khao Lam Latte', price: '฿179' },
-    { name: 'DIRTY COFFEE', sub: 'LIMITED EDITION : COFFEE', price: '฿130' },
-  ],
-  th: [
-    { name: 'Singapore Chicken Rice & Hainanese Chicken Rice', sub: 'A classic chicken rice', price: '฿150-฿670' },
-    { name: 'PANG Signature', sub: 'Matcha x Khao Lam Latte', price: '฿179' },
-    { name: 'DIRTY COFFEE', sub: 'LIMITED EDITION : COFFEE', price: '฿130' },
-  ],
-  zh: [
-    { name: 'Singapore Chicken Rice & Hainanese Chicken Rice', sub: 'A classic chicken rice', price: '฿150-฿670' },
-    { name: 'PANG Signature', sub: '门店特调配方，层次丰富、顺口耐喝', price: '฿179' },
-    { name: 'DIRTY COFFEE', sub: 'LIMITED EDITION : COFFEE', price: '฿130' },
-  ],
-}
-
 const TAB_SECTION_CATS = {
   food: ['chickenRice', 'breakfast'],
   coffee: ['coffee'],
@@ -902,7 +884,6 @@ export default function Menu() {
   const [activeTab, setActiveTab] = useState('signature')
   const [activeSubCat, setActiveSubCat] = useState('chickenRice')
   const menuData = localizeMenuData(MENU_DATA, lang)
-  const featured = FEATURED_COPY[lang] || FEATURED_COPY.en
 
   const subSections = activeTab === 'signature'
     ? []
@@ -994,31 +975,6 @@ export default function Menu() {
               />
             )}
           </div>
-        </div>
-      </section>
-
-      {/* Featured */}
-      <section className="bg-ink text-bg px-4 py-14 reveal sm:px-6 sm:py-14 lg:px-10 lg:py-20">
-        <div className="text-[10px] tracking-[0.4em] uppercase text-gold mb-4">{t.specialsLabel}</div>
-        <h2 className="font-display font-light leading-[1.1] mb-12 max-w-[800px] text-[clamp(36px,5vw,60px)]">{t.chefLine1}</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-          {[
-            {
-              img: '/menu/singaporean-chicken-rice.png',
-              imgClass: 'w-full aspect-[4/5] object-cover object-[50%_52%] [filter:saturate(0.58)_brightness(0.74)_contrast(1.06)] group-hover:[filter:saturate(0.92)_brightness(0.88)] transition-[filter] duration-500',
-              ...featured[0],
-            },
-            { img:'/uploads/weekend-brunch-custom.png', ...featured[1] },
-            { img:'/uploads/caramel-sea-salt-custom.png', ...featured[2] },
-          ].map(({ img, imgClass, name, sub, price }) => (
-            <div key={name} className="group flex flex-col gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className={imgClass || 'w-full aspect-[4/5] object-cover [filter:saturate(0.6)] group-hover:[filter:saturate(1)] transition-[filter] duration-500'} src={img} alt={name} />
-              <div className="font-display text-[22px] font-light mt-1.5">{name}</div>
-              <div className="text-[11px] tracking-[0.15em] text-[rgba(245,243,239,0.5)] uppercase mt-0.5">{sub}</div>
-              <div className="font-display text-lg text-gold mt-1.5">{price}</div>
-            </div>
-          ))}
         </div>
       </section>
 

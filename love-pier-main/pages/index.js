@@ -4,8 +4,21 @@ import Footer from '../components/Footer'
 import { ScrollStack, ScrollStackPanel } from '../components/ScrollStack'
 import { useLanguage } from '../lib/language'
 
+const HOME_SPECIALS = [
+  { img: '/menu/singaporean-chicken-rice.png', name: 'Singapore Chicken Rice & Hainanese Chicken Rice', sub: 'A classic chicken rice', price: '฿150-฿670', imgClass: 'object-[50%_55%] [filter:saturate(0.6)_brightness(0.85)] group-hover:[filter:saturate(0.95)_brightness(0.95)]' },
+  { img: '/menu/real-pang-signature.jpg', name: 'PANG Signature', sub: 'Matcha x Khao Lam Latte', price: '฿179' },
+  { img: '/menu/real-dirty-coffee.jpg', name: 'DIRTY COFFEE', sub: 'Limited Edition : Coffee', price: '฿130' },
+]
+
+const SPECIALS_LABEL = {
+  th: { kicker: 'เมนูพิเศษวันนี้', title: 'เมนูแนะนำ' },
+  en: { kicker: "Today's Specials", title: 'Recommended Specials' },
+  zh: { kicker: '今日推荐', title: '精选推荐' },
+}
+
 export default function Home() {
   const { lang } = useLanguage()
+  const sp = SPECIALS_LABEL[lang] || SPECIALS_LABEL.en
   const t = lang === 'th'
     ? {
         title: 'Love Pier Beach Cafe — หน้าหลัก',
@@ -166,6 +179,29 @@ export default function Home() {
           <img className="home-mosaic-img block w-full h-auto object-contain sm:absolute sm:inset-0 sm:h-full sm:object-cover sm:object-[50%_72%]" src="/uploads/home-espresso.png" alt="coffee" />
         </div>
       </div>
+      </ScrollStackPanel>
+
+      <ScrollStackPanel>
+      {/* Recommended Specials */}
+      <section className="bg-ink text-bg px-4 py-14 reveal sm:px-6 sm:py-16 lg:px-10 lg:py-20">
+        <div className="text-[10px] tracking-[0.4em] uppercase text-gold mb-4">{sp.kicker}</div>
+        <h2 className="font-display font-light leading-[1.1] mb-12 max-w-[800px] text-[clamp(36px,5vw,60px)]">{sp.title}</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+          {HOME_SPECIALS.map(({ img, imgClass, name, sub, price }) => (
+            <Link key={name} href="/menu" className="group flex flex-col gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                className={`w-full aspect-[4/5] object-cover transition-[filter] duration-500 ${imgClass || 'object-center [filter:saturate(0.6)] group-hover:[filter:saturate(1)]'}`}
+                src={img}
+                alt={name}
+              />
+              <div className="font-display text-[22px] font-light mt-1.5">{name}</div>
+              <div className="text-[11px] tracking-[0.15em] text-[rgba(245,243,239,0.5)] uppercase mt-0.5">{sub}</div>
+              <div className="font-display text-lg text-gold mt-1.5">{price}</div>
+            </Link>
+          ))}
+        </div>
+      </section>
       </ScrollStackPanel>
 
       <ScrollStackPanel>
