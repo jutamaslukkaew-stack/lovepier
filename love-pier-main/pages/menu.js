@@ -426,6 +426,7 @@ const MENU_DATA = [
       { num:'07', name:'Orange Cake', price:'90', image:'/menu/dessert-orange-cake.png' },
       { num:'08', name:'Egg Tart', price:'55' },
       { num:'09', name:'Tiramisu', price:'150', image:'/menu/dessert-tiramisu.png' },
+      { num:'10', name:'Strawberry Shortcake', price:'150', image:'/menu/dessert-strawberry-shortcake.png' },
     ],
   },
 ]
