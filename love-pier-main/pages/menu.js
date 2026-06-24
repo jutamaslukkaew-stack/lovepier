@@ -142,6 +142,11 @@ function Lightbox({ items, index, onIndexChange, onClose }) {
           {current.priceText ? (
             <p className="mt-1 text-[#e3c77a] text-sm sm:text-base tabular-nums">{current.priceText}</p>
           ) : null}
+          {current.description ? (
+            <p className="mt-2.5 mx-auto max-w-md text-white/70 text-xs sm:text-sm font-light leading-relaxed">
+              {current.description}
+            </p>
+          ) : null}
         </div>
       </div>
     </div>,
@@ -246,7 +251,7 @@ function FloreMenuPanel({ section, items, priceLabels, menuAddOns, tasteNotes })
   const showDrinkPrices = !!priceLabels
   const gallery = items
     .filter((i) => i.image)
-    .map((i) => ({ image: i.image, name: i.name, priceText: getLightboxPrice(i, showDrinkPrices, priceLabels) }))
+    .map((i) => ({ image: i.image, name: i.name, description: i.desc, priceText: getLightboxPrice(i, showDrinkPrices, priceLabels) }))
   let gi = -1
   const galleryIndex = items.map((i) => (i.image ? ++gi : -1))
 
@@ -290,7 +295,7 @@ function FloreSignaturePanel({ menuData }) {
   const allItems = groups.flatMap(({ items }) => items)
   const gallery = allItems
     .filter((i) => i.image)
-    .map((i) => ({ image: i.image, name: i.name, priceText: getLightboxPrice(i, false, null) }))
+    .map((i) => ({ image: i.image, name: i.name, description: i.desc, priceText: getLightboxPrice(i, false, null) }))
   const imageKeyToIndex = {}
   let gi = -1
   allItems.forEach((i) => { if (i.image) imageKeyToIndex[`${i.num}-${i.name}`] = ++gi })
@@ -480,43 +485,43 @@ const BREAKFAST_DESC_COPY = {
 
 const CHICKEN_RICE_DESC_COPY = {
   en: {
-    '01': { desc: 'Mixed chicken parts · 1 plate of chicken rice' },
-    '02': { desc: 'Mixed chicken parts · 2 plates of chicken rice' },
-    '03': { desc: 'Mixed chicken parts · 4 plates of chicken rice' },
-    '04': { badge: 'Signature', desc: 'Thigh or breast · 4 plates of chicken rice' },
-    '05': { desc: 'Sesame oil liver — plate' },
-    '06': { desc: 'Boiled chicken blood — plate' },
-    '07': { desc: 'Fragrant chicken rice — bowl' },
-    '08': { desc: 'Orange chili ginger sauce — small jar' },
-    '09': { desc: 'Ginger oil sauce — small jar' },
-    '10': { desc: 'Soybean paste, ginger, and fresh chili — small jar' },
-    '11': { desc: 'Various dipping sauces for dine-in' },
+    '01': { desc: 'Tender poached chicken over pandan-scented rice cooked in chicken fat, with clear soup and three house sauces. Serves one.' },
+    '02': { desc: 'Tender poached chicken, fragrant rice, clear soup, and three sauces — sized for two to share.' },
+    '03': { desc: 'A generous family tray of poached chicken, fragrant rice, clear soup, and sauces — serves four.' },
+    '04': { badge: 'Signature', desc: 'Premium thigh or breast on fragrant rice, with clear soup and three signature sauces — our signature tray.' },
+    '05': { desc: 'Chicken liver gently poached in fragrant sesame oil and finished with spring onion — silky and aromatic.' },
+    '06': { desc: 'Softly boiled chicken blood, clean and delicate — a classic Hainanese side.' },
+    '07': { desc: 'Rice simmered in chicken fat, garlic, and pandan until fragrant and glossy.' },
+    '08': { desc: 'Bright orange-chili sauce with garlic and ginger — tangy, spicy, and fresh.' },
+    '09': { desc: 'Pounded young ginger in warm oil — mild, fragrant, and cooling.' },
+    '10': { desc: 'Fermented soybean paste with ginger and fresh chili — savory and bold.' },
+    '11': { desc: 'A trio of house dipping sauces, refilled freely for dine-in guests.' },
   },
   th: {
-    '01': { name: 'เซต — ข้าวมันไก่ ขนาดเล็ก', desc: 'เนื้อไก่คละส่วน · ข้าวมัน 1 จาน' },
-    '02': { name: 'เซต — ข้าวมันไก่ ขนาดกลาง', desc: 'เนื้อไก่คละส่วน · ข้าวมัน 2 จาน' },
-    '03': { name: 'เซต — ข้าวมันไก่ ขนาดใหญ่', desc: 'เนื้อไก่คละส่วน · ข้าวมัน 4 จาน' },
-    '04': { name: 'ข้าวมันไก่ซิกเนเจอร์ เสิร์ฟเป็นถาด', badge: 'เมนูแนะนำ', desc: 'น่องสะโพกหรือเนื้ออก · ข้าวมัน 4 จาน' },
-    '05': { name: 'ตับน้ำมันงา', desc: 'จาน' },
-    '06': { name: 'เลือดไก่ต้ม', desc: 'จาน' },
-    '07': { name: 'ข้าวมัน', desc: 'ชาม' },
-    '08': { name: 'น้ำจิ้มพริกส้มขิง', desc: 'กระปุกเล็ก' },
-    '09': { name: 'น้ำจิ้มน้ำมันขิง', desc: 'กระปุกเล็ก' },
-    '10': { name: 'น้ำจิ้มเต้าเจี๊ยว + ขิง + พริกสด', desc: 'กระปุกเล็ก' },
-    '11': { name: 'น้ำจิ้มต่างๆ ทานที่ร้าน', desc: 'ฟรี' },
+    '01': { name: 'เซต — ข้าวมันไก่ ขนาดเล็ก', desc: 'ไก่ต้มนุ่ม เสิร์ฟบนข้าวมันหุงกับน้ำมันไก่และใบเตย พร้อมซุปใสและน้ำจิ้ม 3 สูตร · สำหรับ 1 ท่าน' },
+    '02': { name: 'เซต — ข้าวมันไก่ ขนาดกลาง', desc: 'ไก่ต้มนุ่ม ข้าวมันหอม ซุปใส และน้ำจิ้มครบ 3 สูตร · แบ่งทานได้ 2 ท่าน' },
+    '03': { name: 'เซต — ข้าวมันไก่ ขนาดใหญ่', desc: 'ถาดใหญ่จัดเต็ม ไก่ต้ม ข้าวมันหอม ซุปใส และน้ำจิ้ม · สำหรับ 4 ท่าน' },
+    '04': { name: 'ข้าวมันไก่ซิกเนเจอร์ เสิร์ฟเป็นถาด', badge: 'เมนูแนะนำ', desc: 'น่องสะโพกหรือเนื้ออกคัดพิเศษ บนข้าวมันหอม พร้อมซุปใสและน้ำจิ้ม 3 สูตร · ถาดซิกเนเจอร์' },
+    '05': { name: 'ตับน้ำมันงา', desc: 'ตับไก่ลวกในน้ำมันงาหอม โรยต้นหอม เนื้อนุ่มละมุนกลิ่นหอม' },
+    '06': { name: 'เลือดไก่ต้ม', desc: 'เลือดไก่ต้มเนื้อนุ่ม สะอาด รสละมุน · เครื่องเคียงสไตล์ไหหลำ' },
+    '07': { name: 'ข้าวมัน', desc: 'ข้าวหุงกับน้ำมันไก่ กระเทียม และใบเตย จนหอมเป็นมันวาว' },
+    '08': { name: 'น้ำจิ้มพริกส้มขิง', desc: 'น้ำจิ้มพริกส้มผสมขิงและกระเทียม รสเปรี้ยวเผ็ดสดชื่น' },
+    '09': { name: 'น้ำจิ้มน้ำมันขิง', desc: 'ขิงอ่อนโขลกกับน้ำมันอุ่น กลิ่นหอม รสนุ่มเย็น' },
+    '10': { name: 'น้ำจิ้มเต้าเจี๊ยว + ขิง + พริกสด', desc: 'เต้าเจี้ยวหมักผสมขิงและพริกสด รสกลมกล่อมเข้มข้น' },
+    '11': { name: 'น้ำจิ้มต่างๆ ทานที่ร้าน', desc: 'น้ำจิ้ม 3 สูตรของร้าน เติมได้ไม่อั้นสำหรับทานที่ร้าน' },
   },
   zh: {
-    '01': { desc: '鸡肉混搭部位 · 鸡油饭 1 盘' },
-    '02': { desc: '鸡肉混搭部位 · 鸡油饭 2 盘' },
-    '03': { desc: '鸡肉混搭部位 · 鸡油饭 4 盘' },
-    '04': { badge: '招牌', desc: '鸡腿或鸡胸 · 鸡油饭 4 盘' },
-    '05': { desc: '麻油鸡肝 · 盘' },
-    '06': { desc: '白切鸡血 · 盘' },
-    '07': { desc: '鸡油饭 · 碗' },
-    '08': { desc: '橘椒姜蘸酱 · 小罐' },
-    '09': { desc: '姜油蘸酱 · 小罐' },
-    '10': { desc: '豆酱 + 姜 + 鲜辣椒 · 小罐' },
-    '11': { desc: '堂食蘸料（多款）' },
+    '01': { desc: '嫩滑白切鸡配香兰鸡油饭，附清汤与三款招牌蘸酱 · 一人份' },
+    '02': { desc: '嫩滑白切鸡、香鸡油饭、清汤与三款蘸酱 · 适合两人分享' },
+    '03': { desc: '丰盛家庭拼盘：白切鸡、香鸡油饭、清汤与蘸酱 · 四人份' },
+    '04': { badge: '招牌', desc: '精选鸡腿或鸡胸配香鸡油饭，附清汤与三款招牌蘸酱 · 招牌拼盘' },
+    '05': { desc: '鸡肝以香麻油轻煮，撒上葱花，滑嫩浓香' },
+    '06': { desc: '白煮鸡血，软嫩干净，经典海南配菜' },
+    '07': { desc: '米饭以鸡油、蒜与香兰焖煮至油亮喷香' },
+    '08': { desc: '橘子辣椒姜蘸酱，蒜香浓郁，酸辣清新' },
+    '09': { desc: '嫩姜捣入温油，温和清香' },
+    '10': { desc: '发酵豆酱配姜与鲜辣椒，咸香浓郁' },
+    '11': { desc: '三款招牌蘸酱，堂食免费续添' },
   },
 }
 
