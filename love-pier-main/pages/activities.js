@@ -17,7 +17,6 @@ const COPY = {
       {
         id: 'surf-pool',
         title: 'Surf Pool',
-        icon: '🌊',
         items: [
           { name: 'Surf Pool', sub: 'บุคคล', duration: '1 ชม.', regular: 1200, member: 1080, note: 'มีอุปกรณ์ และ Instructor' },
           { name: 'Surf Pool Group', sub: 'Single Lane (สูงสุด 10 คน)', duration: '1 ชม.', regular: 4500, member: 4050, note: 'มีอุปกรณ์ และ Instructor' },
@@ -27,7 +26,6 @@ const COPY = {
       {
         id: 'surf-ski',
         title: 'Surf Ski',
-        icon: '🚣',
         items: [
           { name: 'Surf Ski', sub: 'ระดับกลาง (Intermediate)', duration: '1 ครั้ง', regular: 1100, member: 990, note: 'ใช้เรือ Club' },
           { name: 'Surf Ski', sub: 'ระดับเริ่มต้น (Beginner)', duration: '1 ครั้ง', regular: 2200, member: 1980, note: 'รวมอุปกรณ์ครบ ใช้เรือ Club + Instructor' },
@@ -38,7 +36,6 @@ const COPY = {
       {
         id: 'sup',
         title: 'SUP Board',
-        icon: '🏄',
         items: [
           { name: 'SUP Board', sub: '', duration: '1 ชม.', regular: 400, member: 360, note: 'อุปกรณ์ Club' },
           { name: 'SUP Board + Trainer', sub: '', duration: '1 ครั้ง / 1.30 ชม.', regular: 800, member: 720, note: 'รวมอุปกรณ์ Club + Trainer' },
@@ -47,7 +44,6 @@ const COPY = {
       {
         id: 'kayak',
         title: 'Kayak',
-        icon: '🛶',
         items: [
           { name: 'Kayak ธรรมดา', sub: '', duration: '1 ชม.', regular: 400, member: 360, note: 'รวมอุปกรณ์ครบ ใช้เรือ Club' },
           { name: 'Kayak ใส', sub: '(Transparent)', duration: '1 ชม.', regular: 600, member: 540, note: 'รวมอุปกรณ์ครบ ใช้เรือ Club' },
@@ -57,7 +53,6 @@ const COPY = {
       {
         id: 'skimboard',
         title: 'Skim Board',
-        icon: '🏊',
         items: [
           { name: 'Skim Board', sub: 'เช่ารายชั่วโมง', duration: '1 ชม.', regularText: '250 (ชม.แรก) + 180/ชม.', memberText: '225 / 162', note: 'รวมบอร์ดและรองเท้า' },
           { name: 'Skim Board', sub: 'เช่ารายวัน (รวมรองเท้า)', duration: '1 วัน', regular: 800, member: 720, note: 'รวมบอร์ดและรองเท้า' },
@@ -67,7 +62,6 @@ const COPY = {
       {
         id: 'jetski',
         title: 'Jet Ski',
-        icon: '💨',
         items: [
           { name: 'Jet Ski', sub: '', duration: '1 ชม.', regular: 3700, member: 3300, note: 'รวมอุปกรณ์ครบ ชูชีพ + Trainer' },
         ],
@@ -75,7 +69,6 @@ const COPY = {
       {
         id: 'speedboat',
         title: 'Speed Boat',
-        icon: '⛵',
         items: [
           { name: 'ทริปตกปลา / ชมปลาวาฬ', sub: 'เรือ Casalunar (ขนาดใหญ่)', duration: '1 วัน', regularText: '16,000/ลำ', memberText: '–', note: 'สูงสุด 18 ท่าน · ออกเรือเมื่อผู้โดยสาร 8 ท่านขึ้นไป' },
           { name: 'ทริปเที่ยวเกาะสีชัง', sub: 'เรือ Catamaran (ขนาดกลาง)', duration: '1 วัน', regularText: '6,000/ลำ', memberText: '–', note: 'สูงสุด 5 ท่าน · บริการแทนสำหรับราคาที่แตกต่าง' },
@@ -98,7 +91,6 @@ const COPY = {
       {
         id: 'surf-pool',
         title: 'Surf Pool',
-        icon: '🌊',
         items: [
           { name: 'Surf Pool', sub: 'Individual', duration: '1 hr', regular: 1200, member: 1080, note: 'Equipment & Instructor included' },
           { name: 'Surf Pool Group', sub: 'Single Lane (max 10 pax)', duration: '1 hr', regular: 4500, member: 4050, note: 'Equipment & Instructor included' },
@@ -108,7 +100,6 @@ const COPY = {
       {
         id: 'surf-ski',
         title: 'Surf Ski',
-        icon: '🚣',
         items: [
           { name: 'Surf Ski', sub: 'Intermediate', duration: '1 session', regular: 1100, member: 990, note: 'Club boat' },
           { name: 'Surf Ski', sub: 'Beginner', duration: '1 session', regular: 2200, member: 1980, note: 'Full equipment, Club boat + Instructor' },
@@ -119,7 +110,6 @@ const COPY = {
       {
         id: 'sup',
         title: 'SUP Board',
-        icon: '🏄',
         items: [
           { name: 'SUP Board', sub: '', duration: '1 hr', regular: 400, member: 360, note: 'Club equipment' },
           { name: 'SUP Board + Trainer', sub: '', duration: '1 session / 1.5 hrs', regular: 800, member: 720, note: 'Club equipment + Trainer' },
@@ -128,7 +118,6 @@ const COPY = {
       {
         id: 'kayak',
         title: 'Kayak',
-        icon: '🛶',
         items: [
           { name: 'Standard Kayak', sub: '', duration: '1 hr', regular: 400, member: 360, note: 'Full equipment, Club boat' },
           { name: 'Transparent Kayak', sub: '', duration: '1 hr', regular: 600, member: 540, note: 'Full equipment, Club boat' },
@@ -138,7 +127,6 @@ const COPY = {
       {
         id: 'skimboard',
         title: 'Skim Board',
-        icon: '🏊',
         items: [
           { name: 'Skim Board', sub: 'Hourly rental', duration: '1 hr', regularText: '฿250 (1st hr) + ฿180/hr', memberText: '฿225 / ฿162', note: 'Board & shoes included' },
           { name: 'Skim Board', sub: 'Full day (shoes included)', duration: '1 day', regular: 800, member: 720, note: 'Board & shoes included' },
@@ -148,7 +136,6 @@ const COPY = {
       {
         id: 'jetski',
         title: 'Jet Ski',
-        icon: '💨',
         items: [
           { name: 'Jet Ski', sub: '', duration: '1 hr', regular: 3700, member: 3300, note: 'Full equipment, life jacket + Trainer' },
         ],
@@ -156,7 +143,6 @@ const COPY = {
       {
         id: 'speedboat',
         title: 'Speed Boat',
-        icon: '⛵',
         items: [
           { name: 'Fishing & Whale Watching Trip', sub: 'Casalunar (large)', duration: '1 day', regularText: '฿16,000/boat', memberText: '–', note: 'Max 18 pax · departs from 8 pax' },
           { name: 'Koh Si Chang Island Trip', sub: 'Catamaran (medium)', duration: '1 day', regularText: '฿6,000/boat', memberText: '–', note: 'Max 5 pax' },
@@ -179,7 +165,6 @@ const COPY = {
       {
         id: 'surf-pool',
         title: 'Surf Pool 冲浪池',
-        icon: '🌊',
         items: [
           { name: 'Surf Pool', sub: '个人', duration: '1小时', regular: 1200, member: 1080, note: '含器材及教练' },
           { name: 'Surf Pool 团体', sub: '单道（最多10人）', duration: '1小时', regular: 4500, member: 4050, note: '含器材及教练' },
@@ -189,7 +174,6 @@ const COPY = {
       {
         id: 'surf-ski',
         title: 'Surf Ski 冲浪皮艇',
-        icon: '🚣',
         items: [
           { name: 'Surf Ski', sub: '中级', duration: '1次', regular: 1100, member: 990, note: '使用俱乐部艇' },
           { name: 'Surf Ski', sub: '初级', duration: '1次', regular: 2200, member: 1980, note: '含全套器材，俱乐部艇 + 教练' },
@@ -200,7 +184,6 @@ const COPY = {
       {
         id: 'sup',
         title: 'SUP Board 立桨冲浪',
-        icon: '🏄',
         items: [
           { name: 'SUP Board', sub: '', duration: '1小时', regular: 400, member: 360, note: '俱乐部器材' },
           { name: 'SUP Board + 教练', sub: '', duration: '1次 / 1.5小时', regular: 800, member: 720, note: '含俱乐部器材 + 教练' },
@@ -209,7 +192,6 @@ const COPY = {
       {
         id: 'kayak',
         title: 'Kayak 皮划艇',
-        icon: '🛶',
         items: [
           { name: '普通皮划艇', sub: '', duration: '1小时', regular: 400, member: 360, note: '含全套器材，俱乐部艇' },
           { name: '透明皮划艇', sub: '', duration: '1小时', regular: 600, member: 540, note: '含全套器材，俱乐部艇' },
@@ -219,7 +201,6 @@ const COPY = {
       {
         id: 'skimboard',
         title: 'Skim Board 滑板',
-        icon: '🏊',
         items: [
           { name: 'Skim Board', sub: '按小时租借', duration: '1小时', regularText: '250（首小时）+ 180/小时', memberText: '225 / 162', note: '含板及鞋' },
           { name: 'Skim Board', sub: '全天（含鞋）', duration: '1天', regular: 800, member: 720, note: '含板及鞋' },
@@ -229,7 +210,6 @@ const COPY = {
       {
         id: 'jetski',
         title: 'Jet Ski 摩托艇',
-        icon: '💨',
         items: [
           { name: 'Jet Ski', sub: '', duration: '1小时', regular: 3700, member: 3300, note: '含全套器材、救生衣及教练' },
         ],
@@ -237,7 +217,6 @@ const COPY = {
       {
         id: 'speedboat',
         title: 'Speed Boat 快艇',
-        icon: '⛵',
         items: [
           { name: '钓鱼 / 赏鲸之旅', sub: 'Casalunar（大型船）', duration: '全天', regularText: '16,000/艘', memberText: '–', note: '最多18人 · 满8人出发' },
           { name: '斯里昌岛游览', sub: 'Catamaran（中型船）', duration: '全天', regularText: '6,000/艘', memberText: '–', note: '最多5人' },
@@ -257,7 +236,6 @@ function ActivityTable({ cat, t }) {
   return (
     <div id={`activity-${cat.id}`} className="mb-12 last:mb-0">
       <div className="flex items-center gap-3 mb-4">
-        <span className="text-2xl">{cat.icon}</span>
         <h2 className="font-display font-light text-[clamp(22px,3vw,32px)] text-ink tracking-[-0.01em]">
           {cat.title}
         </h2>

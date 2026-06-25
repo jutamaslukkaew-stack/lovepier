@@ -882,27 +882,28 @@ const TAB_SECTION_CATS = {
 function primaryTabsForLang(lang) {
   if (lang === 'th') {
     return [
+      { id: 'promotion', label: 'โปรโมชัน' },
       { id: 'signature', label: 'Signature' },
       { id: 'food', label: 'อาหาร' },
       { id: 'coffee', label: 'กาแฟ' },
       { id: 'matcha', label: 'มัทฉะ' },
       { id: 'drinks', label: 'เครื่องดื่ม' },
       { id: 'sweets', label: 'ของหวาน' },
-      { id: 'promotion', label: 'โปรโมชัน' },
     ]
   }
   if (lang === 'zh') {
     return [
+      { id: 'promotion', label: '优惠' },
       { id: 'signature', label: 'Signature' },
       { id: 'food', label: '餐食' },
       { id: 'coffee', label: '咖啡' },
       { id: 'matcha', label: '抹茶' },
       { id: 'drinks', label: '饮品' },
       { id: 'sweets', label: '甜品' },
-      { id: 'promotion', label: '优惠' },
     ]
   }
   return [
+    { id: 'promotion', label: 'Promotion' },
     { id: 'signature', label: 'Signature' },
     { id: 'food', label: 'Food' },
     { id: 'coffee', label: 'Coffee' },
@@ -1052,19 +1053,37 @@ export default function Menu({ dbMenuData }) {
       {/* Full scrollable menu */}
       <div className="w-full bg-white flore-menu">
 
+        {/* Promotion */}
+        <div id="menu-section-promotion" className="border-b border-black/10">
+          <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
+            <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
+              {primaryTabs.find((t) => t.id === 'promotion')?.label ?? 'Promotion'}
+            </h2>
+            <div className="mt-3 w-12 h-px bg-gold/60" />
+          </div>
+          <PromotionPanel lang={lang} />
+        </div>
+
         {/* Signature */}
         <div id="menu-section-signature" className="border-b border-black/10">
+          <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
+            <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
+              {primaryTabs.find((t) => t.id === 'signature')?.label ?? 'Signature'}
+            </h2>
+            <div className="mt-3 w-12 h-px bg-gold/60" />
+          </div>
           <FloreSignaturePanel menuData={menuData} />
         </div>
 
         {/* Food */}
         <div id="menu-section-food" className="border-b border-black/10">
-          {foodSections.map((section) => (
+          {foodSections.map((section, i) => (
             <div key={section.cat} className="border-b border-black/[0.06] last:border-b-0">
-              <div className="px-6 sm:px-10 lg:px-12 pt-7 pb-1">
-                <h2 className="text-[10px] tracking-[0.2em] uppercase text-gold font-semibold">
-                  {section.title}{section.titleEm ? ` · ${section.titleEm}` : ''}
+              <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
+                <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
+                  {section.title}{section.titleEm ? <em className="not-italic text-gold"> · {section.titleEm}</em> : null}
                 </h2>
+                <div className="mt-3 w-12 h-px bg-gold/60" />
               </div>
               <FloreMenuPanel
                 section={section}
@@ -1079,8 +1098,9 @@ export default function Menu({ dbMenuData }) {
         <div id="menu-section-coffee" className="border-b border-black/10">
           {coffeeSections.map((section) => (
             <div key={section.cat}>
-              <div className="px-6 sm:px-10 lg:px-12 pt-7 pb-1">
-                <h2 className="text-[10px] tracking-[0.2em] uppercase text-gold font-semibold">{section.title}</h2>
+              <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
+                <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">{section.title}</h2>
+                <div className="mt-3 w-12 h-px bg-gold/60" />
               </div>
               <FloreMenuPanel
                 section={section}
@@ -1095,8 +1115,9 @@ export default function Menu({ dbMenuData }) {
         <div id="menu-section-matcha" className="border-b border-black/10">
           {matchaSections.map((section) => (
             <div key={section.cat}>
-              <div className="px-6 sm:px-10 lg:px-12 pt-7 pb-1">
-                <h2 className="text-[10px] tracking-[0.2em] uppercase text-gold font-semibold">{section.title}</h2>
+              <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
+                <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">{section.title}</h2>
+                <div className="mt-3 w-12 h-px bg-gold/60" />
               </div>
               <FloreMenuPanel
                 section={section}
@@ -1111,8 +1132,9 @@ export default function Menu({ dbMenuData }) {
         <div id="menu-section-drinks" className="border-b border-black/10">
           {drinkSections.map((section) => (
             <div key={section.cat} className="border-b border-black/[0.06] last:border-b-0">
-              <div className="px-6 sm:px-10 lg:px-12 pt-7 pb-1">
-                <h2 className="text-[10px] tracking-[0.2em] uppercase text-gold font-semibold">{section.title}</h2>
+              <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
+                <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">{section.title}</h2>
+                <div className="mt-3 w-12 h-px bg-gold/60" />
               </div>
               <FloreMenuPanel section={section} items={section.items} />
             </div>
@@ -1123,18 +1145,15 @@ export default function Menu({ dbMenuData }) {
         <div id="menu-section-sweets" className="border-b border-black/10">
           {sweetsSections.map((section) => (
             <div key={section.cat}>
-              <div className="px-6 sm:px-10 lg:px-12 pt-7 pb-1">
-                <h2 className="text-[10px] tracking-[0.2em] uppercase text-gold font-semibold">{section.title}{section.titleEm ? ` ${section.titleEm}` : ''}</h2>
+              <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
+                <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">{section.title}{section.titleEm ? <em className="not-italic text-gold"> {section.titleEm}</em> : null}</h2>
+                <div className="mt-3 w-12 h-px bg-gold/60" />
               </div>
               <FloreMenuPanel section={section} items={section.items} />
             </div>
           ))}
         </div>
 
-        {/* Promotion */}
-        <div id="menu-section-promotion">
-          <PromotionPanel lang={lang} />
-        </div>
 
       </div>
 

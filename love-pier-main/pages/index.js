@@ -1,6 +1,7 @@
 import { and, asc, eq } from 'drizzle-orm'
 import Head from 'next/head'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import Footer from '../components/Footer'
 import { ScrollStack, ScrollStackPanel } from '../components/ScrollStack'
 import { db } from '../lib/db'
@@ -17,6 +18,7 @@ const COPY = {
     location: 'ที่ตั้ง',
     locationValue: '800 108 แสนสุข\nอำเภอเมือง จังหวัดชลบุรี 20130',
     exploreMenu: 'ดูเมนู',
+    tagline: ['Beach Vibes,', 'Cafe by The Sea,', 'ข้าวมันไก่สิงคโปร์'],
     since: 'ตั้งแต่ปี 2026',
     about1: '<strong>LOVE PIER BEACH CAFE</strong> คาเฟ่ริมชายหาดบางแสน ที่ให้ทุกมื้อพิเศษกว่าที่เคย',
     about2: 'สัมผัสรสชาติของ <em class="italic text-gold">"ข้าวมันไก่สิงคโปร์และข้าวมันไก่ไหหลำ สูตรต้นตำรับ"</em> พร้อมจิบเครื่องดื่มซิกเนเจอร์ ที่ได้แรงบันดาลใจจาก <em class="italic text-gold">"ข้าวหลามหนองมน"</em> เอกลักษณ์แห่งบางแสนที่ถูกถ่ายทอดออกมาในรูปแบบใหม่ อย่างละมุน',
@@ -72,6 +74,7 @@ const COPY = {
     location: 'Location',
     locationValue: '800 108 Saensuk\nMueang Chonburi, Chonburi 20130',
     exploreMenu: 'Explore Menu',
+    tagline: ['Beach Vibes,', 'Cafe by The Sea,', 'Singapore Chicken Rice'],
     since: 'Since 2026',
     about1: 'Love Pier Cafe is a beachside cafe in Bangsaen where every meal feels more special.',
     about2: 'Enjoy <em class="italic text-gold">Singaporean and Hainanese chicken rice (original recipes)</em>, paired with signature drinks inspired by <em class="italic text-gold">Nong Mon khao lam</em>, reimagined with a softer, modern touch.',
@@ -126,6 +129,7 @@ const COPY = {
     location: '地址',
     locationValue: '800 108 Saensuk\nMueang Chonburi, Chonburi 20130',
     exploreMenu: '查看菜单',
+    tagline: ['海边氛围,', '海边咖啡馆,', '新加坡鸡饭'],
     since: '自 2026 年起',
     about1: 'Love Pier Cafe 是邦盛海边的一家咖啡馆，让每一餐都比以往更特别。',
     about2: '品尝<em class="italic text-gold">"新加坡鸡饭与海南鸡饭（传统原味）"</em>，再搭配受<em class="italic text-gold">"农蒙竹筒糯米饭"</em>启发的招牌饮品，把邦盛在地风味以更细腻的方式重新呈现。',
@@ -228,6 +232,73 @@ function MenuCard({ item, lang }) {
   )
 }
 
+// ── hero slideshow ────────────────────────────────────────────────────────────
+const HERO_SLIDES = [
+  { src: '/uploads/home-hero.png', pos: '50% 40%' },
+  { src: '/uploads/home-love-pier-exterior.png', pos: '50% 50%' },
+  { src: '/uploads/gallery-beach-terrace.png', pos: '50% 50%' },
+  { src: '/uploads/gallery-sunset-sea.png', pos: '50% 60%' },
+  { src: '/uploads/home-cafe-exterior.png', pos: '50% 50%' },
+]
+
+function HeroSlideshow({ t, renderLines }) {
+  const [current, setCurrent] = useState(0)
+  const [fading, setFading] = useState(false)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFading(true)
+      setTimeout(() => {
+        setCurrent((c) => (c + 1) % HERO_SLIDES.length)
+        setFading(false)
+      }, 600)
+    }, 4500)
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <div className="relative w-full bg-[#e8e4de] reveal-img overflow-hidden aspect-[4/5] sm:aspect-[3/2] lg:aspect-[16/7]">
+      {HERO_SLIDES.map((slide, i) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={slide.src}
+          src={slide.src}
+          alt="Love Pier Beach Cafe"
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[600ms]"
+          style={{
+            objectPosition: slide.pos,
+            filter: 'saturate(0.75)',
+            opacity: i === current ? (fading ? 0 : 1) : 0,
+            zIndex: i === current ? 1 : 0,
+          }}
+        />
+      ))}
+      {/* gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50" style={{ zIndex: 2 }} />
+      {/* text */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4" style={{ zIndex: 3 }}>
+        <div className="text-[10px] tracking-[0.45em] uppercase text-[rgba(245,243,239,0.7)] mb-4">{t.city}</div>
+        <h1 className="font-display font-light text-[rgba(245,243,239,0.95)] tracking-[-0.02em] drop-shadow-[0_2px_16px_rgba(0,0,0,0.4)]">
+          <span className="block leading-[0.95] text-[clamp(48px,9vw,110px)]">Love Pier</span>
+          <span className="block leading-[1.2] text-[clamp(15px,2.6vw,32px)]">Beach Cafe</span>
+        </h1>
+      </div>
+      {/* dot indicators */}
+      <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 flex gap-1.5" style={{ zIndex: 3 }}>
+        {HERO_SLIDES.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => { setFading(true); setTimeout(() => { setCurrent(i); setFading(false) }, 600) }}
+            className="w-1.5 h-1.5 rounded-full transition-all duration-300 border-0 cursor-pointer"
+            style={{ background: i === current ? 'rgba(245,243,239,0.9)' : 'rgba(245,243,239,0.35)' }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── page ──────────────────────────────────────────────────────────────────────
 export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
   const { lang } = useLanguage()
@@ -254,36 +325,8 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
 
       {/* ── 1. HERO ─────────────────────────────────────────────────────── */}
       <ScrollStackPanel>
-        {/* Hero image with text overlay */}
-        <div className="relative w-full bg-[#e8e4de] reveal-img">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            className="block w-full h-auto max-h-[92vh] object-cover object-[50%_40%] [filter:saturate(0.75)] lg:max-h-none lg:aspect-[3/2] lg:object-cover"
-            src="/uploads/home-hero.png"
-            alt="Love Pier Beach Cafe"
-          />
-          {/* gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50" />
-          {/* text */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-            <div className="text-[10px] tracking-[0.45em] uppercase text-[rgba(245,243,239,0.7)] mb-4">{t.city}</div>
-            <h1 className="font-display font-light text-[rgba(245,243,239,0.95)] tracking-[-0.02em] drop-shadow-[0_2px_16px_rgba(0,0,0,0.4)]">
-              <span className="block leading-[0.95] text-[clamp(48px,9vw,110px)]">Love Pier</span>
-              <span className="block leading-[1.2] text-[clamp(15px,2.6vw,32px)]">Beach Cafe</span>
-            </h1>
-          </div>
-          {/* hours + location bottom bar */}
-          <div className="absolute bottom-0 left-0 right-0 grid grid-cols-1 sm:grid-cols-2 px-4 py-4 sm:px-6 lg:px-10 lg:py-6 border-t border-white/15 bg-black/25 backdrop-blur-[2px] gap-2 sm:gap-0">
-            <div className="text-left">
-              <span className="block text-[9px] tracking-[0.35em] uppercase text-[rgba(245,243,239,0.55)] mb-1">{t.hoursLabel}</span>
-              <div className="text-xs text-[rgba(245,243,239,0.85)] font-light">{t.hoursValue}</div>
-            </div>
-            <div className="text-left sm:text-right">
-              <span className="block text-[9px] tracking-[0.35em] uppercase text-[rgba(245,243,239,0.55)] mb-1">{t.location}</span>
-              <div className="text-xs text-[rgba(245,243,239,0.85)] font-light">{renderLines(t.locationValue)}</div>
-            </div>
-          </div>
-        </div>
+        {/* Hero slideshow with text overlay */}
+        <HeroSlideshow t={t} renderLines={renderLines} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 reveal">
           <div className="bg-[#e8e4de] sm:relative sm:overflow-hidden sm:aspect-[5/4] lg:aspect-[4/3] xl:aspect-[3/2]">
@@ -302,9 +345,9 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
         <section className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] px-4 py-14 items-start lg:items-center reveal sm:px-6 sm:py-16 lg:px-10 lg:py-20 gap-12 lg:gap-14 xl:gap-20">
           <div className="inline-block max-w-full lg:pr-6 xl:pr-10">
             <h2 className="font-display font-light leading-[0.92] text-ink tracking-[-0.02em] text-[clamp(40px,6vw,72px)]">
-              Beach Vibes,<br/>
-              Cafe by The Sea,<br/>
-              <em className="italic text-gold">Singapore Chicken Rice</em>
+              {t.tagline[0]}<br/>
+              {t.tagline[1]}<br/>
+              <em className="italic text-gold">{t.tagline[2]}</em>
             </h2>
             <Link href="/menu" className="mt-8 flex w-full items-center justify-between text-[11px] tracking-[0.25em] uppercase text-[#5f5a51] bg-[#ece7dc] border border-[#d8cdbb] px-5 py-2.5 hover:bg-[#e4dccd] hover:text-ink transition-colors duration-200 after:content-['→'] after:text-base after:transition-transform after:duration-200 hover:after:translate-x-1">{t.exploreMenu}</Link>
           </div>
@@ -501,9 +544,9 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
                 <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.follow}</span>
                 <div className="flex gap-3 items-center flex-wrap">
                   <a href="https://www.instagram.com/lovepiercafe/" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink hover:[&_svg]:text-bg transition-all flex items-center justify-center w-8 h-8" aria-label="Instagram"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg></a>
-                  <a href="https://www.facebook.com/profile.php?id=61590549024692&locale=th_TH" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="Facebook"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5h2.5l.5-3h-3V8.5c0-.9.3-1.5 1.6-1.5H17V4.3c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1V10.5H8v3h2.5V21h3z"/></svg></a>
+                  <a href="https://www.facebook.com/?locale=th_TH" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="Facebook"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5h2.5l.5-3h-3V8.5c0-.9.3-1.5 1.6-1.5H17V4.3c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1V10.5H8v3h2.5V21h3z"/></svg></a>
                   <a href="https://lin.ee/QmClT2h" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="LINE"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.5 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6 1.5-1.7 2.6-3.4 2.6-4.9 0-4.4-4.5-8-10-8z"/></svg></a>
-                  <a href="https://vt.tiktok.com/ZSQtps3yE/" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="TikTok"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-2.6-1.6 4.3 4.3 0 0 1-.8-2.2h-3v12c0 1-.8 1.9-1.9 1.9a1.9 1.9 0 0 1-1.9-1.9c0-1 .8-1.9 1.9-1.9.2 0 .4 0 .6.1V9.1a5 5 0 0 0-.6 0 5 5 0 1 0 5 5V8.4a7.4 7.4 0 0 0 4.3 1.4V6.7a4.4 4.4 0 0 1-1-.9z"/></svg></a>
+                  <a href="https://www.tiktok.com/@lovepier.cafe2?_r=1&_t=ZS-97V9HaUa8jE" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="TikTok"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-2.6-1.6 4.3 4.3 0 0 1-.8-2.2h-3v12c0 1-.8 1.9-1.9 1.9a1.9 1.9 0 0 1-1.9-1.9c0-1 .8-1.9 1.9-1.9.2 0 .4 0 .6.1V9.1a5 5 0 0 0-.6 0 5 5 0 1 0 5 5V8.4a7.4 7.4 0 0 0 4.3 1.4V6.7a4.4 4.4 0 0 1-1-.9z"/></svg></a>
                 </div>
               </div>
               <a href="https://maps.app.goo.gl/CYDRrd6hoxRv7z4j8" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[10px] tracking-[0.25em] uppercase text-[#666] hover:text-ink transition-colors mt-1">
