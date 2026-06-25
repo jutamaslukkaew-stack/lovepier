@@ -142,12 +142,12 @@ function Lightbox({ items, index, onIndexChange, onClose }) {
           className="w-full px-5 pt-5 pb-6 text-center"
           style={{ fontFamily: 'system-ui,-apple-system,sans-serif' }}
         >
-          <p className="text-white text-xl sm:text-2xl font-semibold tracking-wide leading-snug">{current.name}</p>
+          <p className="text-white text-2xl sm:text-3xl font-semibold tracking-wide leading-snug">{current.name}</p>
           {current.priceText ? (
-            <p className="mt-2 text-[#e3c77a] text-lg sm:text-xl tabular-nums font-medium">{current.priceText}</p>
+            <p className="mt-2 text-[#e3c77a] text-xl sm:text-2xl tabular-nums font-medium">{current.priceText}</p>
           ) : null}
           {current.description ? (
-            <p className="mt-3 mx-auto max-w-sm sm:max-w-md text-white/75 text-sm sm:text-base font-light leading-relaxed">
+            <p className="mt-3 mx-auto max-w-[260px] sm:max-w-md text-white/80 text-base sm:text-lg font-light leading-relaxed">
               {current.description}
             </p>
           ) : null}
