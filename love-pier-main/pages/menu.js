@@ -926,6 +926,12 @@ function matchaTasteNotes(lang) {
   return MATCHA_TASTE_NOTES[lang] || MATCHA_TASTE_NOTES.en
 }
 
+const BADGE_COPY = {
+  th: { Signature: 'เมนูแนะนำ' },
+  zh: { Signature: '招牌' },
+  en: {},
+}
+
 const SLUG_TO_CAT = {
   'chicken-rice': 'chickenRice',
   'breakfast': 'breakfast',
@@ -956,7 +962,7 @@ function buildMenuDataFromDB(dbData, lang) {
         desc: item[descField] || item.descriptionEn || '',
         price: item.price === '0' ? 'Free' : (item.price ?? ''),
         priceMax: item.priceMax ?? null,
-        badge: item.badge ?? null,
+        badge: item.badge ? (BADGE_COPY[lang]?.[item.badge] ?? item.badge) : null,
         image: item.imageUrl ?? null,
         featured: item.isFeatured ?? false,
       })),
