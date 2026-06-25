@@ -970,33 +970,46 @@ function buildMenuDataFromDB(dbData, lang) {
   })
 }
 
+const SECTION_IDS = ['signature', 'food', 'coffee', 'matcha', 'drinks', 'sweets', 'promotion']
+
 export default function Menu({ dbMenuData }) {
   const { lang } = useLanguage()
   const primaryTabs = primaryTabsForLang(lang)
   const t = MENU_PAGE_COPY[lang] || MENU_PAGE_COPY.en
-  const [activeTab, setActiveTab] = useState('signature')
-  const [activeSubCat, setActiveSubCat] = useState('chickenRice')
   const menuData = useMemo(() => buildMenuDataFromDB(dbMenuData, lang), [dbMenuData, lang])
+  const [activeAnchor, setActiveAnchor] = useState('signature')
 
-  const subSections = activeTab === 'signature'
-    ? []
-    : menuData.filter((section) => TAB_SECTION_CATS[activeTab]?.includes(section.cat))
-
-  const activeSection = menuData.find((section) => section.cat === activeSubCat)
-
+  // Track which section is in view for highlight
   useEffect(() => {
-    if (activeTab === 'signature') return
-    const cats = TAB_SECTION_CATS[activeTab] || []
-    if (cats.length && !cats.includes(activeSubCat)) {
-      setActiveSubCat(cats[0])
-    }
-  }, [lang, activeTab, activeSubCat])
+    const observers = []
+    SECTION_IDS.forEach((id) => {
+      const el = document.getElementById(`menu-section-${id}`)
+      if (!el) return
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveAnchor(id) },
+        { rootMargin: '-40% 0px -55% 0px' }
+      )
+      obs.observe(el)
+      observers.push(obs)
+    })
+    return () => observers.forEach((o) => o.disconnect())
+  }, [])
 
-  function handlePrimaryTab(id) {
-    setActiveTab(id)
-    const cats = TAB_SECTION_CATS[id]
-    if (cats?.length) setActiveSubCat(cats[0])
+  function scrollTo(id) {
+    const el = document.getElementById(`menu-section-${id}`)
+    if (!el) return
+    const navH = document.querySelector('nav')?.offsetHeight ?? 0
+    const barH = 52
+    const y = el.getBoundingClientRect().top + window.scrollY - navH - barH - 8
+    window.scrollTo({ top: y, behavior: 'smooth' })
   }
+
+  // Grouped sections for Food and Drinks
+  const foodSections = menuData.filter((s) => TAB_SECTION_CATS.food?.includes(s.cat))
+  const drinkSections = menuData.filter((s) => TAB_SECTION_CATS.drinks?.includes(s.cat))
+  const coffeeSections = menuData.filter((s) => s.cat === 'coffee')
+  const matchaSections = menuData.filter((s) => s.cat === 'matcha')
+  const sweetsSections = menuData.filter((s) => s.cat === 'sweets')
 
   return (
     <>
@@ -1018,60 +1031,112 @@ export default function Menu({ dbMenuData }) {
         </div>
       </section>
 
-      {/* Flore-style tabbed menu */}
-      <section className="border-b border-black/10 reveal">
-        <div className="w-full flore-menu overflow-hidden bg-white">
-          <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-b border-black/15 bg-[#ddd8d0]">
-            {primaryTabs.map(({ id, label }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => handlePrimaryTab(id)}
-                className={`flore-menu-tab flex-1 min-w-[7rem] px-5 sm:px-6 py-4 sm:py-[1.125rem] text-[10px] sm:text-xs tracking-[0.16em] uppercase font-semibold whitespace-nowrap transition-colors cursor-pointer border-none ${
-                  activeTab === id
-                    ? 'bg-white text-ink'
-                    : 'bg-transparent text-gold hover:text-ink'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {subSections.length > 1 ? (
-            <div className="flex gap-5 sm:gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-6 sm:px-10 lg:px-12 py-3.5 bg-white border-b border-black/15">
-              {subSections.map((section) => (
-                <button
-                  key={section.cat}
-                  type="button"
-                  onClick={() => setActiveSubCat(section.cat)}
-                  className={`shrink-0 text-[10px] sm:text-[11px] tracking-[0.14em] uppercase font-medium transition-colors cursor-pointer border-none bg-transparent px-0 py-1 ${
-                    activeSubCat === section.cat ? 'text-ink' : 'text-gold hover:text-ink'
-                  }`}
-                >
-                  {section.title}
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="bg-white">
-            {activeTab === 'signature' ? (
-              <FloreSignaturePanel menuData={menuData} />
-            ) : activeTab === 'promotion' ? (
-              <PromotionPanel lang={lang} />
-            ) : (
-              <FloreMenuPanel
-                section={activeSection}
-                items={activeSection?.items ?? []}
-                priceLabels={TIERED_PRICE_CATEGORIES.includes(activeSubCat) ? drinkPriceLabels(lang) : undefined}
-                menuAddOns={menuAddOnsForCategory(activeSubCat, lang)}
-                tasteNotes={activeSubCat === 'matcha' ? matchaTasteNotes(lang) : undefined}
-              />
-            )}
-          </div>
+      {/* Sticky anchor shortcut bar */}
+      <div className="sticky top-[var(--nav-h,64px)] z-50 w-full bg-[#ddd8d0] border-b border-black/15">
+        <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {primaryTabs.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => scrollTo(id)}
+              className={`flex-1 min-w-[6rem] px-4 sm:px-6 py-4 sm:py-[1.125rem] text-[10px] sm:text-xs tracking-[0.16em] uppercase font-semibold whitespace-nowrap transition-colors cursor-pointer border-none ${
+                activeAnchor === id ? 'bg-white text-ink' : 'bg-transparent text-gold hover:text-ink'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-      </section>
+      </div>
+
+      {/* Full scrollable menu */}
+      <div className="w-full bg-white flore-menu">
+
+        {/* Signature */}
+        <div id="menu-section-signature" className="border-b border-black/10">
+          <FloreSignaturePanel menuData={menuData} />
+        </div>
+
+        {/* Food */}
+        <div id="menu-section-food" className="border-b border-black/10">
+          {foodSections.map((section) => (
+            <div key={section.cat} className="border-b border-black/[0.06] last:border-b-0">
+              <div className="px-6 sm:px-10 lg:px-12 pt-7 pb-1">
+                <h2 className="text-[10px] tracking-[0.2em] uppercase text-gold font-semibold">
+                  {section.title}{section.titleEm ? ` · ${section.titleEm}` : ''}
+                </h2>
+              </div>
+              <FloreMenuPanel
+                section={section}
+                items={section.items}
+                menuAddOns={menuAddOnsForCategory(section.cat, lang)}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Coffee */}
+        <div id="menu-section-coffee" className="border-b border-black/10">
+          {coffeeSections.map((section) => (
+            <div key={section.cat}>
+              <div className="px-6 sm:px-10 lg:px-12 pt-7 pb-1">
+                <h2 className="text-[10px] tracking-[0.2em] uppercase text-gold font-semibold">{section.title}</h2>
+              </div>
+              <FloreMenuPanel
+                section={section}
+                items={section.items}
+                menuAddOns={menuAddOnsForCategory(section.cat, lang)}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Matcha */}
+        <div id="menu-section-matcha" className="border-b border-black/10">
+          {matchaSections.map((section) => (
+            <div key={section.cat}>
+              <div className="px-6 sm:px-10 lg:px-12 pt-7 pb-1">
+                <h2 className="text-[10px] tracking-[0.2em] uppercase text-gold font-semibold">{section.title}</h2>
+              </div>
+              <FloreMenuPanel
+                section={section}
+                items={section.items}
+                tasteNotes={matchaTasteNotes(lang)}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Drinks */}
+        <div id="menu-section-drinks" className="border-b border-black/10">
+          {drinkSections.map((section) => (
+            <div key={section.cat} className="border-b border-black/[0.06] last:border-b-0">
+              <div className="px-6 sm:px-10 lg:px-12 pt-7 pb-1">
+                <h2 className="text-[10px] tracking-[0.2em] uppercase text-gold font-semibold">{section.title}</h2>
+              </div>
+              <FloreMenuPanel section={section} items={section.items} />
+            </div>
+          ))}
+        </div>
+
+        {/* Sweets */}
+        <div id="menu-section-sweets" className="border-b border-black/10">
+          {sweetsSections.map((section) => (
+            <div key={section.cat}>
+              <div className="px-6 sm:px-10 lg:px-12 pt-7 pb-1">
+                <h2 className="text-[10px] tracking-[0.2em] uppercase text-gold font-semibold">{section.title}{section.titleEm ? ` ${section.titleEm}` : ''}</h2>
+              </div>
+              <FloreMenuPanel section={section} items={section.items} />
+            </div>
+          ))}
+        </div>
+
+        {/* Promotion */}
+        <div id="menu-section-promotion">
+          <PromotionPanel lang={lang} />
+        </div>
+
+      </div>
 
       <Footer tagline={FOOTER_TAGLINES.menu} />
     </>
