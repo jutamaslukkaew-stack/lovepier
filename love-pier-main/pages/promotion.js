@@ -306,6 +306,87 @@ export default function Promotion() {
         </div>
       </section>
 
+      {/* ── Water Activity Promos ────────────────────────────────────── */}
+      <section className="px-4 py-14 border-b border-black/10 reveal sm:px-6 sm:py-14 lg:px-10 lg:py-20 bg-[#f5f1eb]">
+        <div className="mb-10">
+          <span className="block text-[10px] tracking-[0.4em] uppercase text-gold mb-3">
+            {lang === 'th' ? 'The Symphony Club · บางเสร่ ศรีราชา' : lang === 'zh' ? 'The Symphony Club · 邦斯拉，西拉查' : 'The Symphony Club · Bangpra, Sriracha'}
+          </span>
+          <h2 className="font-display font-light leading-[1.05] text-[clamp(32px,4vw,52px)]">
+            {lang === 'th' ? 'โปรกิจกรรม\nทางน้ำ' : lang === 'zh' ? '水上活动\n优惠' : 'Water Activity\nSpecials'}
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+          {/* Student Day */}
+          <div className="relative overflow-hidden border border-black/10 bg-[#1a1a1a] text-bg flex flex-col">
+            <div className="h-3 bg-[#b0e04a] w-full" />
+            <div className="p-6 sm:p-7 flex flex-col gap-3 flex-1">
+              <span className="text-[9px] tracking-[0.3em] uppercase text-[#b0e04a] border border-[#b0e04a]/40 px-2.5 py-1 self-start">
+                {lang === 'th' ? 'นักเรียน · นักศึกษา' : lang === 'zh' ? '学生专属' : 'Student'}
+              </span>
+              <div className="font-display font-light leading-tight text-[clamp(22px,3vw,28px)] text-white mt-1">
+                {lang === 'th' ? <>ล่าย<em className="italic text-[#b0e04a]">ฟรี!</em></> : lang === 'zh' ? <>游泳<em className="italic text-[#b0e04a]">免费!</em></> : <>Swim<em className="italic text-[#b0e04a]"> Free!</em></>}
+              </div>
+              <div className="font-display text-[40px] sm:text-[44px] font-light text-[#b0e04a] leading-none mt-1">
+                {lang === 'th' ? 'ทุกวันจันทร์' : lang === 'zh' ? '每周一' : 'Every Monday'}
+              </div>
+              <p className="text-[12px] text-white/55 leading-[1.75] font-light mt-1">
+                {lang === 'th' ? 'เงื่อนไข: แสดงบัตรนักเรียน หรือบัตรนักศึกษา ที่ยังไม่หมดอายุ ณ จุดชำระเงิน' : lang === 'zh' ? '条件：出示有效学生证（在结账时未过期）' : 'Condition: Show a valid student ID (not expired) at checkout.'}
+              </p>
+              <div className="mt-auto pt-4 border-t border-white/10">
+                <span className="text-[10px] tracking-[0.2em] uppercase text-white/30">Surf Pool · {lang === 'th' ? 'ทางน้ำ' : lang === 'zh' ? '水上活动' : 'Water Activity'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Family Day */}
+          <div className="relative overflow-hidden border border-black/10 bg-white flex flex-col">
+            <div className="h-3 bg-[#ff5c7a] w-full" />
+            <div className="p-6 sm:p-7 flex flex-col gap-3 flex-1">
+              <span className="text-[9px] tracking-[0.3em] uppercase text-[#ff5c7a] border border-[#ff5c7a]/40 px-2.5 py-1 self-start">
+                {lang === 'th' ? 'ครอบครัว' : lang === 'zh' ? '家庭日' : 'Family Day'}
+              </span>
+              <div className="font-display font-light leading-tight text-[clamp(22px,3vw,28px)] text-ink mt-1">
+                {lang === 'th' ? 'Family Day' : lang === 'zh' ? 'Family Day' : 'Family Day'}
+              </div>
+              <div className="flex items-baseline gap-3">
+                <span className="font-display text-[40px] sm:text-[44px] font-light text-[#ff5c7a] leading-none">฿950</span>
+                <span className="text-base text-[#bbb] line-through">฿1,200</span>
+              </div>
+              <p className="text-[12px] text-[#777] leading-[1.75] font-light">
+                {lang === 'th' ? 'Surf Pool บุคคล · ต่อ 1 ชม. เงื่อนไข: 3 ท่านขึ้นไป' : lang === 'zh' ? 'Surf Pool 个人 · 每小时 条件：3 人或以上' : 'Surf Pool per person · per hour. Condition: Minimum 3 persons.'}
+              </p>
+              <div className="mt-auto pt-4 border-t border-black/10">
+                <span className="text-[10px] tracking-[0.2em] uppercase text-[#aaa]">Surf Pool · {lang === 'th' ? 'ทุกวันอังคาร' : lang === 'zh' ? '每周二' : 'Every Tuesday'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Lady Day */}
+          <div className="relative overflow-hidden border border-black/10 bg-white flex flex-col">
+            <div className="h-3 bg-[#f97316] w-full" />
+            <div className="p-6 sm:p-7 flex flex-col gap-3 flex-1">
+              <span className="text-[9px] tracking-[0.3em] uppercase text-[#f97316] border border-[#f97316]/40 px-2.5 py-1 self-start">
+                {lang === 'th' ? 'ผู้หญิง' : lang === 'zh' ? '女士专属' : 'Ladies'}
+              </span>
+              <div className="font-display font-light leading-tight text-[clamp(22px,3vw,28px)] text-ink mt-1">
+                Lady Day
+              </div>
+              <div className="flex items-baseline gap-3">
+                <span className="font-display text-[40px] sm:text-[44px] font-light text-[#f97316] leading-none">฿950</span>
+                <span className="text-base text-[#bbb] line-through">฿1,200</span>
+              </div>
+              <p className="text-[12px] text-[#777] leading-[1.75] font-light">
+                {lang === 'th' ? 'Surf Pool บุคคล · ต่อ 1 ชม. สำหรับผู้หญิงเท่านั้น' : lang === 'zh' ? 'Surf Pool 个人 · 每小时 仅限女士' : 'Surf Pool per person · per hour. Ladies only.'}
+              </p>
+              <div className="mt-auto pt-4 border-t border-black/10">
+                <span className="text-[10px] tracking-[0.2em] uppercase text-[#aaa]">Surf Pool · {lang === 'th' ? 'ทุกวันพฤหัส' : lang === 'zh' ? '每周四' : 'Every Thursday'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="bg-ink text-bg px-4 py-14 grid grid-cols-1 lg:grid-cols-2 gap-9 lg:gap-16 items-center reveal sm:px-6 sm:py-14 lg:px-10 lg:py-20">
         <div>
           <h2 className="font-display font-light leading-none tracking-[-0.02em] mb-5 text-[clamp(40px,5vw,60px)]">{t.loyalty}</h2>

@@ -37,11 +37,6 @@ const EVENTS_COPY = {
     },
     eventList: [
       { day: '27', month: 'มิ.ย. 2026', title: 'Flow Sunset', sub: '16:00 – 20:00 · The Symphony Club', cat: 'ปาร์ตี้', price: '฿500', free: false },
-      { day: '05', month: 'ก.ค. 2026', title: 'Surf Pool · คลาสมือใหม่', sub: '10:00 – 12:00 · สระคลื่นบางแสน', cat: 'กีฬาทางน้ำ', price: '฿890', free: false },
-      { day: '12', month: 'ก.ค. 2026', title: 'พายเรือคายัคยามเย็น', sub: '17:00 – 19:00 · ชายหาดบางแสน', cat: 'กีฬาทางน้ำ', price: '฿650', free: false },
-      { day: '19', month: 'ก.ค. 2026', title: 'Skimboard & Sup Board Day', sub: '10:00 – 16:00 · ริมชายหาด', cat: 'กีฬาทางน้ำ', price: '฿750', free: false },
-      { day: '26', month: 'ก.ค. 2026', title: 'Love Pier Beach Brunch', sub: '08:00 – 13:00 · ข้าวมันไก่ซิกเนเจอร์', cat: 'อาหาร', price: '฿590', free: false },
-      { day: '02', month: 'ส.ค. 2026', title: 'Jet Ski Experience', sub: '10:00 – 17:00 · ทะเลบางแสน', cat: 'กีฬาทางน้ำ', price: '฿1,200', free: false },
     ],
     recurring: [
       { day: 'ทุกวัน(ยกเว้นวันพุธ)', title: 'Surf Pool', text: 'สัมผัสความสนุกของการโต้คลื่นในสระคลื่นมาตรฐาน เหมาะทั้งมือใหม่และสายเซิร์ฟ', time: '10:00 – 20:00' },
@@ -82,11 +77,6 @@ const EVENTS_COPY = {
     },
     eventList: [
       { day: '27', month: '2026年6月', title: 'Flow Sunset', sub: '16:00 – 20:00 · The Symphony Club', cat: '派对', price: '฿500', free: false },
-      { day: '05', month: '2026年7月', title: 'Surf Pool · 新手班', sub: '10:00 – 12:00 · 邦盛造浪池', cat: '水上运动', price: '฿890', free: false },
-      { day: '12', month: '2026年7月', title: '黄昏皮划艇', sub: '17:00 – 19:00 · 邦盛海滩', cat: '水上运动', price: '฿650', free: false },
-      { day: '19', month: '2026年7月', title: 'Skimboard & Sup Board Day', sub: '10:00 – 16:00 · 海滩边', cat: '水上运动', price: '฿750', free: false },
-      { day: '26', month: '2026年7月', title: 'Love Pier Beach Brunch', sub: '08:00 – 13:00 · 招牌海南鸡饭', cat: '美食', price: '฿590', free: false },
-      { day: '02', month: '2026年8月', title: 'Jet Ski Experience', sub: '10:00 – 17:00 · 邦盛海域', cat: '水上运动', price: '฿1,200', free: false },
     ],
     recurring: [
       { day: '每天（周三除外）', title: 'Surf Pool', text: '在标准造浪池中体验冲浪乐趣，新手与冲浪爱好者都适合。', time: '10:00 – 20:00' },
@@ -127,11 +117,6 @@ const EVENTS_COPY = {
     },
     eventList: [
       { day: '27', month: 'Jun 2026', title: 'Flow Sunset', sub: '16:00 – 20:00 · The Symphony Club', cat: 'Party', price: '฿500', free: false },
-      { day: '05', month: 'Jul 2026', title: 'Surf Pool · Beginner Class', sub: '10:00 – 12:00 · Bang Saen wave pool', cat: 'Water sports', price: '฿890', free: false },
-      { day: '12', month: 'Jul 2026', title: 'Sunset Kayak', sub: '17:00 – 19:00 · Bang Saen beach', cat: 'Water sports', price: '฿650', free: false },
-      { day: '19', month: 'Jul 2026', title: 'Skimboard & Sup Board Day', sub: '10:00 – 16:00 · Beachfront', cat: 'Water sports', price: '฿750', free: false },
-      { day: '26', month: 'Jul 2026', title: 'Love Pier Beach Brunch', sub: '08:00 – 13:00 · Signature chicken rice', cat: 'Food', price: '฿590', free: false },
-      { day: '02', month: 'Aug 2026', title: 'Jet Ski Experience', sub: '10:00 – 17:00 · Bang Saen sea', cat: 'Water sports', price: '฿1,200', free: false },
     ],
     recurring: [
       { day: 'Every day (except Wednesday)', title: 'Surf Pool', text: 'Ride the waves in a standard surf pool — great for beginners and seasoned surfers alike.', time: '10:00 – 20:00' },

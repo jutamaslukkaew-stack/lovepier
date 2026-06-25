@@ -358,7 +358,7 @@ export default function Activities() {
 
       {/* Shortcut anchor bar */}
       <div className="sticky top-[var(--nav-h,64px)] z-40 w-full bg-[#ddd8d0] border-b border-black/15 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex min-w-max px-2">
+        <div className="flex min-w-max lg:min-w-0 lg:w-full">
           {t.categories.map((cat) => (
             <button
               key={cat.id}
@@ -370,7 +370,7 @@ export default function Activities() {
                 const y = el.getBoundingClientRect().top + window.scrollY - navH - 52 - 8
                 window.scrollTo({ top: y, behavior: 'smooth' })
               }}
-              className="px-4 py-3.5 text-[10px] tracking-[0.15em] uppercase font-semibold whitespace-nowrap text-gold hover:text-ink transition-colors border-none bg-transparent cursor-pointer"
+              className="flex-1 px-4 py-3.5 text-[10px] tracking-[0.15em] uppercase font-semibold whitespace-nowrap text-gold hover:text-ink transition-colors border-none bg-transparent cursor-pointer text-center"
             >
               {cat.title}
             </button>
