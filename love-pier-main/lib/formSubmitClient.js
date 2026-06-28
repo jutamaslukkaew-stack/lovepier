@@ -1,4 +1,4 @@
-const RESTAURANT_EMAIL = 'cafe.lovepier@gmail.com'
+const RESTAURANT_EMAIL = 'lovepier.cafe@gmail.com'
 
 function formSubmitSucceeded(data) {
   return data.success === true || data.success === 'true'

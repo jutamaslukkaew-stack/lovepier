@@ -15,7 +15,6 @@ const COPY = {
       { href: '/activities',  label: 'Activities' },
       { href: '/promotion',   label: 'Promotion' },
       { href: '/about',       label: 'About Us' },
-      { href: '/contact',    label: 'Contact' },
     ],
     visit: 'Location',
     hours: 'Hours',
@@ -34,7 +33,6 @@ const COPY = {
       { href: '/activities',  label: 'กิจกรรม' },
       { href: '/promotion',   label: 'โปรโมชัน' },
       { href: '/about',       label: 'เกี่ยวกับเรา' },
-      { href: '/contact',    label: 'ติดต่อ' },
     ],
     visit: 'ที่ตั้ง',
     hours: 'เวลาเปิดทำการ',
@@ -53,7 +51,6 @@ const COPY = {
       { href: '/activities',  label: '水上活动' },
       { href: '/promotion',   label: '优惠' },
       { href: '/about',       label: '关于我们' },
-      { href: '/contact',    label: '联系' },
     ],
     visit: '地址',
     hours: '营业时间',
@@ -79,44 +76,19 @@ export default function MenuOverlay({ isOpen, onClose }) {
       </div>
 
       {/* body */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 md:items-center px-4 py-5 sm:px-6 sm:py-6 md:px-8 lg:px-10 gap-6 md:gap-10 lg:gap-14 overflow-y-auto overscroll-contain">
+      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 md:items-center px-6 py-6 sm:px-8 sm:py-8 md:px-8 lg:px-10 gap-6 md:gap-10 lg:gap-14 overflow-y-auto overscroll-contain">
 
         {/* nav links */}
-        <nav className="flex flex-col gap-0.5">
-          {/* language switcher */}
-          <div className="mb-4 pb-4 border-b border-white/[0.08]">
-            <h4 className="text-[9px] tracking-[0.35em] uppercase text-white/35 mb-2">{dict.language}</h4>
-            <div className="flex items-center border border-white/[0.2] w-fit">
-              {LANG_OPTIONS.map(({ value, flag, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setLang(value)}
-                  aria-label={label}
-                  aria-pressed={lang === value}
-                  title={label}
-                  className={`px-3 py-2 text-[18px] leading-none transition-colors cursor-pointer ${
-                    lang === value
-                      ? 'bg-black shadow-[inset_0_-2px_0_0_#c9a84c]'
-                      : 'text-white/80 hover:bg-white/10'
-                  }`}
-                >
-                  {flag}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {dict.navItems.map((item, i) => (
+        <nav className="flex flex-col gap-0.5 sm:gap-1">
+          {dict.navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className={`group font-display font-light leading-[1.15] tracking-[-0.01em] flex items-baseline gap-3 py-1.5 transition-all duration-150 hover:translate-x-1 text-[clamp(22px,4.5vw,32px)] sm:text-[clamp(24px,3.5vw,36px)] ${
+              className={`group font-display font-light leading-[1.2] tracking-[-0.01em] flex items-baseline gap-3 py-1 transition-all duration-150 hover:translate-x-1 text-[clamp(16px,3vw,22px)] sm:text-[clamp(17px,2.5vw,24px)] ${
                 pathname === item.href ? 'text-gold' : 'text-white/50 hover:text-white/90'
               }`}
             >
-              <span className="font-sans text-[9px] tracking-[0.18em] font-normal text-white/25 shrink-0 w-5">{String(i + 1).padStart(2, '0')}</span>
               {item.label}
             </Link>
           ))}
@@ -136,7 +108,7 @@ export default function MenuOverlay({ isOpen, onClose }) {
             <h4 className="text-[9px] tracking-[0.35em] uppercase text-white/35 mb-1.5">{dict.contact}</h4>
             <p className="text-[12px] text-white/65 leading-[1.75] font-light">
               <a href="tel:0642523293" className="hover:text-gold transition-colors">064-252-3293</a><br/>
-              <a href="mailto:cafe.lovepier@gmail.com" className="hover:text-gold transition-colors break-all">cafe.lovepier@gmail.com</a>
+              <a href="mailto:lovepier.cafe@gmail.com" className="hover:text-gold transition-colors break-all">lovepier.cafe@gmail.com</a>
             </p>
           </div>
         </aside>

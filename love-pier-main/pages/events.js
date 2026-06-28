@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import Footer from '../components/Footer'
+import PageHero from '../components/PageHero'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
 
@@ -138,15 +139,12 @@ export default function Events() {
         <title>{t.title}</title>
       </Head>
 
-      <header className="px-4 pt-12 pb-8 text-center border-b border-black/10 reveal sm:px-6 lg:px-10 lg:pt-16 lg:pb-10">
-        <h1 className="font-display font-light leading-[0.95] text-ink tracking-[-0.02em] text-[clamp(48px,7vw,88px)]">
-          <span>
-            <em className="italic text-gold">{t.heroBrand}</em>
-            {' '}{t.heroSuffix}
-          </span>
-        </h1>
-        <p className="mt-4 text-sm text-[#666] font-light max-w-[580px] mx-auto leading-[1.8]">{t.desc}</p>
-      </header>
+      <PageHero title={t.heroBrand + ' ' + t.heroSuffix} />
+
+      <div className="bg-[#f5f2ee] px-6 py-8 text-center border-b border-black/10">
+        <p className="text-[11px] tracking-[0.05em] text-gold mb-1">{t.featured}</p>
+        <p className="font-display font-light text-ink text-[clamp(22px,4vw,32px)] leading-tight">{t.desc}</p>
+      </div>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 lg:items-stretch border-b border-black/10 reveal-img">
         <div className="relative overflow-hidden aspect-[4/3] lg:aspect-auto lg:min-h-full">
@@ -167,33 +165,8 @@ export default function Events() {
           </div>
           <p className="text-sm text-[#555] leading-[1.9] font-light mb-8 max-w-[480px]">{fe.desc}</p>
           <div className="flex gap-3 flex-wrap">
-            <Link href="/reservation" className="inline-block bg-ink text-bg text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-gold hover:text-ink transition-colors duration-300">{t.reserve}</Link>
-            <a href="#" className="inline-flex items-center gap-2.5 text-[10px] tracking-[0.3em] uppercase text-[#666] hover:text-ink transition-colors after:content-['→'] after:text-sm after:transition-transform hover:after:translate-x-1">{t.add}</a>
+            <Link href="/reservation" className="inline-block bg-[#1a2d4a] text-white text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-[#243d63] transition-colors duration-300">{t.reserve}</Link>
           </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-14 reveal sm:px-6 sm:py-14 lg:px-10 lg:py-20">
-        <h3 className="font-display font-light mb-12 leading-[1.05] text-[clamp(32px,4vw,48px)]">{t.next}</h3>
-        <div className="border-t border-black/10">
-          {t.eventList.map((ev, i) => (
-            <div key={i} className="group grid items-center gap-4 sm:gap-5 lg:gap-8 py-5 sm:py-6 lg:py-7 border-b border-black/10 cursor-pointer hover:bg-[rgba(201,169,110,0.04)] transition-all duration-200 lg:hover:pl-3 grid-cols-1 sm:grid-cols-[100px_1fr_auto] lg:grid-cols-[100px_1fr_1fr_auto_32px]">
-              <div>
-                <div className="font-display text-[44px] font-light leading-none text-ink sm:text-3xl">{ev.day}</div>
-                <div className="text-[10px] tracking-[0.25em] uppercase text-[#aaa] mt-0.5">{ev.month}</div>
-              </div>
-              <div>
-                <div className="font-display text-[22px] font-light text-ink">{ev.title}</div>
-                <div className="text-[11px] tracking-[0.18em] uppercase text-muted mt-1.5">{ev.sub}</div>
-              </div>
-              <div className="text-[10px] tracking-[0.25em] uppercase text-gold lg:justify-self-start">{ev.cat}</div>
-              {ev.free
-                ? <div className="text-[11px] tracking-[0.2em] uppercase text-gold border border-gold/50 px-2.5 py-1 w-fit">{t.freeLabel}</div>
-                : <div className="font-display text-lg text-ink w-fit">{ev.price}</div>
-              }
-              <div className="hidden lg:block text-muted text-base group-hover:text-ink group-hover:translate-x-1 transition-all duration-200">→</div>
-            </div>
-          ))}
         </div>
       </section>
 

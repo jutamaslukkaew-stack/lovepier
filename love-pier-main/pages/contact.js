@@ -32,8 +32,8 @@ export default function Contact() {
         modalErrorTitle: 'ส่งไม่สำเร็จ',
         modalClose: 'ปิด',
         sending: 'กำลังส่ง…',
-        sendError: 'ส่งไม่สำเร็จ กรุณาลองอีกครั้งหรืออีเมล cafe.lovepier@gmail.com',
-        sendConfigError: 'ระบบอีเมลยังไม่พร้อม กรุณาติดต่อ 064-252-3293 หรือ cafe.lovepier@gmail.com',
+        sendError: 'ส่งไม่สำเร็จ กรุณาลองอีกครั้งหรืออีเมล lovepier.cafe@gmail.com',
+        sendConfigError: 'ระบบอีเมลยังไม่พร้อม กรุณาติดต่อ 064-252-3293 หรือ lovepier.cafe@gmail.com',
         followTitle: 'ติดตามเรา',
         followDesc: 'แท็ก #lovepiercafe เพื่อให้เรารีแชร์',
         quick: 'คำถามที่พบบ่อย',
@@ -77,8 +77,8 @@ export default function Contact() {
           modalErrorTitle: '发送失败',
           modalClose: '关闭',
           sending: '发送中…',
-          sendError: '发送失败，请重试或直接发邮件至 cafe.lovepier@gmail.com',
-          sendConfigError: '邮件服务尚未配置，请致电 064-252-3293 或发送邮件至 cafe.lovepier@gmail.com',
+          sendError: '发送失败，请重试或直接发邮件至 lovepier.cafe@gmail.com',
+          sendConfigError: '邮件服务尚未配置，请致电 064-252-3293 或发送邮件至 lovepier.cafe@gmail.com',
           followTitle: '关注我们',
           followDesc: '使用 #lovepiercafe 标记，我们会定期精选分享。',
           quick: '常见问题',
@@ -121,8 +121,8 @@ export default function Contact() {
           modalErrorTitle: 'Could not send',
           modalClose: 'Close',
           sending: 'Sending…',
-          sendError: 'Could not send. Please try again or email cafe.lovepier@gmail.com',
-          sendConfigError: 'Email is not set up yet. Please call 064-252-3293 or email cafe.lovepier@gmail.com',
+          sendError: 'Could not send. Please try again or email lovepier.cafe@gmail.com',
+          sendConfigError: 'Email is not set up yet. Please call 064-252-3293 or email lovepier.cafe@gmail.com',
           followTitle: 'Follow us, say hello',
           followDesc: 'Tag #lovepiercafe to be featured.',
           quick: 'Quick answers',
@@ -218,9 +218,9 @@ export default function Contact() {
             <div className="font-display text-[22px] font-normal text-ink leading-[1.2]">064-252-3293</div>
             <div className="text-xs text-muted font-light mt-1">{t.phoneNote}</div>
           </a>
-          <a href="mailto:cafe.lovepier@gmail.com" className="flex flex-col gap-2 p-6 sm:p-7 lg:p-8 bg-white border border-black/10 hover:bg-[#fffdf6] hover:border-gold transition-all duration-200">
+          <a href="mailto:lovepier.cafe@gmail.com" className="flex flex-col gap-2 p-6 sm:p-7 lg:p-8 bg-white border border-black/10 hover:bg-[#fffdf6] hover:border-gold transition-all duration-200">
             <span className="text-[10px] tracking-[0.3em] uppercase text-gold">{t.email}</span>
-            <div className="font-display text-[20px] sm:text-[22px] font-normal text-ink leading-[1.2] break-all">cafe.lovepier@gmail.com</div>
+            <div className="font-display text-[20px] sm:text-[22px] font-normal text-ink leading-[1.2] break-all">lovepier.cafe@gmail.com</div>
             <div className="text-xs text-muted font-light mt-1">{t.emailNote}</div>
           </a>
           <a href="https://lin.ee/QmClT2h" target="_blank" rel="noopener noreferrer" className="flex flex-col gap-2 p-6 sm:p-7 lg:p-8 bg-white border border-black/10 hover:bg-[#fffdf6] hover:border-gold transition-all duration-200">

@@ -1,7 +1,17 @@
 import '../styles/globals.css'
 import { useEffect } from 'react'
 import Layout from '../components/Layout'
-import { LanguageProvider } from '../lib/language'
+import { LanguageProvider, useLanguage } from '../lib/language'
+import { CartProvider } from '../lib/cart'
+import CartDrawer from '../components/CartDrawer'
+
+function LangSync() {
+  const { lang } = useLanguage()
+  useEffect(() => {
+    document.documentElement.lang = lang === 'th' ? 'th' : lang === 'zh' ? 'zh' : 'en'
+  }, [lang])
+  return null
+}
 
 export default function App({ Component, pageProps }) {
   useEffect(() => {
@@ -41,7 +51,11 @@ export default function App({ Component, pageProps }) {
 
   return (
     <LanguageProvider>
-      <Layout><Component {...pageProps} /></Layout>
+      <LangSync />
+      <CartProvider>
+        <Layout><Component {...pageProps} /></Layout>
+        <CartDrawer />
+      </CartProvider>
     </LanguageProvider>
   )
 }

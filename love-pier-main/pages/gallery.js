@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import { useState } from 'react'
 import Footer from '../components/Footer'
+import PageHero from '../components/PageHero'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
 
@@ -186,8 +187,14 @@ export default function Gallery() {
   const filters = FILTER_COPY[lang] || FILTER_COPY.en
   const t = PAGE_COPY[lang] || PAGE_COPY.en
   const [activeFilter, setActiveFilter] = useState(null)
+  const [showAll, setShowAll] = useState(false)
 
-  const visible = activeFilter ? TILES.filter((tile) => tile.cat === activeFilter) : TILES
+  const filtered = activeFilter ? TILES.filter((tile) => tile.cat === activeFilter) : TILES
+  const visible = showAll ? filtered : filtered.slice(0, 6)
+  const hasMore = filtered.length > 6 && !showAll
+
+  const SHOW_MORE = { th: 'ดูรูปทั้งหมด', en: 'See all photos', zh: '查看全部' }
+  const showMoreLabel = SHOW_MORE[lang] || SHOW_MORE.en
 
   return (
     <>
@@ -202,32 +209,25 @@ export default function Gallery() {
         <meta name="twitter:image" content="https://www.lovepier.cafe/og-gallery.png" />
       </Head>
 
-      <header className="px-4 pt-12 pb-8 text-center border-b border-black/10 reveal sm:px-6 lg:px-10 lg:pt-16 lg:pb-10">
-        <div className="text-[10px] tracking-[0.4em] uppercase text-muted mb-3">{t.g}</div>
-        <h1 className="font-display font-light leading-[0.95] text-ink tracking-[-0.02em] text-[clamp(48px,7vw,88px)]">
-          {t.h.split('\n').map((l, i) => (
-            <span key={i}>
-              {l}
-              {i === 0 ? <br /> : null}
-            </span>
-          ))}
-        </h1>
-        <p className="mt-4 text-sm text-[#666] font-light max-w-[580px] mx-auto leading-[1.8]">{t.d}</p>
-      </header>
+      <PageHero title={t.h.replace('\n', ' ')} />
 
-      <div className="flex gap-4 lg:gap-6 px-4 py-5 lg:py-8 border-b border-black/10 bg-bg flex-wrap reveal sm:px-6 sm:gap-3.5">
-        {filters.map(({ label, cat }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => setActiveFilter(cat)}
-            className={`text-[11px] tracking-[0.25em] uppercase bg-transparent border-none px-0 py-1.5 border-b-2 cursor-pointer transition-colors ${
-              activeFilter === cat ? 'text-ink border-gold' : 'text-[#aaa] border-transparent hover:text-ink'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="sticky top-[var(--nav-h,64px)] z-50 w-full bg-[#f5f2ee] border-b border-black/10">
+        <div className="flex overflow-x-auto gap-2 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {filters.map(({ label, cat }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => { setActiveFilter(cat); setShowAll(false) }}
+              className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-all cursor-pointer border ${
+                activeFilter === cat
+                  ? 'bg-[#1a4a7a] text-white border-[#1a4a7a]'
+                  : 'bg-transparent text-[#1a4a7a]/60 border-[#1a4a7a]/25 hover:border-[#1a4a7a]/60 hover:text-[#1a4a7a]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="gallery-grid gallery-grid--equal reveal">
@@ -252,6 +252,18 @@ export default function Gallery() {
           </div>
         ))}
       </div>
+
+      {hasMore && (
+        <div className="flex justify-center py-10">
+          <button
+            onClick={() => setShowAll(true)}
+            className="flex items-center gap-2 px-6 py-3 rounded-full border border-[#1a4a7a]/30 text-[#1a4a7a] text-[12px] tracking-[0.15em] uppercase font-semibold hover:bg-[#1a4a7a] hover:text-white transition-all"
+          >
+            {showMoreLabel}
+            <span className="text-base">↓</span>
+          </button>
+        </div>
+      )}
 
       <section className="bg-ink text-bg px-4 py-14 text-center reveal sm:px-6 sm:py-14 lg:px-10 lg:py-20">
         <h2 className="font-display font-light mb-7 leading-[1.05] text-[clamp(40px,5vw,64px)]">{t.share}</h2>

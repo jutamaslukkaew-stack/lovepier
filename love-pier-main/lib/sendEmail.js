@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer'
 
-const RESTAURANT_EMAIL = process.env.MAIL_TO || 'cafe.lovepier@gmail.com'
+const RESTAURANT_EMAIL = process.env.MAIL_TO || 'lovepier.cafe@gmail.com'
 
 export function smtpConfigured() {
   return Boolean(

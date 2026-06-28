@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom'
 import Footer from '../components/Footer'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
+import { useCart } from '../lib/cart'
 import { db } from '../lib/db'
 import { categories, menuItems } from '../lib/db/schema'
 
@@ -94,122 +95,162 @@ function Lightbox({ items, index, onIndexChange, onClose }) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md"
+      className="fixed inset-0 z-[200] flex flex-col bg-black"
       onClick={onClose}
     >
+      {/* close */}
       <button
         type="button"
         onClick={onClose}
-        className="absolute top-4 right-5 text-white/60 hover:text-white text-3xl leading-none z-10"
+        className="absolute top-4 right-4 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 text-white/80 hover:text-white text-xl leading-none"
         aria-label="Close"
       >✕</button>
-      {hasPrev ? (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); goPrev() }}
-          className="absolute left-2 sm:left-5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl leading-none"
-          aria-label="Previous"
-        >‹</button>
-      ) : null}
-      {hasNext ? (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); goNext() }}
-          className="absolute right-2 sm:right-5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl leading-none"
-          aria-label="Next"
-        >›</button>
-      ) : null}
+
+      {/* image — fills full width, fixed height */}
       <div
+        className="relative w-full shrink-0"
+        style={{ height: '65dvh' }}
         onClick={(e) => e.stopPropagation()}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
-        className="flex flex-col items-center"
-        style={{ maxWidth: 'min(92vw, 560px)' }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={current.image}
           alt={current.name}
-          className="rounded-2xl shadow-2xl"
-          style={{
-            maxWidth: '100%',
-            maxHeight: 'calc(100dvh - 120px)',
-            objectFit: 'contain',
-            display: 'block',
-          }}
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
-        <div
-          className="w-full px-5 pt-5 pb-6 text-center"
-          style={{ fontFamily: 'system-ui,-apple-system,sans-serif' }}
-        >
-          <p className="text-white text-2xl sm:text-3xl font-semibold tracking-wide leading-snug">{current.name}</p>
-          {current.priceText ? (
-            <p className="mt-2 text-[#e3c77a] text-xl sm:text-2xl tabular-nums font-medium">{current.priceText}</p>
-          ) : null}
-          {current.description ? (
-            <p className="mt-3 mx-auto max-w-[260px] sm:max-w-md text-white/80 text-base sm:text-lg font-light leading-relaxed">
-              {current.description}
-            </p>
-          ) : null}
-        </div>
+        {/* nav arrows over image */}
+        {hasPrev && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); goPrev() }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-black/35 hover:bg-black/55 text-white text-2xl leading-none"
+            aria-label="Previous"
+          >‹</button>
+        )}
+        {hasNext && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); goNext() }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-black/35 hover:bg-black/55 text-white text-2xl leading-none"
+            aria-label="Next"
+          >›</button>
+        )}
+      </div>
+
+      {/* info panel */}
+      <div
+        className="flex-1 overflow-y-auto px-6 pt-10 pb-10 text-center"
+        onClick={(e) => e.stopPropagation()}
+        style={{ fontFamily: 'system-ui,-apple-system,sans-serif' }}
+      >
+        <p className="text-white text-3xl sm:text-4xl font-semibold tracking-wide leading-tight line-clamp-2">{current.name}</p>
+        {current.priceText ? (
+          <p className="mt-3 text-[#e3c77a] text-2xl sm:text-3xl tabular-nums font-semibold">{current.priceText}</p>
+        ) : null}
+        {current.description ? (
+          <p className="mt-3 mx-auto text-white/75 text-base sm:text-lg font-light leading-relaxed" style={{ maxWidth: '92%', textWrap: 'balance' }}>
+            {current.description}
+          </p>
+        ) : null}
       </div>
     </div>,
     document.body
   )
 }
 
-function FloreMenuItem({ name, badge, desc, price, prices, showDrinkPrices, image, onImageClick }) {
-  const priceCell = prices && showDrinkPrices ? (
-    <div className="flex justify-end gap-5 sm:gap-6 shrink-0 min-w-[120px]">
-      {COFFEE_PRICE_KEYS.map((key) => (
-        <span
-          key={key}
-          className={`font-display text-[15px] sm:text-[16px] tabular-nums leading-none w-10 text-center shrink-0 ${prices[key] ? 'text-gold' : 'text-[#ccc]'}`}
-        >
-          {prices[key] ? formatMenuPrice(prices[key]) : '–'}
-        </span>
-      ))}
-    </div>
-  ) : (
-    <span className="font-display text-[15px] sm:text-[16px] text-gold tabular-nums whitespace-nowrap shrink-0">
-      {formatMenuPrice(price)}
-    </span>
-  )
+const CARD_COPY = {
+  th: { add: 'เพิ่มลงตะกร้า', added: 'เพิ่มแล้ว ✓' },
+  en: { add: 'Add to Cart', added: 'Added ✓' },
+  zh: { add: '加入购物车', added: '已添加 ✓' },
+}
+
+function mockRating(name) {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff
+  return (4.4 + (h % 6) * 0.1).toFixed(1)
+}
+
+function mockSold(name) {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 17 + name.charCodeAt(i)) & 0xffff
+  return 12 + (h % 80)
+}
+
+function MenuCard({ id, name, badge, desc, price, prices, image, lang, onImageClick }) {
+  const { addItem, openCart } = useCart()
+  const [flash, setFlash] = useState(false)
+  const t = CARD_COPY[lang] || CARD_COPY.en
+
+  const displayPrice = prices
+    ? Object.values(prices).find(Boolean)
+    : price
+
+  function handleAdd() {
+    addItem({ id, name, price: displayPrice, image })
+    setFlash(true)
+    setTimeout(() => setFlash(false), 1200)
+    openCart()
+  }
 
   return (
-    <div className={`border-b border-dotted border-black/15 last:border-b-0 ${image ? 'py-3 sm:py-3.5' : 'py-3.5 sm:py-4'}`}>
-      <div className={`flex items-center gap-4 min-w-0 ${showDrinkPrices ? 'pr-0' : ''}`}>
+    <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.08)] flex flex-col">
+      {/* image area — portrait 3:4 */}
+      <div className="relative bg-[#f2ede6]" style={{ paddingTop: '133.33%' }}>
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image}
             alt={name}
             onClick={onImageClick}
-            className="w-28 h-28 sm:w-[150px] sm:h-[150px] object-cover rounded-lg shrink-0 border border-black/[0.07] cursor-zoom-in hover:opacity-80 transition-opacity"
+            className={`absolute inset-0 w-full h-full object-cover object-center ${onImageClick ? 'cursor-zoom-in' : ''}`}
           />
-        ) : null}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 min-w-0">
-            <span className="shrink-0 max-w-[58%] sm:max-w-none text-[13px] sm:text-[15px] font-semibold tracking-[0.1em] uppercase text-ink leading-snug">
-              {name}
-              {badge ? (
-                <span className="font-sans text-[9px] tracking-[0.18em] text-gold uppercase ml-2 align-middle font-medium">
-                  {badge}
-                </span>
-              ) : null}
-            </span>
-            {!showDrinkPrices ? (
-              <span className="flore-menu-leader flex-1 min-w-[12px] mb-[3px]" aria-hidden />
-            ) : (
-              <span className="flex-1 min-w-[8px]" aria-hidden />
-            )}
-            {priceCell}
-          </div>
-          {desc ? (
-            <p className="mt-1.5 text-[12px] sm:text-[13px] italic text-[#888] font-light leading-relaxed normal-case tracking-normal">
-              {desc}
-            </p>
-          ) : null}
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-20">☕</div>
+        )}
+        {image && onImageClick && (
+          <button
+            onClick={onImageClick}
+            className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white text-[15px] leading-none"
+            aria-label="ดูรูปเต็ม"
+          >⛶</button>
+        )}
+        {badge && (
+          <span className="absolute top-2.5 left-2.5 bg-[#1a2d4a] text-white text-[9px] tracking-[0.15em] uppercase font-semibold px-2 py-0.5 rounded-full">
+            {badge}
+          </span>
+        )}
+      </div>
+
+      {/* content */}
+      <div className="p-3.5 flex flex-col flex-1 gap-1.5">
+        <h3 className="text-[13px] font-semibold text-ink leading-snug line-clamp-2">{name}</h3>
+        {desc && (
+          <p className="text-[11px] text-black/50 font-light leading-relaxed line-clamp-2">{desc}</p>
+        )}
+        {prices && (
+          <p className="text-[10px] text-black/40 font-light">
+            {COFFEE_PRICE_KEYS.filter((k) => prices[k]).map((k, i, arr) => (
+              <span key={k}>{COFFEE_PRICE_LABELS[lang]?.[k] ?? k} ฿{prices[k]}{i < arr.length - 1 ? ' · ' : ''}</span>
+            ))}
+          </p>
+        )}
+        <div className="flex items-center justify-between mt-auto pt-2">
+          <span className="font-semibold text-[15px] text-ink tabular-nums">
+            {displayPrice ? `฿${Math.round(parseFloat(displayPrice))}` : '–'}
+          </span>
+          <button
+            onClick={handleAdd}
+            disabled={!displayPrice || displayPrice === 'Free'}
+            className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+              flash
+                ? 'bg-[#243d63] text-white'
+                : 'bg-[#1a2d4a] text-white hover:bg-[#243d63]'
+            } disabled:opacity-40 disabled:cursor-not-allowed`}
+          >
+            {flash ? t.added : t.add}
+          </button>
         </div>
       </div>
     </div>
@@ -250,14 +291,8 @@ function MatchaTasteNotes({ notes }) {
 
 const TIERED_PRICE_CATEGORIES = []
 
-function FloreMenuPanel({ section, items, priceLabels, menuAddOns, tasteNotes }) {
-  const [lbIndex, setLbIndex] = useState(-1)
-  const showDrinkPrices = !!priceLabels
-  const gallery = items
-    .filter((i) => i.image)
-    .map((i) => ({ image: i.image, name: i.name, description: i.desc, priceText: getLightboxPrice(i, showDrinkPrices, priceLabels) }))
-  let gi = -1
-  const galleryIndex = items.map((i) => (i.image ? ++gi : -1))
+function FloreMenuPanel({ section, items, menuAddOns, tasteNotes, globalIndexMap, onImageClick }) {
+  const { lang } = useLanguage()
 
   if (!section) return null
   return (
@@ -267,65 +302,55 @@ function FloreMenuPanel({ section, items, priceLabels, menuAddOns, tasteNotes })
           {section.subtitle}
         </p>
       ) : null}
-      {priceLabels ? <CoffeePriceHeader priceLabels={priceLabels} /> : null}
-      <div>
-        {items.map((item, idx) => (
-          <FloreMenuItem
-            key={`${section.cat}-${item.num}`}
-            {...item}
-            showDrinkPrices={showDrinkPrices}
-            onImageClick={item.image ? () => setLbIndex(galleryIndex[idx]) : undefined}
-          />
-        ))}
+      <div className="grid grid-cols-1 gap-4">
+        {items.map((item) => {
+          const key = `${section.cat}-${item.num}`
+          return (
+            <MenuCard
+              key={key}
+              id={key}
+              lang={lang}
+              {...item}
+              onImageClick={item.image && onImageClick ? () => onImageClick(globalIndexMap?.[key] ?? 0) : undefined}
+            />
+          )
+        })}
       </div>
       {menuAddOns?.length ? <CoffeeAddOns items={menuAddOns} /> : null}
       {tasteNotes?.length ? <MatchaTasteNotes notes={tasteNotes} /> : null}
-      {lbIndex >= 0 ? (
-        <Lightbox items={gallery} index={lbIndex} onIndexChange={setLbIndex} onClose={() => setLbIndex(-1)} />
-      ) : null}
     </div>
   )
 }
 
-function FloreSignaturePanel({ menuData }) {
-  const [lbIndex, setLbIndex] = useState(-1)
+function FloreSignaturePanel({ menuData, globalIndexMap, onImageClick }) {
+  const { lang } = useLanguage()
   const groups = menuData
-    .map((section) => ({
-      section,
-      items: section.items.filter((item) => item.badge),
-    }))
+    .map((section) => ({ section, items: section.items.filter((item) => item.badge) }))
     .filter((group) => group.items.length > 0)
-
-  const allItems = groups.flatMap(({ items }) => items)
-  const gallery = allItems
-    .filter((i) => i.image)
-    .map((i) => ({ image: i.image, name: i.name, description: i.desc, priceText: getLightboxPrice(i, false, null) }))
-  const imageKeyToIndex = {}
-  let gi = -1
-  allItems.forEach((i) => { if (i.image) imageKeyToIndex[`${i.num}-${i.name}`] = ++gi })
 
   return (
     <div className="flore-menu-panel px-6 sm:px-10 lg:px-12 py-7 sm:py-9">
       {groups.map(({ section, items }) => (
-        <div key={section.cat} className="mb-6 last:mb-0">
-          <h3 className="text-[10px] tracking-[0.2em] uppercase text-gold mb-3">
-            {section.title}
-            {section.titleEm ? ` ${section.titleEm}` : ''}
+        <div key={section.cat} className="mb-8 last:mb-0">
+          <h3 className="text-[10px] tracking-[0.2em] uppercase text-gold mb-4">
+            {section.title}{section.titleEm ? ` ${section.titleEm}` : ''}
           </h3>
-          <div>
-            {items.map((item) => (
-              <FloreMenuItem
-                key={`${section.cat}-${item.num}`}
-                {...item}
-                onImageClick={item.image ? () => setLbIndex(imageKeyToIndex[`${item.num}-${item.name}`]) : undefined}
-              />
-            ))}
+          <div className="grid grid-cols-1 gap-4">
+            {items.map((item) => {
+              const key = `${section.cat}-${item.num}`
+              return (
+                <MenuCard
+                  key={key}
+                  id={key}
+                  lang={lang}
+                  {...item}
+                  onImageClick={item.image && onImageClick ? () => onImageClick(globalIndexMap?.[key] ?? 0) : undefined}
+                />
+              )
+            })}
           </div>
         </div>
       ))}
-      {lbIndex >= 0 ? (
-        <Lightbox items={gallery} index={lbIndex} onIndexChange={setLbIndex} onClose={() => setLbIndex(-1)} />
-      ) : null}
     </div>
   )
 }
@@ -380,7 +405,7 @@ const MENU_DATA = [
     num: '04', cat: 'matcha', title: 'Matcha', titleEm: '', bg: true,
     subtitle: 'Stone-ground matcha whisked to order — pure, creamy, and gently sweet.',
     items: [
-      { num:'00', name:'PANG Signature', badge:'Signature', desc:'Matcha x Khao Lam Latte', price:'179', image:'/menu/real-pang-signature.jpg' },
+      { num:'00', name:'แป้ง', badge:'Signature', desc:'Matcha x Khao Lam Latte', price:'179', image:'/menu/real-pang-signature.jpg' },
       { num:'01', name:'Pure Matcha', price:'140', image:'/menu/real-pure-matcha.jpg' },
       { num:'02', name:'Matcha Latte', price:'150', image:'/menu/real-matcha-latte.jpg' },
       { num:'03', name:'Dirty Matcha', price:'150', image:'/menu/real-dirty-matcha-v2.jpg' },
@@ -442,24 +467,24 @@ const MENU_DATA = [
 
 const SECTION_COPY = {
   th: {
-    coffee: { title: 'Coffee', titleEm: '', subtitle: 'ร้อน · เย็น · ปั่น — ราคาตามเมนู' },
-    matcha: { title: 'Matcha', titleEm: '', subtitle: 'มัทฉะเกรดพรีเมี่ยม ตีฟองทีละแก้ว หอมนุ่มละมุน' },
-    nonCoffee: { title: 'Non Coffee', titleEm: '', subtitle: 'ชาไทย ช็อกโกแลต และเครื่องดื่มปั่น — ไม่มีกาแฟ' },
-    italianSoda: { title: 'Italian Soda', titleEm: '', subtitle: 'โซดาผสมผลไม้และน้ำผึ้ง สดชื่นเหมาะกับอากาศริมทะเล' },
-    other: { title: 'Other', titleEm: '', subtitle: 'น้ำดื่ม น้ำแร่ และเครื่องดื่มอัดลม' },
-    chickenRice: { title: 'ข้าวมันไก่', titleEm: 'สิงคโปร์ / ไหหลำ', subtitle: 'ไก่ต้มนุ่ม ข้าวมันหอม น้ำจิ้มสูตรเด็ด 3 แบบ และซุปไก่ร้อนๆ' },
-    breakfast: { title: 'อาหารเช้า', titleEm: 'ตลอดวัน', subtitle: 'จานเบาและแซนด์วิช เสิร์ฟได้ทุกเวลา สบายๆ ริมทะเล' },
-    sweets: { title: 'Sweet', titleEm: 'Desserts', subtitle: 'เค้กและพายโฮมเมด หวานกำลังดีปิดมื้ออย่างลงตัว' },
+    coffee: { title: 'กาแฟ', titleEm: '', subtitle: 'ร้อน · เย็น · ปั่น — ราคาตามเมนู' },
+    matcha: { title: 'มัทฉะ', titleEm: '', subtitle: 'มัทฉะเกรดพรีเมี่ยม ตีฟองทีละแก้ว หอมนุ่มละมุน' },
+    nonCoffee: { title: 'เครื่องดื่ม', titleEm: '', subtitle: 'ชาไทย ช็อกโกแลต และเครื่องดื่มปั่น — ไม่มีกาแฟ' },
+    italianSoda: { title: 'อิตาเลี่ยนโซดา', titleEm: '', subtitle: 'โซดาผสมผลไม้และน้ำผึ้ง สดชื่นเหมาะกับอากาศริมทะเล' },
+    other: { title: 'อื่นๆ', titleEm: '', subtitle: 'น้ำดื่ม น้ำแร่ และเครื่องดื่มอัดลม' },
+    chickenRice: { title: 'อาหาร', titleEm: '', subtitle: 'ไก่ต้มนุ่ม ข้าวมันหอม น้ำจิ้มสูตรเด็ด 3 แบบ และซุปไก่ร้อนๆ' },
+    breakfast: { title: 'อาหารเช้า', titleEm: '', subtitle: 'จานเบาและแซนด์วิช เสิร์ฟได้ทุกเวลา สบายๆ ริมทะเล' },
+    sweets: { title: 'ของหวาน', titleEm: '', subtitle: 'เค้กและพายโฮมเมด หวานกำลังดีปิดมื้ออย่างลงตัว' },
   },
   zh: {
-    coffee: { title: 'Coffee', titleEm: '', subtitle: '热饮 · 冰饮 · 冰沙 — 价格见菜单。' },
-    matcha: { title: 'Matcha', titleEm: '', subtitle: '石磨抹茶现点现打，香气清甜，口感细腻。' },
-    nonCoffee: { title: 'Non Coffee', titleEm: '', subtitle: '泰茶、巧克力与冰沙饮品，不含咖啡。' },
-    italianSoda: { title: 'Italian Soda', titleEm: '', subtitle: '气泡苏打配水果与蜂蜜，清爽顺口。' },
-    other: { title: 'Other', titleEm: '', subtitle: '饮用水、矿泉水与汽水。' },
+    coffee: { title: '咖啡', titleEm: '', subtitle: '热饮 · 冰饮 · 冰沙 — 价格见菜单。' },
+    matcha: { title: '抹茶', titleEm: '', subtitle: '石磨抹茶现点现打，香气清甜，口感细腻。' },
+    nonCoffee: { title: '饮品', titleEm: '', subtitle: '泰茶、巧克力与冰沙饮品，不含咖啡。' },
+    italianSoda: { title: '气泡苏打', titleEm: '', subtitle: '气泡苏打配水果与蜂蜜，清爽顺口。' },
+    other: { title: '其他', titleEm: '', subtitle: '饮用水、矿泉水与汽水。' },
     chickenRice: { title: '海南鸡饭', titleEm: '新加坡 / 海南', subtitle: '嫩滑白切鸡、香浓鸡油饭、三款招牌蘸料与热鸡汤。' },
-    breakfast: { title: '早餐', titleEm: '全天供应', subtitle: '轻食与三明治，从早到晚都能点，海边吃更舒服。' },
-    sweets: { title: 'Sweet', titleEm: 'Desserts', subtitle: '自制蛋糕与派点，甜度适中，收尾刚好。' },
+    breakfast: { title: '早餐', titleEm: '', subtitle: '轻食与三明治，从早到晚都能点，海边吃更舒服。' },
+    sweets: { title: '甜品', titleEm: '', subtitle: '自制蛋糕与派点，甜度适中，收尾刚好。' },
   },
 }
 
@@ -813,6 +838,8 @@ const PROMO_DEALS = {
 
 function PromotionPanel({ lang }) {
   const t = PROMO_DEALS[lang] || PROMO_DEALS.en
+  const { addItem, openCart } = useCart()
+  const cardT = CARD_COPY[lang] || CARD_COPY.en
   return (
     <div className="px-6 sm:px-10 lg:px-12 py-7 sm:py-9">
       <div className="flex items-baseline justify-between mb-6 gap-4">
@@ -825,8 +852,10 @@ function PromotionPanel({ lang }) {
         {t.deals.map((deal, i) => (
           <div key={i} className="border border-black/10 rounded-xl overflow-hidden bg-white flex flex-col">
             {deal.img ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={deal.img} alt={deal.title} className="w-full h-44 object-cover" />
+              <div className="relative bg-[#f2ede6]" style={{ paddingTop: '133.33%' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={deal.img} alt={deal.title} className="absolute inset-0 w-full h-full object-cover object-center" />
+              </div>
             ) : null}
             <div className="p-4 flex flex-col flex-1">
               <div className="flex items-center justify-between mb-2 gap-2">
@@ -835,12 +864,17 @@ function PromotionPanel({ lang }) {
               </div>
               <h3 className="text-[13px] font-semibold tracking-[0.06em] uppercase text-ink leading-snug mb-1.5">{deal.title}</h3>
               <p className="text-[11px] text-[#888] font-light leading-relaxed flex-1 mb-3">{deal.desc}</p>
-              <div className="flex items-baseline justify-between pt-3 border-t border-black/10">
+              <div className="flex items-center justify-between pt-3 border-t border-black/10 gap-2">
                 <div className="flex items-baseline gap-2">
                   <span className="font-display text-[17px] text-gold tabular-nums">{deal.price}</span>
                   <span className="text-[11px] text-[#bbb] line-through tabular-nums">{deal.orig}</span>
                 </div>
-                <span className="text-[9px] tracking-[0.12em] uppercase text-[#999]">{deal.validity}</span>
+                <button
+                  onClick={() => { addItem({ id: `promo-${i}`, name: deal.title, price: deal.price.replace('฿',''), image: deal.img }); openCart() }}
+                  className="shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-[#1a2d4a] text-white hover:bg-[#243d63] transition-colors"
+                >
+                  {cardT.add}
+                </button>
               </div>
             </div>
           </div>
@@ -883,7 +917,7 @@ function primaryTabsForLang(lang) {
   if (lang === 'th') {
     return [
       { id: 'promotion', label: 'โปรโมชัน' },
-      { id: 'signature', label: 'Signature' },
+      { id: 'signature', label: 'แนะนำ' },
       { id: 'food', label: 'อาหาร' },
       { id: 'coffee', label: 'กาแฟ' },
       { id: 'matcha', label: 'มัทฉะ' },
@@ -894,7 +928,7 @@ function primaryTabsForLang(lang) {
   if (lang === 'zh') {
     return [
       { id: 'promotion', label: '优惠' },
-      { id: 'signature', label: 'Signature' },
+      { id: 'signature', label: '招牌' },
       { id: 'food', label: '餐食' },
       { id: 'coffee', label: '咖啡' },
       { id: 'matcha', label: '抹茶' },
@@ -910,7 +944,6 @@ function primaryTabsForLang(lang) {
     { id: 'matcha', label: 'Matcha' },
     { id: 'drinks', label: 'Drinks' },
     { id: 'sweets', label: 'Sweets' },
-    { id: 'promotion', label: 'Promotion' },
   ]
 }
 
@@ -973,12 +1006,112 @@ function buildMenuDataFromDB(dbData, lang) {
 
 const SECTION_IDS = ['signature', 'food', 'coffee', 'matcha', 'drinks', 'sweets', 'promotion']
 
+const HERO_IMAGES = [
+  '/uploads/gallery-beach-terrace.png',
+  '/uploads/home-beach-panorama.png',
+  '/uploads/home-cafe-exterior.png',
+  '/uploads/gallery-sunset-sea.png',
+  '/uploads/gallery-beach-lawn.png',
+  '/uploads/home-love-pier-exterior.png',
+  '/uploads/gallery-interior-dining.png',
+  '/uploads/gallery-sunset-boat.png',
+]
+
+function MenuHero({ lang }) {
+  const [idx, setIdx] = useState(0)
+  const [prev, setPrev] = useState(null)
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setIdx((i) => {
+        setPrev(i)
+        return (i + 1) % HERO_IMAGES.length
+      })
+    }, 4000)
+    return () => clearInterval(t)
+  }, [])
+
+  const title = lang === 'th' ? 'เมนู' : lang === 'zh' ? '菜单' : 'Menu'
+
+  return (
+    <section className="relative overflow-hidden" style={{ height: 'clamp(260px, 55vw, 420px)' }}>
+      {/* previous image fading out */}
+      {prev !== null && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={`prev-${prev}`}
+          src={HERO_IMAGES[prev]}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover object-center animate-[fadeOut_0.8s_ease-in-out_forwards]"
+        />
+      )}
+      {/* current image fading in */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        key={`cur-${idx}`}
+        src={HERO_IMAGES[idx]}
+        alt="Love Pier Beach Cafe"
+        className="absolute inset-0 w-full h-full object-cover object-center animate-[fadeIn_0.8s_ease-in-out_forwards]"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" />
+      <div className="absolute inset-0 flex flex-col items-center justify-end pb-8 px-6 text-center">
+        <p className="text-white/70 text-[10px] tracking-[0.3em] uppercase font-light mb-2">Love Pier Beach Cafe</p>
+        <h1 className="font-display font-light text-white leading-[0.95] tracking-[-0.02em] text-[clamp(36px,7vw,64px)]">
+          {title}
+        </h1>
+      </div>
+      {/* dot indicators */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+        {HERO_IMAGES.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => { setPrev(idx); setIdx(i) }}
+            className={`w-1.5 h-1.5 rounded-full transition-all ${i === idx ? 'bg-white w-4' : 'bg-white/40'}`}
+            aria-label={`Slide ${i + 1}`}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+const CART_BTN_COPY = {
+  th: 'ตะกร้า',
+  en: 'Cart',
+  zh: '购物车',
+}
+
 export default function Menu({ dbMenuData }) {
   const { lang } = useLanguage()
+  const { totalQty, openCart } = useCart()
   const primaryTabs = primaryTabsForLang(lang)
   const t = MENU_PAGE_COPY[lang] || MENU_PAGE_COPY.en
   const menuData = useMemo(() => buildMenuDataFromDB(dbMenuData, lang), [dbMenuData, lang])
   const [activeAnchor, setActiveAnchor] = useState('signature')
+  const [globalLbIndex, setGlobalLbIndex] = useState(-1)
+
+  // Build flat global gallery from all sections (in section order)
+  const { globalGallery, globalIndexMap } = useMemo(() => {
+    const gallery = []
+    const indexMap = {}
+    menuData.forEach((section) => {
+      section.items.forEach((item) => {
+        if (item.image) {
+          const key = `${section.cat}-${item.num}`
+          indexMap[key] = gallery.length
+          gallery.push({
+            key,
+            image: item.image,
+            name: item.name,
+            description: item.desc,
+            priceText: item.price && item.price !== 'Free' ? `฿${Math.round(parseFloat(item.price))}` : '',
+          })
+        }
+      })
+    })
+    return { globalGallery: gallery, globalIndexMap: indexMap }
+  }, [menuData])
 
   // Track which section is in view for highlight
   useEffect(() => {
@@ -1025,23 +1158,21 @@ export default function Menu({ dbMenuData }) {
         <meta name="twitter:image" content="https://www.lovepier.cafe/og-menu.png" />
       </Head>
 
-      {/* Menu Hero */}
-      <section className="border-b border-black/10 reveal">
-        <div className="px-4 py-12 text-center sm:px-6 sm:py-12 lg:px-16 lg:py-20">
-          <h1 className="font-display font-light leading-[0.95] text-ink tracking-[-0.02em] text-[clamp(48px,6vw,76px)]" dangerouslySetInnerHTML={{ __html: t.hero.replace(/\n/g, '<br/>') }} />
-        </div>
-      </section>
+      {/* Menu Hero Slideshow */}
+      <MenuHero lang={lang} />
 
       {/* Sticky anchor shortcut bar */}
-      <div className="sticky top-[var(--nav-h,64px)] z-50 w-full bg-[#ddd8d0] border-b border-black/15">
-        <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="sticky top-[var(--nav-h,64px)] z-50 w-full bg-[#f5f2ee] border-b border-black/10">
+        <div className="flex overflow-x-auto gap-2 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {primaryTabs.map(({ id, label }) => (
             <button
               key={id}
               type="button"
               onClick={() => scrollTo(id)}
-              className={`flex-1 min-w-[6rem] px-4 sm:px-6 py-4 sm:py-[1.125rem] text-[10px] sm:text-xs tracking-[0.16em] uppercase font-semibold whitespace-nowrap transition-colors cursor-pointer border-none ${
-                activeAnchor === id ? 'bg-white text-ink' : 'bg-transparent text-gold hover:text-ink'
+              className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-all cursor-pointer border ${
+                activeAnchor === id
+                  ? 'bg-[#1a4a7a] text-white border-[#1a4a7a]'
+                  : 'bg-transparent text-[#1a4a7a]/60 border-[#1a4a7a]/25 hover:border-[#1a4a7a]/60 hover:text-[#1a4a7a]'
               }`}
             >
               {label}
@@ -1072,7 +1203,7 @@ export default function Menu({ dbMenuData }) {
             </h2>
             <div className="mt-3 w-12 h-px bg-gold/60" />
           </div>
-          <FloreSignaturePanel menuData={menuData} />
+          <FloreSignaturePanel menuData={menuData} globalIndexMap={globalIndexMap} onImageClick={setGlobalLbIndex} />
         </div>
 
         {/* Food */}
@@ -1089,6 +1220,8 @@ export default function Menu({ dbMenuData }) {
                 section={section}
                 items={section.items}
                 menuAddOns={menuAddOnsForCategory(section.cat, lang)}
+                globalIndexMap={globalIndexMap}
+                onImageClick={setGlobalLbIndex}
               />
             </div>
           ))}
@@ -1106,6 +1239,8 @@ export default function Menu({ dbMenuData }) {
                 section={section}
                 items={section.items}
                 menuAddOns={menuAddOnsForCategory(section.cat, lang)}
+                globalIndexMap={globalIndexMap}
+                onImageClick={setGlobalLbIndex}
               />
             </div>
           ))}
@@ -1123,6 +1258,8 @@ export default function Menu({ dbMenuData }) {
                 section={section}
                 items={section.items}
                 tasteNotes={matchaTasteNotes(lang)}
+                globalIndexMap={globalIndexMap}
+                onImageClick={setGlobalLbIndex}
               />
             </div>
           ))}
@@ -1136,7 +1273,12 @@ export default function Menu({ dbMenuData }) {
                 <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">{section.title}</h2>
                 <div className="mt-3 w-12 h-px bg-gold/60" />
               </div>
-              <FloreMenuPanel section={section} items={section.items} />
+              <FloreMenuPanel
+                section={section}
+                items={section.items}
+                globalIndexMap={globalIndexMap}
+                onImageClick={setGlobalLbIndex}
+              />
             </div>
           ))}
         </div>
@@ -1149,13 +1291,41 @@ export default function Menu({ dbMenuData }) {
                 <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">{section.title}{section.titleEm ? <em className="not-italic text-gold"> {section.titleEm}</em> : null}</h2>
                 <div className="mt-3 w-12 h-px bg-gold/60" />
               </div>
-              <FloreMenuPanel section={section} items={section.items} />
+              <FloreMenuPanel
+                section={section}
+                items={section.items}
+                globalIndexMap={globalIndexMap}
+                onImageClick={setGlobalLbIndex}
+              />
             </div>
           ))}
         </div>
 
-
       </div>
+
+      {/* Global lightbox — navigates across ALL menu items */}
+      {globalLbIndex >= 0 && (
+        <Lightbox
+          items={globalGallery}
+          index={globalLbIndex}
+          onIndexChange={setGlobalLbIndex}
+          onClose={() => setGlobalLbIndex(-1)}
+        />
+      )}
+
+      {/* Floating cart button */}
+      {totalQty > 0 && (
+        <button
+          onClick={openCart}
+          className="fixed bottom-6 right-5 z-[170] flex items-center gap-2 bg-[#1a2d4a] text-white px-4 py-3 rounded-full shadow-lg font-semibold text-[13px] hover:bg-[#243d63] transition-colors active:scale-95"
+        >
+          <span>🛒</span>
+          <span>{CART_BTN_COPY[lang] ?? 'Cart'}</span>
+          <span className="bg-white text-[#1a2d4a] text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+            {totalQty}
+          </span>
+        </button>
+      )}
 
       <Footer tagline={FOOTER_TAGLINES.menu} />
     </>

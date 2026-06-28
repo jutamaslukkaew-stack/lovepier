@@ -18,7 +18,7 @@ const COPY = {
     location: 'ที่ตั้ง',
     locationValue: '800 108 แสนสุข\nอำเภอเมือง จังหวัดชลบุรี 20130',
     exploreMenu: 'ดูเมนู',
-    tagline: ['Beach Vibes,', 'Cafe by The Sea,', 'ข้าวมันไก่สิงคโปร์'],
+    tagline: ['Beach Vibes,', 'Cafe by The Sea,', 'คาเฟ่บรรยากาศดีริมทะเล'],
     since: 'ตั้งแต่ปี 2026',
     about1: '<strong>LOVE PIER BEACH CAFE</strong> คาเฟ่ริมชายหาดบางแสน ที่ให้ทุกมื้อพิเศษกว่าที่เคย',
     about2: 'สัมผัสรสชาติของ <em class="italic text-gold">"ข้าวมันไก่สิงคโปร์และข้าวมันไก่ไหหลำ สูตรต้นตำรับ"</em> พร้อมจิบเครื่องดื่มซิกเนเจอร์ ที่ได้แรงบันดาลใจจาก <em class="italic text-gold">"ข้าวหลามหนองมน"</em> เอกลักษณ์แห่งบางแสนที่ถูกถ่ายทอดออกมาในรูปแบบใหม่ อย่างละมุน',
@@ -179,27 +179,29 @@ const COPY = {
 }
 
 const GALLERY_PHOTOS = [
-  { src: '/uploads/gallery-beach-terrace.png', alt: 'beach terrace' },
-  { src: '/uploads/gallery-matcha-forest.png', alt: 'matcha drink' },
-  { src: '/uploads/gallery-chicken-rice-plate.png', alt: 'chicken rice' },
-  { src: '/uploads/gallery-golden-water.png', alt: 'golden water' },
-  { src: '/uploads/gallery-sunset-boat.png', alt: 'sunset boat' },
-  { src: '/uploads/gallery-latte-table.png', alt: 'latte on table' },
+  { src: '/uploads/gallery-beach-terrace.png', alt: 'beach terrace', wide: false },
+  { src: '/uploads/gallery-sunset-sea.png', alt: 'sunset sea', wide: true },
+  { src: '/uploads/gallery-matcha-forest.png', alt: 'matcha drink', wide: false },
+  { src: '/uploads/gallery-interior-dining.png', alt: 'interior dining', wide: true },
+  { src: '/uploads/gallery-chicken-rice-plate.png', alt: 'chicken rice', wide: false },
+  { src: '/uploads/gallery-sunset-boat.png', alt: 'sunset boat', wide: true },
+  { src: '/uploads/gallery-latte-table.png', alt: 'latte on table', wide: false },
+  { src: '/uploads/gallery-beach-lawn.png', alt: 'beach lawn', wide: true },
 ]
 
 // ── components ────────────────────────────────────────────────────────────────
 function SectionHeader({ title, sub, moreLabel, moreHref }) {
   return (
-    <div className="flex items-end justify-between mb-6 sm:mb-8">
-      <div>
-        <h2 className="font-display font-light text-ink text-[clamp(28px,4vw,48px)] leading-none tracking-[-0.01em]">{title}</h2>
-        {sub ? <p className="text-[11px] tracking-[0.18em] uppercase text-muted mt-2">{sub}</p> : null}
+    <div className="mb-6 sm:mb-8">
+      <h2 className="font-display font-light text-ink text-[clamp(28px,4vw,48px)] leading-none tracking-[-0.01em]">{title}</h2>
+      <div className="flex items-center justify-between mt-2 gap-4">
+        {sub ? <p className="text-[13px] tracking-[0.03em] text-muted leading-relaxed">{sub}</p> : <span />}
+        {moreLabel && moreHref ? (
+          <Link href={moreHref} className="shrink-0 text-[13px] tracking-[0.03em] text-gold hover:text-ink transition-colors whitespace-nowrap">
+            {moreLabel} →
+          </Link>
+        ) : null}
       </div>
-      {moreLabel && moreHref ? (
-        <Link href={moreHref} className="shrink-0 text-[10px] tracking-[0.22em] uppercase text-gold hover:text-ink transition-colors flex items-center gap-1.5 ml-4">
-          {moreLabel} <span className="text-sm">→</span>
-        </Link>
-      ) : null}
     </div>
   )
 }
@@ -210,7 +212,7 @@ function MenuCard({ item, lang }) {
   const price = item.price ? `฿${Number(item.price).toLocaleString()}` : ''
   const priceMax = item.priceMax ? `–฿${Number(item.priceMax).toLocaleString()}` : ''
   return (
-    <div className="flex flex-col gap-3 group">
+    <div className="flex flex-col h-full group">
       {item.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -223,11 +225,8 @@ function MenuCard({ item, lang }) {
           <span className="text-[#b0aa9e] text-xs tracking-widest uppercase">No image</span>
         </div>
       )}
-      <div className="font-display text-[18px] sm:text-[20px] font-light text-ink leading-snug">{name}</div>
-      {item.badge ? (
-        <div className="text-[9px] tracking-[0.2em] uppercase text-gold font-medium -mt-1">{item.badge}</div>
-      ) : null}
-      <div className="font-display text-[16px] text-gold mt-auto">{price}{priceMax}</div>
+      <div className="font-display text-[18px] sm:text-[20px] font-light text-ink leading-snug line-clamp-2 flex-1 mt-3">{name}</div>
+      <div className="font-display text-[16px] text-gold mt-2">{price}{priceMax}</div>
     </div>
   )
 }
@@ -284,7 +283,7 @@ function HeroSlideshow({ t, renderLines }) {
         </h1>
       </div>
       {/* dot indicators */}
-      <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 flex gap-1.5" style={{ zIndex: 3 }}>
+      <div className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-5 flex flex-col gap-1.5" style={{ zIndex: 4 }}>
         {HERO_SLIDES.map((_, i) => (
           <button
             key={i}
@@ -328,6 +327,15 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
         {/* Hero slideshow with text overlay */}
         <HeroSlideshow t={t} renderLines={renderLines} />
 
+        {/* Tagline divider */}
+        <div className="bg-[#e8e4de] px-8 sm:px-14 lg:px-20 py-16 sm:py-20 lg:py-28 border-b border-black/10">
+          <h2 className="font-display font-light leading-[1.25] text-ink tracking-[-0.02em] text-[clamp(26px,3.8vw,54px)]">
+            {t.tagline[0]}<br/>
+            {t.tagline[1]}<br/>
+            <em className="not-italic text-gold whitespace-nowrap">{t.tagline[2]}</em>
+          </h2>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 reveal">
           <div className="bg-[#e8e4de] sm:relative sm:overflow-hidden sm:aspect-[5/4] lg:aspect-[4/3] xl:aspect-[3/2]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -344,15 +352,12 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
       <ScrollStackPanel>
         <section className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] px-4 py-14 items-start lg:items-center reveal sm:px-6 sm:py-16 lg:px-10 lg:py-20 gap-12 lg:gap-14 xl:gap-20">
           <div className="inline-block max-w-full lg:pr-6 xl:pr-10">
-            <h2 className="font-display font-light leading-[0.92] text-ink tracking-[-0.02em] text-[clamp(40px,6vw,72px)]">
-              {t.tagline[0]}<br/>
-              {t.tagline[1]}<br/>
-              <em className="italic text-gold">{t.tagline[2]}</em>
-            </h2>
-            <Link href="/menu" className="mt-8 flex w-full items-center justify-between text-[11px] tracking-[0.25em] uppercase text-[#5f5a51] bg-[#ece7dc] border border-[#d8cdbb] px-5 py-2.5 hover:bg-[#e4dccd] hover:text-ink transition-colors duration-200 after:content-['→'] after:text-base after:transition-transform after:duration-200 hover:after:translate-x-1">{t.exploreMenu}</Link>
+            <Link href="/menu" className="group flex w-full items-center justify-between px-6 py-5 bg-[#1a3a4a] text-[rgba(245,243,239,0.95)] hover:bg-[#15303e] transition-colors duration-200">
+              <span className="text-[13px] sm:text-[15px] tracking-[0.2em] uppercase font-light">{t.exploreMenu}</span>
+              <span className="text-lg transition-transform duration-200 group-hover:translate-x-1.5">→</span>
+            </Link>
           </div>
           <div className="lg:pl-2 xl:pl-4">
-            <div className="text-[9px] tracking-[0.4em] uppercase text-[#bbb] mb-5 flex items-center gap-3 before:content-[''] before:block before:w-6 before:h-px before:bg-[#bbb]">{t.since}</div>
             <div className="text-sm leading-[1.9] text-[#555] font-light">
               <p className="mb-4" dangerouslySetInnerHTML={{ __html: t.about1 }} />
               <p className="mb-4" dangerouslySetInnerHTML={{ __html: t.about2 }} />
@@ -364,17 +369,25 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
 
       {/* ── 3. GALLERY STRIP ────────────────────────────────────────────── */}
       <ScrollStackPanel tone="white">
-        <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 reveal border-t border-black/10">
-          <SectionHeader title={t.galleryTitle} sub={t.gallerySub} moreLabel={t.galleryMore} moreHref="/gallery" />
-          <div className="flex gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 pb-2">
-            {GALLERY_PHOTOS.map(({ src, alt }) => (
+        <section className="py-10 sm:py-14 reveal border-t border-black/10">
+          <div className="px-4 sm:px-6 lg:px-10 flex items-end justify-between mb-6">
+            <div>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-gold mb-1">{t.gallerySub}</p>
+              <h2 className="font-display font-light text-ink text-[clamp(28px,5vw,42px)] leading-none">{t.galleryTitle}</h2>
+            </div>
+            <Link href="/gallery" className="text-[11px] tracking-[0.2em] uppercase text-[#888] hover:text-ink transition-colors flex items-center gap-1.5 shrink-0">{t.galleryMore} →</Link>
+          </div>
+          {/* Horizontal scroll strip — snap per card */}
+          <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth snap-x snap-mandatory -mx-0 px-4 sm:px-6 lg:px-10 pb-1">
+            {GALLERY_PHOTOS.map(({ src, alt, wide }) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={src}
-                src={src}
-                alt={alt}
-                className="h-48 sm:h-64 lg:h-80 w-auto aspect-[3/4] object-cover shrink-0 [filter:saturate(0.72)] hover:[filter:saturate(1)] transition-[filter] duration-500"
-              />
+              <div key={src} className={`shrink-0 snap-start overflow-hidden ${wide ? 'w-[72vw] sm:w-[52vw] lg:w-[38vw]' : 'w-[52vw] sm:w-[36vw] lg:w-[26vw]'}`}>
+                <img
+                  src={src}
+                  alt={alt}
+                  className="w-full h-[58vw] sm:h-[42vw] lg:h-[32vw] max-h-[480px] object-cover [filter:saturate(0.68)_contrast(1.02)] hover:[filter:saturate(1)_contrast(1)] transition-[filter] duration-700"
+                />
+              </div>
             ))}
           </div>
         </section>
@@ -385,7 +398,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
         <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 reveal border-t border-black/10">
           <SectionHeader title={t.drinksTitle} sub={t.drinksSub} moreLabel={t.drinksMore} moreHref="/menu#menu-section-coffee" />
           {featuredDrinks.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
               {featuredDrinks.map((item) => (
                 <Link key={item.id} href="/menu#menu-section-coffee">
                   <MenuCard item={item} lang={lang} />
@@ -401,7 +414,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
         <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 reveal border-t border-black/10">
           <SectionHeader title={t.foodTitle} sub={t.foodSub} moreLabel={t.foodMore} moreHref="/menu#menu-section-food" />
           {featuredFood.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
               {featuredFood.map((item) => (
                 <Link key={item.id} href="/menu#menu-section-food">
                   <MenuCard item={item} lang={lang} />
@@ -537,7 +550,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
                 <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.contact}</span>
                 <div className="text-[13px] text-[#444] leading-[1.7] font-light">
                   <a href="tel:0642523293" className="text-muted hover:text-ink transition-colors">064-252-3293</a><br/>
-                  <a href="mailto:cafe.lovepier@gmail.com" className="text-muted hover:text-ink transition-colors break-all">cafe.lovepier@gmail.com</a>
+                  <a href="mailto:lovepier.cafe@gmail.com" className="text-muted hover:text-ink transition-colors break-all">lovepier.cafe@gmail.com</a>
                 </div>
               </div>
               <div>
@@ -604,8 +617,8 @@ export async function getServerSideProps() {
 
   return {
     props: {
-      featuredDrinks: ser(pick(drinkIds, 3)),
-      featuredFood:   ser(pick(foodIds, 3)),
+      featuredDrinks: ser(pick(drinkIds, 4)),
+      featuredFood:   ser(pick(foodIds, 4)),
       featuredSweets: ser(pick(sweetIds, 4)),
     },
   }

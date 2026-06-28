@@ -230,7 +230,7 @@ const DATA: Cat[] = [
     nameTh: 'มัทฉะ', nameEn: 'Matcha', nameZh: '抹茶',
     items: [
       {
-        nameTh: 'PANG Signature', nameEn: 'PANG Signature', nameZh: 'PANG 招牌',
+        nameTh: 'แพง', nameEn: 'PANG', nameZh: 'PANG 特调',
         descTh: 'มัทฉะ x ข้าวหลามหนองมน ลาเต้ — สูตรซิกเนเจอร์เฉพาะร้าน',
         descEn: 'Matcha x Khao Lam Latte — our house signature blend.',
         descZh: '抹茶 x 烤糯米香拿铁 — 门店招牌特调，层次丰富、顺口耐喝。',

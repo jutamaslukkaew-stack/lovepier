@@ -5,9 +5,12 @@
   --color-ink: #1a1a1a;
   --color-muted: #888888;
   --color-gold: #c9a96e;
-  --font-family-display: "Cormorant Garamond", serif;
-  --font-family-sans: Jost, sans-serif;
+  --font-family-display: "Cormorant Garamond", "Noto Serif Thai", serif;
+  --font-family-sans: Jost, "Noto Sans Thai", sans-serif;
 }
+
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes fadeOut { from { opacity: 1 } to { opacity: 0 } }
 
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
@@ -71,6 +74,25 @@ body.menu-open {
 }
 
 .nav-lang-select::-ms-expand { display: none; }
+
+/* Thai typography — prevent vowel/tone marks from overlapping adjacent lines */
+:lang(th) {
+  font-family: "Noto Sans Thai", sans-serif;
+  line-height: 1.75;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+:lang(th) h1, :lang(th) h2, :lang(th) h3, :lang(th) h4 {
+  font-family: "Noto Serif Thai", "Noto Sans Thai", serif;
+  line-height: 1.45;
+  font-weight: 300;
+}
+/* Display headings with tight leading need extra room for Thai tone marks */
+:lang(th) .font-display {
+  font-family: "Noto Serif Thai", serif;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
 
 /* Homepage mosaic — match hero / two-up row (desaturated, no warm cast) */
 .home-mosaic-img {

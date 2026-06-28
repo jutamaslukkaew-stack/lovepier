@@ -1,12 +1,13 @@
 import Head from 'next/head'
 import Footer from '../components/Footer'
+import PageHero from '../components/PageHero'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
 
 const COPY = {
   th: {
     title: 'กิจกรรมทางน้ำ — Love Pier Beach Cafe',
-    hero: 'กิจกรรม<em class="italic text-gold">ทางน้ำ</em>',
+    hero: 'กิจกรรม<em class="not-italic text-gold">ทางน้ำ</em>',
     subtitle: 'The Symphony Club · บางเสร่ ศรีราชา',
     memberNote: '* ราคาสมาชิก/ลูกบ้าน ลด 10% จากราคาปกติ · ราคารวม VAT 7%',
     regular: 'ราคาปกติ',
@@ -16,63 +17,63 @@ const COPY = {
     categories: [
       {
         id: 'surf-pool',
-        title: 'Surf Pool',
+        title: 'สระคลื่น',
         items: [
-          { name: 'Surf Pool', sub: 'บุคคล', duration: '1 ชม.', regular: 1200, member: 1080, note: 'มีอุปกรณ์ และ Instructor' },
-          { name: 'Surf Pool Group', sub: 'Single Lane (สูงสุด 10 คน)', duration: '1 ชม.', regular: 4500, member: 4050, note: 'มีอุปกรณ์ และ Instructor' },
-          { name: 'Surf Pool Group', sub: 'Double Lane (สูงสุด 20 คน)', duration: '1 ชม.', regular: 9000, member: 8100, note: 'มีอุปกรณ์ และ Instructor' },
+          { name: 'สระคลื่น', sub: 'บุคคล', duration: '1 ชม.', regular: 1200, member: 1080, note: 'มีอุปกรณ์และครูฝึก' },
+          { name: 'สระคลื่น กลุ่ม', sub: 'เลน เดียว (สูงสุด 10 คน)', duration: '1 ชม.', regular: 4500, member: 4050, note: 'มีอุปกรณ์และครูฝึก' },
+          { name: 'สระคลื่น กลุ่ม', sub: 'สองเลน (สูงสุด 20 คน)', duration: '1 ชม.', regular: 9000, member: 8100, note: 'มีอุปกรณ์และครูฝึก' },
         ],
       },
       {
         id: 'surf-ski',
-        title: 'Surf Ski',
+        title: 'เซิร์ฟสกี',
         items: [
-          { name: 'Surf Ski', sub: 'ระดับกลาง (Intermediate)', duration: '1 ครั้ง', regular: 1100, member: 990, note: 'ใช้เรือ Club' },
-          { name: 'Surf Ski', sub: 'ระดับเริ่มต้น (Beginner)', duration: '1 ครั้ง', regular: 2200, member: 1980, note: 'รวมอุปกรณ์ครบ ใช้เรือ Club + Instructor' },
-          { name: 'Surf Ski', sub: '4 ระดับ (มีใบรับรอง)', duration: '4 ครั้ง', regular: 5500, member: 4950, note: 'รวมอุปกรณ์ครบ ใช้เรือ Club + Instructor' },
-          { name: 'Surf Ski', sub: 'ระดับกลาง (ใช้เรือตัวเอง)', duration: '1 ครั้ง', regular: 200, member: 180, note: 'ลูกค้าใช้เรือตัวเอง' },
+          { name: 'เซิร์ฟสกี', sub: 'ระดับกลาง', duration: '1 ครั้ง', regular: 1100, member: 990, note: 'ใช้เรือของคลับ' },
+          { name: 'เซิร์ฟสกี', sub: 'ระดับเริ่มต้น', duration: '1 ครั้ง', regular: 2200, member: 1980, note: 'รวมอุปกรณ์ครบ เรือคลับ + ครูฝึก' },
+          { name: 'เซิร์ฟสกี', sub: '4 ระดับ (มีใบรับรอง)', duration: '4 ครั้ง', regular: 5500, member: 4950, note: 'รวมอุปกรณ์ครบ เรือคลับ + ครูฝึก' },
+          { name: 'เซิร์ฟสกี', sub: 'ระดับกลาง (ใช้เรือตัวเอง)', duration: '1 ครั้ง', regular: 200, member: 180, note: 'ลูกค้าใช้เรือตัวเอง' },
         ],
       },
       {
         id: 'sup',
-        title: 'SUP Board',
+        title: 'ซัพบอร์ด',
         items: [
-          { name: 'SUP Board', sub: '', duration: '1 ชม.', regular: 400, member: 360, note: 'อุปกรณ์ Club' },
-          { name: 'SUP Board + Trainer', sub: '', duration: '1 ครั้ง / 1.30 ชม.', regular: 800, member: 720, note: 'รวมอุปกรณ์ Club + Trainer' },
+          { name: 'ซัพบอร์ด', sub: '', duration: '1 ชม.', regular: 400, member: 360, note: 'อุปกรณ์ของคลับ' },
+          { name: 'ซัพบอร์ด + ครูฝึก', sub: '', duration: '1 ครั้ง / 1.30 ชม.', regular: 800, member: 720, note: 'รวมอุปกรณ์ + ครูฝึก' },
         ],
       },
       {
         id: 'kayak',
-        title: 'Kayak',
+        title: 'คายัค',
         items: [
-          { name: 'Kayak ธรรมดา', sub: '', duration: '1 ชม.', regular: 400, member: 360, note: 'รวมอุปกรณ์ครบ ใช้เรือ Club' },
-          { name: 'Kayak ใส', sub: '(Transparent)', duration: '1 ชม.', regular: 600, member: 540, note: 'รวมอุปกรณ์ครบ ใช้เรือ Club' },
-          { name: 'Kayak', sub: 'ใช้เรือตัวเอง', duration: '1 ครั้ง/วัน', regular: 200, member: 180, note: 'ลูกค้าใช้เรือตัวเอง' },
+          { name: 'คายัคธรรมดา', sub: '', duration: '1 ชม.', regular: 400, member: 360, note: 'รวมอุปกรณ์ครบ ใช้เรือคลับ' },
+          { name: 'คายัคใส', sub: '(ใสมองเห็นก้นทะเล)', duration: '1 ชม.', regular: 600, member: 540, note: 'รวมอุปกรณ์ครบ ใช้เรือคลับ' },
+          { name: 'คายัค', sub: 'ใช้เรือตัวเอง', duration: '1 ครั้ง/วัน', regular: 200, member: 180, note: 'ลูกค้าใช้เรือตัวเอง' },
         ],
       },
       {
         id: 'skimboard',
-        title: 'Skim Board',
+        title: 'สกิมบอร์ด',
         items: [
-          { name: 'Skim Board', sub: 'เช่ารายชั่วโมง', duration: '1 ชม.', regularText: '250 (ชม.แรก) + 180/ชม.', memberText: '225 / 162', note: 'รวมบอร์ดและรองเท้า' },
-          { name: 'Skim Board', sub: 'เช่ารายวัน (รวมรองเท้า)', duration: '1 วัน', regular: 800, member: 720, note: 'รวมบอร์ดและรองเท้า' },
-          { name: 'Skim Board', sub: 'เช่ารายวัน (ใช้อุปกรณ์ตัวเอง)', duration: '1 วัน', regular: 500, member: 450, note: 'ใช้บอร์ดและอุปกรณ์ตัวเอง' },
+          { name: 'สกิมบอร์ด', sub: 'เช่ารายชั่วโมง', duration: '1 ชม.', regularText: '฿250/180', memberText: '฿225/162', note: 'รวมบอร์ดและรองเท้า (ชม.แรก/ถัดไป)' },
+          { name: 'สกิมบอร์ด', sub: 'เช่ารายวัน (รวมรองเท้า)', duration: '1 วัน', regular: 800, member: 720, note: 'รวมบอร์ดและรองเท้า' },
+          { name: 'สกิมบอร์ด', sub: 'เช่ารายวัน (ใช้อุปกรณ์ตัวเอง)', duration: '1 วัน', regular: 500, member: 450, note: 'ใช้บอร์ดและอุปกรณ์ตัวเอง' },
         ],
       },
       {
         id: 'jetski',
-        title: 'Jet Ski',
+        title: 'เจ็ตสกี',
         items: [
-          { name: 'Jet Ski', sub: '', duration: '1 ชม.', regular: 3700, member: 3300, note: 'รวมอุปกรณ์ครบ ชูชีพ + Trainer' },
+          { name: 'เจ็ตสกี', sub: '', duration: '1 ชม.', regular: 3700, member: 3300, note: 'รวมอุปกรณ์ครบ ชูชีพ + ครูฝึก' },
         ],
       },
       {
         id: 'speedboat',
-        title: 'Speed Boat',
+        title: 'สปีดโบ๊ต',
         items: [
           { name: 'ทริปตกปลา / ชมปลาวาฬ', sub: 'เรือ Casalunar (ขนาดใหญ่)', duration: '1 วัน', regularText: '16,000/ลำ', memberText: '–', note: 'สูงสุด 18 ท่าน · ออกเรือเมื่อผู้โดยสาร 8 ท่านขึ้นไป' },
           { name: 'ทริปเที่ยวเกาะสีชัง', sub: 'เรือ Catamaran (ขนาดกลาง)', duration: '1 วัน', regularText: '6,000/ลำ', memberText: '–', note: 'สูงสุด 5 ท่าน · บริการแทนสำหรับราคาที่แตกต่าง' },
-          { name: 'ทุกแพ็คเกจเรือ', sub: 'สิทธิพิเศษฟรี', duration: '–', regularText: '–', memberText: '–', note: 'ฟรี! Snack Box น้ำดื่มและน้ำแข็ง' },
+          { name: 'ทุกแพ็คเกจเรือ', sub: 'สิทธิพิเศษฟรี', duration: '–', regularText: '–', memberText: '–', note: 'ฟรี! สแน็คบ็อกซ์ น้ำดื่มและน้ำแข็ง' },
         ],
         notice: 'กรณีทริปตกปลา: ทริปไม่รับประกันการจับปลาแน่นอน แต่ทางเราจะพาไปยังจุดที่มีโอกาสจับปลาได้มากที่สุด · ทริปเที่ยวเกาะสีชัง: สำรองที่นั่งล่วงหน้า ทีมงานจะยืนยันวันเดินทางที่แน่นอนกับผู้โดยสารอีกครั้ง',
       },
@@ -128,7 +129,7 @@ const COPY = {
         id: 'skimboard',
         title: 'Skim Board',
         items: [
-          { name: 'Skim Board', sub: 'Hourly rental', duration: '1 hr', regularText: '฿250 (1st hr) + ฿180/hr', memberText: '฿225 / ฿162', note: 'Board & shoes included' },
+          { name: 'Skim Board', sub: 'Hourly rental', duration: '1 hr', regularText: '฿250/180', memberText: '฿225/162', note: 'Board & shoes incl. (1st hr / next hrs)' },
           { name: 'Skim Board', sub: 'Full day (shoes included)', duration: '1 day', regular: 800, member: 720, note: 'Board & shoes included' },
           { name: 'Skim Board', sub: 'Full day (own equipment)', duration: '1 day', regular: 500, member: 450, note: 'Customer uses own board & equipment' },
         ],
@@ -202,7 +203,7 @@ const COPY = {
         id: 'skimboard',
         title: 'Skim Board 滑板',
         items: [
-          { name: 'Skim Board', sub: '按小时租借', duration: '1小时', regularText: '250（首小时）+ 180/小时', memberText: '225 / 162', note: '含板及鞋' },
+          { name: 'Skim Board', sub: '按小时租借', duration: '1小时', regularText: '฿250/180', memberText: '฿225/162', note: '含板及鞋（首小时/之后每小时）' },
           { name: 'Skim Board', sub: '全天（含鞋）', duration: '1天', regular: 800, member: 720, note: '含板及鞋' },
           { name: 'Skim Board', sub: '全天（自带器材）', duration: '1天', regular: 500, member: 450, note: '客人使用自备板及器材' },
         ],
@@ -234,7 +235,7 @@ function fmt(n) {
 
 function ActivityTable({ cat, t }) {
   return (
-    <div id={`activity-${cat.id}`} className="mb-12 last:mb-0">
+    <div id={`activity-${cat.id}`} className="mb-7 last:mb-0">
       <div className="flex items-center gap-3 mb-4">
         <h2 className="font-display font-light text-[clamp(22px,3vw,32px)] text-ink tracking-[-0.01em]">
           {cat.title}
@@ -277,25 +278,25 @@ function ActivityTable({ cat, t }) {
       {/* Mobile cards */}
       <div className="sm:hidden space-y-3">
         {cat.items.map((item, i) => (
-          <div key={i} className="border border-black/10 p-4 bg-white">
-            <div className="flex items-start justify-between gap-2 mb-1">
+          <div key={i} className="border border-black/10 p-5 bg-white rounded-sm">
+            <div className="flex items-start justify-between gap-2 mb-2">
               <div>
-                <span className="font-semibold text-ink text-[13px] tracking-wide">{item.name}</span>
-                {item.sub ? <span className="block text-[11px] text-muted mt-0.5">{item.sub}</span> : null}
+                <span className="font-semibold text-ink text-[15px] leading-snug">{item.name}</span>
+                {item.sub ? <span className="block text-[12px] text-muted mt-0.5 leading-snug">{item.sub}</span> : null}
               </div>
-              <span className="text-[11px] text-muted shrink-0">{item.duration}</span>
+              <span className="text-[11px] text-muted shrink-0 mt-0.5">{item.duration}</span>
             </div>
-            <div className="flex gap-6 mt-2 mb-2">
+            <div className="flex gap-8 mt-3 mb-3 pt-3 border-t border-black/[0.07]">
               <div>
-                <div className="text-[9px] tracking-[0.14em] uppercase text-muted mb-0.5">{t.regular}</div>
-                <div className="font-display text-[16px] text-gold tabular-nums">{item.regularText ?? fmt(item.regular)}</div>
+                <div className="text-[9px] tracking-[0.14em] uppercase text-muted mb-1">{t.regular}</div>
+                <div className="font-display text-[20px] tabular-nums leading-none whitespace-nowrap text-gold">{item.regularText ?? fmt(item.regular)}</div>
               </div>
               <div>
-                <div className="text-[9px] tracking-[0.14em] uppercase text-muted mb-0.5">{t.member}</div>
-                <div className="font-display text-[16px] text-ink/70 tabular-nums">{item.memberText ?? fmt(item.member)}</div>
+                <div className="text-[9px] tracking-[0.14em] uppercase text-muted mb-1">{t.member}</div>
+                <div className="font-display text-[20px] tabular-nums leading-none whitespace-nowrap text-ink/60">{item.memberText ?? fmt(item.member)}</div>
               </div>
             </div>
-            <p className="text-[11px] italic text-muted leading-relaxed">{item.note}</p>
+            <p className="text-[11px] text-muted leading-relaxed">{item.note}</p>
           </div>
         ))}
       </div>
@@ -324,19 +325,11 @@ export default function Activities() {
       </Head>
 
       {/* Hero */}
-      <section className="border-b border-black/10 reveal">
-        <div className="px-4 py-12 text-center sm:px-6 sm:py-14 lg:px-16 lg:py-20">
-          <h1
-            className="font-display font-light leading-[0.95] text-ink tracking-[-0.02em] text-[clamp(44px,6vw,76px)]"
-            dangerouslySetInnerHTML={{ __html: t.hero }}
-          />
-          <p className="mt-4 text-[12px] sm:text-[13px] tracking-[0.2em] uppercase text-muted">{t.subtitle}</p>
-        </div>
-      </section>
+      <PageHero titleHtml={t.hero} subtitle={t.subtitle} />
 
       {/* Shortcut anchor bar */}
-      <div className="sticky top-[var(--nav-h,64px)] z-40 w-full bg-[#ddd8d0] border-b border-black/15 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex min-w-max lg:min-w-0 lg:w-full">
+      <div className="sticky top-[var(--nav-h,64px)] z-40 w-full bg-[#f5f3ef] border-b border-black/10 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-2 min-w-max lg:min-w-0 lg:justify-center px-4 py-3">
           {t.categories.map((cat) => (
             <button
               key={cat.id}
@@ -348,7 +341,7 @@ export default function Activities() {
                 const y = el.getBoundingClientRect().top + window.scrollY - navH - 52 - 8
                 window.scrollTo({ top: y, behavior: 'smooth' })
               }}
-              className="flex-1 px-4 py-3.5 text-[10px] tracking-[0.15em] uppercase font-semibold whitespace-nowrap text-gold hover:text-ink transition-colors border-none bg-transparent cursor-pointer text-center"
+              className="px-4 py-1.5 rounded-full text-[10px] tracking-[0.12em] uppercase font-semibold whitespace-nowrap bg-[#1a2d4a] text-white hover:bg-[#243d63] transition-colors border-none cursor-pointer"
             >
               {cat.title}
             </button>

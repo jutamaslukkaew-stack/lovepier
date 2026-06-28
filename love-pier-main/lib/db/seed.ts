@@ -50,7 +50,7 @@ const data: { slug: string; nameTh: string; nameEn: string; nameZh: string; item
     nameEn: 'Matcha',
     nameZh: '抹茶',
     items: [
-      { nameTh: 'PANG Signature', nameEn: 'PANG Signature', nameZh: 'PANG 招牌', price: '179', badge: 'Signature', image: '/menu/real-pang-signature.jpg', featured: true },
+      { nameTh: 'แพง', nameEn: 'PANG', nameZh: 'PANG 特调', price: '179', badge: 'Signature', image: '/menu/real-pang-signature.jpg', featured: true },
       { nameTh: 'เพียวมัทฉะ', nameEn: 'Pure Matcha', nameZh: '纯抹茶', price: '140', image: '/menu/real-pure-matcha.jpg' },
       { nameTh: 'มัทฉะลาเต้', nameEn: 'Matcha Latte', nameZh: '抹茶拿铁', price: '150', image: '/menu/real-matcha-latte.jpg' },
       { nameTh: 'เดอตี้มัทฉะ', nameEn: 'Dirty Matcha', nameZh: 'Dirty 抹茶', price: '150', image: '/menu/real-dirty-matcha-v2.jpg' },

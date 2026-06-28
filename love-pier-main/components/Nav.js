@@ -14,7 +14,6 @@ const COPY = {
       { href: '/activities', label: 'Activities' },
       { href: '/promotion', label: 'Promotion' },
       { href: '/about', label: 'About Us' },
-      { href: '/contact', label: 'Contact' },
     ],
     reserve: 'Reserve',
   },
@@ -27,7 +26,6 @@ const COPY = {
       { href: '/activities', label: 'กิจกรรม' },
       { href: '/promotion', label: 'โปรโมชัน' },
       { href: '/about', label: 'เกี่ยวกับเรา' },
-      { href: '/contact', label: 'ติดต่อ' },
     ],
     reserve: 'จองโต๊ะ',
   },
@@ -40,7 +38,6 @@ const COPY = {
       { href: '/activities', label: '水上活动' },
       { href: '/promotion', label: '优惠' },
       { href: '/about', label: '关于我们' },
-      { href: '/contact', label: '联系' },
     ],
     reserve: '预订',
   },
@@ -141,6 +138,11 @@ export default function Nav({ onOpenMenu }) {
           />
         </Link>
 
+        {/* Lang flag (mobile only) — right */}
+        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 md:hidden">
+          <LangFlagDropdown lang={lang} setLang={setLang} />
+        </div>
+
         {/* Hamburger (mobile only) — left */}
         <div className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 md:hidden">
           <button
@@ -155,10 +157,6 @@ export default function Nav({ onOpenMenu }) {
           </button>
         </div>
 
-        {/* Lang flag (mobile only) — right */}
-        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 md:hidden">
-          <LangFlagDropdown lang={lang} setLang={setLang} />
-        </div>
       </div>
 
       {/* Row 2 — Nav links + Reserve + Lang (desktop only) */}

@@ -116,7 +116,7 @@ export default function Location() {
           <h4 className="text-[10px] tracking-[0.4em] uppercase text-gold mb-3">{t.phone}</h4>
           <p className="text-sm text-ink leading-[1.7] font-light">
             <a href="tel:0642523293" className="hover:text-gold transition-colors">064-252-3293</a><br/>
-            <a href="mailto:cafe.lovepier@gmail.com" className="hover:text-gold transition-colors">cafe.lovepier@gmail.com</a><br/>
+            <a href="mailto:lovepier.cafe@gmail.com" className="hover:text-gold transition-colors">lovepier.cafe@gmail.com</a><br/>
             <span className="text-muted text-xs">LINE: @lovepier.cafe</span>
           </p>
         </div>

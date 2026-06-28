@@ -2,6 +2,7 @@ import Head from 'next/head'
 import { useEffect, useState } from 'react'
 import Footer from '../components/Footer'
 import FormFeedbackModal from '../components/FormFeedbackModal'
+import PageHero from '../components/PageHero'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
 import { buildReservationEmail } from '../lib/emailContent'
@@ -20,7 +21,7 @@ const RESERVATION_COPY = {
     mapTitle: 'แผนที่ Love Pier Beach Cafe',
     openMaps: 'เปิดใน Google Maps',
     heroTag: 'จองโต๊ะ',
-    heroTitle: 'จองที่นั่ง\nริมทะเล',
+    heroTitle: 'จองที่นั่ง',
     step: '— สำรองที่นั่ง',
     formTitle: 'บอกวันเวลา\nที่คุณจะมา',
     intro: 'เราจะยืนยันการจองภายใน 2 ชั่วโมงทางอีเมลหรือ LINE',
@@ -36,7 +37,7 @@ const RESERVATION_COPY = {
     modalClose: 'ปิด',
     sending: 'กำลังส่ง…',
     sendError: 'ส่งไม่สำเร็จ กรุณาลองอีกครั้งหรือโทร 064-252-3293',
-    sendConfigError: 'ระบบอีเมลยังไม่พร้อม กรุณาโทร 064-252-3293 หรืออีเมล cafe.lovepier@gmail.com',
+    sendConfigError: 'ระบบอีเมลยังไม่พร้อม กรุณาโทร 064-252-3293 หรืออีเมล lovepier.cafe@gmail.com',
     imageAlt: 'บรรยากาศภายในร้าน',
     guestOptions: ['1 คน', '2 คน', '3 คน', '4 คน', '5–6 คน', '7+ คน (กลุ่ม)'],
     seatingOptions: ['ไม่ระบุ', 'ริมหน้าต่าง', 'โซนเทอเรซ', 'เคาน์เตอร์บาร์', 'มุมส่วนตัว'],
@@ -78,7 +79,7 @@ const RESERVATION_COPY = {
     modalClose: '关闭',
     sending: '发送中…',
     sendError: '发送失败，请重试或直接致电 064-252-3293',
-    sendConfigError: '邮件服务尚未配置，请致电 064-252-3293 或发送邮件至 cafe.lovepier@gmail.com',
+    sendConfigError: '邮件服务尚未配置，请致电 064-252-3293 或发送邮件至 lovepier.cafe@gmail.com',
     imageAlt: '店内环境',
     guestOptions: ['1 位', '2 位', '3 位', '4 位', '5–6 位', '7 位以上（团体）'],
     seatingOptions: ['无偏好', '靠窗', '露台', '吧台', '安静角落'],
@@ -120,7 +121,7 @@ const RESERVATION_COPY = {
     modalClose: 'Close',
     sending: 'Sending…',
     sendError: 'Could not send. Please try again or call 064-252-3293',
-    sendConfigError: 'Email is not set up yet. Please call 064-252-3293 or email cafe.lovepier@gmail.com',
+    sendConfigError: 'Email is not set up yet. Please call 064-252-3293 or email lovepier.cafe@gmail.com',
     imageAlt: 'Cafe interior',
     guestOptions: ['1 person', '2 people', '3 people', '4 people', '5–6 people', '7+ people (group)'],
     seatingOptions: ['No preference', 'Window seat', 'Outdoor terrace', 'Counter / bar', 'Private corner'],
@@ -201,7 +202,21 @@ export default function Reservation() {
         onClose={closeModal}
       />
 
-      <section className="grid grid-cols-1 lg:grid-cols-[11fr_9fr] lg:items-stretch border-b border-black/10 bg-white">
+      <PageHero title={t.heroTitle.replace('\n', ' ')} />
+
+      <div className="bg-[#f5f2ee] px-6 py-8 text-center border-b border-black/10">
+        <p className="text-[10px] tracking-[0.25em] uppercase text-[#1a4a7a]/60 font-medium mb-1">{t.step}</p>
+        <p className="font-display font-light text-ink text-[clamp(22px,4vw,32px)] leading-tight">{t.formTitle.replace('\n', ' ')}</p>
+        <p className="mt-2 text-[12px] text-muted leading-relaxed">{t.intro}</p>
+        <a
+          href="#reservation-form"
+          className="inline-flex items-center gap-2 mt-5 px-7 py-3 rounded-full bg-[#1a4a7a] text-white text-[12px] tracking-[0.18em] uppercase font-semibold hover:bg-[#163d68] transition-all"
+        >
+          {t.heroTag} ↓
+        </a>
+      </div>
+
+      <section id="reservation-form" className="grid grid-cols-1 lg:grid-cols-[11fr_9fr] lg:items-stretch border-b border-black/10 bg-white">
         {/* Left — poster image */}
         <div className="relative overflow-hidden border-b border-black/10 lg:border-b-0 lg:border-r min-h-[58vh] sm:min-h-[66vh] lg:min-h-[calc(100svh-4.25rem)] lg:h-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -234,8 +249,8 @@ export default function Reservation() {
             <a href="tel:0642523293" className="hover:text-gold transition-colors">
               {t.phoneLabel} 064-252-3293
             </a>
-            <a href="mailto:cafe.lovepier@gmail.com" className="hover:text-gold transition-colors break-all">
-              {t.emailLabel} cafe.lovepier@gmail.com
+            <a href="mailto:lovepier.cafe@gmail.com" className="hover:text-gold transition-colors break-all">
+              {t.emailLabel} lovepier.cafe@gmail.com
             </a>
           </div>
 
@@ -243,12 +258,8 @@ export default function Reservation() {
             {t.hoursLabel} : {t.hoursValue}
           </p>
 
-          <span className="inline-flex w-fit items-center rounded-full bg-[#1e3d2f] text-white text-[9px] sm:text-[10px] tracking-[0.2em] uppercase px-4 py-2 mb-8 lg:mb-10">
-            {t.badge}
-          </span>
-
           <div className="mb-6">
-            <p className="text-[10px] tracking-[0.4em] uppercase text-gold mb-3">{t.step}</p>
+            <p className="text-[11px] tracking-[0.05em] text-gold mb-3">{t.step}</p>
             <h2 className="font-display font-light leading-[1.05] text-[clamp(28px,3.2vw,38px)] text-ink">
               {t.formTitle.split('\n').map((line, i) => (
                 <span key={i}>{line}{i === 0 ? <br /> : null}</span>
@@ -278,15 +289,6 @@ export default function Reservation() {
                 disabled={status === 'sending'}
               />
             </div>
-            <input
-              className="flore-input"
-              type="email"
-              id="email"
-              name="email"
-              placeholder={t.email}
-              required
-              disabled={status === 'sending'}
-            />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
                 className="flore-input normal-case tracking-[0.06em]"
@@ -311,31 +313,18 @@ export default function Reservation() {
                 ))}
               </select>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <select
-                key={`guests-${lang}`}
-                className="flore-input"
-                id="guests"
-                name="guests"
-                required
-                disabled={status === 'sending'}
-              >
-                {t.guestOptions.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </select>
-              <select
-                key={`seating-${lang}`}
-                className="flore-input"
-                id="seating"
-                name="seating"
-                disabled={status === 'sending'}
-              >
-                {t.seatingOptions.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              key={`guests-${lang}`}
+              className="flore-input"
+              id="guests"
+              name="guests"
+              required
+              disabled={status === 'sending'}
+            >
+              {t.guestOptions.map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
             <select
               key={`occasion-${lang}`}
               className="flore-input"
@@ -358,7 +347,7 @@ export default function Reservation() {
             <button
               type="submit"
               disabled={status === 'sending'}
-              className="mt-4 w-full sm:w-auto self-start bg-ink text-bg text-[10px] tracking-[0.22em] uppercase px-8 py-3.5 hover:bg-gold hover:text-ink transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-4 w-full sm:w-auto self-start bg-[#1a2d4a] text-white text-[10px] tracking-[0.22em] uppercase px-8 py-3.5 hover:bg-[#243d63] transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {status === 'sending' ? t.sending : t.request}
             </button>

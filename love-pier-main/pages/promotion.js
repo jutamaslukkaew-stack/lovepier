@@ -1,7 +1,11 @@
 import Head from 'next/head'
 import Link from 'next/link'
+import { createPortal } from 'react-dom'
+import { useState } from 'react'
 import Footer from '../components/Footer'
+import PageHero from '../components/PageHero'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
+import { useCart } from '../lib/cart'
 import { useLanguage } from '../lib/language'
 
 const FACEBOOK_MESSENGER_URL = 'https://m.me/61590549024692'
@@ -240,11 +244,15 @@ const PROMOTION_COPY = {
   },
 }
 
+const ADD_LABEL = { th: 'เพิ่มลงตะกร้า', en: 'Add to cart', zh: '加入购物车' }
+
 export default function Promotion() {
   const { lang } = useLanguage()
   const t = PROMOTION_COPY[lang] || PROMOTION_COPY.en
   const deals = t.dealList
   const dealsHeading = t.dealsHeading
+  const [lbDeal, setLbDeal] = useState(null)
+  const { addItem, openCart } = useCart()
 
   return (
     <>
@@ -259,19 +267,7 @@ export default function Promotion() {
         <meta name="twitter:image" content="https://www.lovepier.cafe/og-promotion.png" />
       </Head>
 
-      <section className="relative w-full h-[420px] lg:h-[480px] overflow-hidden border-b border-black/10 reveal-img sm:h-[380px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="w-full h-full object-cover [filter:brightness(0.6)_saturate(0.6)]" src="/uploads/promotion-hero.png" alt={t.heroImageAlt} />
-        <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-6 lg:px-16 text-bg max-w-[720px]">
-          <span className="inline-flex text-[10px] tracking-[0.4em] uppercase text-gold px-3.5 py-1.5 border border-gold/50 mb-6 w-fit">{t.may}</span>
-          <h1 className="font-display font-light leading-[0.95] tracking-[-0.02em] text-[clamp(48px,7vw,92px)]">{t.hero.split('\n').map((l, i) => <span key={i}>{l}{i === 0 ? <br /> : null}</span>)}</h1>
-          <p className="mt-5 text-sm leading-[1.8] text-[rgba(245,243,239,0.75)] font-light max-w-[480px]">{t.desc}</p>
-          <div className="mt-8 flex gap-3 flex-wrap">
-            <Link href="/reservation" className="inline-block bg-gold text-ink text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-bg transition-colors duration-300">{t.reserve}</Link>
-            <Link href="/menu" className="inline-block bg-[rgba(236,231,220,0.2)] text-bg text-[12px] tracking-[0.22em] uppercase px-7 py-3.5 border border-[rgba(236,231,220,0.55)] hover:bg-[rgba(236,231,220,0.32)] hover:text-white transition-colors duration-300">{t.view}</Link>
-          </div>
-        </div>
-      </section>
+      <PageHero title={t.hero.replace('\n', ' ')} />
 
       <section className="px-4 py-14 border-b border-black/10 reveal sm:px-6 sm:py-14 lg:px-10 lg:py-20">
         <div className="flex justify-between items-end mb-12 gap-8 flex-wrap">
@@ -283,22 +279,25 @@ export default function Promotion() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {deals.map(({ badge, title, price, orig, disc, desc, validity, cta, href, img }) => (
-            <div key={title} className="flex flex-col bg-white overflow-hidden border border-black/10 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300">
+          {deals.map((deal) => (
+            <div key={deal.title} className="flex flex-col bg-white overflow-hidden border border-black/10 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="w-full aspect-[4/3] object-cover [filter:saturate(0.7)]" src={img} alt={title} />
+              <div className="relative cursor-zoom-in" onClick={() => setLbDeal(deal)}>
+                <img className="w-full aspect-[4/3] object-cover [filter:saturate(0.7)]" src={deal.img} alt={deal.title} />
+                <div className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-black/40 flex items-center justify-center text-white text-xs">&#x26F6;</div>
+              </div>
               <div className="p-6 sm:p-7 flex flex-col gap-3 flex-1">
-                <span className="text-[9px] tracking-[0.3em] uppercase text-gold border border-gold/40 px-2.5 py-1 self-start">{badge}</span>
-                <h3 className="font-display text-[26px] font-light text-ink leading-[1.1]">{title}</h3>
+                <span className="text-[9px] tracking-[0.3em] uppercase text-gold border border-gold/40 px-2.5 py-1 self-start">{deal.badge}</span>
+                <h3 className="font-display text-[26px] font-light text-ink leading-[1.1]">{deal.title}</h3>
                 <div className="flex items-baseline gap-3 mt-1">
-                  <span className="font-display text-[32px] text-gold font-light">{price}</span>
-                  <span className="text-sm text-[#aaa] line-through">{orig}</span>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-gold bg-gold/10 px-2.5 py-1">{disc}</span>
+                  <span className="font-display text-[32px] text-gold font-light">{deal.price}</span>
+                  <span className="text-sm text-[#aaa] line-through">{deal.orig}</span>
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-gold bg-gold/10 px-2.5 py-1">{deal.disc}</span>
                 </div>
-                <p className="text-[13px] text-[#777] leading-[1.7] font-light flex-1">{desc}</p>
+                <p className="text-[13px] text-[#777] leading-[1.7] font-light flex-1">{deal.desc}</p>
                 <div className="flex justify-between items-center pt-4 mt-2 border-t border-black/10">
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-[#aaa]">{validity}</span>
-                  <Link href={href} className="inline-flex items-center gap-2.5 text-[10px] tracking-[0.3em] uppercase text-[#666] hover:text-ink transition-colors after:content-['→'] after:text-sm after:transition-transform hover:after:translate-x-1">{cta}</Link>
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-[#aaa]">{deal.validity}</span>
+                  <Link href={deal.href} className="inline-flex items-center gap-2.5 text-[10px] tracking-[0.3em] uppercase text-[#666] hover:text-ink transition-colors">{deal.cta} &#x2192;</Link>
                 </div>
               </div>
             </div>
@@ -318,39 +317,39 @@ export default function Promotion() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
           {/* Student Day */}
-          <div className="relative overflow-hidden border border-black/10 bg-[#1a1a1a] text-bg flex flex-col">
-            <div className="h-3 bg-[#b0e04a] w-full" />
+          <div className="relative overflow-hidden border border-black/10 bg-white flex flex-col">
+            <div className="h-3 bg-gold w-full" />
             <div className="p-6 sm:p-7 flex flex-col gap-3 flex-1">
-              <span className="text-[9px] tracking-[0.3em] uppercase text-[#b0e04a] border border-[#b0e04a]/40 px-2.5 py-1 self-start">
+              <span className="text-[9px] tracking-[0.3em] uppercase text-gold border border-gold/40 px-2.5 py-1 self-start">
                 {lang === 'th' ? 'นักเรียน · นักศึกษา' : lang === 'zh' ? '学生专属' : 'Student'}
               </span>
-              <div className="font-display font-light leading-tight text-[clamp(22px,3vw,28px)] text-white mt-1">
-                {lang === 'th' ? <>ล่าย<em className="italic text-[#b0e04a]">ฟรี!</em></> : lang === 'zh' ? <>游泳<em className="italic text-[#b0e04a]">免费!</em></> : <>Swim<em className="italic text-[#b0e04a]"> Free!</em></>}
+              <div className="font-display font-light leading-tight text-[clamp(22px,3vw,28px)] text-ink mt-1">
+                {lang === 'th' ? <>เล่น<em className="italic text-gold">ฟรี!</em></> : lang === 'zh' ? <>玩水<em className="italic text-gold">免费!</em></> : <>Play<em className="italic text-gold"> Free!</em></>}
               </div>
-              <div className="font-display text-[40px] sm:text-[44px] font-light text-[#b0e04a] leading-none mt-1">
+              <div className="font-display text-[40px] sm:text-[44px] font-light text-gold leading-none mt-1">
                 {lang === 'th' ? 'ทุกวันจันทร์' : lang === 'zh' ? '每周一' : 'Every Monday'}
               </div>
-              <p className="text-[12px] text-white/55 leading-[1.75] font-light mt-1">
+              <p className="text-[12px] text-[#777] leading-[1.75] font-light mt-1">
                 {lang === 'th' ? 'เงื่อนไข: แสดงบัตรนักเรียน หรือบัตรนักศึกษา ที่ยังไม่หมดอายุ ณ จุดชำระเงิน' : lang === 'zh' ? '条件：出示有效学生证（在结账时未过期）' : 'Condition: Show a valid student ID (not expired) at checkout.'}
               </p>
-              <div className="mt-auto pt-4 border-t border-white/10">
-                <span className="text-[10px] tracking-[0.2em] uppercase text-white/30">Surf Pool · {lang === 'th' ? 'ทางน้ำ' : lang === 'zh' ? '水上活动' : 'Water Activity'}</span>
+              <div className="mt-auto pt-4 border-t border-black/10">
+                <span className="text-[10px] tracking-[0.2em] uppercase text-[#aaa]">Surf Pool · {lang === 'th' ? 'ทางน้ำ' : lang === 'zh' ? '水上活动' : 'Water Activity'}</span>
               </div>
             </div>
           </div>
 
           {/* Family Day */}
           <div className="relative overflow-hidden border border-black/10 bg-white flex flex-col">
-            <div className="h-3 bg-[#ff5c7a] w-full" />
+            <div className="h-3 bg-[#1a4a7a] w-full" />
             <div className="p-6 sm:p-7 flex flex-col gap-3 flex-1">
-              <span className="text-[9px] tracking-[0.3em] uppercase text-[#ff5c7a] border border-[#ff5c7a]/40 px-2.5 py-1 self-start">
+              <span className="text-[9px] tracking-[0.3em] uppercase text-[#1a4a7a] border border-[#1a4a7a]/30 px-2.5 py-1 self-start">
                 {lang === 'th' ? 'ครอบครัว' : lang === 'zh' ? '家庭日' : 'Family Day'}
               </span>
               <div className="font-display font-light leading-tight text-[clamp(22px,3vw,28px)] text-ink mt-1">
-                {lang === 'th' ? 'Family Day' : lang === 'zh' ? 'Family Day' : 'Family Day'}
+                {lang === 'th' ? 'วันครอบครัว' : lang === 'zh' ? '家庭日' : 'Family Day'}
               </div>
               <div className="flex items-baseline gap-3">
-                <span className="font-display text-[40px] sm:text-[44px] font-light text-[#ff5c7a] leading-none">฿950</span>
+                <span className="font-display text-[40px] sm:text-[44px] font-light text-[#1a4a7a] leading-none">฿950</span>
                 <span className="text-base text-[#bbb] line-through">฿1,200</span>
               </div>
               <p className="text-[12px] text-[#777] leading-[1.75] font-light">
@@ -364,16 +363,16 @@ export default function Promotion() {
 
           {/* Lady Day */}
           <div className="relative overflow-hidden border border-black/10 bg-white flex flex-col">
-            <div className="h-3 bg-[#f97316] w-full" />
+            <div className="h-3 bg-gold w-full" />
             <div className="p-6 sm:p-7 flex flex-col gap-3 flex-1">
-              <span className="text-[9px] tracking-[0.3em] uppercase text-[#f97316] border border-[#f97316]/40 px-2.5 py-1 self-start">
+              <span className="text-[9px] tracking-[0.3em] uppercase text-gold border border-gold/40 px-2.5 py-1 self-start">
                 {lang === 'th' ? 'ผู้หญิง' : lang === 'zh' ? '女士专属' : 'Ladies'}
               </span>
               <div className="font-display font-light leading-tight text-[clamp(22px,3vw,28px)] text-ink mt-1">
-                Lady Day
+                {lang === 'th' ? 'วันสาวๆ' : lang === 'zh' ? '女士日' : 'Lady Day'}
               </div>
               <div className="flex items-baseline gap-3">
-                <span className="font-display text-[40px] sm:text-[44px] font-light text-[#f97316] leading-none">฿950</span>
+                <span className="font-display text-[40px] sm:text-[44px] font-light text-gold leading-none">฿950</span>
                 <span className="text-base text-[#bbb] line-through">฿1,200</span>
               </div>
               <p className="text-[12px] text-[#777] leading-[1.75] font-light">
@@ -409,6 +408,38 @@ export default function Promotion() {
       </section>
 
       <Footer tagline={FOOTER_TAGLINES.promotion} />
+
+      {lbDeal && typeof window !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[200] flex flex-col bg-black" onClick={() => setLbDeal(null)}>
+          <button onClick={() => setLbDeal(null)} className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white text-base hover:bg-white/30 transition-colors">✕</button>
+          <div className="relative w-full shrink-0" style={{ height: '60dvh' }} onClick={e => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={lbDeal.img} alt={lbDeal.title} className="absolute inset-0 w-full h-full object-cover object-center" />
+          </div>
+          <div className="flex-1 overflow-y-auto px-6 pt-8 pb-8 text-center flex flex-col items-center justify-center gap-4" onClick={e => e.stopPropagation()}>
+            <span className="text-[9px] tracking-[0.3em] uppercase text-gold border border-gold/40 px-2.5 py-1">{lbDeal.badge}</span>
+            <p className="text-white text-2xl sm:text-3xl font-semibold leading-snug">{lbDeal.title}</p>
+            <div className="flex items-baseline gap-3 justify-center">
+              <span className="text-[#e3c77a] text-2xl sm:text-3xl font-semibold tabular-nums">{lbDeal.price}</span>
+              <span className="text-white/40 text-base line-through tabular-nums">{lbDeal.orig}</span>
+              <span className="text-[10px] tracking-[0.15em] uppercase text-gold bg-gold/15 px-2 py-0.5">{lbDeal.disc}</span>
+            </div>
+            {lbDeal.desc && <p className="text-white/70 text-sm font-light leading-relaxed" style={{ maxWidth: '88%', textWrap: 'balance' }}>{lbDeal.desc}</p>}
+            <button
+              onClick={() => {
+                addItem({ id: `promo-${lbDeal.title}`, name: lbDeal.title, price: lbDeal.price.replace('฿', ''), image: lbDeal.img })
+                openCart()
+                setLbDeal(null)
+              }}
+              className="mt-2 px-8 py-3 rounded-full bg-gold text-ink text-[12px] tracking-[0.18em] uppercase font-semibold hover:bg-[#e3c77a] transition-colors"
+            >
+              {ADD_LABEL[lang] || ADD_LABEL.en}
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   )
 }
+
