@@ -24,21 +24,8 @@ const EVENTS_COPY = {
       { src: '/uploads/events-kayak.png', alt: 'พายเรือคายัค' },
     ],
     freeLabel: 'ฟรี',
-    featuredImageAlt: 'Flow Sunset — The Symphony Club',
-    featuredEvent: {
-      title: 'Flow',
-      titleEm: 'Sunset',
-      date: 'เสาร์ 27 มิ.ย.',
-      year: '2026',
-      time: '16:00 – 20:00',
-      timeSub: 'DJ SUPACHAI 18:00 – 20:00',
-      entry: '฿500 ต่อท่าน',
-      entrySub: 'เล่นกิจกรรมในคลับไม่จำกัด',
-      desc: 'Surf Pool · Skimboard · Kayak · Sup Board อาหาร เครื่องดื่ม และสินค้าพาร์ทเนอร์ตลอดงาน รับริสแบนด์และเครื่องดื่มกระป๋องฟรี 1 แก้ว',
-    },
-    eventList: [
-      { day: '27', month: 'มิ.ย. 2026', title: 'Flow Sunset', sub: '16:00 – 20:00 · The Symphony Club', cat: 'ปาร์ตี้', price: '฿500', free: false },
-    ],
+    featuredImageAlt: 'Featured Event',
+    perPerson: ' ต่อท่าน',
     recurring: [
       { day: 'ทุกวัน(ยกเว้นวันพุธ)', title: 'Surf Pool', text: 'สัมผัสความสนุกของการโต้คลื่นในสระคลื่นมาตรฐาน เหมาะทั้งมือใหม่และสายเซิร์ฟ', time: '10:00 – 20:00' },
       { day: 'ทุกวัน (ยกเว้นวันพุธ)', title: 'เจ็ตสกี', text: 'เร่งความเร็วบนผืนน้ำกับเจ็ตสกี สัมผัสความตื่นเต้นแบบเต็มสปีด', time: '10:00 – 20:00' },
@@ -64,21 +51,8 @@ const EVENTS_COPY = {
       { src: '/uploads/events-kayak.png', alt: '皮划艇' },
     ],
     freeLabel: '免费',
-    featuredImageAlt: 'Flow Sunset — The Symphony Club',
-    featuredEvent: {
-      title: 'Flow',
-      titleEm: 'Sunset',
-      date: '6月27日 周六',
-      year: '2026',
-      time: '16:00 – 20:00',
-      timeSub: 'DJ SUPACHAI 18:00 – 20:00',
-      entry: '每人 ฿500',
-      entrySub: '俱乐部内活动不限次数',
-      desc: 'Surf Pool · Skimboard · Kayak · Sup Board，餐饮与合作伙伴产品供应至活动结束，赠送手环及一罐免费饮料。',
-    },
-    eventList: [
-      { day: '27', month: '2026年6月', title: 'Flow Sunset', sub: '16:00 – 20:00 · The Symphony Club', cat: '派对', price: '฿500', free: false },
-    ],
+    featuredImageAlt: 'Featured Event',
+    perPerson: ' 每人',
     recurring: [
       { day: '每天（周三除外）', title: 'Surf Pool', text: '在标准造浪池中体验冲浪乐趣，新手与冲浪爱好者都适合。', time: '10:00 – 20:00' },
       { day: '每天（周三除外）', title: '水上摩托', text: '驾驶水上摩托驰骋海面，感受全速刺激。', time: '10:00 – 20:00' },
@@ -104,21 +78,8 @@ const EVENTS_COPY = {
       { src: '/uploads/events-kayak.png', alt: 'Kayaking' },
     ],
     freeLabel: 'Free',
-    featuredImageAlt: 'Flow Sunset — The Symphony Club',
-    featuredEvent: {
-      title: 'Flow',
-      titleEm: 'Sunset',
-      date: 'Sat 27 Jun',
-      year: '2026',
-      time: '16:00 – 20:00',
-      timeSub: 'DJ SUPACHAI 18:00 – 20:00',
-      entry: '฿500 per person',
-      entrySub: 'Unlimited club activities included',
-      desc: 'Surf Pool · Skimboard · Kayak · Sup Board. Food, drinks and partner products all evening. Free wristband and one canned drink.',
-    },
-    eventList: [
-      { day: '27', month: 'Jun 2026', title: 'Flow Sunset', sub: '16:00 – 20:00 · The Symphony Club', cat: 'Party', price: '฿500', free: false },
-    ],
+    featuredImageAlt: 'Featured Event',
+    perPerson: ' per person',
     recurring: [
       { day: 'Every day (except Wednesday)', title: 'Surf Pool', text: 'Ride the waves in a standard surf pool — great for beginners and seasoned surfers alike.', time: '10:00 – 20:00' },
       { day: 'Every day (except Wednesday)', title: 'Jet Ski', text: 'Pick up speed on the water with jet skis and feel the full-throttle thrill.', time: '10:00 – 20:00' },
@@ -168,7 +129,6 @@ export default function Events({ dbEvents = [] }) {
     ? (() => {
         const d = formatEventDate(dbFeatured.eventDate, lang)
         const priceStr = dbFeatured.price != null ? `฿${dbFeatured.price.toLocaleString()}` : freeLabel
-        const perPerson = lang === 'th' ? ' ต่อท่าน' : lang === 'zh' ? ' 每人' : ' per person'
         return {
           title: dbFeatured[titleKey] || dbFeatured.titleEn,
           titleEm: dbFeatured.titleEm,
@@ -176,29 +136,27 @@ export default function Events({ dbEvents = [] }) {
           year: d.year,
           time: dbFeatured.timeRange,
           timeSub: dbFeatured.timeSub,
-          entry: dbFeatured.price != null ? `${priceStr}${perPerson}` : freeLabel,
+          entry: dbFeatured.price != null ? `${priceStr}${t.perPerson}` : freeLabel,
           entrySub: dbFeatured[entrySubKey],
           desc: dbFeatured[descKey],
           imageUrl: dbFeatured.imageUrl || null,
         }
       })()
-    : t.featuredEvent
+    : null
 
-  const eventList = dbEventList.length > 0
-    ? dbEventList.map((e) => {
-        const d = formatEventDate(e.eventDate, lang)
-        const priceStr = e.price != null ? `฿${e.price.toLocaleString()}` : freeLabel
-        return {
-          day: d.day,
-          month: d.month,
-          title: e[titleKey] || e.titleEn,
-          sub: [e.timeRange, e.location].filter(Boolean).join(' · '),
-          cat: e[catKey],
-          price: priceStr,
-          free: e.price == null,
-        }
-      })
-    : t.eventList
+  const eventList = dbEventList.map((e) => {
+    const d = formatEventDate(e.eventDate, lang)
+    const priceStr = e.price != null ? `฿${e.price.toLocaleString()}` : freeLabel
+    return {
+      day: d.day,
+      month: d.month,
+      title: e[titleKey] || e.titleEn,
+      sub: [e.timeRange, e.location].filter(Boolean).join(' · '),
+      cat: e[catKey],
+      price: priceStr,
+      free: e.price == null,
+    }
+  })
 
   return (
     <>
@@ -213,7 +171,7 @@ export default function Events({ dbEvents = [] }) {
         <p className="font-display font-light text-ink text-[clamp(22px,4vw,32px)] leading-tight">{t.desc}</p>
       </div>
 
-      <section className="grid grid-cols-1 lg:grid-cols-2 lg:items-stretch border-b border-black/10 reveal-img">
+      {fe && <section className="grid grid-cols-1 lg:grid-cols-2 lg:items-stretch border-b border-black/10 reveal-img">
         <div className="relative overflow-hidden aspect-[4/3] lg:aspect-auto lg:min-h-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -235,7 +193,7 @@ export default function Events({ dbEvents = [] }) {
             <Link href="/reservation" className="inline-block bg-[#4a3520] text-white text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-[#3a2818] transition-colors duration-300">{t.reserve}</Link>
           </div>
         </div>
-      </section>
+      </section>}
 
       {eventList.length > 0 && (
         <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 border-b border-black/10 reveal">
