@@ -352,7 +352,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
       <ScrollStackPanel>
         <section className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] px-4 py-14 items-start lg:items-center reveal sm:px-6 sm:py-16 lg:px-10 lg:py-20 gap-12 lg:gap-14 xl:gap-20">
           <div className="inline-block max-w-full lg:pr-6 xl:pr-10">
-            <Link href="/menu" className="group flex w-full items-center justify-between px-6 py-5 bg-[#1a3a4a] text-[rgba(245,243,239,0.95)] hover:bg-[#15303e] transition-colors duration-200">
+            <Link href="/menu" className="group flex w-full items-center justify-between px-6 py-5 bg-[#4a3520] text-[rgba(245,243,239,0.95)] hover:bg-[#3a2818] transition-colors duration-200">
               <span className="text-[13px] sm:text-[15px] tracking-[0.2em] uppercase font-light">{t.exploreMenu}</span>
               <span className="text-lg transition-transform duration-200 group-hover:translate-x-1.5">→</span>
             </Link>

@@ -170,7 +170,7 @@ export default function About() {
               href="https://maps.google.com/?q=800+108+Saensuk+Mueang+Chonburi"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-8 inline-flex items-center gap-2 text-[13px] tracking-[0.05em] bg-[#1a2d4a] text-white px-6 py-3 hover:bg-[#243d63] transition-all duration-300 font-light"
+              className="mt-8 inline-flex items-center gap-2 text-[13px] tracking-[0.05em] bg-[#4a3520] text-white px-6 py-3 hover:bg-[#3a2818] transition-all duration-300 font-light"
             >
               {t.mapsLabel}
             </a>
@@ -194,7 +194,7 @@ export default function About() {
             </div>
             <Link
               href="/reservation"
-              className="inline-flex items-center gap-3 text-[13px] tracking-[0.05em] bg-[#1a2d4a] text-white px-8 py-4 hover:bg-[#243d63] transition-colors font-light"
+              className="inline-flex items-center gap-3 text-[13px] tracking-[0.05em] bg-[#4a3520] text-white px-8 py-4 hover:bg-[#3a2818] transition-colors font-light"
             >
               {t.reserveLabel} →
             </Link>

@@ -1213,10 +1213,10 @@ export default function Menu({ dbMenuData }) {
               key={id}
               type="button"
               onClick={() => scrollTo(id)}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-all cursor-pointer border ${
+              className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 activeAnchor === id
-                  ? 'bg-[#4a3520] text-white border-[#4a3520]'
-                  : 'bg-transparent text-[#4a3520]/60 border-[#4a3520]/25 hover:border-[#4a3520]/60 hover:text-[#4a3520]'
+                  ? 'bg-[#4a3520] text-white'
+                  : 'bg-[#4a3520]/[0.07] text-[#4a3520]/70 hover:bg-[#4a3520]/15 hover:text-[#4a3520]'
               }`}
             >
               {label}
@@ -1370,11 +1370,11 @@ export default function Menu({ dbMenuData }) {
       {totalQty > 0 && (
         <button
           onClick={openCart}
-          className="fixed bottom-6 right-5 z-[170] flex items-center gap-2 bg-[#4a3520] text-white px-4 py-3 rounded-full shadow-lg font-semibold text-[13px] hover:bg-[#243d63] transition-colors active:scale-95"
+          className="fixed bottom-6 right-5 z-[170] flex items-center gap-2 bg-[#4a3520] text-white px-4 py-3 rounded-full shadow-lg font-semibold text-[13px] hover:bg-[#3a2818] transition-colors active:scale-95"
         >
           <span>🛒</span>
           <span>{CART_BTN_COPY[lang] ?? 'Cart'}</span>
-          <span className="bg-white text-[#1a2d4a] text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+          <span className="bg-white text-[#4a3520] text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
             {totalQty}
           </span>
         </button>

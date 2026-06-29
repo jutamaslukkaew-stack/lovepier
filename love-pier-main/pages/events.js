@@ -165,7 +165,7 @@ export default function Events() {
           </div>
           <p className="text-sm text-[#555] leading-[1.9] font-light mb-8 max-w-[480px]">{fe.desc}</p>
           <div className="flex gap-3 flex-wrap">
-            <Link href="/reservation" className="inline-block bg-[#1a2d4a] text-white text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-[#243d63] transition-colors duration-300">{t.reserve}</Link>
+            <Link href="/reservation" className="inline-block bg-[#4a3520] text-white text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-[#3a2818] transition-colors duration-300">{t.reserve}</Link>
           </div>
         </div>
       </section>

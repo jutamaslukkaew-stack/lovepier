@@ -234,8 +234,8 @@ export default function Gallery() {
                 onClick={() => { setActiveFilter(cat); setShowAll(false) }}
                 className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-all cursor-pointer border ${
                   activeFilter === cat
-                    ? 'bg-[#4a3520] text-white border-[#1a4a7a]'
-                    : 'bg-transparent text-[#1a4a7a]/60 border-[#1a4a7a]/25 hover:border-[#1a4a7a]/60 hover:text-[#1a4a7a]'
+                    ? 'bg-[#4a3520] text-white border-[#4a3520]'
+                    : 'bg-[#4a3520]/[0.07] text-[#4a3520]/70 border-transparent hover:bg-[#4a3520]/15 hover:text-[#4a3520]'
                 }`}
               >
                 {label}

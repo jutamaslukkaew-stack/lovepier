@@ -205,12 +205,12 @@ export default function Reservation() {
       <PageHero title={t.heroTitle.replace('\n', ' ')} />
 
       <div className="bg-[#f5f2ee] px-6 py-8 text-center border-b border-black/10">
-        <p className="text-[10px] tracking-[0.25em] uppercase text-[#1a4a7a]/60 font-medium mb-1">{t.step}</p>
+        <p className="text-[10px] tracking-[0.25em] uppercase text-[#4a3520]/60 font-medium mb-1">{t.step}</p>
         <p className="font-display font-light text-ink text-[clamp(22px,4vw,32px)] leading-tight">{t.formTitle.replace('\n', ' ')}</p>
         <p className="mt-2 text-[12px] text-muted leading-relaxed">{t.intro}</p>
         <a
           href="#reservation-form"
-          className="inline-flex items-center gap-2 mt-5 px-7 py-3 rounded-full bg-[#1a4a7a] text-white text-[12px] tracking-[0.18em] uppercase font-semibold hover:bg-[#163d68] transition-all"
+          className="inline-flex items-center gap-2 mt-5 px-7 py-3 rounded-full bg-[#4a3520] text-white text-[12px] tracking-[0.18em] uppercase font-semibold hover:bg-[#3a2818] transition-all"
         >
           {t.heroTag} ↓
         </a>
@@ -347,7 +347,7 @@ export default function Reservation() {
             <button
               type="submit"
               disabled={status === 'sending'}
-              className="mt-4 w-full sm:w-auto self-start bg-[#1a2d4a] text-white text-[10px] tracking-[0.22em] uppercase px-8 py-3.5 hover:bg-[#243d63] transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-4 w-full sm:w-auto self-start bg-[#4a3520] text-white text-[10px] tracking-[0.22em] uppercase px-8 py-3.5 hover:bg-[#3a2818] transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {status === 'sending' ? t.sending : t.request}
             </button>
