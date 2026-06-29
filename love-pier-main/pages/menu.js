@@ -148,7 +148,7 @@ function Lightbox({ items, index, onIndexChange, onClose }) {
           <p className="mt-2 text-[#e3c77a] text-2xl sm:text-3xl tabular-nums font-semibold">{current.priceText}</p>
         ) : null}
         {current.description ? (
-          <p className="mt-3 mx-auto text-white/80 text-base sm:text-lg font-light leading-relaxed" style={{ maxWidth: '560px' }}>
+          <p className="mt-3 mx-auto text-white/80 text-xl sm:text-2xl font-light leading-relaxed" style={{ maxWidth: '400px' }}>
             {current.description}
           </p>
         ) : null}
