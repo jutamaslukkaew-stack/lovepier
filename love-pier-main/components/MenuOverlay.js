@@ -70,7 +70,7 @@ export default function MenuOverlay({ isOpen, onClose }) {
       <div className="shrink-0 px-4 py-3 sm:px-6 flex items-center justify-between border-b border-white/[0.08] gap-3">
         <Link href="/" onClick={onClose} className="shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/uploads/logo-8dc1f126.png" alt="Love Pier" className="h-9 block" style={{ filter: 'invert(1) brightness(2) opacity(0.85)' }} />
+          <img src="/uploads/logo-8dc1f126.webp" alt="Love Pier" className="h-9 block" style={{ filter: 'invert(1) brightness(2) opacity(0.85)' }} />
         </Link>
         <button onClick={onClose} className="ml-auto bg-transparent border border-white/[0.15] w-9 h-9 flex items-center justify-center text-white/70 hover:border-white hover:text-white transition-colors shrink-0" aria-label="Close menu">✕</button>
       </div>

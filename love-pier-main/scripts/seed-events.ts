@@ -37,7 +37,7 @@ async function main() {
       category_th: 'ปาร์ตี้',
       category_en: 'Party',
       category_zh: '派对',
-      image_url: '/uploads/events-flow-sunset.png',
+      image_url: '/uploads/events-flow-sunset.webp',
       is_featured: true,
       is_active: true,
       sort_order: 0,

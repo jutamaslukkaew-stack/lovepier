@@ -13,7 +13,7 @@ const TILES = [
     id: 'sunset',
     cat: 'beach',
     pos: '52% 58%',
-    src: '/uploads/gallery-sunset-sea.png',
+    src: '/uploads/gallery-sunset-sea.webp',
     cap: { th: 'พระอาทิตย์ตกริมทะเล', en: 'Sunset by the shore', zh: '海边日落' },
   },
   {
@@ -21,7 +21,7 @@ const TILES = [
     id: 'interior-dining',
     cat: 'interior',
     pos: '48% 42%',
-    src: '/uploads/gallery-interior-dining.png',
+    src: '/uploads/gallery-interior-dining.webp',
     cap: { th: 'โซนทานอาหาร', en: 'Dining area', zh: '用餐区' },
   },
   {
@@ -29,7 +29,7 @@ const TILES = [
     id: 'latte-table',
     cat: 'interior',
     pos: '38% 48%',
-    src: '/uploads/gallery-latte-table.png',
+    src: '/uploads/gallery-latte-table.webp',
     cap: { th: 'ลาเต้อาร์ตริมทะเล', en: 'Latte art by the pier', zh: '码头拉花拿铁' },
   },
   {
@@ -37,7 +37,7 @@ const TILES = [
     id: 'golden-water',
     cat: 'beach',
     pos: '44% 38%',
-    src: '/uploads/gallery-golden-water.png',
+    src: '/uploads/gallery-golden-water.webp',
     cap: { th: 'แสงทองบนผิวน้ำ', en: 'Golden light on the water', zh: '水面金光' },
   },
   {
@@ -45,7 +45,7 @@ const TILES = [
     id: 'beach-terrace',
     cat: 'beach',
     pos: '58% 32%',
-    src: '/uploads/gallery-beach-terrace.png',
+    src: '/uploads/gallery-beach-terrace.webp',
     cap: { th: 'เทอเรซกลางแจ้ง', en: 'Outdoor terrace', zh: '户外露台' },
   },
   {
@@ -53,7 +53,7 @@ const TILES = [
     id: 'matcha-forest',
     cat: 'food',
     pos: '50% 28%',
-    src: '/uploads/gallery-matcha-forest.png',
+    src: '/uploads/gallery-matcha-forest.webp',
     cap: { th: 'มัทฉะในสวนป่า', en: 'Matcha in the forest', zh: '森林抹茶' },
   },
   {
@@ -61,7 +61,7 @@ const TILES = [
     id: 'interior-moon-lamp',
     cat: 'interior',
     pos: '62% 22%',
-    src: '/uploads/gallery-interior-moon-lamp.png',
+    src: '/uploads/gallery-interior-moon-lamp.webp',
     cap: { th: 'โคมไฟดวงจันทร์', en: 'Moon lamp ceiling', zh: '月亮灯饰' },
   },
   {
@@ -69,7 +69,7 @@ const TILES = [
     id: 'matcha-moss',
     cat: 'food',
     pos: '34% 52%',
-    src: '/uploads/gallery-matcha-moss.png',
+    src: '/uploads/gallery-matcha-moss.webp',
     cap: { th: 'มัทฉะช้าๆ กลางธรรมชาติ', en: 'Slow matcha, wild greens', zh: '自然里的抹茶' },
   },
   {
@@ -77,7 +77,7 @@ const TILES = [
     id: 'chicken-rice-plate',
     cat: 'food',
     pos: '46% 38%',
-    src: '/uploads/gallery-chicken-rice-plate.png',
+    src: '/uploads/gallery-chicken-rice-plate.webp',
     cap: { th: 'ข้าวมันไก่สูตรต้นตำรับ', en: 'Signature chicken rice', zh: '招牌鸡油饭' },
   },
   {
@@ -85,7 +85,7 @@ const TILES = [
     id: 'beach-lawn',
     cat: 'beach',
     pos: '50% 45%',
-    src: '/uploads/gallery-beach-lawn.png',
+    src: '/uploads/gallery-beach-lawn.webp',
     cap: { th: 'สนามหญ้าริมทะเล', en: 'Beachside lawn', zh: '海边草坪' },
   },
   {
@@ -93,7 +93,7 @@ const TILES = [
     id: 'espresso-card',
     cat: 'food',
     pos: '50% 68%',
-    src: '/uploads/gallery-espresso-card.png',
+    src: '/uploads/gallery-espresso-card.webp',
     cap: { th: 'เอสเพรสโซ่ Love Pier', en: 'Love Pier espresso', zh: 'Love Pier 浓缩' },
   },
   {
@@ -101,7 +101,7 @@ const TILES = [
     id: 'can-latte',
     cat: 'food',
     pos: '42% 36%',
-    src: '/uploads/gallery-can-latte.png',
+    src: '/uploads/gallery-can-latte.webp',
     cap: { th: 'กาแฟนมแคนสด', en: 'Iced latte in a can', zh: '罐装冰拿铁' },
   },
   {
@@ -109,7 +109,7 @@ const TILES = [
     id: 'matcha-can',
     cat: 'food',
     pos: '50% 32%',
-    src: '/uploads/gallery-matcha-can.png',
+    src: '/uploads/gallery-matcha-can.webp',
     cap: { th: 'มัทฉะแคนซิกเนเจอร์', en: 'Signature matcha can', zh: '招牌抹茶罐' },
   },
   {
@@ -117,7 +117,7 @@ const TILES = [
     id: 'beach-surf-signs',
     cat: 'beach',
     pos: '48% 50%',
-    src: '/uploads/gallery-beach-surf-signs.png',
+    src: '/uploads/gallery-beach-surf-signs.webp',
     cap: { th: 'ริม Surf Pool', en: 'By the surf pool', zh: '冲浪池畔' },
   },
   {
@@ -125,7 +125,7 @@ const TILES = [
     id: 'can-citrus',
     cat: 'food',
     pos: '56% 44%',
-    src: '/uploads/gallery-can-citrus.png',
+    src: '/uploads/gallery-can-citrus.webp',
     cap: { th: 'คอฟฟี่ผสมส้ม', en: 'Citrus coffee blend', zh: '柑橘咖啡' },
   },
 ]

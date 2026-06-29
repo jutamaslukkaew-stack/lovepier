@@ -18,10 +18,10 @@ const EVENTS_COPY = {
     weekly: 'กิจกรรมประจำวัน',
     weeklyDesc: 'กิจกรรมที่คุณมาได้ทุกวัน',
     weeklyGallery: [
-      { src: '/uploads/events-surf-pool.png', alt: 'Surf Pool' },
-      { src: '/uploads/events-jet-ski.png', alt: 'เจ็ตสกี' },
-      { src: '/uploads/events-skimboard.png', alt: 'Sup Board & Skim Board' },
-      { src: '/uploads/events-kayak.png', alt: 'พายเรือคายัค' },
+      { src: '/uploads/events-surf-pool.webp', alt: 'Surf Pool' },
+      { src: '/uploads/events-jet-ski.webp', alt: 'เจ็ตสกี' },
+      { src: '/uploads/events-skimboard.webp', alt: 'Sup Board & Skim Board' },
+      { src: '/uploads/events-kayak.webp', alt: 'พายเรือคายัค' },
     ],
     freeLabel: 'ฟรี',
     featuredImageAlt: 'Featured Event',
@@ -45,10 +45,10 @@ const EVENTS_COPY = {
     weekly: '每日固定活动',
     weeklyDesc: '每天都有，直接到店即可。',
     weeklyGallery: [
-      { src: '/uploads/events-surf-pool.png', alt: 'Surf Pool' },
-      { src: '/uploads/events-jet-ski.png', alt: '水上摩托' },
-      { src: '/uploads/events-skimboard.png', alt: 'Sup Board & Skim Board' },
-      { src: '/uploads/events-kayak.png', alt: '皮划艇' },
+      { src: '/uploads/events-surf-pool.webp', alt: 'Surf Pool' },
+      { src: '/uploads/events-jet-ski.webp', alt: '水上摩托' },
+      { src: '/uploads/events-skimboard.webp', alt: 'Sup Board & Skim Board' },
+      { src: '/uploads/events-kayak.webp', alt: '皮划艇' },
     ],
     freeLabel: '免费',
     featuredImageAlt: 'Featured Event',
@@ -72,10 +72,10 @@ const EVENTS_COPY = {
     weekly: 'Daily activities',
     weeklyDesc: 'Something to enjoy every day — just show up.',
     weeklyGallery: [
-      { src: '/uploads/events-surf-pool.png', alt: 'Surf Pool' },
-      { src: '/uploads/events-jet-ski.png', alt: 'Jet Ski' },
-      { src: '/uploads/events-skimboard.png', alt: 'Sup Board & Skim Board' },
-      { src: '/uploads/events-kayak.png', alt: 'Kayaking' },
+      { src: '/uploads/events-surf-pool.webp', alt: 'Surf Pool' },
+      { src: '/uploads/events-jet-ski.webp', alt: 'Jet Ski' },
+      { src: '/uploads/events-skimboard.webp', alt: 'Sup Board & Skim Board' },
+      { src: '/uploads/events-kayak.webp', alt: 'Kayaking' },
     ],
     freeLabel: 'Free',
     featuredImageAlt: 'Featured Event',
@@ -176,7 +176,7 @@ export default function Events({ dbEvents = [] }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             className="absolute inset-0 w-full h-full object-cover object-[50%_42%] scale-[1.14] origin-center [filter:saturate(0.58)_brightness(0.9)_contrast(1.04)]"
-            src={fe.imageUrl || '/uploads/events-flow-sunset.png'}
+            src={fe.imageUrl || '/uploads/events-flow-sunset.webp'}
             alt={t.featuredImageAlt}
           />
         </div>

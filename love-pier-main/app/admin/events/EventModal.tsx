@@ -230,7 +230,7 @@ export function EventModal({
               <Input
                 value={form.imageUrl}
                 onChange={(e) => set('imageUrl', e.target.value)}
-                placeholder="/uploads/event-poster.jpg"
+                placeholder="/uploads/event-poster.webp"
               />
               <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
                 {uploading ? 'กำลังอัปโหลด...' : 'อัปโหลด'}

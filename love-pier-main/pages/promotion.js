@@ -51,7 +51,7 @@ function dealsFromDB(rows, lang) {
       validity,
       cta: CTA_LABEL[lang] || CTA_LABEL.en,
       href: '/menu',
-      img: p.imageUrl || '/uploads/promotion-large-chicken-rice-set.png',
+      img: p.imageUrl || '/uploads/promotion-large-chicken-rice-set.webp',
     }
   })
 }
@@ -85,7 +85,7 @@ const PROMOTION_COPY = {
         desc: 'เซตข้าวมันไก่ขนาดใหญ่ (เมนู ฿550) รับเครื่องดื่มเย็น 1 แก้วฟรี — เลือก Americano / Latte / ชาไทยพรีเมียม (สูงสุด ฿120)',
         validity: 'ทานที่ร้าน · ทุกวัน',
         cta: 'ดูเมนู', href: '/menu',
-        img: '/uploads/promotion-large-chicken-rice-set.png',
+        img: '/uploads/promotion-large-chicken-rice-set.webp',
       },
       {
         badge: 'ข้าวมันไก่',
@@ -94,7 +94,7 @@ const PROMOTION_COPY = {
         desc: 'เซตขนาดกลาง (฿280) + ลาเต้เย็นเพิ่มเพียง ฿50 (ปกติในเมนู ฿120)',
         validity: 'ทานที่ร้าน · ทุกวัน',
         cta: 'ดูเมนู', href: '/menu',
-        img: '/uploads/promotion-medium-set-iced-latte.png',
+        img: '/uploads/promotion-medium-set-iced-latte.webp',
       },
       {
         badge: 'ซิกเนเจอร์',
@@ -103,7 +103,7 @@ const PROMOTION_COPY = {
         desc: 'ข้าวมันไก่ซิกเนเจอร์เสิร์ฟเป็นถาด (฿670) พร้อมชาไทยพรีเมียม 2 แก้วฟรี (฿100/แก้ว)',
         validity: 'ทานที่ร้าน · แชร์ได้',
         cta: 'ดูเมนู', href: '/menu',
-        img: '/uploads/promotion-signature-tray.png',
+        img: '/uploads/promotion-signature-tray.webp',
       },
       {
         badge: 'บรันช์',
@@ -112,7 +112,7 @@ const PROMOTION_COPY = {
         desc: 'จาน Pier Breakfast (฿280) รับอเมริกาโน่ร้อนฟรี 1 แก้ว (เมนู ฿90)',
         validity: 'ทานที่ร้าน · 09:00–18:00',
         cta: 'ดูเมนู', href: '/menu',
-        img: '/uploads/promotion-pier-breakfast.png',
+        img: '/uploads/promotion-pier-breakfast.webp',
       },
       {
         badge: 'มัทฉะ',
@@ -121,7 +121,7 @@ const PROMOTION_COPY = {
         desc: 'มัทฉะลาเต้ (฿150) + ทาร์ตไข่ (฿55) ในราคาชุดเดียว',
         validity: 'ทานที่ร้าน · ทุกวัน',
         cta: 'ดูเมนู', href: '/menu',
-        img: '/uploads/promotion-matcha-tart.png',
+        img: '/uploads/promotion-matcha-tart.webp',
       },
       {
         badge: 'คอมโบ',
@@ -130,7 +130,7 @@ const PROMOTION_COPY = {
         desc: 'เซตข้าวมันไก่เล็ก (฿150) + ชาไทยพรีเมียม (฿100) จ่ายรวม ฿220',
         validity: 'ทานที่ร้าน · มื้อเบา',
         cta: 'ดูเมนู', href: '/menu',
-        img: '/uploads/promotion-small-set-thai-tea.png',
+        img: '/uploads/promotion-small-set-thai-tea.webp',
       },
     ],
   },
@@ -162,7 +162,7 @@ const PROMOTION_COPY = {
         desc: '大份混合鸡饭套餐（菜单 ฿550）赠冰饮 1 杯——可选美式 / 拿铁 / 泰式奶茶（最高价值 ฿120）',
         validity: '堂食 · 每日',
         cta: '查看菜单', href: '/menu',
-        img: '/uploads/promotion-large-chicken-rice-set.png',
+        img: '/uploads/promotion-large-chicken-rice-set.webp',
       },
       {
         badge: '鸡饭',
@@ -171,7 +171,7 @@ const PROMOTION_COPY = {
         desc: '中份套餐（฿280）+ 冰拿铁仅需加 ฿50（菜单价 ฿120）',
         validity: '堂食 · 每日',
         cta: '查看菜单', href: '/menu',
-        img: '/uploads/promotion-medium-set-iced-latte.png',
+        img: '/uploads/promotion-medium-set-iced-latte.webp',
       },
       {
         badge: '招牌',
@@ -180,7 +180,7 @@ const PROMOTION_COPY = {
         desc: '招牌鸡饭大盘（฿670）附赠泰式奶茶 2 杯（每杯 ฿100）',
         validity: '堂食 · 适合分享',
         cta: '查看菜单', href: '/menu',
-        img: '/uploads/promotion-signature-tray.png',
+        img: '/uploads/promotion-signature-tray.webp',
       },
       {
         badge: '早午餐',
@@ -189,7 +189,7 @@ const PROMOTION_COPY = {
         desc: 'Pier Breakfast 招牌盘（฿280）赠热美式 1 杯（菜单 ฿90）',
         validity: '堂食 · 09:00–18:00',
         cta: '查看菜单', href: '/menu',
-        img: '/uploads/promotion-pier-breakfast.png',
+        img: '/uploads/promotion-pier-breakfast.webp',
       },
       {
         badge: '抹茶',
@@ -198,7 +198,7 @@ const PROMOTION_COPY = {
         desc: '抹茶拿铁（฿150）+ 蛋挞（฿55）组合价',
         validity: '堂食 · 每日',
         cta: '查看菜单', href: '/menu',
-        img: '/uploads/promotion-matcha-tart.png',
+        img: '/uploads/promotion-matcha-tart.webp',
       },
       {
         badge: '组合',
@@ -207,7 +207,7 @@ const PROMOTION_COPY = {
         desc: '小份鸡饭套餐（฿150）+ 泰式奶茶（฿100）合计 ฿220',
         validity: '堂食 · 轻食',
         cta: '查看菜单', href: '/menu',
-        img: '/uploads/promotion-small-set-thai-tea.png',
+        img: '/uploads/promotion-small-set-thai-tea.webp',
       },
     ],
   },
@@ -239,7 +239,7 @@ const PROMOTION_COPY = {
         desc: 'Large mixed chicken rice set (menu ฿550) includes one free iced drink — Americano, Latte, or Premium Thai Tea (up to ฿120).',
         validity: 'Dine-in · Daily',
         cta: 'See menu', href: '/menu',
-        img: '/uploads/promotion-large-chicken-rice-set.png',
+        img: '/uploads/promotion-large-chicken-rice-set.webp',
       },
       {
         badge: 'Chicken rice',
@@ -248,7 +248,7 @@ const PROMOTION_COPY = {
         desc: 'Medium set (฿280) + iced latte for only ฿50 more (menu price ฿120).',
         validity: 'Dine-in · Daily',
         cta: 'See menu', href: '/menu',
-        img: '/uploads/promotion-medium-set-iced-latte.png',
+        img: '/uploads/promotion-medium-set-iced-latte.webp',
       },
       {
         badge: 'Signature',
@@ -257,7 +257,7 @@ const PROMOTION_COPY = {
         desc: 'Signature chicken rice tray (฿670) with two Premium Thai Teas on the house (฿100 each).',
         validity: 'Dine-in · To share',
         cta: 'See menu', href: '/menu',
-        img: '/uploads/promotion-signature-tray.png',
+        img: '/uploads/promotion-signature-tray.webp',
       },
       {
         badge: 'Breakfast',
@@ -266,7 +266,7 @@ const PROMOTION_COPY = {
         desc: 'Pier Breakfast Plate (฿280) with a complimentary hot Americano (menu ฿90).',
         validity: 'Dine-in · 09:00–18:00',
         cta: 'See menu', href: '/menu',
-        img: '/uploads/promotion-pier-breakfast.png',
+        img: '/uploads/promotion-pier-breakfast.webp',
       },
       {
         badge: 'Matcha',
@@ -275,7 +275,7 @@ const PROMOTION_COPY = {
         desc: 'Matcha Latte (฿150) + Egg Tart (฿55) as one bundle.',
         validity: 'Dine-in · Daily',
         cta: 'See menu', href: '/menu',
-        img: '/uploads/promotion-matcha-tart.png',
+        img: '/uploads/promotion-matcha-tart.webp',
       },
       {
         badge: 'Combo',
@@ -284,7 +284,7 @@ const PROMOTION_COPY = {
         desc: 'Small chicken rice set (฿150) + Premium Thai Tea (฿100) for ฿220 total.',
         validity: 'Dine-in · Light meal',
         cta: 'See menu', href: '/menu',
-        img: '/uploads/promotion-small-set-thai-tea.png',
+        img: '/uploads/promotion-small-set-thai-tea.webp',
       },
     ],
   },

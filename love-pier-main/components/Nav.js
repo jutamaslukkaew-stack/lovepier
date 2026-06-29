@@ -132,7 +132,7 @@ export default function Nav({ onOpenMenu }) {
         <Link href="/" className="shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/uploads/logo-8dc1f126.png"
+            src="/uploads/logo-8dc1f126.webp"
             alt="Love Pier Beach Cafe"
             className="h-12 sm:h-14 lg:h-16 w-auto mix-blend-multiply block"
           />

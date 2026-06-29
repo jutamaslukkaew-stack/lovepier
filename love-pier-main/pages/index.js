@@ -62,7 +62,7 @@ const COPY = {
         date: 'SAT 27 JUN 2026 · 16:00–20:00',
         desc: 'Surf Pool · Skimboard · Kayak · SUP Board ฟรีริสแบนด์ และเครื่องดื่ม 1 กระป๋อง',
         price: '฿500 / คน',
-        img: '/uploads/events-flow-sunset.png',
+        img: '/uploads/events-flow-sunset.webp',
       },
     ],
   },
@@ -117,7 +117,7 @@ const COPY = {
         date: 'SAT 27 JUN 2026 · 16:00–20:00',
         desc: 'Surf Pool · Skimboard · Kayak · SUP Board. Free wristband and one canned drink.',
         price: '฿500 / person',
-        img: '/uploads/events-flow-sunset.png',
+        img: '/uploads/events-flow-sunset.webp',
       },
     ],
   },
@@ -172,21 +172,21 @@ const COPY = {
         date: '2026年6月27日（周六） 16:00–20:00',
         desc: 'Surf Pool · Skimboard · Kayak · SUP Board。免费腕带及一罐饮料。',
         price: '฿500 / 人',
-        img: '/uploads/events-flow-sunset.png',
+        img: '/uploads/events-flow-sunset.webp',
       },
     ],
   },
 }
 
 const GALLERY_PHOTOS = [
-  { src: '/uploads/gallery-beach-terrace.png', alt: 'beach terrace', wide: false },
-  { src: '/uploads/gallery-sunset-sea.png', alt: 'sunset sea', wide: true },
-  { src: '/uploads/gallery-matcha-forest.png', alt: 'matcha drink', wide: false },
-  { src: '/uploads/gallery-interior-dining.png', alt: 'interior dining', wide: true },
-  { src: '/uploads/gallery-chicken-rice-plate.png', alt: 'chicken rice', wide: false },
-  { src: '/uploads/gallery-sunset-boat.png', alt: 'sunset boat', wide: true },
-  { src: '/uploads/gallery-latte-table.png', alt: 'latte on table', wide: false },
-  { src: '/uploads/gallery-beach-lawn.png', alt: 'beach lawn', wide: true },
+  { src: '/uploads/gallery-beach-terrace.webp', alt: 'beach terrace', wide: false },
+  { src: '/uploads/gallery-sunset-sea.webp', alt: 'sunset sea', wide: true },
+  { src: '/uploads/gallery-matcha-forest.webp', alt: 'matcha drink', wide: false },
+  { src: '/uploads/gallery-interior-dining.webp', alt: 'interior dining', wide: true },
+  { src: '/uploads/gallery-chicken-rice-plate.webp', alt: 'chicken rice', wide: false },
+  { src: '/uploads/gallery-sunset-boat.webp', alt: 'sunset boat', wide: true },
+  { src: '/uploads/gallery-latte-table.webp', alt: 'latte on table', wide: false },
+  { src: '/uploads/gallery-beach-lawn.webp', alt: 'beach lawn', wide: true },
 ]
 
 // ── components ────────────────────────────────────────────────────────────────
@@ -233,11 +233,11 @@ function MenuCard({ item, lang }) {
 
 // ── hero slideshow ────────────────────────────────────────────────────────────
 const HERO_SLIDES = [
-  { src: '/uploads/home-hero.png', pos: '50% 40%' },
-  { src: '/uploads/home-love-pier-exterior.png', pos: '50% 50%' },
-  { src: '/uploads/gallery-beach-terrace.png', pos: '50% 50%' },
-  { src: '/uploads/gallery-sunset-sea.png', pos: '50% 60%' },
-  { src: '/uploads/home-cafe-exterior.png', pos: '50% 50%' },
+  { src: '/uploads/home-hero.webp', pos: '50% 40%' },
+  { src: '/uploads/home-love-pier-exterior.webp', pos: '50% 50%' },
+  { src: '/uploads/gallery-beach-terrace.webp', pos: '50% 50%' },
+  { src: '/uploads/gallery-sunset-sea.webp', pos: '50% 60%' },
+  { src: '/uploads/home-cafe-exterior.webp', pos: '50% 50%' },
 ]
 
 function HeroSlideshow({ t, renderLines }) {
@@ -339,11 +339,11 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 reveal">
           <div className="bg-[#e8e4de] sm:relative sm:overflow-hidden sm:aspect-[5/4] lg:aspect-[4/3] xl:aspect-[3/2]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="block w-full h-auto object-contain sm:absolute sm:inset-0 sm:h-full sm:object-cover sm:object-[50%_42%] [filter:saturate(0.7)] hover:[filter:saturate(1)] transition-[filter] duration-500" src="/uploads/home-cafe-interior.png" alt="Love Pier Beach Cafe interior" />
+            <img className="block w-full h-auto object-contain sm:absolute sm:inset-0 sm:h-full sm:object-cover sm:object-[50%_42%] [filter:saturate(0.7)] hover:[filter:saturate(1)] transition-[filter] duration-500" src="/uploads/home-cafe-interior.webp" alt="Love Pier Beach Cafe interior" />
           </div>
           <div className="bg-[#e8e4de] sm:relative sm:overflow-hidden sm:aspect-[5/4] lg:aspect-[4/3] xl:aspect-[3/2]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="block w-full h-auto object-contain sm:absolute sm:inset-0 sm:h-full sm:object-cover sm:object-[50%_48%] [filter:saturate(0.7)] hover:[filter:saturate(1)] transition-[filter] duration-500" src="/uploads/drink-can-set.png" alt="Love Pier canned drinks" />
+            <img className="block w-full h-auto object-contain sm:absolute sm:inset-0 sm:h-full sm:object-cover sm:object-[50%_48%] [filter:saturate(0.7)] hover:[filter:saturate(1)] transition-[filter] duration-500" src="/uploads/drink-can-set.webp" alt="Love Pier canned drinks" />
           </div>
         </div>
       </ScrollStackPanel>
@@ -456,10 +456,10 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { src: '/uploads/events-surf-pool.png', alt: 'surf pool' },
-              { src: '/uploads/events-kayak.png', alt: 'kayak' },
-              { src: '/uploads/events-skimboard.png', alt: 'skimboard' },
-              { src: '/uploads/events-jet-ski.png', alt: 'jet ski' },
+              { src: '/uploads/events-surf-pool.webp', alt: 'surf pool' },
+              { src: '/uploads/events-kayak.webp', alt: 'kayak' },
+              { src: '/uploads/events-skimboard.webp', alt: 'skimboard' },
+              { src: '/uploads/events-jet-ski.webp', alt: 'jet ski' },
             ].map(({ src, alt }) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img key={src} src={src} alt={alt} className="w-full aspect-square object-cover [filter:saturate(0.75)] hover:[filter:saturate(1)] transition-[filter] duration-500" />

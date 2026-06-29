@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 
 const HERO_IMAGES = [
-  '/uploads/gallery-beach-terrace.png',
-  '/uploads/home-beach-panorama.png',
-  '/uploads/home-cafe-exterior.png',
-  '/uploads/gallery-sunset-sea.png',
-  '/uploads/gallery-beach-lawn.png',
-  '/uploads/home-love-pier-exterior.png',
-  '/uploads/gallery-interior-dining.png',
-  '/uploads/gallery-sunset-boat.png',
+  '/uploads/gallery-beach-terrace.webp',
+  '/uploads/home-beach-panorama.webp',
+  '/uploads/home-cafe-exterior.webp',
+  '/uploads/gallery-sunset-sea.webp',
+  '/uploads/gallery-beach-lawn.webp',
+  '/uploads/home-love-pier-exterior.webp',
+  '/uploads/gallery-interior-dining.webp',
+  '/uploads/gallery-sunset-boat.webp',
 ]
 
 export default function PageHero({ title, titleHtml, subtitle, cta }) {

@@ -222,7 +222,7 @@ export default function Reservation() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             className="absolute inset-0 w-full h-full object-cover object-[50%_42%] scale-[1.1] origin-center [filter:saturate(0.82)]"
-            src="/uploads/reservation-interior.png"
+            src="/uploads/reservation-interior.webp"
             alt={t.imageAlt}
           />
         </div>
