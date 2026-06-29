@@ -234,7 +234,7 @@ export default function Gallery() {
                 onClick={() => { setActiveFilter(cat); setShowAll(false) }}
                 className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-all cursor-pointer border ${
                   activeFilter === cat
-                    ? 'bg-[#1a4a7a] text-white border-[#1a4a7a]'
+                    ? 'bg-[#4a3520] text-white border-[#1a4a7a]'
                     : 'bg-transparent text-[#1a4a7a]/60 border-[#1a4a7a]/25 hover:border-[#1a4a7a]/60 hover:text-[#1a4a7a]'
                 }`}
               >
@@ -246,7 +246,7 @@ export default function Gallery() {
         </div>
         <div className="lg:hidden flex justify-center gap-1.5 pb-2">
           {Array.from({ length: TAB_DOT_COUNT }).map((_, i) => (
-            <span key={i} className={`block rounded-full transition-all duration-300 ${i === tabDotIndex ? 'w-4 h-1.5 bg-[#1a4a7a]' : 'w-1.5 h-1.5 bg-[#1a4a7a]/30'}`} />
+            <span key={i} className={`block rounded-full transition-all duration-300 ${i === tabDotIndex ? 'w-4 h-1.5 bg-[#4a3520]' : 'w-1.5 h-1.5 bg-[#4a3520]/30'}`} />
           ))}
         </div>
       </div>
@@ -278,7 +278,7 @@ export default function Gallery() {
         <div className="flex justify-center py-10">
           <button
             onClick={() => setShowAll(true)}
-            className="flex items-center gap-2 px-6 py-3 rounded-full border border-[#1a4a7a]/30 text-[#1a4a7a] text-[12px] tracking-[0.15em] uppercase font-semibold hover:bg-[#1a4a7a] hover:text-white transition-all"
+            className="flex items-center gap-2 px-6 py-3 rounded-full border border-[#4a3520]/30 text-[#4a3520] text-[12px] tracking-[0.15em] uppercase font-semibold hover:bg-[#4a3520] hover:text-white transition-all"
           >
             {showMoreLabel}
             <span className="text-base">↓</span>

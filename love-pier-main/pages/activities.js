@@ -358,7 +358,7 @@ export default function Activities() {
                     const y = el.getBoundingClientRect().top + window.scrollY - navH - 52 - 8
                     window.scrollTo({ top: y, behavior: 'smooth' })
                   }}
-                  className="px-4 py-1.5 rounded-full text-[10px] tracking-[0.12em] uppercase font-semibold whitespace-nowrap bg-[#1a2d4a] text-white hover:bg-[#243d63] transition-colors border-none cursor-pointer"
+                  className="px-4 py-1.5 rounded-full text-[10px] tracking-[0.12em] uppercase font-semibold whitespace-nowrap bg-[#4a3520] text-white hover:bg-[#3a2818] transition-colors border-none cursor-pointer"
                 >
                   {cat.title}
                 </button>
@@ -373,7 +373,7 @@ export default function Activities() {
           {Array.from({ length: DOT_COUNT }).map((_, i) => (
             <span
               key={i}
-              className={`block rounded-full transition-all duration-300 ${i === dotIndex ? 'w-4 h-1.5 bg-[#1a2d4a]' : 'w-1.5 h-1.5 bg-[#1a2d4a]/30'}`}
+              className={`block rounded-full transition-all duration-300 ${i === dotIndex ? 'w-4 h-1.5 bg-[#4a3520]' : 'w-1.5 h-1.5 bg-[#4a3520]/30'}`}
             />
           ))}
         </div>
