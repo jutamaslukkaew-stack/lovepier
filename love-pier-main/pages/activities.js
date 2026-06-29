@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import { useEffect, useRef, useState } from 'react'
 import Footer from '../components/Footer'
 import PageHero from '../components/PageHero'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
@@ -313,6 +314,20 @@ function ActivityTable({ cat, t }) {
 export default function Activities() {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
+  const scrollRef = useRef(null)
+  const [dotIndex, setDotIndex] = useState(0)
+  const DOT_COUNT = 2
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const onScroll = () => {
+      const ratio = el.scrollLeft / (el.scrollWidth - el.clientWidth || 1)
+      setDotIndex(Math.round(ratio * (DOT_COUNT - 1)))
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
     <>
@@ -328,23 +343,38 @@ export default function Activities() {
       <PageHero titleHtml={t.hero} subtitle={t.subtitle} />
 
       {/* Shortcut anchor bar */}
-      <div className="sticky top-[var(--nav-h,64px)] z-40 w-full bg-[#f5f3ef] border-b border-black/10 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex gap-2 min-w-max lg:min-w-0 lg:justify-center px-4 py-3">
-          {t.categories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => {
-                const el = document.getElementById(`activity-${cat.id}`)
-                if (!el) return
-                const navH = document.querySelector('nav')?.offsetHeight ?? 64
-                const y = el.getBoundingClientRect().top + window.scrollY - navH - 52 - 8
-                window.scrollTo({ top: y, behavior: 'smooth' })
-              }}
-              className="px-4 py-1.5 rounded-full text-[10px] tracking-[0.12em] uppercase font-semibold whitespace-nowrap bg-[#1a2d4a] text-white hover:bg-[#243d63] transition-colors border-none cursor-pointer"
-            >
-              {cat.title}
-            </button>
+      <div className="sticky top-[var(--nav-h,64px)] z-40 w-full bg-[#f5f3ef] border-b border-black/10">
+        <div className="relative">
+          <div ref={scrollRef} className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-2 min-w-max lg:min-w-0 lg:justify-center px-4 pt-3 pb-2 pr-10">
+              {t.categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById(`activity-${cat.id}`)
+                    if (!el) return
+                    const navH = document.querySelector('nav')?.offsetHeight ?? 64
+                    const y = el.getBoundingClientRect().top + window.scrollY - navH - 52 - 8
+                    window.scrollTo({ top: y, behavior: 'smooth' })
+                  }}
+                  className="px-4 py-1.5 rounded-full text-[10px] tracking-[0.12em] uppercase font-semibold whitespace-nowrap bg-[#1a2d4a] text-white hover:bg-[#243d63] transition-colors border-none cursor-pointer"
+                >
+                  {cat.title}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* fade hint */}
+          <div className="lg:hidden pointer-events-none absolute top-0 right-0 bottom-6 w-10 bg-gradient-to-l from-[#f5f3ef] to-transparent" />
+        </div>
+        {/* scroll dots */}
+        <div className="lg:hidden flex justify-center gap-1.5 pb-2">
+          {Array.from({ length: DOT_COUNT }).map((_, i) => (
+            <span
+              key={i}
+              className={`block rounded-full transition-all duration-300 ${i === dotIndex ? 'w-4 h-1.5 bg-[#1a2d4a]' : 'w-1.5 h-1.5 bg-[#1a2d4a]/30'}`}
+            />
           ))}
         </div>
       </div>

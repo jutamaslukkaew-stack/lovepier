@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Footer from '../components/Footer'
 import PageHero from '../components/PageHero'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
@@ -188,6 +188,19 @@ export default function Gallery() {
   const t = PAGE_COPY[lang] || PAGE_COPY.en
   const [activeFilter, setActiveFilter] = useState(null)
   const [showAll, setShowAll] = useState(false)
+  const tabScrollRef = useRef(null)
+  const [tabDotIndex, setTabDotIndex] = useState(0)
+  const TAB_DOT_COUNT = 2
+  useEffect(() => {
+    const el = tabScrollRef.current
+    if (!el) return
+    const onScroll = () => {
+      const ratio = el.scrollLeft / (el.scrollWidth - el.clientWidth || 1)
+      setTabDotIndex(Math.round(ratio * (TAB_DOT_COUNT - 1)))
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
 
   const filtered = activeFilter ? TILES.filter((tile) => tile.cat === activeFilter) : TILES
   const visible = showAll ? filtered : filtered.slice(0, 6)
@@ -212,20 +225,28 @@ export default function Gallery() {
       <PageHero title={t.h.replace('\n', ' ')} />
 
       <div className="sticky top-[var(--nav-h,64px)] z-50 w-full bg-[#f5f2ee] border-b border-black/10">
-        <div className="flex overflow-x-auto gap-2 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {filters.map(({ label, cat }) => (
-            <button
-              key={label}
-              type="button"
-              onClick={() => { setActiveFilter(cat); setShowAll(false) }}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-all cursor-pointer border ${
-                activeFilter === cat
-                  ? 'bg-[#1a4a7a] text-white border-[#1a4a7a]'
-                  : 'bg-transparent text-[#1a4a7a]/60 border-[#1a4a7a]/25 hover:border-[#1a4a7a]/60 hover:text-[#1a4a7a]'
-              }`}
-            >
-              {label}
-            </button>
+        <div className="relative">
+          <div ref={tabScrollRef} className="flex overflow-x-auto gap-2 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {filters.map(({ label, cat }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => { setActiveFilter(cat); setShowAll(false) }}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-all cursor-pointer border ${
+                  activeFilter === cat
+                    ? 'bg-[#1a4a7a] text-white border-[#1a4a7a]'
+                    : 'bg-transparent text-[#1a4a7a]/60 border-[#1a4a7a]/25 hover:border-[#1a4a7a]/60 hover:text-[#1a4a7a]'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="lg:hidden pointer-events-none absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-l from-[#f5f2ee] to-transparent" />
+        </div>
+        <div className="lg:hidden flex justify-center gap-1.5 pb-2">
+          {Array.from({ length: TAB_DOT_COUNT }).map((_, i) => (
+            <span key={i} className={`block rounded-full transition-all duration-300 ${i === tabDotIndex ? 'w-4 h-1.5 bg-[#1a4a7a]' : 'w-1.5 h-1.5 bg-[#1a4a7a]/30'}`} />
           ))}
         </div>
       </div>

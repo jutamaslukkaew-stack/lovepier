@@ -5,8 +5,13 @@
   --color-ink: #1a1a1a;
   --color-muted: #888888;
   --color-gold: #c9a96e;
-  --font-family-display: "Cormorant Garamond", "Noto Serif Thai", serif;
-  --font-family-sans: Jost, "Noto Sans Thai", sans-serif;
+  --font-family-display: "Cormorant Garamond", "LINESeedSansTH", "Noto Serif Thai", serif;
+  --font-family-sans: Jost, "LINESeedSansTH", "Noto Sans Thai", sans-serif;
+}
+
+/* Thai text: disable letter-spacing for readability */
+:lang(th) * {
+  letter-spacing: 0 !important;
 }
 
 @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }

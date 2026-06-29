@@ -225,7 +225,7 @@ function MenuCard({ id, name, badge, desc, price, prices, image, lang, onImageCl
 
       {/* content */}
       <div className="p-3.5 flex flex-col flex-1 gap-1.5">
-        <h3 className="text-[13px] font-semibold text-ink leading-snug line-clamp-2">{name}</h3>
+        <h3 className="font-display text-[15px] font-medium text-ink leading-snug line-clamp-2">{name}</h3>
         {desc && (
           <p className="text-[11px] text-black/50 font-light leading-relaxed line-clamp-2">{desc}</p>
         )}
@@ -1090,6 +1090,19 @@ export default function Menu({ dbMenuData }) {
   const menuData = useMemo(() => buildMenuDataFromDB(dbMenuData, lang), [dbMenuData, lang])
   const [activeAnchor, setActiveAnchor] = useState('signature')
   const [globalLbIndex, setGlobalLbIndex] = useState(-1)
+  const tabScrollRef = useRef(null)
+  const [tabDotIndex, setTabDotIndex] = useState(0)
+  const TAB_DOT_COUNT = 2
+  useEffect(() => {
+    const el = tabScrollRef.current
+    if (!el) return
+    const onScroll = () => {
+      const ratio = el.scrollLeft / (el.scrollWidth - el.clientWidth || 1)
+      setTabDotIndex(Math.round(ratio * (TAB_DOT_COUNT - 1)))
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
 
   // Build flat global gallery from all sections (in section order)
   const { globalGallery, globalIndexMap } = useMemo(() => {
@@ -1163,7 +1176,8 @@ export default function Menu({ dbMenuData }) {
 
       {/* Sticky anchor shortcut bar */}
       <div className="sticky top-[var(--nav-h,64px)] z-50 w-full bg-[#f5f2ee] border-b border-black/10">
-        <div className="flex overflow-x-auto gap-2 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="relative">
+          <div ref={tabScrollRef} className="flex overflow-x-auto gap-2 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {primaryTabs.map(({ id, label }) => (
             <button
               key={id}
@@ -1177,6 +1191,14 @@ export default function Menu({ dbMenuData }) {
             >
               {label}
             </button>
+          ))}
+          </div>
+          <div className="lg:hidden pointer-events-none absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-l from-[#f5f2ee] to-transparent" />
+        </div>
+        {/* scroll dots */}
+        <div className="lg:hidden flex justify-center gap-1.5 pb-2">
+          {Array.from({ length: TAB_DOT_COUNT }).map((_, i) => (
+            <span key={i} className={`block rounded-full transition-all duration-300 ${i === tabDotIndex ? 'w-4 h-1.5 bg-[#1a4a7a]' : 'w-1.5 h-1.5 bg-[#1a4a7a]/30'}`} />
           ))}
         </div>
       </div>
