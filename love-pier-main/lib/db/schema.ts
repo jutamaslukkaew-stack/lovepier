@@ -101,3 +101,33 @@ export const promotions = pgTable('promotions', {
 
 export type Promotion = typeof promotions.$inferSelect
 export type NewPromotion = typeof promotions.$inferInsert
+
+export const events = pgTable('events', {
+  id: serial('id').primaryKey(),
+  titleTh: text('title_th').notNull(),
+  titleEn: text('title_en').notNull(),
+  titleZh: text('title_zh').notNull().default(''),
+  titleEm: text('title_em').notNull().default(''),
+  eventDate: date('event_date'),
+  timeRange: text('time_range').notNull().default(''),
+  timeSub: text('time_sub').notNull().default(''),
+  location: text('location').notNull().default(''),
+  price: integer('price'),
+  entrySubTh: text('entry_sub_th').notNull().default(''),
+  entrySubEn: text('entry_sub_en').notNull().default(''),
+  entrySubZh: text('entry_sub_zh').notNull().default(''),
+  descriptionTh: text('description_th').notNull().default(''),
+  descriptionEn: text('description_en').notNull().default(''),
+  descriptionZh: text('description_zh').notNull().default(''),
+  categoryTh: text('category_th').notNull().default(''),
+  categoryEn: text('category_en').notNull().default(''),
+  categoryZh: text('category_zh').notNull().default(''),
+  imageUrl: text('image_url'),
+  isFeatured: boolean('is_featured').notNull().default(false),
+  isActive: boolean('is_active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+})
+
+export type Event = typeof events.$inferSelect
+export type NewEvent = typeof events.$inferInsert

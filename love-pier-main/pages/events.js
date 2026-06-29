@@ -128,10 +128,77 @@ const EVENTS_COPY = {
   },
 }
 
-export default function Events() {
+function formatEventDate(dateStr, lang) {
+  if (!dateStr) return { day: '', month: '', dateFull: '', year: '', weekday: '' }
+  const d = new Date(dateStr + 'T00:00:00')
+  const day = d.getDate()
+  const year = d.getFullYear()
+  const weekdayEn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]
+  const weekdayTh = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'][d.getDay()]
+  const weekdayZh = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()]
+  if (lang === 'th') {
+    const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+    const m = months[d.getMonth()]
+    return { day: String(day), month: `${m} ${year}`, dateFull: `${weekdayTh} ${day} ${m}`, year: String(year) }
+  }
+  if (lang === 'zh') {
+    const m = d.getMonth() + 1
+    return { day: String(day), month: `${year}年${m}月`, dateFull: `${m}月${day}日 ${weekdayZh}`, year: String(year) }
+  }
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const m = months[d.getMonth()]
+  return { day: String(day), month: `${m} ${year}`, dateFull: `${weekdayEn} ${day} ${m}`, year: String(year) }
+}
+
+export default function Events({ dbEvents = [] }) {
   const { lang } = useLanguage()
   const t = EVENTS_COPY[lang] || EVENTS_COPY.en
-  const fe = t.featuredEvent
+
+  const activeEvents = dbEvents.filter((e) => e.isActive)
+  const dbFeatured = activeEvents.find((e) => e.isFeatured) || null
+  const dbEventList = activeEvents.filter((e) => !e.isFeatured)
+
+  const titleKey = lang === 'th' ? 'titleTh' : lang === 'zh' ? 'titleZh' : 'titleEn'
+  const descKey = lang === 'th' ? 'descriptionTh' : lang === 'zh' ? 'descriptionZh' : 'descriptionEn'
+  const entrySubKey = lang === 'th' ? 'entrySubTh' : lang === 'zh' ? 'entrySubZh' : 'entrySubEn'
+  const catKey = lang === 'th' ? 'categoryTh' : lang === 'zh' ? 'categoryZh' : 'categoryEn'
+  const freeLabel = t.freeLabel
+
+  const fe = dbFeatured
+    ? (() => {
+        const d = formatEventDate(dbFeatured.eventDate, lang)
+        const priceStr = dbFeatured.price != null ? `฿${dbFeatured.price.toLocaleString()}` : freeLabel
+        const perPerson = lang === 'th' ? ' ต่อท่าน' : lang === 'zh' ? ' 每人' : ' per person'
+        return {
+          title: dbFeatured[titleKey] || dbFeatured.titleEn,
+          titleEm: dbFeatured.titleEm,
+          date: d.dateFull,
+          year: d.year,
+          time: dbFeatured.timeRange,
+          timeSub: dbFeatured.timeSub,
+          entry: dbFeatured.price != null ? `${priceStr}${perPerson}` : freeLabel,
+          entrySub: dbFeatured[entrySubKey],
+          desc: dbFeatured[descKey],
+          imageUrl: dbFeatured.imageUrl || null,
+        }
+      })()
+    : t.featuredEvent
+
+  const eventList = dbEventList.length > 0
+    ? dbEventList.map((e) => {
+        const d = formatEventDate(e.eventDate, lang)
+        const priceStr = e.price != null ? `฿${e.price.toLocaleString()}` : freeLabel
+        return {
+          day: d.day,
+          month: d.month,
+          title: e[titleKey] || e.titleEn,
+          sub: [e.timeRange, e.location].filter(Boolean).join(' · '),
+          cat: e[catKey],
+          price: priceStr,
+          free: e.price == null,
+        }
+      })
+    : t.eventList
 
   return (
     <>
@@ -151,7 +218,7 @@ export default function Events() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             className="absolute inset-0 w-full h-full object-cover object-[50%_42%] scale-[1.14] origin-center [filter:saturate(0.58)_brightness(0.9)_contrast(1.04)]"
-            src="/uploads/events-flow-sunset.png"
+            src={fe.imageUrl || '/uploads/events-flow-sunset.png'}
             alt={t.featuredImageAlt}
           />
         </div>
@@ -169,6 +236,30 @@ export default function Events() {
           </div>
         </div>
       </section>
+
+      {eventList.length > 0 && (
+        <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 border-b border-black/10 reveal">
+          <h3 className="font-display font-light text-ink mb-8 text-[clamp(26px,3.5vw,40px)]">{t.next}</h3>
+          <div className="space-y-px">
+            {eventList.map((ev, i) => (
+              <div key={i} className="flex items-center gap-6 py-5 border-t border-black/10 last:border-b group hover:bg-[#f5f2ee] transition-colors px-2 -mx-2">
+                <div className="w-12 text-center shrink-0">
+                  <div className="text-2xl font-display font-light text-ink leading-none">{ev.day}</div>
+                  <div className="text-[10px] tracking-[0.15em] uppercase text-muted mt-0.5">{ev.month}</div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm text-ink truncate">{ev.title}</div>
+                  <div className="text-xs text-muted mt-0.5 truncate">{ev.sub}</div>
+                </div>
+                <div className="shrink-0 text-right">
+                  {ev.cat && <div className="text-[10px] tracking-[0.15em] uppercase text-gold mb-0.5">{ev.cat}</div>}
+                  <div className="text-sm font-medium text-ink">{ev.free ? t.freeLabel : ev.price}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="bg-ink text-bg px-4 py-14 reveal sm:px-6 sm:py-14 lg:px-10 lg:py-20">
         <h3 className="font-display font-light mb-3.5 leading-[1.05] text-[clamp(32px,4vw,48px)]">{t.weekly}</h3>
@@ -200,4 +291,21 @@ export default function Events() {
       <Footer tagline={FOOTER_TAGLINES.events} />
     </>
   )
+}
+
+export async function getServerSideProps() {
+  try {
+    const { db } = await import('../lib/db')
+    const { events } = await import('../lib/db/schema')
+    const { asc } = await import('drizzle-orm')
+    const rows = await db.select().from(events).orderBy(asc(events.sortOrder))
+    const serialized = rows.map((r) => ({
+      ...r,
+      eventDate: r.eventDate ?? null,
+      createdAt: r.createdAt ? r.createdAt.toISOString() : null,
+    }))
+    return { props: { dbEvents: serialized } }
+  } catch {
+    return { props: { dbEvents: [] } }
+  }
 }
