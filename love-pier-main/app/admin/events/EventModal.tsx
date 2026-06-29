@@ -91,14 +91,15 @@ export function EventModal({
   const set = (key: keyof FormData, val: string | boolean) =>
     setForm((f) => ({ ...f, [key]: val }))
 
-  async function uploadImage(file: File) {
+  async function handleUpload(file: File) {
     setUploading(true)
-    const fd = new FormData()
-    fd.append('file', file)
-    const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
-    const json = await res.json()
-    set('imageUrl', json.url)
-    setUploading(false)
+    try {
+      const { uploadImage } = await import('@/lib/upload-image')
+      const { url } = await uploadImage(file)
+      set('imageUrl', url)
+    } finally {
+      setUploading(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -234,7 +235,7 @@ export function EventModal({
               <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
                 {uploading ? 'กำลังอัปโหลด...' : 'อัปโหลด'}
               </Button>
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) uploadImage(e.target.files[0]) }} />
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleUpload(e.target.files[0]) }} />
             </div>
             {form.imageUrl && (
               // eslint-disable-next-line @next/next/no-img-element

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import { ImagePlus, Loader2, X } from 'lucide-react'
-import { uploadPromotionImage } from '@/lib/upload-promotion-image'
+import { uploadImage } from '@/lib/upload-image'
 import type { Promotion } from '@/lib/db/schema'
 import {
   Dialog,
@@ -120,7 +120,7 @@ export function PromotionModal({
     if (!file) return
     setUploading(true)
     try {
-      const { url } = await uploadPromotionImage(file)
+      const { url } = await uploadImage(file)
       set('imageUrl', url)
       toast.success('อัพโหลดรูปแล้ว')
     } catch (e) {
