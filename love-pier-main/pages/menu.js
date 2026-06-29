@@ -143,12 +143,12 @@ function Lightbox({ items, index, onIndexChange, onClose }) {
         onClick={(e) => e.stopPropagation()}
         style={{ fontFamily: 'system-ui,-apple-system,sans-serif' }}
       >
-        <p className="text-white text-2xl sm:text-3xl font-semibold tracking-wide leading-tight">{current.name}</p>
+        <p className="text-white text-3xl sm:text-4xl font-semibold tracking-wide leading-tight">{current.name}</p>
         {current.priceText ? (
-          <p className="mt-2 text-[#e3c77a] text-xl sm:text-2xl tabular-nums font-semibold">{current.priceText}</p>
+          <p className="mt-2 text-[#e3c77a] text-2xl sm:text-3xl tabular-nums font-semibold">{current.priceText}</p>
         ) : null}
         {current.description ? (
-          <p className="mt-2 mx-auto text-white/75 text-sm sm:text-base font-light leading-relaxed" style={{ maxWidth: '560px' }}>
+          <p className="mt-3 mx-auto text-white/80 text-base sm:text-lg font-light leading-relaxed" style={{ maxWidth: '560px' }}>
             {current.description}
           </p>
         ) : null}
