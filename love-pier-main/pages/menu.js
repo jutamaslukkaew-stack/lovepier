@@ -95,7 +95,7 @@ function Lightbox({ items, index, onIndexChange, onClose }) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex flex-col lg:flex-row bg-black"
+      className="fixed inset-0 z-[200] flex flex-col bg-black"
       onClick={onClose}
     >
       {/* close */}
@@ -106,25 +106,19 @@ function Lightbox({ items, index, onIndexChange, onClose }) {
         aria-label="Close"
       >✕</button>
 
-      {/* image area — mobile: fixed height, desktop: full height left column */}
+      {/* image — flex-1 so it fills available space, object-contain shows full image */}
       <div
-        className="relative shrink-0 w-full lg:flex-1"
-        style={{ height: 'min(65dvh, 65vw)' }}
+        className="relative flex-1 min-h-0 w-full"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        {/* on desktop override height to fill screen */}
-        <style>{`@media(min-width:1024px){.lb-img-wrap{height:100%!important}}`}</style>
-        <div className="lb-img-wrap absolute inset-0 flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={current.image}
-            alt={current.name}
-            className="w-full h-full object-contain"
-          />
-        </div>
-        {/* nav arrows */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={current.image}
+          alt={current.name}
+          className="absolute inset-0 w-full h-full object-contain"
+        />
         {hasPrev && (
           <button
             type="button"
@@ -143,18 +137,18 @@ function Lightbox({ items, index, onIndexChange, onClose }) {
         )}
       </div>
 
-      {/* info panel — mobile: scrolls below, desktop: right column fixed width */}
+      {/* info panel — fixed height below image */}
       <div
-        className="flex-1 lg:flex-none lg:w-80 xl:w-96 flex flex-col justify-center overflow-y-auto px-8 pt-8 pb-10 text-center lg:border-l lg:border-white/10"
+        className="shrink-0 px-6 pt-6 pb-8 text-center border-t border-white/10"
         onClick={(e) => e.stopPropagation()}
         style={{ fontFamily: 'system-ui,-apple-system,sans-serif' }}
       >
-        <p className="text-white text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-wide leading-tight">{current.name}</p>
+        <p className="text-white text-2xl sm:text-3xl font-semibold tracking-wide leading-tight">{current.name}</p>
         {current.priceText ? (
-          <p className="mt-3 text-[#e3c77a] text-xl sm:text-2xl lg:text-3xl tabular-nums font-semibold">{current.priceText}</p>
+          <p className="mt-2 text-[#e3c77a] text-xl sm:text-2xl tabular-nums font-semibold">{current.priceText}</p>
         ) : null}
         {current.description ? (
-          <p className="mt-4 text-white/75 text-sm sm:text-base lg:text-lg font-light leading-relaxed">
+          <p className="mt-2 mx-auto text-white/75 text-sm sm:text-base font-light leading-relaxed" style={{ maxWidth: '560px' }}>
             {current.description}
           </p>
         ) : null}
