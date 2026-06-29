@@ -202,7 +202,7 @@ function MenuCard({ id, name, badge, desc, price, prices, image, lang, onImageCl
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.08)] flex flex-col">
       {/* image area — portrait 3:4 */}
-      <div className="relative bg-[#f2ede6]" style={{ paddingTop: '133.33%' }}>
+      <div className="relative bg-[#f2ede6]" style={{ paddingTop: '75%' }}>
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
