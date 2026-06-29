@@ -7,8 +7,54 @@ import PageHero from '../components/PageHero'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useCart } from '../lib/cart'
 import { useLanguage } from '../lib/language'
+import { db } from '../lib/db'
+import { promotions } from '../lib/db/schema'
+import { asc, eq } from 'drizzle-orm'
+
 
 const FACEBOOK_MESSENGER_URL = 'https://m.me/61590549024692'
+
+const CATEGORY_BADGE = {
+  'chicken-rice': { th: 'ข้าวมันไก่', en: 'Chicken rice', zh: '鸡饭' },
+  'signature':    { th: 'ซิกเนเจอร์', en: 'Signature',    zh: '招牌' },
+  'breakfast':    { th: 'บรันช์',     en: 'Breakfast',    zh: '早午餐' },
+  'matcha':       { th: 'มัทฉะ',     en: 'Matcha',       zh: '抹茶' },
+  'combo':        { th: 'คอมโบ',     en: 'Combo',        zh: '组合' },
+  'coffee':       { th: 'กาแฟ',      en: 'Coffee',       zh: '咖啡' },
+  'drinks':       { th: 'เครื่องดื่ม', en: 'Drinks',     zh: '饮品' },
+  'sweets':       { th: 'ของหวาน',   en: 'Sweets',       zh: '甜品' },
+}
+
+const TAG_LABEL = {
+  'dine-in':      { th: 'ทานที่ร้าน',  en: 'Dine-in',    zh: '堂食' },
+  'take-away':    { th: 'สั่งกลับ',    en: 'Take-away',  zh: '外带' },
+  'daily':        { th: 'ทุกวัน',      en: 'Daily',      zh: '每日' },
+  'to-share':     { th: 'แชร์ได้',     en: 'To share',   zh: '适合分享' },
+  'weekend-only': { th: 'เสาร์-อาทิตย์', en: 'Weekends', zh: '周末' },
+}
+
+const CTA_LABEL = { th: 'ดูเมนู', en: 'See menu', zh: '查看菜单' }
+
+function dealsFromDB(rows, lang) {
+  return rows.map((p) => {
+    const badge = CATEGORY_BADGE[p.category]?.[lang] ?? p.category
+    const tags = (p.tags ?? []).map((t) => TAG_LABEL[t]?.[lang] ?? t)
+    const validity = tags.length ? tags.join(' · ') : ''
+    return {
+      id: p.id,
+      badge,
+      title: (lang === 'th' ? p.titleTh : lang === 'zh' ? p.titleZh : p.titleEn) || p.titleEn,
+      price: `฿${p.priceCurrent}`,
+      orig: p.priceOriginal ? `฿${p.priceOriginal}` : null,
+      disc: p.discountLabel,
+      desc: (lang === 'th' ? p.descriptionTh : lang === 'zh' ? p.descriptionZh : p.descriptionEn) || p.descriptionEn,
+      validity,
+      cta: CTA_LABEL[lang] || CTA_LABEL.en,
+      href: '/menu',
+      img: p.imageUrl || '/uploads/promotion-large-chicken-rice-set.png',
+    }
+  })
+}
 
 const PROMOTION_COPY = {
   th: {
@@ -246,10 +292,10 @@ const PROMOTION_COPY = {
 
 const ADD_LABEL = { th: 'เพิ่มลงตะกร้า', en: 'Add to cart', zh: '加入购物车' }
 
-export default function Promotion() {
+export default function Promotion({ dbPromotions = [] }) {
   const { lang } = useLanguage()
   const t = PROMOTION_COPY[lang] || PROMOTION_COPY.en
-  const deals = t.dealList
+  const deals = dbPromotions.length ? dealsFromDB(dbPromotions, lang) : t.dealList
   const dealsHeading = t.dealsHeading
   const [lbDeal, setLbDeal] = useState(null)
   const { addItem, openCart } = useCart()
@@ -291,8 +337,8 @@ export default function Promotion() {
                 <h3 className="font-display text-[26px] font-light text-ink leading-[1.1]">{deal.title}</h3>
                 <div className="flex items-baseline gap-3 mt-1">
                   <span className="font-display text-[32px] text-gold font-light">{deal.price}</span>
-                  <span className="text-sm text-[#aaa] line-through">{deal.orig}</span>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-gold bg-gold/10 px-2.5 py-1">{deal.disc}</span>
+                  {deal.orig && <span className="text-sm text-[#aaa] line-through">{deal.orig}</span>}
+                  {deal.disc && <span className="text-[10px] tracking-[0.2em] uppercase text-gold bg-gold/10 px-2.5 py-1">{deal.disc}</span>}
                 </div>
                 <p className="text-[13px] text-[#777] leading-[1.7] font-light flex-1">{deal.desc}</p>
                 <div className="flex justify-between items-center pt-4 mt-2 border-t border-black/10">
@@ -409,7 +455,7 @@ export default function Promotion() {
 
       <Footer tagline={FOOTER_TAGLINES.promotion} />
 
-      {lbDeal && typeof window !== 'undefined' && createPortal(
+      {lbDeal && typeof window !== 'undefined' && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[200] flex flex-col bg-black" onClick={() => setLbDeal(null)}>
           <button onClick={() => setLbDeal(null)} className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white text-base hover:bg-white/30 transition-colors">✕</button>
           <div className="relative w-full shrink-0" style={{ height: '60dvh' }} onClick={e => e.stopPropagation()}>
@@ -421,8 +467,8 @@ export default function Promotion() {
             <p className="text-white text-2xl sm:text-3xl font-semibold leading-snug">{lbDeal.title}</p>
             <div className="flex items-baseline gap-3 justify-center">
               <span className="text-[#e3c77a] text-2xl sm:text-3xl font-semibold tabular-nums">{lbDeal.price}</span>
-              <span className="text-white/40 text-base line-through tabular-nums">{lbDeal.orig}</span>
-              <span className="text-[10px] tracking-[0.15em] uppercase text-gold bg-gold/15 px-2 py-0.5">{lbDeal.disc}</span>
+              {lbDeal.orig && <span className="text-white/40 text-base line-through tabular-nums">{lbDeal.orig}</span>}
+              {lbDeal.disc && <span className="text-[10px] tracking-[0.15em] uppercase text-gold bg-gold/15 px-2 py-0.5">{lbDeal.disc}</span>}
             </div>
             {lbDeal.desc && <p className="text-white/70 text-sm font-light leading-relaxed" style={{ maxWidth: '88%', textWrap: 'balance' }}>{lbDeal.desc}</p>}
             <button
@@ -443,3 +489,22 @@ export default function Promotion() {
   )
 }
 
+export async function getServerSideProps() {
+  try {
+    const rows = await db
+      .select()
+      .from(promotions)
+      .where(eq(promotions.isActive, true))
+      .orderBy(asc(promotions.sortOrder))
+
+    const serialized = rows.map((r) => ({
+      ...r,
+      createdAt: r.createdAt ? r.createdAt.toISOString() : null,
+      validFrom: r.validFrom ?? null,
+      validUntil: r.validUntil ?? null,
+    }))
+    return { props: { dbPromotions: serialized } }
+  } catch {
+    return { props: { dbPromotions: [] } }
+  }
+}
