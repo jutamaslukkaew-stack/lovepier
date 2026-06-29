@@ -271,7 +271,7 @@ export default function Reservation() {
           <form className="flex flex-col gap-3 max-w-[520px]" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
-                className="flore-input"
+                className="res-input"
                 type="text"
                 id="name"
                 name="name"
@@ -280,7 +280,7 @@ export default function Reservation() {
                 disabled={status === 'sending'}
               />
               <input
-                className="flore-input"
+                className="res-input"
                 type="tel"
                 id="phone"
                 name="phone"
@@ -291,7 +291,7 @@ export default function Reservation() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
-                className="flore-input normal-case tracking-[0.06em]"
+                className="res-input normal-case tracking-[0.06em]"
                 type="date"
                 id="date"
                 name="date"
@@ -300,7 +300,7 @@ export default function Reservation() {
               />
               <select
                 key={`time-${lang}`}
-                className="flore-input"
+                className="res-input"
                 id="time"
                 name="time"
                 required
@@ -315,7 +315,7 @@ export default function Reservation() {
             </div>
             <select
               key={`guests-${lang}`}
-              className="flore-input"
+              className="res-input"
               id="guests"
               name="guests"
               required
@@ -327,7 +327,7 @@ export default function Reservation() {
             </select>
             <select
               key={`occasion-${lang}`}
-              className="flore-input"
+              className="res-input"
               id="occasion"
               value={occasion}
               onChange={(e) => setOccasion(e.target.value)}
@@ -338,7 +338,7 @@ export default function Reservation() {
               ))}
             </select>
             <textarea
-              className="flore-input"
+              className="res-input"
               id="notes"
               name="notes"
               placeholder={t.notes}
