@@ -7,6 +7,8 @@ import {
   numeric,
   timestamp,
   index,
+  serial,
+  date,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
@@ -75,3 +77,27 @@ export type Category = typeof categories.$inferSelect
 export type NewCategory = typeof categories.$inferInsert
 export type MenuItem = typeof menuItems.$inferSelect
 export type NewMenuItem = typeof menuItems.$inferInsert
+
+export const promotions = pgTable('promotions', {
+  id: serial('id').primaryKey(),
+  titleTh: text('title_th').notNull(),
+  titleEn: text('title_en').notNull(),
+  titleZh: text('title_zh').notNull().default(''),
+  descriptionTh: text('description_th').notNull().default(''),
+  descriptionEn: text('description_en').notNull().default(''),
+  descriptionZh: text('description_zh').notNull().default(''),
+  category: text('category').notNull().default(''),
+  imageUrl: text('image_url'),
+  priceCurrent: integer('price_current').notNull(),
+  priceOriginal: integer('price_original'),
+  discountLabel: text('discount_label'),
+  tags: text('tags').array().notNull().default([]),
+  isActive: boolean('is_active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  validFrom: date('valid_from'),
+  validUntil: date('valid_until'),
+  createdAt: timestamp('created_at').defaultNow(),
+})
+
+export type Promotion = typeof promotions.$inferSelect
+export type NewPromotion = typeof promotions.$inferInsert

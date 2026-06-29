@@ -1,0 +1,20 @@
+CREATE TABLE "promotions" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title_th" text NOT NULL,
+	"title_en" text NOT NULL,
+	"title_zh" text DEFAULT '' NOT NULL,
+	"description_th" text DEFAULT '' NOT NULL,
+	"description_en" text DEFAULT '' NOT NULL,
+	"description_zh" text DEFAULT '' NOT NULL,
+	"category" text DEFAULT '' NOT NULL,
+	"image_url" text,
+	"price_current" integer NOT NULL,
+	"price_original" integer,
+	"discount_label" text,
+	"tags" text[] DEFAULT '{}' NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"valid_from" date,
+	"valid_until" date,
+	"created_at" timestamp DEFAULT now()
+);

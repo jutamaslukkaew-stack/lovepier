@@ -8,6 +8,13 @@
       "when": 1782192940282,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782718215922,
+      "tag": "0001_burly_sunspot",
+      "breakpoints": true
     }
   ]
 }
