@@ -217,7 +217,7 @@ function MenuCard({ id, name, badge, desc, price, prices, image, lang, onImageCl
           >⛶</button>
         )}
         {badge && (
-          <span className="absolute top-2.5 left-2.5 bg-[#1a2d4a] text-white text-[9px] tracking-[0.15em] uppercase font-semibold px-2 py-0.5 rounded-full">
+          <span className="absolute top-2.5 left-2.5 bg-[#4a3520] text-white text-[9px] tracking-[0.15em] uppercase font-semibold px-2 py-0.5 rounded-full">
             {badge}
           </span>
         )}
@@ -245,8 +245,8 @@ function MenuCard({ id, name, badge, desc, price, prices, image, lang, onImageCl
             disabled={!displayPrice || displayPrice === 'Free'}
             className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors ${
               flash
-                ? 'bg-[#243d63] text-white'
-                : 'bg-[#1a2d4a] text-white hover:bg-[#243d63]'
+                ? 'bg-[#3a2818] text-white'
+                : 'bg-[#4a3520] text-white hover:bg-[#3a2818]'
             } disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             {flash ? t.added : t.add}
@@ -871,7 +871,7 @@ function PromotionPanel({ lang }) {
                 </div>
                 <button
                   onClick={() => { addItem({ id: `promo-${i}`, name: deal.title, price: deal.price.replace('฿',''), image: deal.img }); openCart() }}
-                  className="shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-[#1a2d4a] text-white hover:bg-[#243d63] transition-colors"
+                  className="shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-[#4a3520] text-white hover:bg-[#3a2818] transition-colors"
                 >
                   {cardT.add}
                 </button>
@@ -1339,7 +1339,7 @@ export default function Menu({ dbMenuData }) {
       {totalQty > 0 && (
         <button
           onClick={openCart}
-          className="fixed bottom-6 right-5 z-[170] flex items-center gap-2 bg-[#1a2d4a] text-white px-4 py-3 rounded-full shadow-lg font-semibold text-[13px] hover:bg-[#243d63] transition-colors active:scale-95"
+          className="fixed bottom-6 right-5 z-[170] flex items-center gap-2 bg-[#4a3520] text-white px-4 py-3 rounded-full shadow-lg font-semibold text-[13px] hover:bg-[#243d63] transition-colors active:scale-95"
         >
           <span>🛒</span>
           <span>{CART_BTN_COPY[lang] ?? 'Cart'}</span>
