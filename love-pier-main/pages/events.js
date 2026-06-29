@@ -1,3 +1,9 @@
+function getSrcSet(url) {
+  if (!url || !url.includes('-960w.webp')) return undefined
+  const base = url.replace('-960w.webp', '')
+  return `${base}-480w.webp 480w, ${base}-960w.webp 960w, ${base}-1440w.webp 1440w`
+}
+
 import Head from 'next/head'
 import Link from 'next/link'
 import Footer from '../components/Footer'
@@ -178,6 +184,10 @@ export default function Events({ dbEvents = [] }) {
             className="absolute inset-0 w-full h-full object-cover object-[50%_42%] scale-[1.14] origin-center [filter:saturate(0.58)_brightness(0.9)_contrast(1.04)]"
             src={fe.imageUrl || '/uploads/events-flow-sunset.webp'}
             alt={t.featuredImageAlt}
+            loading="eager"
+            fetchPriority="high"
+            srcSet={getSrcSet(fe.imageUrl)}
+            sizes="(min-width: 1024px) 50vw, 100vw"
           />
         </div>
         <div className="px-4 py-12 flex flex-col justify-center sm:px-6 sm:py-12 lg:px-16 lg:py-20">
@@ -230,6 +240,7 @@ export default function Events({ dbEvents = [] }) {
                 className="w-full aspect-[3/2] object-cover [filter:saturate(0.72)_brightness(0.95)]"
                 src={src}
                 alt={alt}
+                loading="lazy"
               />
             </div>
           ))}

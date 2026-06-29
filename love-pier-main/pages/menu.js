@@ -10,6 +10,12 @@ import { useCart } from '../lib/cart'
 import { db } from '../lib/db'
 import { categories, menuItems } from '../lib/db/schema'
 
+function getSrcSet(url) {
+  if (!url || !url.includes('-960w.webp')) return undefined
+  const base = url.replace('-960w.webp', '')
+  return `${base}-480w.webp 480w, ${base}-960w.webp 960w, ${base}-1440w.webp 1440w`
+}
+
 const COFFEE_PRICE_KEYS = ['hot', 'iced', 'blended']
 
 const COFFEE_PRICE_LABELS = {
@@ -117,6 +123,7 @@ function Lightbox({ items, index, onIndexChange, onClose }) {
         <img
           src={current.image}
           alt={current.name}
+          loading="eager"
           className="absolute inset-0 w-full h-full object-contain"
         />
         {hasPrev && (
@@ -202,6 +209,9 @@ function MenuCard({ id, name, badge, desc, price, prices, image, lang, onImageCl
             src={image}
             alt={name}
             onClick={onImageClick}
+            loading="lazy"
+            srcSet={getSrcSet(image)}
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className={`absolute inset-0 w-full h-full object-cover object-center ${onImageClick ? 'cursor-zoom-in' : ''}`}
           />
         ) : (
@@ -875,7 +885,7 @@ function PromotionPanel({ lang }) {
             {deal.img ? (
               <div className="relative bg-[#f2ede6]" style={{ paddingTop: '133.33%' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={deal.img} alt={deal.title} className="absolute inset-0 w-full h-full object-cover object-center" />
+                <img src={deal.img} alt={deal.title} loading="lazy" srcSet={getSrcSet(deal.img)} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="absolute inset-0 w-full h-full object-cover object-center" />
               </div>
             ) : null}
             <div className="p-4 flex flex-col flex-1">
@@ -1064,6 +1074,7 @@ function MenuHero({ lang }) {
           src={HERO_IMAGES[prev]}
           alt=""
           aria-hidden
+          loading="eager"
           className="absolute inset-0 w-full h-full object-cover object-center animate-[fadeOut_0.8s_ease-in-out_forwards]"
         />
       )}
@@ -1073,6 +1084,8 @@ function MenuHero({ lang }) {
         key={`cur-${idx}`}
         src={HERO_IMAGES[idx]}
         alt="Love Pier Beach Cafe"
+        loading={idx === 0 ? 'eager' : 'lazy'}
+        fetchPriority={idx === 0 ? 'high' : 'auto'}
         className="absolute inset-0 w-full h-full object-cover object-center animate-[fadeIn_0.8s_ease-in-out_forwards]"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" />
