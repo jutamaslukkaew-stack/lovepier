@@ -6,8 +6,5 @@
     "build": "cd love-pier-main && npm install && npm run build",
     "dev": "cd love-pier-main && npm run dev",
     "start": "cd love-pier-main && npm run start"
-  },
-  "dependencies": {
-    "next": "16.2.6"
   }
 }
