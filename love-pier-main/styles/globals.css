@@ -17,9 +17,7 @@
 @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
 @keyframes fadeOut { from { opacity: 1 } to { opacity: 0 } }
 
-html.lenis, html.lenis body { height: auto; }
-.lenis.lenis-smooth { scroll-behavior: auto !important; }
-.lenis.lenis-stopped { overflow: clip; }
+html { scroll-behavior: smooth; }
 
 body.menu-open {
   overflow: hidden;

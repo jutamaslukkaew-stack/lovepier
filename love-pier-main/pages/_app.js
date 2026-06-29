@@ -15,12 +15,6 @@ function LangSync() {
 
 export default function App({ Component, pageProps }) {
   useEffect(() => {
-    let lenis
-    import('lenis').then(({ default: Lenis }) => {
-      lenis = new Lenis({ duration: 1.4, easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smoothWheel: true })
-      function raf(time) { lenis.raf(time); requestAnimationFrame(raf) }
-      requestAnimationFrame(raf)
-    }).catch(() => {})
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -43,7 +37,6 @@ export default function App({ Component, pageProps }) {
     mo.observe(document.body, { childList: true, subtree: true })
 
     return () => {
-      lenis?.destroy()
       observer.disconnect()
       mo.disconnect()
     }

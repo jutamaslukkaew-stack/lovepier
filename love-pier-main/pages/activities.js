@@ -236,7 +236,7 @@ function fmt(n) {
 
 function ActivityTable({ cat, t }) {
   return (
-    <div id={`activity-${cat.id}`} className="mb-7 last:mb-0">
+    <div id={`activity-${cat.id}`} className="mb-7 last:mb-0" style={{ scrollMarginTop: '130px' }}>
       <div className="flex items-center gap-3 mb-4">
         <h2 className="font-display font-light text-[clamp(22px,3vw,32px)] text-ink tracking-[-0.01em]">
           {cat.title}
@@ -316,6 +316,7 @@ export default function Activities() {
   const t = COPY[lang] || COPY.en
   const scrollRef = useRef(null)
   const [dotIndex, setDotIndex] = useState(0)
+  const [activeCat, setActiveCat] = useState('surf-pool')
   const DOT_COUNT = 2
 
   useEffect(() => {
@@ -348,20 +349,14 @@ export default function Activities() {
           <div ref={scrollRef} className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex gap-2 min-w-max lg:min-w-0 lg:justify-center px-4 pt-3 pb-2 pr-10">
               {t.categories.map((cat) => (
-                <button
+                <a
                   key={cat.id}
-                  type="button"
-                  onClick={() => {
-                    const el = document.getElementById(`activity-${cat.id}`)
-                    if (!el) return
-                    const navH = document.querySelector('nav')?.offsetHeight ?? 64
-                    const y = el.getBoundingClientRect().top + window.scrollY - navH - 52 - 8
-                    window.scrollTo({ top: y, behavior: 'smooth' })
-                  }}
-                  className="px-4 py-1.5 rounded-full text-[10px] tracking-[0.12em] uppercase font-semibold whitespace-nowrap bg-[#4a3520] text-white hover:bg-[#3a2818] transition-colors border-none cursor-pointer"
+                  href={`#activity-${cat.id}`}
+                  onClick={() => setActiveCat(cat.id)}
+                  className={`px-4 py-1.5 rounded-full text-[10px] tracking-[0.12em] uppercase font-semibold whitespace-nowrap transition-all cursor-pointer no-underline ${activeCat === cat.id ? 'bg-[#4a3520] text-white' : 'bg-[#4a3520]/[0.07] text-[#4a3520]/70 hover:bg-[#4a3520]/15 hover:text-[#4a3520]'}`}
                 >
                   {cat.title}
-                </button>
+                </a>
               ))}
             </div>
           </div>
