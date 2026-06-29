@@ -46,7 +46,7 @@ export default function CartDrawer() {
   function handleOrder() {
     const lines = items.map((i) => `${i.name} x${i.qty} = ฿${(parseFloat(i.price) * i.qty).toFixed(0)}`).join('\n')
     const msg = encodeURIComponent(`สวัสดีครับ ขอสั่งอาหาร:\n${lines}\n\nรวม ฿${totalPrice.toFixed(0)}`)
-    window.open(`https://line.me/R/oaMessage/@lovepier/?${msg}`, '_blank')
+    window.open(`https://line.me/R/oaMessage/@694eccdr/?${msg}`, '_blank')
   }
 
   return (
