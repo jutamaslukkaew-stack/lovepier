@@ -291,7 +291,36 @@ function MatchaTasteNotes({ notes }) {
 
 const TIERED_PRICE_CATEGORIES = []
 
-function FloreMenuPanel({ section, items, menuAddOns, tasteNotes, globalIndexMap, onImageClick }) {
+const PRICE_LIST_LABEL = { th: 'รายการราคา', en: 'Price List', zh: '价目表' }
+
+function PriceListSection({ items, lang }) {
+  const label = PRICE_LIST_LABEL[lang] || PRICE_LIST_LABEL.en
+  const listItems = items.filter((i) => i.price && i.price !== 'Free' && parseFloat(i.price) > 0)
+  if (!listItems.length) return null
+  return (
+    <div className="mt-7 pt-6 border-t border-black/10">
+      <h4 className="text-[9px] tracking-[0.25em] uppercase text-[#888] mb-4">{label}</h4>
+      <div className="space-y-2.5">
+        {listItems.map((item) => (
+          <div key={item.num} className="flex items-baseline gap-2">
+            <span className="shrink-0 text-[12px] sm:text-[13px] font-light text-ink leading-snug">{item.name}</span>
+            {item.desc && (
+              <span className="shrink-0 text-[10px] text-black/40 font-light">({item.desc})</span>
+            )}
+            <span className="flore-menu-leader flex-1 min-w-[12px] mb-[3px]" aria-hidden />
+            <span className="shrink-0 font-semibold text-[13px] text-ink tabular-nums">
+              {item.prices
+                ? Object.values(item.prices).filter(Boolean).map((p, i, arr) => `฿${p}${i < arr.length - 1 ? ' / ' : ''}`).join('')
+                : `฿${Math.round(parseFloat(item.price))}`}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FloreMenuPanel({ section, items, menuAddOns, tasteNotes, globalIndexMap, onImageClick, showPriceList }) {
   const { lang } = useLanguage()
 
   if (!section) return null
@@ -316,6 +345,7 @@ function FloreMenuPanel({ section, items, menuAddOns, tasteNotes, globalIndexMap
           )
         })}
       </div>
+      {showPriceList ? <PriceListSection items={items} lang={lang} /> : null}
       {menuAddOns?.length ? <CoffeeAddOns items={menuAddOns} /> : null}
       {tasteNotes?.length ? <MatchaTasteNotes notes={tasteNotes} /> : null}
     </div>
@@ -1244,6 +1274,7 @@ export default function Menu({ dbMenuData }) {
                 menuAddOns={menuAddOnsForCategory(section.cat, lang)}
                 globalIndexMap={globalIndexMap}
                 onImageClick={setGlobalLbIndex}
+                showPriceList
               />
             </div>
           ))}
