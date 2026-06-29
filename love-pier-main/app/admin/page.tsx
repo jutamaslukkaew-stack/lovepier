@@ -32,7 +32,7 @@ export default async function AdminHome() {
     { label: 'เมนูที่ปิดขายอยู่', value: stats.unavailable },
   ]
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-4xl px-4 py-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">ภาพรวม</h1>
         <Button asChild>

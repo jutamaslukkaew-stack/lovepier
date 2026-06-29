@@ -106,7 +106,7 @@ export function MenuManager({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto max-w-4xl px-4 py-6 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">เมนูอาหาร</h1>
         <Button onClick={() => setCreating(true)} disabled={categories.length === 0}>

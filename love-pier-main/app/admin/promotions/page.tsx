@@ -158,7 +158,7 @@ export default function PromotionsPage() {
     })
   }, [promos, categoryFilter, search])
 
-  const canReorder = categoryFilter !== 'all' && !search
+  const canReorder = true
 
   function onDragEnd(e: DragEndEvent) {
     const { active, over } = e
@@ -248,11 +248,6 @@ export default function PromotionsPage() {
         />
       </div>
 
-      {!canReorder && filtered.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          เลือกหมวดเดียว (และล้างการค้นหา) เพื่อจัดลำดับด้วยการลาก
-        </p>
-      )}
 
       {loading ? (
         <p className="text-muted-foreground text-sm">กำลังโหลด…</p>

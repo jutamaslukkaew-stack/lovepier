@@ -331,7 +331,7 @@ function FloreMenuPanel({ section, items, menuAddOns, tasteNotes, globalIndexMap
           {section.subtitle}
         </p>
       ) : null}
-      <div className="grid grid-cols-1 gap-4">
+      <div className={`grid grid-cols-1 gap-4 lg:gap-6 ${items.length >= 3 ? 'lg:grid-cols-3' : items.length === 2 ? 'lg:grid-cols-2' : ''}`}>
         {items.map((item) => {
           const key = `${section.cat}-${item.num}`
           return (
@@ -354,33 +354,26 @@ function FloreMenuPanel({ section, items, menuAddOns, tasteNotes, globalIndexMap
 
 function FloreSignaturePanel({ menuData, globalIndexMap, onImageClick }) {
   const { lang } = useLanguage()
-  const groups = menuData
-    .map((section) => ({ section, items: section.items.filter((item) => item.badge) }))
-    .filter((group) => group.items.length > 0)
+  const allItems = menuData.flatMap((section) =>
+    section.items.filter((item) => item.badge).map((item) => ({ section, item }))
+  )
 
   return (
     <div className="flore-menu-panel px-6 sm:px-10 lg:px-12 py-7 sm:py-9">
-      {groups.map(({ section, items }) => (
-        <div key={section.cat} className="mb-8 last:mb-0">
-          <h3 className="text-[10px] tracking-[0.2em] uppercase text-gold mb-4">
-            {section.title}{section.titleEm ? ` ${section.titleEm}` : ''}
-          </h3>
-          <div className="grid grid-cols-1 gap-4">
-            {items.map((item) => {
-              const key = `${section.cat}-${item.num}`
-              return (
-                <MenuCard
-                  key={key}
-                  id={key}
-                  lang={lang}
-                  {...item}
-                  onImageClick={item.image && onImageClick ? () => onImageClick(globalIndexMap?.[key] ?? 0) : undefined}
-                />
-              )
-            })}
-          </div>
-        </div>
-      ))}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+        {allItems.map(({ section, item }) => {
+          const key = `${section.cat}-${item.num}`
+          return (
+            <MenuCard
+              key={key}
+              id={key}
+              lang={lang}
+              {...item}
+              onImageClick={item.image && onImageClick ? () => onImageClick(globalIndexMap?.[key] ?? 0) : undefined}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }
