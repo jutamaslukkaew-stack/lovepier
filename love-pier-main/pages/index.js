@@ -5,8 +5,33 @@ import { useEffect, useState } from 'react'
 import Footer from '../components/Footer'
 import { ScrollStack, ScrollStackPanel } from '../components/ScrollStack'
 import { db } from '../lib/db'
-import { categories, menuItems } from '../lib/db/schema'
+import { categories, events as eventsTable, menuItems } from '../lib/db/schema'
 import { useLanguage } from '../lib/language'
+
+function getSrcSet(url) {
+  if (!url || !url.includes('-960w.webp')) return undefined
+  const base = url.replace('-960w.webp', '')
+  return `${base}-480w.webp 480w, ${base}-960w.webp 960w, ${base}-1440w.webp 1440w`
+}
+
+function formatEventDate(dateStr, lang) {
+  if (!dateStr) return { dateFull: '', year: '' }
+  const d = new Date(dateStr + 'T00:00:00')
+  const day = d.getDate()
+  const year = d.getFullYear()
+  if (lang === 'th') {
+    const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+    const weekdays = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.']
+    return { dateFull: `${weekdays[d.getDay()]} ${day} ${months[d.getMonth()]}`, year: String(year) }
+  }
+  if (lang === 'zh') {
+    const weekdays = ['周日','周一','周二','周三','周四','周五','周六']
+    return { dateFull: `${d.getMonth()+1}月${day}日 ${weekdays[d.getDay()]}`, year: String(year) }
+  }
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+  return { dateFull: `${weekdays[d.getDay()]} ${day} ${months[d.getMonth()]}`, year: String(year) }
+}
 
 // ── copy ──────────────────────────────────────────────────────────────────────
 const COPY = {
@@ -218,6 +243,9 @@ function MenuCard({ item, lang }) {
         <img
           src={item.imageUrl}
           alt={name}
+          loading="lazy"
+          srcSet={getSrcSet(item.imageUrl)}
+          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 25vw, 50vw"
           className="w-full aspect-[4/5] object-cover [filter:saturate(0.75)] group-hover:[filter:saturate(1)] transition-[filter] duration-500"
         />
       ) : (
@@ -263,6 +291,8 @@ function HeroSlideshow({ t, renderLines }) {
           key={slide.src}
           src={slide.src}
           alt="Love Pier Beach Cafe"
+          loading={i === 0 ? 'eager' : 'lazy'}
+          fetchPriority={i === 0 ? 'high' : 'auto'}
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[600ms]"
           style={{
             objectPosition: slide.pos,
@@ -299,13 +329,39 @@ function HeroSlideshow({ t, renderLines }) {
 }
 
 // ── page ──────────────────────────────────────────────────────────────────────
-export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
+export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbEvents = [] }) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
 
   const renderLines = (text) => text.split('\n').map((line, idx, arr) => (
     <span key={`${line}-${idx}`}>{line}{idx < arr.length - 1 ? <br /> : null}</span>
   ))
+
+  const titleKey = lang === 'th' ? 'titleTh' : lang === 'zh' ? 'titleZh' : 'titleEn'
+  const descKey  = lang === 'th' ? 'descriptionTh' : lang === 'zh' ? 'descriptionZh' : 'descriptionEn'
+  const perLabel = lang === 'th' ? 'คน' : lang === 'zh' ? '人' : 'person'
+  const freeLabel = lang === 'th' ? 'ฟรี' : lang === 'zh' ? '免费' : 'Free'
+
+  const activeEvents = dbEvents.filter((e) => e.isActive)
+  const eventsItems = activeEvents.length > 0
+    ? activeEvents.slice(0, 3).map((ev) => {
+        const d = formatEventDate(ev.eventDate, lang)
+        const fullTitle = ev[titleKey] || ev.titleEn
+        const em = ev.titleEm || ''
+        const titleMain = em && fullTitle.endsWith(em) ? fullTitle.slice(0, -em.length).trim() : fullTitle
+        const dateStr = d.dateFull ? `${d.dateFull} ${d.year} · ${ev.timeRange}` : ev.timeRange
+        const priceStr = ev.price != null ? `฿${ev.price.toLocaleString()} / ${perLabel}` : freeLabel
+        return {
+          tag: ev.location || 'Love Pier',
+          title: titleMain,
+          titleEm: em,
+          date: dateStr,
+          desc: ev[descKey] || ev.descriptionEn,
+          price: priceStr,
+          img: ev.imageUrl || '',
+        }
+      })
+    : t.eventsItems
 
   return (
     <>
@@ -339,11 +395,11 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 reveal">
           <div className="bg-[#e8e4de] sm:relative sm:overflow-hidden sm:aspect-[5/4] lg:aspect-[4/3] xl:aspect-[3/2]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="block w-full h-auto object-contain sm:absolute sm:inset-0 sm:h-full sm:object-cover sm:object-[50%_42%] [filter:saturate(0.7)] hover:[filter:saturate(1)] transition-[filter] duration-500" src="/uploads/home-cafe-interior.webp" alt="Love Pier Beach Cafe interior" />
+            <img className="block w-full h-auto object-contain sm:absolute sm:inset-0 sm:h-full sm:object-cover sm:object-[50%_42%] [filter:saturate(0.7)] hover:[filter:saturate(1)] transition-[filter] duration-500" src="/uploads/home-cafe-interior.webp" alt="Love Pier Beach Cafe interior" loading="lazy" />
           </div>
           <div className="bg-[#e8e4de] sm:relative sm:overflow-hidden sm:aspect-[5/4] lg:aspect-[4/3] xl:aspect-[3/2]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="block w-full h-auto object-contain sm:absolute sm:inset-0 sm:h-full sm:object-cover sm:object-[50%_48%] [filter:saturate(0.7)] hover:[filter:saturate(1)] transition-[filter] duration-500" src="/uploads/drink-can-set.webp" alt="Love Pier canned drinks" />
+            <img className="block w-full h-auto object-contain sm:absolute sm:inset-0 sm:h-full sm:object-cover sm:object-[50%_48%] [filter:saturate(0.7)] hover:[filter:saturate(1)] transition-[filter] duration-500" src="/uploads/drink-can-set.webp" alt="Love Pier canned drinks" loading="lazy" />
           </div>
         </div>
       </ScrollStackPanel>
@@ -385,6 +441,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
                 <img
                   src={src}
                   alt={alt}
+                  loading="lazy"
                   className="w-full h-[58vw] sm:h-[42vw] lg:h-[32vw] max-h-[480px] object-cover [filter:saturate(0.68)_contrast(1.02)] hover:[filter:saturate(1)_contrast(1)] transition-[filter] duration-700"
                 />
               </div>
@@ -462,7 +519,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
               { src: '/uploads/events-jet-ski.webp', alt: 'jet ski' },
             ].map(({ src, alt }) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={src} src={src} alt={alt} className="w-full aspect-square object-cover [filter:saturate(0.75)] hover:[filter:saturate(1)] transition-[filter] duration-500" />
+              <img key={src} src={src} alt={alt} loading="lazy" className="w-full aspect-square object-cover [filter:saturate(0.75)] hover:[filter:saturate(1)] transition-[filter] duration-500" />
             ))}
           </div>
         </section>
@@ -473,10 +530,10 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets }) {
         <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 reveal border-t border-black/10">
           <SectionHeader title={t.eventsTitle} sub={t.eventsSub} moreLabel={t.eventsMore} moreHref="/events" />
           <div className="space-y-4">
-            {t.eventsItems.map((ev) => (
-              <Link key={ev.title} href="/events" className="group grid grid-cols-1 sm:grid-cols-[300px_1fr] lg:grid-cols-[420px_1fr] gap-0 border border-black/10 overflow-hidden hover:border-black/25 transition-colors">
+            {eventsItems.map((ev) => (
+              <Link key={ev.title + ev.date} href="/events" className="group grid grid-cols-1 sm:grid-cols-[300px_1fr] lg:grid-cols-[420px_1fr] gap-0 border border-black/10 overflow-hidden hover:border-black/25 transition-colors">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={ev.img} alt={ev.title} className="w-full h-48 sm:h-auto object-cover [filter:saturate(0.72)] group-hover:[filter:saturate(1)] transition-[filter] duration-500" />
+                {ev.img && <img src={ev.img} alt={ev.title} loading="lazy" srcSet={getSrcSet(ev.img)} sizes="(min-width: 1024px) 420px, (min-width: 640px) 300px, 100vw" className="w-full h-48 sm:h-auto object-cover [filter:saturate(0.72)] group-hover:[filter:saturate(1)] transition-[filter] duration-500" />}
                 <div className="px-6 py-6 sm:py-8 flex flex-col gap-3">
                   <span className="text-[9px] tracking-[0.3em] uppercase text-gold font-semibold">{ev.tag}</span>
                   <h3 className="font-display font-light text-[clamp(28px,4vw,44px)] leading-none text-ink">
@@ -615,11 +672,26 @@ export async function getServerSideProps() {
       isFeatured: i.isFeatured,
     }))
 
+  let dbEvents = []
+  try {
+    const evRows = await db
+      .select()
+      .from(eventsTable)
+      .where(eq(eventsTable.isActive, true))
+      .orderBy(asc(eventsTable.sortOrder))
+    dbEvents = evRows.map((r) => ({
+      ...r,
+      eventDate: r.eventDate ?? null,
+      createdAt: r.createdAt ? r.createdAt.toISOString() : null,
+    }))
+  } catch { /* fallback to empty */ }
+
   return {
     props: {
       featuredDrinks: ser(pick(drinkIds, 4)),
       featuredFood:   ser(pick(foodIds, 4)),
       featuredSweets: ser(pick(sweetIds, 4)),
+      dbEvents,
     },
   }
 }
