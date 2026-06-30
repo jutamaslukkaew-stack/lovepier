@@ -190,7 +190,7 @@ export default function Gallery() {
   const [showAll, setShowAll] = useState(false)
   const tabScrollRef = useRef(null)
   const [tabDotIndex, setTabDotIndex] = useState(0)
-  const TAB_DOT_COUNT = 2
+  const TAB_DOT_COUNT = filters.length
   useEffect(() => {
     const el = tabScrollRef.current
     if (!el) return

@@ -317,7 +317,7 @@ export default function Activities() {
   const scrollRef = useRef(null)
   const [dotIndex, setDotIndex] = useState(0)
   const [activeCat, setActiveCat] = useState('surf-pool')
-  const DOT_COUNT = 2
+  const DOT_COUNT = t.categories.length
 
   useEffect(() => {
     const el = scrollRef.current

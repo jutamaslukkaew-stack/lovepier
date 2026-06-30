@@ -1080,7 +1080,7 @@ export default function Menu({ dbMenuData }) {
   const [globalLbIndex, setGlobalLbIndex] = useState(-1)
   const tabScrollRef = useRef(null)
   const [tabDotIndex, setTabDotIndex] = useState(0)
-  const TAB_DOT_COUNT = 2
+  const TAB_DOT_COUNT = primaryTabs.length
   useEffect(() => {
     const el = tabScrollRef.current
     if (!el) return
