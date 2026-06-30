@@ -100,7 +100,7 @@ function LangFlagDropdown({ lang, setLang }) {
                 }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 transition-colors cursor-pointer ${
                   lang === value
-                    ? 'bg-[#fffdf6] shadow-[inset_0_-2px_0_0_#c9a84c]'
+                    ? 'bg-[#fffdf6]'
                     : 'hover:bg-black/[0.04]'
                 }`}
               >
