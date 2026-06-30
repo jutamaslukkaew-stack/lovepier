@@ -1016,7 +1016,7 @@ function MenuHero({ lang }) {
     return () => clearInterval(t)
   }, [])
 
-  const title = lang === 'th' ? 'เมนู' : lang === 'zh' ? '菜单' : 'Menu'
+  const title = lang === 'th' ? 'เมนูร้านเลิฟเพียร์' : lang === 'zh' ? '菜单' : 'Menu'
 
   return (
     <section className="relative overflow-hidden" style={{ height: 'clamp(260px, 55vw, 420px)' }}>
