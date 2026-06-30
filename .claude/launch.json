@@ -6,14 +6,7 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "cwd": "love-pier-main",
-      "port": 3000
-    },
-    {
-      "name": "lovepier",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "cwd": "lovepier",
-      "port": 3000
+      "autoPort": true
     }
   ]
 }

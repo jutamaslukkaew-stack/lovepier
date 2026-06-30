@@ -45,10 +45,10 @@ const COPY = {
     exploreMenu: 'ดูเมนู',
     tagline: ['Beach Vibes,', 'Cafe by The Sea,', 'คาเฟ่บรรยากาศดีริมทะเล'],
     since: 'ตั้งแต่ปี 2026',
-    about1: '<strong>LOVE PIER BEACH CAFE</strong> คาเฟ่ริมชายหาดบางแสน ที่ให้ทุกมื้อพิเศษกว่าที่เคย',
-    about2: 'สัมผัสรสชาติของ <em class="italic text-gold">"ข้าวมันไก่สิงคโปร์และข้าวมันไก่ไหหลำ สูตรต้นตำรับ"</em> พร้อมจิบเครื่องดื่มซิกเนเจอร์ ที่ได้แรงบันดาลใจจาก <em class="italic text-gold">"ข้าวหลามหนองมน"</em> เอกลักษณ์แห่งบางแสนที่ถูกถ่ายทอดออกมาในรูปแบบใหม่ อย่างละมุน',
-    about3: 'นั่งรับลมทะเล ฟังเสียงคลื่นเบา ๆ ท่ามกลางบรรยากาศอบอุ่นริมชายหาด และเก็บภาพความทรงจำที่มุมท่าเรือสุดโรแมนติก',
-    about4: 'เพราะบางช่วงเวลาที่สวยงาม ไม่ได้ต้องการอะไรมากไปกว่าอาหารดี ๆ เครื่องดื่มแก้วโปรด และคนพิเศษที่นั่งมองพระอาทิตย์ตกไปด้วยกัน<br />ที่ <strong class="italic text-gold font-normal tracking-[0.12em]">LOVE PIER BEACH CAFE</strong>',
+    about1: '<strong>LOVE PIER BEACH CAFE</strong> คาเฟ่ริมชายหาดบางแสน ที่อยากให้ทุกช่วงเวลาของคุณพิเศษกว่าที่เคย',
+    about2: 'ที่นี่ไม่ใช่แค่คาเฟ่ริมทะเล แต่คือพื้นที่พักใจริมชายหาด สำหรับคนที่อยากหลบความวุ่นวาย มานั่งรับลม ฟังเสียงคลื่น และปล่อยเวลาให้เดินช้าลง ท่ามกลางบรรยากาศอบอุ่น โรแมนติก และวิวทะเลบางแสนที่สวยในแบบเรียบง่าย',
+    about3: 'LOVE PIER BEACH CAFE ถูกออกแบบให้เป็นจุดนัดพบของความทรงจำ ไม่ว่าจะมานั่งจิบเครื่องดื่มแก้วโปรด ทานอาหารมื้อสบาย ๆ เก็บภาพกับมุมท่าเรือริมทะเล หรือใช้เวลาสนุกไปกับกิจกรรมกลางแจ้งริมชายหาด ทั้งเล่นเซิร์ฟ พายเรือ และกิจกรรมทางน้ำที่ทำให้วันพักผ่อนมีชีวิตชีวามากขึ้น',
+    about4: 'ในช่วงเย็น แสงพระอาทิตย์ที่ค่อย ๆ ลับขอบฟ้า เสียงคลื่นเบา ๆ และลมทะเลที่พัดผ่าน จะทำให้ทุกมื้อธรรมดากลายเป็นช่วงเวลาที่น่าจดจำ เพราะบางครั้งความสุขก็ไม่ได้ต้องการอะไรมากไปกว่า วิวสวย ๆ เครื่องดื่มดี ๆ กิจกรรมสนุก ๆ และใครสักคนที่นั่งอยู่ข้างกัน<br /><br /><strong class="italic text-gold font-normal tracking-[0.12em]">LOVE PIER BEACH CAFE</strong> คาเฟ่ริมทะเลบางแสน สำหรับมื้อพิเศษ วันพักผ่อน กิจกรรมริมชายหาด และความทรงจำดี ๆ ของคุณ',
     address: 'ที่อยู่',
     addressValue: '800 108 แสนสุข\nอำเภอเมือง จังหวัดชลบุรี 20130',
     hoursCompact: 'เปิดทุกวัน (ยกเว้นวันพุธ) · 09:00-18:00',
@@ -246,7 +246,7 @@ function MenuCard({ item, lang }) {
           loading="lazy"
           srcSet={getSrcSet(item.imageUrl)}
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 25vw, 50vw"
-          className="w-full aspect-[4/5] object-cover [filter:saturate(0.75)] group-hover:[filter:saturate(1)] transition-[filter] duration-500"
+          className="w-full aspect-[4/5] object-cover rounded-2xl [filter:saturate(0.75)] group-hover:[filter:saturate(1)] transition-[filter] duration-500"
         />
       ) : (
         <div className="w-full aspect-[4/5] bg-[#e8e4de] flex items-center justify-center">
@@ -392,34 +392,20 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 reveal">
-          <div className="bg-[#e8e4de] sm:relative sm:overflow-hidden sm:aspect-[5/4] lg:aspect-[4/3] xl:aspect-[3/2]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="block w-full h-auto object-contain sm:absolute sm:inset-0 sm:h-full sm:object-cover sm:object-[50%_42%] [filter:saturate(0.7)] hover:[filter:saturate(1)] transition-[filter] duration-500" src="/uploads/home-cafe-interior.webp" alt="Love Pier Beach Cafe interior" loading="lazy" />
-          </div>
-          <div className="bg-[#e8e4de] sm:relative sm:overflow-hidden sm:aspect-[5/4] lg:aspect-[4/3] xl:aspect-[3/2]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="block w-full h-auto object-contain sm:absolute sm:inset-0 sm:h-full sm:object-cover sm:object-[50%_48%] [filter:saturate(0.7)] hover:[filter:saturate(1)] transition-[filter] duration-500" src="/uploads/drink-can-set.webp" alt="Love Pier canned drinks" loading="lazy" />
-          </div>
-        </div>
       </ScrollStackPanel>
 
       {/* ── 2. ABOUT ────────────────────────────────────────────────────── */}
       <ScrollStackPanel>
-        <section className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] px-4 py-14 items-start lg:items-center reveal sm:px-6 sm:py-16 lg:px-10 lg:py-20 gap-12 lg:gap-14 xl:gap-20">
-          <div className="inline-block max-w-full lg:pr-6 xl:pr-10">
-            <Link href="/menu" className="group flex w-full items-center justify-between px-6 py-5 bg-[#4a3520] text-[rgba(245,243,239,0.95)] hover:bg-[#3a2818] transition-colors duration-200">
-              <span className="text-[13px] sm:text-[15px] tracking-[0.2em] uppercase font-light">{t.exploreMenu}</span>
-              <span className="text-lg transition-transform duration-200 group-hover:translate-x-1.5">→</span>
-            </Link>
+        <section className="px-4 py-14 reveal sm:px-6 sm:py-16 lg:px-10 lg:py-20 max-w-3xl">
+          <div className="text-sm leading-[1.9] text-[#555] font-light mb-10">
+            <p className="mb-4" dangerouslySetInnerHTML={{ __html: t.about1 }} />
+            <p className="mb-4" dangerouslySetInnerHTML={{ __html: t.about2 }} />
+            <p dangerouslySetInnerHTML={{ __html: `${t.about3} ${t.about4}` }} />
           </div>
-          <div className="lg:pl-2 xl:pl-4">
-            <div className="text-sm leading-[1.9] text-[#555] font-light">
-              <p className="mb-4" dangerouslySetInnerHTML={{ __html: t.about1 }} />
-              <p className="mb-4" dangerouslySetInnerHTML={{ __html: t.about2 }} />
-              <p dangerouslySetInnerHTML={{ __html: `${t.about3} ${t.about4}` }} />
-            </div>
-          </div>
+          <Link href="/menu" className="group flex w-full items-center justify-between px-6 py-5 bg-[#4a3520] text-[rgba(245,243,239,0.95)] hover:bg-[#3a2818] transition-colors duration-200">
+            <span className="text-[13px] sm:text-[15px] tracking-[0.2em] uppercase font-light">{t.exploreMenu}</span>
+            <span className="text-lg transition-transform duration-200 group-hover:translate-x-1.5">→</span>
+          </Link>
         </section>
       </ScrollStackPanel>
 
@@ -612,11 +598,18 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
               </div>
               <div>
                 <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.follow}</span>
-                <div className="flex gap-3 items-center flex-wrap">
-                  <a href="https://www.instagram.com/lovepiercafe/" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink hover:[&_svg]:text-bg transition-all flex items-center justify-center w-8 h-8" aria-label="Instagram"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg></a>
-                  <a href="https://www.facebook.com/?locale=th_TH" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="Facebook"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5h2.5l.5-3h-3V8.5c0-.9.3-1.5 1.6-1.5H17V4.3c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1V10.5H8v3h2.5V21h3z"/></svg></a>
-                  <a href="https://lin.ee/5A0tfSQ" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="LINE"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.5 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6 1.5-1.7 2.6-3.4 2.6-4.9 0-4.4-4.5-8-10-8z"/></svg></a>
-                  <a href="https://www.tiktok.com/@lovepier.cafe2?_r=1&_t=ZS-97V9HaUa8jE" target="_blank" rel="noopener noreferrer" className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink transition-all flex items-center justify-center w-8 h-8" aria-label="TikTok"><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-2.6-1.6 4.3 4.3 0 0 1-.8-2.2h-3v12c0 1-.8 1.9-1.9 1.9a1.9 1.9 0 0 1-1.9-1.9c0-1 .8-1.9 1.9-1.9.2 0 .4 0 .6.1V9.1a5 5 0 0 0-.6 0 5 5 0 1 0 5 5V8.4a7.4 7.4 0 0 0 4.3 1.4V6.7a4.4 4.4 0 0 1-1-.9z"/></svg></a>
+                <div className="flex gap-4 items-start flex-wrap">
+                  {[
+                    { href: 'https://www.instagram.com/lovepiercafe/', label: 'Instagram', handle: 'lovepiercafe', icon: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg> },
+                    { href: 'https://www.facebook.com/?locale=th_TH', label: 'Facebook', handle: 'lovepier.cafe', icon: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5h2.5l.5-3h-3V8.5c0-.9.3-1.5 1.6-1.5H17V4.3c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1V10.5H8v3h2.5V21h3z"/></svg> },
+                    { href: 'https://lin.ee/5A0tfSQ', label: 'LINE', handle: '@lovepier.cafe', icon: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.5 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6 1.5-1.7 2.6-3.4 2.6-4.9 0-4.4-4.5-8-10-8z"/></svg> },
+                    { href: 'https://www.tiktok.com/@lovepier.cafe2?_r=1&_t=ZS-97V9HaUa8jE', label: 'TikTok', handle: 'lovepier.cafe', icon: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-2.6-1.6 4.3 4.3 0 0 1-.8-2.2h-3v12c0 1-.8 1.9-1.9 1.9a1.9 1.9 0 0 1-1.9-1.9c0-1 .8-1.9 1.9-1.9.2 0 .4 0 .6.1V9.1a5 5 0 0 0-.6 0 5 5 0 1 0 5 5V8.4a7.4 7.4 0 0 0 4.3 1.4V6.7a4.4 4.4 0 0 1-1-.9z"/></svg> },
+                  ].map(({ href, label, handle, icon }) => (
+                    <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="flex flex-col items-center gap-1 group">
+                      <span className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink group-hover:[&_svg]:text-bg transition-all flex items-center justify-center w-8 h-8">{icon}</span>
+                      <span className="text-[9px] text-[#aaa] group-hover:text-ink transition-colors whitespace-nowrap">{handle}</span>
+                    </a>
+                  ))}
                 </div>
               </div>
               <a href="https://maps.app.goo.gl/CYDRrd6hoxRv7z4j8" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[10px] tracking-[0.25em] uppercase text-[#666] hover:text-ink transition-colors mt-1">

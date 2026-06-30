@@ -244,21 +244,10 @@ function MenuCard({ id, name, badge, desc, price, prices, image, lang, onImageCl
             ))}
           </p>
         )}
-        <div className="flex items-center justify-between mt-auto pt-2">
+        <div className="mt-auto pt-2">
           <span className="font-semibold text-[15px] text-ink tabular-nums">
             {displayPrice ? `฿${Math.round(parseFloat(displayPrice))}` : '–'}
           </span>
-          <button
-            onClick={handleAdd}
-            disabled={!displayPrice || displayPrice === 'Free'}
-            className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors ${
-              flash
-                ? 'bg-[#3a2818] text-white'
-                : 'bg-[#4a3520] text-white hover:bg-[#3a2818]'
-            } disabled:opacity-40 disabled:cursor-not-allowed`}
-          >
-            {flash ? t.added : t.add}
-          </button>
         </div>
       </div>
     </div>
@@ -301,32 +290,7 @@ const TIERED_PRICE_CATEGORIES = []
 
 const PRICE_LIST_LABEL = { th: 'รายการราคา', en: 'Price List', zh: '价目表' }
 
-function PriceListSection({ items, lang }) {
-  const label = PRICE_LIST_LABEL[lang] || PRICE_LIST_LABEL.en
-  const listItems = items.filter((i) => i.price && i.price !== 'Free' && parseFloat(i.price) > 0)
-  if (!listItems.length) return null
-  return (
-    <div className="mt-7 pt-6 border-t border-black/10">
-      <h4 className="text-[9px] tracking-[0.25em] uppercase text-[#888] mb-4">{label}</h4>
-      <div className="space-y-2.5">
-        {listItems.map((item) => (
-          <div key={item.num} className="flex items-baseline gap-2">
-            <span className="shrink-0 text-[12px] sm:text-[13px] font-light text-ink leading-snug">{item.name}</span>
-            {item.desc && (
-              <span className="shrink-0 text-[10px] text-black/40 font-light">({item.desc})</span>
-            )}
-            <span className="flore-menu-leader flex-1 min-w-[12px] mb-[3px]" aria-hidden />
-            <span className="shrink-0 font-semibold text-[13px] text-ink tabular-nums">
-              {item.prices
-                ? Object.values(item.prices).filter(Boolean).map((p, i, arr) => `฿${p}${i < arr.length - 1 ? ' / ' : ''}`).join('')
-                : `฿${Math.round(parseFloat(item.price))}`}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+function PriceListSection() { return null }
 
 function FloreMenuPanel({ section, items, menuAddOns, tasteNotes, globalIndexMap, onImageClick, showPriceList }) {
   const { lang } = useLanguage()
@@ -869,8 +833,6 @@ const PROMO_DEALS = {
 
 function PromotionPanel({ lang }) {
   const t = PROMO_DEALS[lang] || PROMO_DEALS.en
-  const { addItem, openCart } = useCart()
-  const cardT = CARD_COPY[lang] || CARD_COPY.en
   return (
     <div className="px-6 sm:px-10 lg:px-12 py-7 sm:py-9">
       <div className="flex items-baseline justify-between mb-6 gap-4">
@@ -883,7 +845,7 @@ function PromotionPanel({ lang }) {
         {t.deals.map((deal, i) => (
           <div key={i} className="border border-black/10 rounded-xl overflow-hidden bg-white flex flex-col">
             {deal.img ? (
-              <div className="relative bg-[#f2ede6]" style={{ paddingTop: '133.33%' }}>
+              <div className="relative bg-[#f2ede6]" style={{ paddingTop: '75%' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={deal.img} alt={deal.title} loading="lazy" srcSet={getSrcSet(deal.img)} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="absolute inset-0 w-full h-full object-cover object-center" />
               </div>
@@ -895,17 +857,9 @@ function PromotionPanel({ lang }) {
               </div>
               <h3 className="text-[13px] font-semibold tracking-[0.06em] uppercase text-ink leading-snug mb-1.5">{deal.title}</h3>
               <p className="text-[11px] text-[#888] font-light leading-relaxed flex-1 mb-3">{deal.desc}</p>
-              <div className="flex items-center justify-between pt-3 border-t border-black/10 gap-2">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-display text-[17px] text-gold tabular-nums">{deal.price}</span>
-                  <span className="text-[11px] text-[#bbb] line-through tabular-nums">{deal.orig}</span>
-                </div>
-                <button
-                  onClick={() => { addItem({ id: `promo-${i}`, name: deal.title, price: deal.price.replace('฿',''), image: deal.img }); openCart() }}
-                  className="shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-[#4a3520] text-white hover:bg-[#3a2818] transition-colors"
-                >
-                  {cardT.add}
-                </button>
+              <div className="flex items-baseline gap-2 pt-3 border-t border-black/10">
+                <span className="font-display text-[17px] text-gold tabular-nums">{deal.price}</span>
+                <span className="text-[11px] text-[#bbb] line-through tabular-nums">{deal.orig}</span>
               </div>
             </div>
           </div>

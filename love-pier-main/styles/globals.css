@@ -63,21 +63,21 @@ body.menu-open {
 
 .nav-lang-select::-ms-expand { display: none; }
 
-/* Thai typography — prevent vowel/tone marks from overlapping adjacent lines */
+/* Thai typography — LINE Seed Sans TH for all Thai text */
 :lang(th) {
-  font-family: "Noto Sans Thai", sans-serif;
+  font-family: "LINESeedSansTH", sans-serif;
   line-height: 1.75;
   word-break: normal;
   overflow-wrap: break-word;
 }
 :lang(th) h1, :lang(th) h2, :lang(th) h3, :lang(th) h4 {
-  font-family: "Noto Serif Thai", "Noto Sans Thai", serif;
+  font-family: "LINESeedSansTH", sans-serif;
   line-height: 1.45;
   font-weight: 300;
 }
 /* Display headings with tight leading need extra room for Thai tone marks */
 :lang(th) .font-display {
-  font-family: "Noto Serif Thai", serif;
+  font-family: "LINESeedSansTH", sans-serif;
   line-height: 1.4;
   letter-spacing: 0;
 }

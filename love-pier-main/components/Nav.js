@@ -123,9 +123,19 @@ export default function Nav({ onOpenMenu }) {
     `shrink-0 text-[13px] lg:text-[14px] tracking-[0.12em] lg:tracking-[0.15em] uppercase whitespace-nowrap transition-colors duration-200 ${
       pathname === href ? 'text-ink' : 'text-muted hover:text-ink'
     }`
+  const navRef = useRef(null)
+  useEffect(() => {
+    const el = navRef.current
+    if (!el) return
+    const update = () => document.documentElement.style.setProperty('--nav-h', `${el.offsetHeight}px`)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   return (
-    <nav className="w-full sticky top-0 z-[100] border-b border-black/10 bg-[rgba(245,243,239,0.96)] backdrop-blur-sm">
+    <nav ref={navRef} className="w-full sticky top-0 z-[100] border-b border-black/10 bg-[rgba(245,243,239,0.96)] backdrop-blur-sm">
       {/* Row 1 — Logo centered, lang left (desktop), hamburger right (mobile) */}
       <div className="relative flex items-center justify-center px-4 pt-3 pb-2 sm:px-6 lg:px-10">
         {/* Logo — center */}
