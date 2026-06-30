@@ -315,8 +315,8 @@ export default function Promotion({ dbPromotions = [] }) {
 
       <PageHero title={t.hero.replace('\n', ' ')} />
 
-      <section className="px-4 py-14 border-b border-black/10 reveal sm:px-6 sm:py-14 lg:px-10 lg:py-20">
-        <div className="flex justify-between items-end mb-12 gap-8 flex-wrap">
+      <section className="px-4 pt-8 pb-14 border-b border-black/10 reveal sm:px-6 sm:pt-10 sm:pb-14 lg:px-10 lg:pt-12 lg:pb-20">
+        <div className="flex justify-between items-end mb-7 gap-8 flex-wrap">
           <div>
             <span className="block text-[10px] tracking-[0.4em] uppercase text-gold mb-3">{t.month}</span>
             <h2 className="font-display font-light leading-[1.05] text-[clamp(36px,4.5vw,56px)]">{dealsHeading.split('\n').map((l, i) => <span key={i}>{l}{i === 0 ? <br /> : null}</span>)}</h2>

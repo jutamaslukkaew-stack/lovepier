@@ -313,7 +313,7 @@ function HeroSlideshow({ t, renderLines }) {
         </h1>
       </div>
       {/* dot indicators */}
-      <div className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-5 flex flex-col gap-1.5" style={{ zIndex: 4 }}>
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-row gap-1.5" style={{ zIndex: 4 }}>
         {HERO_SLIDES.map((_, i) => (
           <button
             key={i}
@@ -399,8 +399,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
         <section className="px-4 py-14 reveal sm:px-6 sm:py-16 lg:px-10 lg:py-20 max-w-3xl">
           <div className="text-sm leading-[1.9] text-[#555] font-light mb-10">
             <p className="mb-4" dangerouslySetInnerHTML={{ __html: t.about1 }} />
-            <p className="mb-4" dangerouslySetInnerHTML={{ __html: t.about2 }} />
-            <p dangerouslySetInnerHTML={{ __html: `${t.about3} ${t.about4}` }} />
+            <p dangerouslySetInnerHTML={{ __html: `${t.about2} ${t.about3} ${t.about4}` }} />
           </div>
           <Link href="/menu" className="group flex w-full items-center justify-between px-6 py-5 bg-[#4a3520] text-[rgba(245,243,239,0.95)] hover:bg-[#3a2818] transition-colors duration-200">
             <span className="text-[13px] sm:text-[15px] tracking-[0.2em] uppercase font-light">{t.exploreMenu}</span>
@@ -505,7 +504,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
               { src: '/uploads/events-jet-ski.webp', alt: 'jet ski' },
             ].map(({ src, alt }) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={src} src={src} alt={alt} loading="lazy" className="w-full aspect-square object-cover [filter:saturate(0.75)] hover:[filter:saturate(1)] transition-[filter] duration-500" />
+              <img key={src} src={src} alt={alt} loading="lazy" className="w-full aspect-square object-cover rounded-xl [filter:saturate(0.75)] hover:[filter:saturate(1)] transition-[filter] duration-500" />
             ))}
           </div>
         </section>

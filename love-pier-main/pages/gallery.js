@@ -226,7 +226,7 @@ export default function Gallery() {
 
       <div className="sticky top-[var(--nav-h,64px)] z-50 w-full bg-[#f5f2ee] border-b border-black/10">
         <div className="relative">
-          <div ref={tabScrollRef} className="flex overflow-x-auto gap-2 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div ref={tabScrollRef} className="flex justify-center overflow-x-auto gap-2 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {filters.map(({ label, cat }) => (
               <button
                 key={label}
