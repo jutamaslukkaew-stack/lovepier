@@ -471,15 +471,15 @@ export default function Promotion({ dbPromotions = [] }) {
 
       {lbDeal && typeof window !== 'undefined' && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[200] flex flex-col bg-black" onClick={() => setLbIdx(null)}>
-          <button onClick={() => setLbIdx(null)} className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white text-base hover:bg-white/30 transition-colors">✕</button>
-          {/* prev / next */}
-          <button onClick={e => { e.stopPropagation(); lbPrev() }} className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-white text-lg hover:bg-white/30 transition-colors">‹</button>
-          <button onClick={e => { e.stopPropagation(); lbNext() }} className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-white text-lg hover:bg-white/30 transition-colors">›</button>
-          <div className="relative w-full shrink-0" style={{ height: '60dvh' }} onClick={e => e.stopPropagation()}>
+          <button onClick={() => setLbIdx(null)} className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center text-white text-base hover:bg-black/70 transition-colors">✕</button>
+          {/* image */}
+          <div className="relative flex-1 min-h-0 w-full" onClick={e => e.stopPropagation()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={lbDeal.img} alt={lbDeal.title} className="absolute inset-0 w-full h-full object-cover object-center" />
+            <img src={lbDeal.img} alt={lbDeal.title} className="absolute inset-0 w-full h-full object-contain" />
+            <button onClick={e => { e.stopPropagation(); lbPrev() }} className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-black/35 hover:bg-black/55 flex items-center justify-center text-white text-2xl leading-none">‹</button>
+            <button onClick={e => { e.stopPropagation(); lbNext() }} className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-black/35 hover:bg-black/55 flex items-center justify-center text-white text-2xl leading-none">›</button>
           </div>
-          <div className="flex-1 overflow-y-auto px-6 pt-8 pb-8 text-center flex flex-col items-center justify-center gap-4" onClick={e => e.stopPropagation()}>
+          <div className="shrink-0 px-6 pt-6 pb-8 text-center border-t border-white/10 flex flex-col items-center gap-3" onClick={e => e.stopPropagation()}>
             <span className="text-[9px] tracking-[0.3em] uppercase text-gold border border-gold/40 px-2.5 py-1">{lbDeal.badge}</span>
             <p className="text-white text-2xl sm:text-3xl font-semibold leading-snug">{lbDeal.title}</p>
             <div className="flex items-baseline gap-3 justify-center">
