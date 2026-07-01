@@ -6,7 +6,11 @@
   --color-muted: #888888;
   --color-gold: #c9a96e;
   --font-family-display: "Cormorant Garamond", "LINESeedSansTH", "Noto Serif Thai", serif;
-  --font-family-sans: Jost, "LINESeedSansTH", "Noto Sans Thai", sans-serif;
+  --font-family-sans: "LINESeedSansTH", Jost, "Noto Sans Thai", sans-serif;
+}
+
+body {
+  font-family: "LINESeedSansTH", Jost, "Noto Sans Thai", sans-serif;
 }
 
 /* Thai text: disable letter-spacing for readability */
