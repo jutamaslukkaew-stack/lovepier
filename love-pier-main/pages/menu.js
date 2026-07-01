@@ -919,6 +919,8 @@ const TAB_SECTION_CATS = {
   matcha: ['matcha'],
   drinks: ['nonCoffee', 'italianSoda', 'other'],
   sweets: ['sweets'],
+  'ice-cream': ['ice-cream'],
+  alcohol: ['alcohol'],
 }
 
 function primaryTabsForLang(lang) {
@@ -931,6 +933,8 @@ function primaryTabsForLang(lang) {
       { id: 'matcha', label: 'มัทฉะ' },
       { id: 'drinks', label: 'เครื่องดื่ม' },
       { id: 'sweets', label: 'ของหวาน' },
+      { id: 'ice-cream', label: 'ไอศครีม' },
+      { id: 'alcohol', label: 'แอลกอฮอล์' },
     ]
   }
   if (lang === 'zh') {
@@ -942,6 +946,8 @@ function primaryTabsForLang(lang) {
       { id: 'matcha', label: '抹茶' },
       { id: 'drinks', label: '饮品' },
       { id: 'sweets', label: '甜品' },
+      { id: 'ice-cream', label: '冰淇淋' },
+      { id: 'alcohol', label: '酒类' },
     ]
   }
   return [
@@ -952,6 +958,8 @@ function primaryTabsForLang(lang) {
     { id: 'matcha', label: 'Matcha' },
     { id: 'drinks', label: 'Drinks' },
     { id: 'sweets', label: 'Sweets' },
+    { id: 'ice-cream', label: 'Ice Cream' },
+    { id: 'alcohol', label: 'Alcohol' },
   ]
 }
 
@@ -983,6 +991,8 @@ const SLUG_TO_CAT = {
   'italian-soda': 'italianSoda',
   'other': 'other',
   'sweets': 'sweets',
+  'ice-cream': 'ice-cream',
+  'alcohol': 'alcohol',
 }
 
 function buildMenuDataFromDB(dbData, lang) {
@@ -1168,6 +1178,8 @@ export default function Menu({ dbMenuData, dbPromotions = [] }) {
   const coffeeSections = menuData.filter((s) => s.cat === 'coffee')
   const matchaSections = menuData.filter((s) => s.cat === 'matcha')
   const sweetsSections = menuData.filter((s) => s.cat === 'sweets')
+  const iceCreamSections = menuData.filter((s) => s.cat === 'ice-cream')
+  const alcoholSections = menuData.filter((s) => s.cat === 'alcohol')
 
   return (
     <>
@@ -1334,6 +1346,44 @@ export default function Menu({ dbMenuData, dbPromotions = [] }) {
             </div>
           ))}
         </div>
+
+        {iceCreamSections.length > 0 && (
+          <div id="menu-section-ice-cream" className="border-b border-black/10">
+            {iceCreamSections.map((section) => (
+              <div key={section.cat}>
+                <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
+                  <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">{section.title}{section.titleEm ? <em className="not-italic text-gold"> {section.titleEm}</em> : null}</h2>
+                  <div className="mt-3 w-12 h-px bg-gold/60" />
+                </div>
+                <FloreMenuPanel
+                  section={section}
+                  items={section.items}
+                  globalIndexMap={globalIndexMap}
+                  onImageClick={setGlobalLbIndex}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {alcoholSections.length > 0 && (
+          <div id="menu-section-alcohol" className="border-b border-black/10">
+            {alcoholSections.map((section) => (
+              <div key={section.cat}>
+                <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
+                  <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">{section.title}{section.titleEm ? <em className="not-italic text-gold"> {section.titleEm}</em> : null}</h2>
+                  <div className="mt-3 w-12 h-px bg-gold/60" />
+                </div>
+                <FloreMenuPanel
+                  section={section}
+                  items={section.items}
+                  globalIndexMap={globalIndexMap}
+                  onImageClick={setGlobalLbIndex}
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
       </div>
 
