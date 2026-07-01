@@ -10,13 +10,16 @@ export function LanguageProvider({ children }) {
 
   useEffect(() => {
     const saved = window.localStorage.getItem('lp_lang')
-    if (saved === 'th' || saved === 'en' || saved === 'zh') setLangState(saved)
+    const initial = (saved === 'th' || saved === 'en' || saved === 'zh') ? saved : 'th'
+    setLangState(initial)
+    document.documentElement.lang = initial
   }, [])
 
   const setLang = useCallback((nextLang) => {
     if (nextLang !== 'th' && nextLang !== 'en' && nextLang !== 'zh') return
     setLangState(nextLang)
     window.localStorage.setItem('lp_lang', nextLang)
+    document.documentElement.lang = nextLang
   }, [])
 
   const value = useMemo(() => ({ lang, setLang }), [lang, setLang])

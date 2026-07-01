@@ -8,7 +8,7 @@ import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
 import { useCart } from '../lib/cart'
 import { db } from '../lib/db'
-import { categories, menuItems } from '../lib/db/schema'
+import { categories, menuItems, promotions } from '../lib/db/schema'
 
 function getSrcSet(url) {
   if (!url || !url.includes('-960w.webp')) return undefined
@@ -233,7 +233,7 @@ function MenuCard({ id, name, badge, desc, price, prices, image, lang, onImageCl
 
       {/* content */}
       <div className="p-3.5 flex flex-col flex-1 gap-1.5">
-        <h3 className="font-display text-[15px] font-medium text-ink leading-snug line-clamp-2">{name}</h3>
+        <h3 className="font-display text-[17px] font-bold text-ink leading-snug line-clamp-2">{name}</h3>
         {desc && (
           <p className="text-[11px] text-black/50 font-light leading-relaxed line-clamp-2">{desc}</p>
         )}
@@ -831,8 +831,31 @@ const PROMO_DEALS = {
   },
 }
 
-function PromotionPanel({ lang }) {
+const PROMO_CATEGORY_BADGE = {
+  'chicken-rice': { th: 'ข้าวมันไก่', en: 'Chicken rice', zh: '鸡饭' },
+  signature: { th: 'ซิกเนเจอร์', en: 'Signature', zh: '招牌' },
+  brunch: { th: 'บรันช์', en: 'Brunch', zh: '早午餐' },
+  breakfast: { th: 'บรันช์', en: 'Brunch', zh: '早午餐' },
+  matcha: { th: 'มัทฉะ', en: 'Matcha', zh: '抹茶' },
+  combo: { th: 'คอมโบ', en: 'Combo', zh: '组合' },
+  drinks: { th: 'เครื่องดื่ม', en: 'Drinks', zh: '饮品' },
+}
+
+function promoDealsFromDB(rows, lang) {
+  return rows.map(p => ({
+    badge: PROMO_CATEGORY_BADGE[p.category]?.[lang] ?? p.category,
+    title: (lang === 'th' ? p.titleTh : lang === 'zh' ? p.titleZh : p.titleEn) || p.titleEn,
+    price: `฿${p.priceCurrent}`,
+    orig: p.priceOriginal ? `฿${p.priceOriginal}` : null,
+    disc: p.discountLabel,
+    desc: (lang === 'th' ? p.descriptionTh : lang === 'zh' ? p.descriptionZh : p.descriptionEn) || p.descriptionEn,
+    img: p.imageUrl || '/uploads/promotion-large-chicken-rice-set.webp',
+  }))
+}
+
+function PromotionPanel({ lang, dbPromotions = [] }) {
   const t = PROMO_DEALS[lang] || PROMO_DEALS.en
+  const deals = dbPromotions.length ? promoDealsFromDB(dbPromotions, lang) : t.deals
   return (
     <div className="px-6 sm:px-10 lg:px-12 py-7 sm:py-9">
       <div className="flex items-baseline justify-between mb-6 gap-4">
@@ -842,8 +865,8 @@ function PromotionPanel({ lang }) {
         </Link>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-        {t.deals.map((deal, i) => (
-          <div key={i} className="border border-black/10 rounded-xl overflow-hidden bg-white flex flex-col">
+        {deals.map((deal, i) => (
+          <Link key={i} href="/promotion" className="border border-black/10 rounded-xl overflow-hidden bg-white flex flex-col hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300 cursor-pointer">
             {deal.img ? (
               <div className="relative bg-[#f2ede6]" style={{ paddingTop: '75%' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -862,7 +885,7 @@ function PromotionPanel({ lang }) {
                 <span className="text-[11px] text-[#bbb] line-through tabular-nums">{deal.orig}</span>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
@@ -1016,7 +1039,7 @@ function MenuHero({ lang }) {
     return () => clearInterval(t)
   }, [])
 
-  const title = lang === 'th' ? 'เมนูร้านเลิฟเพียร์' : lang === 'zh' ? '菜单' : 'Menu'
+  const title = lang === 'th' ? 'เมนู อาหาร เครื่องดื่ม' : lang === 'zh' ? '菜单' : 'Menu'
 
   return (
     <section className="relative overflow-hidden" style={{ height: 'clamp(260px, 55vw, 420px)' }}>
@@ -1070,7 +1093,7 @@ const CART_BTN_COPY = {
   zh: '购物车',
 }
 
-export default function Menu({ dbMenuData }) {
+export default function Menu({ dbMenuData, dbPromotions = [] }) {
   const { lang } = useLanguage()
   const { totalQty, openCart } = useCart()
   const primaryTabs = primaryTabsForLang(lang)
@@ -1202,7 +1225,7 @@ export default function Menu({ dbMenuData }) {
             </h2>
             <div className="mt-3 w-12 h-px bg-gold/60" />
           </div>
-          <PromotionPanel lang={lang} />
+          <PromotionPanel lang={lang} dbPromotions={dbPromotions} />
         </div>
 
         {/* Signature */}
@@ -1382,5 +1405,25 @@ export async function getServerSideProps() {
       })),
   }))
 
-  return { props: { dbMenuData } }
+  const dbPromotions = await db
+    .select()
+    .from(promotions)
+    .where(eq(promotions.isActive, true))
+    .orderBy(asc(promotions.sortOrder))
+
+  return { props: { dbMenuData, dbPromotions: dbPromotions.map(p => ({
+    id: p.id,
+    category: p.category,
+    titleTh: p.titleTh,
+    titleEn: p.titleEn,
+    titleZh: p.titleZh,
+    descriptionTh: p.descriptionTh,
+    descriptionEn: p.descriptionEn,
+    descriptionZh: p.descriptionZh,
+    priceCurrent: p.priceCurrent,
+    priceOriginal: p.priceOriginal,
+    discountLabel: p.discountLabel,
+    tags: p.tags,
+    imageUrl: p.imageUrl,
+  })) } }
 }

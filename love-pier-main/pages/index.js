@@ -1,7 +1,8 @@
 import { and, asc, eq } from 'drizzle-orm'
 import Head from 'next/head'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useEffect, useRef, useState } from 'react'
 import Footer from '../components/Footer'
 import { ScrollStack, ScrollStackPanel } from '../components/ScrollStack'
 import { db } from '../lib/db'
@@ -84,10 +85,17 @@ const COPY = {
       {
         tag: 'The Symphony Club',
         title: 'Flow', titleEm: 'Sunset',
-        date: 'SAT 27 JUN 2026 · 16:00–20:00',
-        desc: 'Surf Pool · Skimboard · Kayak · SUP Board ฟรีริสแบนด์ และเครื่องดื่ม 1 กระป๋อง',
+        date: 'ส. 27 มิ.ย. 2026 · 16:00–20:00',
+        desc: 'Surf Pool · Skimboard · Kayak · SUP Board อาหาร เครื่องดื่ม และสินค้าพาร์ทเนอร์ตลอดงาน รับริสแบนด์และเครื่องดื่มกระป๋องฟรี 1 แก้ว',
         price: '฿500 / คน',
         img: '/uploads/events-flow-sunset.webp',
+        images: [
+          '/uploads/events-flow-sunset.webp',
+          '/uploads/events-surf-pool.webp',
+          '/uploads/events-skimboard.webp',
+          '/uploads/events-kayak.webp',
+          '/uploads/events-jet-ski.webp',
+        ],
       },
     ],
   },
@@ -143,6 +151,7 @@ const COPY = {
         desc: 'Surf Pool · Skimboard · Kayak · SUP Board. Free wristband and one canned drink.',
         price: '฿500 / person',
         img: '/uploads/events-flow-sunset.webp',
+        images: ['/uploads/events-flow-sunset.webp','/uploads/events-surf-pool.webp','/uploads/events-skimboard.webp','/uploads/events-kayak.webp','/uploads/events-jet-ski.webp'],
       },
     ],
   },
@@ -198,6 +207,7 @@ const COPY = {
         desc: 'Surf Pool · Skimboard · Kayak · SUP Board。免费腕带及一罐饮料。',
         price: '฿500 / 人',
         img: '/uploads/events-flow-sunset.webp',
+        images: ['/uploads/events-flow-sunset.webp','/uploads/events-surf-pool.webp','/uploads/events-skimboard.webp','/uploads/events-kayak.webp','/uploads/events-jet-ski.webp'],
       },
     ],
   },
@@ -332,6 +342,9 @@ function HeroSlideshow({ t, renderLines }) {
 export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbEvents = [] }) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
+  const [evLbImages, setEvLbImages] = useState(null) // array of image URLs
+  const [evLbIdx, setEvLbIdx] = useState(0)
+  const evTouchX = useRef(null)
 
   const renderLines = (text) => text.split('\n').map((line, idx, arr) => (
     <span key={`${line}-${idx}`}>{line}{idx < arr.length - 1 ? <br /> : null}</span>
@@ -359,6 +372,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
           desc: ev[descKey] || ev.descriptionEn,
           price: priceStr,
           img: ev.imageUrl || '',
+          images: ev.imageUrl ? [ev.imageUrl] : [],
         }
       })
     : t.eventsItems
@@ -383,29 +397,42 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
         {/* Hero slideshow with text overlay */}
         <HeroSlideshow t={t} renderLines={renderLines} />
 
-        {/* Tagline divider */}
+        {/* Tagline + About */}
         <div className="bg-[#e8e4de] px-8 sm:px-14 lg:px-20 py-16 sm:py-20 lg:py-28 border-b border-black/10">
-          <h2 className="font-display font-light leading-[1.25] text-ink tracking-[-0.02em] text-[clamp(26px,3.8vw,54px)]">
-            {t.tagline[0]}<br/>
-            {t.tagline[1]}<br/>
-            <em className="not-italic text-gold whitespace-nowrap">{t.tagline[2]}</em>
-          </h2>
+          <div className="lg:grid lg:grid-cols-2 lg:gap-20 lg:items-start">
+            {/* Left col: tagline + button */}
+            <div className="lg:sticky lg:top-24">
+              <h2 className="font-display font-light leading-[1.25] text-ink tracking-[-0.02em] text-[clamp(26px,3.8vw,54px)]">
+                {t.tagline[0]}<br/>
+                {t.tagline[1]}<br/>
+                <em className="not-italic text-gold whitespace-nowrap">{t.tagline[2]}</em>
+              </h2>
+              <div className="mt-10 hidden lg:flex">
+                <Link href="/menu" className="group inline-flex items-center gap-3 px-8 py-4 rounded-full bg-[#4a3520] text-[rgba(245,243,239,0.95)] hover:bg-[#3a2818] transition-colors duration-200">
+                  <span className="text-[13px] sm:text-[14px] tracking-[0.15em] uppercase font-light">
+                    {lang === 'th' ? 'ดูเมนู อาหาร เครื่องดื่ม ขนม' : lang === 'zh' ? '查看菜单' : 'View Menu'}
+                  </span>
+                  <span className="text-base transition-transform duration-200 group-hover:translate-x-1">→</span>
+                </Link>
+              </div>
+            </div>
+            {/* Right col: about text */}
+            <div className="mt-10 lg:mt-0 text-sm leading-[1.9] text-[#555] font-light">
+              <p className="mb-4" dangerouslySetInnerHTML={{ __html: t.about1 }} />
+              <p dangerouslySetInnerHTML={{ __html: `${t.about2} ${t.about3} ${t.about4}` }} />
+            </div>
+          </div>
+          {/* Button for mobile/tablet */}
+          <div className="mt-10 flex justify-center lg:hidden">
+            <Link href="/menu" className="group inline-flex items-center gap-3 px-8 py-4 rounded-full bg-[#4a3520] text-[rgba(245,243,239,0.95)] hover:bg-[#3a2818] transition-colors duration-200">
+              <span className="text-[13px] sm:text-[14px] tracking-[0.15em] uppercase font-light">
+                {lang === 'th' ? 'ดูเมนู อาหาร เครื่องดื่ม ขนม' : lang === 'zh' ? '查看菜单' : 'View Menu'}
+              </span>
+              <span className="text-base transition-transform duration-200 group-hover:translate-x-1">→</span>
+            </Link>
+          </div>
         </div>
 
-      </ScrollStackPanel>
-
-      {/* ── 2. ABOUT ────────────────────────────────────────────────────── */}
-      <ScrollStackPanel>
-        <section className="px-4 py-14 reveal sm:px-6 sm:py-16 lg:px-10 lg:py-20 max-w-3xl">
-          <div className="text-sm leading-[1.9] text-[#555] font-light mb-10">
-            <p className="mb-4" dangerouslySetInnerHTML={{ __html: t.about1 }} />
-            <p dangerouslySetInnerHTML={{ __html: `${t.about2} ${t.about3} ${t.about4}` }} />
-          </div>
-          <Link href="/menu" className="group flex w-full items-center justify-between px-6 py-5 bg-[#4a3520] text-[rgba(245,243,239,0.95)] hover:bg-[#3a2818] transition-colors duration-200">
-            <span className="text-[13px] sm:text-[15px] tracking-[0.2em] uppercase font-light">{t.exploreMenu}</span>
-            <span className="text-lg transition-transform duration-200 group-hover:translate-x-1.5">→</span>
-          </Link>
-        </section>
       </ScrollStackPanel>
 
       {/* ── 3. GALLERY STRIP ────────────────────────────────────────────── */}
@@ -422,7 +449,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
           <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth snap-x snap-mandatory -mx-0 px-4 sm:px-6 lg:px-10 pb-1">
             {GALLERY_PHOTOS.map(({ src, alt, wide }) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <div key={src} className={`shrink-0 snap-start overflow-hidden ${wide ? 'w-[72vw] sm:w-[52vw] lg:w-[38vw]' : 'w-[52vw] sm:w-[36vw] lg:w-[26vw]'}`}>
+              <div key={src} className={`shrink-0 snap-start overflow-hidden rounded-xl ${wide ? 'w-[72vw] sm:w-[52vw] lg:w-[38vw]' : 'w-[52vw] sm:w-[36vw] lg:w-[26vw]'}`}>
                 <img
                   src={src}
                   alt={alt}
@@ -516,9 +543,27 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
           <SectionHeader title={t.eventsTitle} sub={t.eventsSub} moreLabel={t.eventsMore} moreHref="/events" />
           <div className="space-y-4">
             {eventsItems.map((ev) => (
-              <Link key={ev.title + ev.date} href="/events" className="group grid grid-cols-1 sm:grid-cols-[300px_1fr] lg:grid-cols-[420px_1fr] gap-0 border border-black/10 overflow-hidden hover:border-black/25 transition-colors">
+              <div key={ev.title + ev.date} className="group grid grid-cols-1 sm:grid-cols-[300px_1fr] lg:grid-cols-[420px_1fr] gap-0 border border-black/10 overflow-hidden hover:border-black/25 transition-colors">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {ev.img && <img src={ev.img} alt={ev.title} loading="lazy" srcSet={getSrcSet(ev.img)} sizes="(min-width: 1024px) 420px, (min-width: 640px) 300px, 100vw" className="w-full h-48 sm:h-auto object-cover [filter:saturate(0.72)] group-hover:[filter:saturate(1)] transition-[filter] duration-500" />}
+                {ev.img && (
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={ev.img}
+                      alt={ev.title}
+                      loading="lazy"
+                      srcSet={getSrcSet(ev.img)}
+                      sizes="(min-width: 1024px) 420px, (min-width: 640px) 300px, 100vw"
+                      onClick={() => { if (ev.images?.length) { setEvLbImages(ev.images); setEvLbIdx(0) } }}
+                      className={`w-full h-48 sm:h-full object-cover [filter:saturate(0.72)] group-hover:[filter:saturate(1)] transition-[filter] duration-500 ${ev.images?.length ? 'cursor-zoom-in' : ''}`}
+                    />
+                    {ev.images?.length > 1 && (
+                      <button
+                        onClick={() => { setEvLbImages(ev.images); setEvLbIdx(0) }}
+                        className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white text-[13px] leading-none"
+                      >⛶</button>
+                    )}
+                  </div>
+                )}
                 <div className="px-6 py-6 sm:py-8 flex flex-col gap-3">
                   <span className="text-[9px] tracking-[0.3em] uppercase text-gold font-semibold">{ev.tag}</span>
                   <h3 className="font-display font-light text-[clamp(28px,4vw,44px)] leading-none text-ink">
@@ -528,10 +573,10 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
                   <p className="text-[13px] text-[#555] font-light leading-relaxed mt-1">{ev.desc}</p>
                   <div className="mt-auto pt-3 border-t border-black/10 flex items-center justify-between">
                     <span className="font-display text-[18px] text-gold">{ev.price}</span>
-                    <span className="text-[10px] tracking-[0.2em] uppercase text-muted group-hover:text-ink transition-colors">More →</span>
+                    <Link href="/events" className="text-[10px] tracking-[0.2em] uppercase text-muted hover:text-ink transition-colors">More →</Link>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </section>
@@ -597,24 +642,20 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
               </div>
               <div>
                 <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.follow}</span>
-                <div className="flex gap-4 items-start flex-wrap">
+                <div className="flex flex-col gap-2">
                   {[
-                    { href: 'https://www.instagram.com/lovepiercafe/', label: 'Instagram', handle: 'lovepiercafe', icon: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg> },
-                    { href: 'https://www.facebook.com/?locale=th_TH', label: 'Facebook', handle: 'lovepier.cafe', icon: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5h2.5l.5-3h-3V8.5c0-.9.3-1.5 1.6-1.5H17V4.3c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1V10.5H8v3h2.5V21h3z"/></svg> },
-                    { href: 'https://lin.ee/5A0tfSQ', label: 'LINE', handle: '@lovepier.cafe', icon: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.5 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6 1.5-1.7 2.6-3.4 2.6-4.9 0-4.4-4.5-8-10-8z"/></svg> },
-                    { href: 'https://www.tiktok.com/@lovepier.cafe2?_r=1&_t=ZS-97V9HaUa8jE', label: 'TikTok', handle: 'lovepier.cafe', icon: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-2.6-1.6 4.3 4.3 0 0 1-.8-2.2h-3v12c0 1-.8 1.9-1.9 1.9a1.9 1.9 0 0 1-1.9-1.9c0-1 .8-1.9 1.9-1.9.2 0 .4 0 .6.1V9.1a5 5 0 0 0-.6 0 5 5 0 1 0 5 5V8.4a7.4 7.4 0 0 0 4.3 1.4V6.7a4.4 4.4 0 0 1-1-.9z"/></svg> },
+                    { href: 'https://www.instagram.com/lovepiercafe/', label: 'Instagram', handle: 'lovepiercafe', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg> },
+                    { href: 'https://www.facebook.com/?locale=th_TH', label: 'Facebook', handle: 'lovepier.cafe', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5h2.5l.5-3h-3V8.5c0-.9.3-1.5 1.6-1.5H17V4.3c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1V10.5H8v3h2.5V21h3z"/></svg> },
+                    { href: 'https://lin.ee/5A0tfSQ', label: 'LINE', handle: '@lovepier.cafe', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.5 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6 1.5-1.7 2.6-3.4 2.6-4.9 0-4.4-4.5-8-10-8z"/></svg> },
+                    { href: 'https://www.tiktok.com/@lovepier.cafe2?_r=1&_t=ZS-97V9HaUa8jE', label: 'TikTok', handle: 'lovepier.cafe', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-2.6-1.6 4.3 4.3 0 0 1-.8-2.2h-3v12c0 1-.8 1.9-1.9 1.9a1.9 1.9 0 0 1-1.9-1.9c0-1 .8-1.9 1.9-1.9.2 0 .4 0 .6.1V9.1a5 5 0 0 0-.6 0 5 5 0 1 0 5 5V8.4a7.4 7.4 0 0 0 4.3 1.4V6.7a4.4 4.4 0 0 1-1-.9z"/></svg> },
                   ].map(({ href, label, handle, icon }) => (
-                    <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="flex flex-col items-center gap-1 group">
-                      <span className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink group-hover:[&_svg]:text-bg transition-all flex items-center justify-center w-8 h-8">{icon}</span>
-                      <span className="text-[9px] text-[#aaa] group-hover:text-ink transition-colors whitespace-nowrap">{handle}</span>
+                    <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="flex flex-row items-center gap-3 group">
+                      <span className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink group-hover:[&_svg]:text-bg transition-all flex items-center justify-center w-9 h-9 shrink-0">{icon}</span>
+                      <span className="text-[13px] text-[#888] group-hover:text-ink transition-colors whitespace-nowrap">{handle}</span>
                     </a>
                   ))}
                 </div>
               </div>
-              <a href="https://maps.app.goo.gl/CYDRrd6hoxRv7z4j8" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[10px] tracking-[0.25em] uppercase text-[#666] hover:text-ink transition-colors mt-1">
-                <span>{t.openInMaps}</span>
-                <span className="text-sm">→</span>
-              </a>
             </div>
           </div>
         </div>
@@ -623,6 +664,36 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
       </ScrollStackPanel>
 
       </ScrollStack>
+
+      {/* Event image lightbox */}
+      {evLbImages && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[200] flex flex-col bg-black" onClick={() => setEvLbImages(null)}>
+          <button onClick={() => setEvLbImages(null)} className="absolute top-4 right-4 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 text-white/80 hover:text-white text-xl leading-none">✕</button>
+          <div
+            className="relative flex-1 min-h-0 w-full"
+            onClick={e => e.stopPropagation()}
+            onTouchStart={e => { evTouchX.current = e.touches[0].clientX }}
+            onTouchEnd={e => {
+              if (evTouchX.current === null) return
+              const dx = evTouchX.current - e.changedTouches[0].clientX
+              if (dx > 45) setEvLbIdx(i => Math.min(i + 1, evLbImages.length - 1))
+              else if (dx < -45) setEvLbIdx(i => Math.max(i - 1, 0))
+              evTouchX.current = null
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={evLbImages[evLbIdx]} alt="" className="absolute inset-0 w-full h-full object-contain" />
+            {evLbIdx > 0 && <button onClick={e => { e.stopPropagation(); setEvLbIdx(i => i - 1) }} className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-black/35 hover:bg-black/55 text-white text-2xl">‹</button>}
+            {evLbIdx < evLbImages.length - 1 && <button onClick={e => { e.stopPropagation(); setEvLbIdx(i => i + 1) }} className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-black/35 hover:bg-black/55 text-white text-2xl">›</button>}
+          </div>
+          <div className="shrink-0 py-4 flex justify-center gap-1.5" onClick={e => e.stopPropagation()}>
+            {evLbImages.map((_, i) => (
+              <button key={i} onClick={() => setEvLbIdx(i)} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === evLbIdx ? 'bg-gold' : 'bg-white/30'}`} />
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   )
 }

@@ -311,7 +311,7 @@ const PROMO_CARD_COPY = {
   zh: { add: '加入购物车', added: '已添加 ✓' },
 }
 
-function PromoCard({ deal, lang }) {
+function PromoCard({ deal, lang, onImageClick }) {
   const { addItem, openCart } = useCart()
   const [flash, setFlash] = useState(false)
   const t = PROMO_CARD_COPY[lang] || PROMO_CARD_COPY.en
@@ -329,7 +329,10 @@ function PromoCard({ deal, lang }) {
       {deal.img ? (
         <div className="relative bg-[#f2ede6]" style={{ paddingTop: '75%' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={deal.img} alt={deal.title} loading="lazy" srcSet={getSrcSet(deal.img)} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="absolute inset-0 w-full h-full object-cover object-center" />
+          <img src={deal.img} alt={deal.title} loading="lazy" srcSet={getSrcSet(deal.img)} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" onClick={onImageClick} className={`absolute inset-0 w-full h-full object-cover object-center ${onImageClick ? 'cursor-zoom-in' : ''}`} />
+          {onImageClick && (
+            <button onClick={onImageClick} className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white text-[15px] leading-none" aria-label="ดูรูปเต็ม">⛶</button>
+          )}
         </div>
       ) : null}
       <div className="p-4 flex flex-col flex-1">
@@ -358,7 +361,7 @@ function PromoCard({ deal, lang }) {
   )
 }
 
-function DeliveryPromotionPanel({ lang }) {
+function DeliveryPromotionPanel({ lang, promoStartIdx, onImageClick }) {
   const t = PROMO_DEALS[lang] || PROMO_DEALS.en
   return (
     <div className="px-4 sm:px-6 lg:px-10 py-7 sm:py-9">
@@ -367,7 +370,7 @@ function DeliveryPromotionPanel({ lang }) {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
         {t.deals.map((deal, i) => (
-          <PromoCard key={i} deal={deal} lang={lang} />
+          <PromoCard key={i} deal={deal} lang={lang} onImageClick={deal.img && onImageClick ? () => onImageClick(promoStartIdx + i) : undefined} />
         ))}
       </div>
     </div>
@@ -399,8 +402,16 @@ export default function Delivery({ dbMenuData }) {
   const [globalLbIndex, setGlobalLbIndex] = useState(-1)
   const tabScrollRef = useRef(null)
 
-  const { globalGallery, globalIndexMap } = useMemo(() => {
-    const gallery = []
+  const { globalGallery, globalIndexMap, promoStartIdx } = useMemo(() => {
+    const promoDeals = (PROMO_DEALS[lang] || PROMO_DEALS.en).deals
+    const gallery = promoDeals.filter(d => d.img).map(d => ({
+      key: `promo-${d.title}`,
+      image: d.img,
+      name: d.title,
+      description: d.desc,
+      priceText: d.price,
+    }))
+    const promoStart = 0
     const indexMap = {}
     menuData.forEach((section) => {
       section.items.forEach((item) => {
@@ -411,8 +422,8 @@ export default function Delivery({ dbMenuData }) {
         }
       })
     })
-    return { globalGallery: gallery, globalIndexMap: indexMap }
-  }, [menuData])
+    return { globalGallery: gallery, globalIndexMap: indexMap, promoStartIdx: promoStart }
+  }, [menuData, lang])
 
   useEffect(() => {
     const observers = []
@@ -499,7 +510,7 @@ export default function Delivery({ dbMenuData }) {
             <h2 className="font-display font-light text-[clamp(28px,4vw,48px)] tracking-[-0.02em] text-ink leading-none">{PROMO_TAB_LABEL[lang] || PROMO_TAB_LABEL.en}</h2>
             <div className="mt-3 w-10 h-px bg-gold/60" />
           </div>
-          <DeliveryPromotionPanel lang={lang} />
+          <DeliveryPromotionPanel lang={lang} promoStartIdx={promoStartIdx} onImageClick={setGlobalLbIndex} />
         </div>
         {menuData.map((section) => (
           <div key={section.cat} id={`delivery-section-${section.cat}`} className="border-b border-black/10">

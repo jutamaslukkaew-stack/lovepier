@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { createPortal } from 'react-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Footer from '../components/Footer'
 import PageHero from '../components/PageHero'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
@@ -297,8 +297,22 @@ export default function Promotion({ dbPromotions = [] }) {
   const t = PROMOTION_COPY[lang] || PROMOTION_COPY.en
   const deals = dbPromotions.length ? dealsFromDB(dbPromotions, lang) : t.dealList
   const dealsHeading = t.dealsHeading
-  const [lbDeal, setLbDeal] = useState(null)
+  const [lbIdx, setLbIdx] = useState(null)
+  const lbDeal = lbIdx !== null ? deals[lbIdx] : null
+  const setLbDeal = (deal) => setLbIdx(deal ? deals.indexOf(deal) : null)
+  const lbPrev = () => setLbIdx(i => (i - 1 + deals.length) % deals.length)
+  const lbNext = () => setLbIdx(i => (i + 1) % deals.length)
   const { addItem, openCart } = useCart()
+  useEffect(() => {
+    if (lbIdx === null) return
+    const onKey = (e) => {
+      if (e.key === 'ArrowLeft') lbPrev()
+      if (e.key === 'ArrowRight') lbNext()
+      if (e.key === 'Escape') setLbIdx(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [lbIdx])
 
   return (
     <>
@@ -326,9 +340,9 @@ export default function Promotion({ dbPromotions = [] }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {deals.map((deal) => (
-            <div key={deal.title} className="flex flex-col bg-white overflow-hidden border border-black/10 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300">
+            <div key={deal.title} className="flex flex-col bg-white overflow-hidden border border-black/10 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300 cursor-pointer" onClick={() => setLbDeal(deal)}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <div className="relative cursor-zoom-in" onClick={() => setLbDeal(deal)}>
+              <div className="relative">
                 <img className="w-full aspect-[4/3] object-cover [filter:saturate(0.7)]" src={deal.img} alt={deal.title} />
                 <div className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-black/40 flex items-center justify-center text-white text-xs">&#x26F6;</div>
               </div>
@@ -343,7 +357,7 @@ export default function Promotion({ dbPromotions = [] }) {
                 <p className="text-[13px] text-[#777] leading-[1.7] font-light flex-1">{deal.desc}</p>
                 <div className="flex justify-between items-center pt-4 mt-2 border-t border-black/10">
                   <span className="text-[10px] tracking-[0.2em] uppercase text-[#aaa]">{deal.validity}</span>
-                  <Link href={deal.href} className="inline-flex items-center gap-2.5 text-[10px] tracking-[0.3em] uppercase text-[#666] hover:text-ink transition-colors">{deal.cta} &#x2192;</Link>
+                  <Link href={deal.href} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-2.5 text-[10px] tracking-[0.3em] uppercase text-[#666] hover:text-ink transition-colors">{deal.cta} &#x2192;</Link>
                 </div>
               </div>
             </div>
@@ -456,8 +470,11 @@ export default function Promotion({ dbPromotions = [] }) {
       <Footer tagline={FOOTER_TAGLINES.promotion} />
 
       {lbDeal && typeof window !== 'undefined' && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[200] flex flex-col bg-black" onClick={() => setLbDeal(null)}>
-          <button onClick={() => setLbDeal(null)} className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white text-base hover:bg-white/30 transition-colors">✕</button>
+        <div className="fixed inset-0 z-[200] flex flex-col bg-black" onClick={() => setLbIdx(null)}>
+          <button onClick={() => setLbIdx(null)} className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white text-base hover:bg-white/30 transition-colors">✕</button>
+          {/* prev / next */}
+          <button onClick={e => { e.stopPropagation(); lbPrev() }} className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-white text-lg hover:bg-white/30 transition-colors">‹</button>
+          <button onClick={e => { e.stopPropagation(); lbNext() }} className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-white text-lg hover:bg-white/30 transition-colors">›</button>
           <div className="relative w-full shrink-0" style={{ height: '60dvh' }} onClick={e => e.stopPropagation()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={lbDeal.img} alt={lbDeal.title} className="absolute inset-0 w-full h-full object-cover object-center" />
@@ -471,16 +488,11 @@ export default function Promotion({ dbPromotions = [] }) {
               {lbDeal.disc && <span className="text-[10px] tracking-[0.15em] uppercase text-gold bg-gold/15 px-2 py-0.5">{lbDeal.disc}</span>}
             </div>
             {lbDeal.desc && <p className="text-white/70 text-sm font-light leading-relaxed" style={{ maxWidth: '88%', textWrap: 'balance' }}>{lbDeal.desc}</p>}
-            <button
-              onClick={() => {
-                addItem({ id: `promo-${lbDeal.title}`, name: lbDeal.title, price: lbDeal.price.replace('฿', ''), image: lbDeal.img })
-                openCart()
-                setLbDeal(null)
-              }}
-              className="mt-2 px-8 py-3 rounded-full bg-gold text-ink text-[12px] tracking-[0.18em] uppercase font-semibold hover:bg-[#e3c77a] transition-colors"
-            >
-              {ADD_LABEL[lang] || ADD_LABEL.en}
-            </button>
+            <div className="flex gap-1.5 mt-2">
+              {deals.map((_, i) => (
+                <button key={i} onClick={() => setLbIdx(i)} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === lbIdx ? 'bg-gold' : 'bg-white/30'}`} />
+              ))}
+            </div>
           </div>
         </div>,
         document.body
