@@ -123,6 +123,7 @@ export const events = pgTable('events', {
   categoryEn: text('category_en').notNull().default(''),
   categoryZh: text('category_zh').notNull().default(''),
   imageUrl: text('image_url'),
+  albumImages: text('album_images').array().notNull().default([]),
   isFeatured: boolean('is_featured').notNull().default(false),
   isActive: boolean('is_active').notNull().default(true),
   sortOrder: integer('sort_order').notNull().default(0),

@@ -27,6 +27,7 @@ type FormData = {
   categoryEn: string
   categoryZh: string
   imageUrl: string
+  albumImages: string[]
   isFeatured: boolean
   isActive: boolean
 }
@@ -37,7 +38,7 @@ const EMPTY: FormData = {
   price: '', entrySubTh: '', entrySubEn: '', entrySubZh: '',
   descriptionTh: '', descriptionEn: '', descriptionZh: '',
   categoryTh: '', categoryEn: '', categoryZh: '',
-  imageUrl: '', isFeatured: false, isActive: true,
+  imageUrl: '', albumImages: [], isFeatured: false, isActive: true,
 }
 
 export type EventForm = FormData
@@ -55,7 +56,9 @@ export function EventModal({
   const [lang, setLang] = useState<'th' | 'en' | 'zh'>('th')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadingAlbum, setUploadingAlbum] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const albumFileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (event) {
@@ -79,6 +82,7 @@ export function EventModal({
         categoryEn: event.categoryEn,
         categoryZh: event.categoryZh,
         imageUrl: event.imageUrl ?? '',
+        albumImages: (event as any).albumImages ?? [],
         isFeatured: event.isFeatured,
         isActive: event.isActive,
       })
@@ -100,6 +104,26 @@ export function EventModal({
     } finally {
       setUploading(false)
     }
+  }
+
+  async function handleAlbumUpload(files: FileList) {
+    setUploadingAlbum(true)
+    try {
+      const { uploadImage } = await import('@/lib/upload-image')
+      const urls: string[] = []
+      for (const file of Array.from(files)) {
+        const { url } = await uploadImage(file)
+        urls.push(url)
+      }
+      setForm((f) => ({ ...f, albumImages: [...f.albumImages, ...urls] }))
+    } finally {
+      setUploadingAlbum(false)
+      if (albumFileRef.current) albumFileRef.current.value = ''
+    }
+  }
+
+  function removeAlbumImage(idx: number) {
+    setForm((f) => ({ ...f, albumImages: f.albumImages.filter((_, i) => i !== idx) }))
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -240,6 +264,47 @@ export function EventModal({
             {form.imageUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={form.imageUrl} alt="" className="mt-2 h-24 rounded-md object-cover" />
+            )}
+          </div>
+
+          {/* Album images */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-muted-foreground">อัลบัมรูปภาพ ({form.albumImages.length} รูป)</label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => albumFileRef.current?.click()}
+                disabled={uploadingAlbum}
+              >
+                {uploadingAlbum ? 'กำลังอัปโหลด...' : '+ เพิ่มรูป'}
+              </Button>
+              <input
+                ref={albumFileRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => { if (e.target.files?.length) handleAlbumUpload(e.target.files) }}
+              />
+            </div>
+            {form.albumImages.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {form.albumImages.map((url, i) => (
+                  <div key={i} className="relative group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="" className="h-20 w-20 rounded-md object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeAlbumImage(i)}
+                      className="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 

@@ -36,6 +36,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     categoryEn: body.categoryEn ?? '',
     categoryZh: body.categoryZh ?? '',
     imageUrl: body.imageUrl ?? null,
+    albumImages: body.albumImages ?? [],
     isFeatured: body.isFeatured ?? false,
     isActive: body.isActive ?? true,
     sortOrder: body.sortOrder ?? 0,

@@ -372,7 +372,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
           desc: ev[descKey] || ev.descriptionEn,
           price: priceStr,
           img: ev.imageUrl || '',
-          images: ev.imageUrl ? [ev.imageUrl] : [],
+          images: (ev.albumImages && ev.albumImages.length > 0) ? ev.albumImages : (ev.imageUrl ? [ev.imageUrl] : []),
         }
       })
     : t.eventsItems

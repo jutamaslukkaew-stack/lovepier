@@ -43,6 +43,7 @@ export async function POST(req: Request) {
     categoryEn: body.categoryEn ?? '',
     categoryZh: body.categoryZh ?? '',
     imageUrl: body.imageUrl ?? null,
+    albumImages: body.albumImages ?? [],
     isFeatured: body.isFeatured ?? false,
     isActive: body.isActive ?? true,
     sortOrder: body.sortOrder ?? 0,
