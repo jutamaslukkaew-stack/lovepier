@@ -364,7 +364,7 @@ export default function Activities() {
           <div className="lg:hidden pointer-events-none absolute top-0 right-0 bottom-6 w-10 bg-gradient-to-l from-[#f5f3ef] to-transparent" />
         </div>
         {/* scroll dots */}
-        <div className="lg:hidden flex justify-center gap-1.5 pb-2">
+        <div className="flex justify-center gap-1.5 pb-2">
           {Array.from({ length: DOT_COUNT }).map((_, i) => (
             <span
               key={i}

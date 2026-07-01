@@ -244,7 +244,7 @@ export default function Gallery() {
           </div>
           <div className="lg:hidden pointer-events-none absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-l from-[#f5f2ee] to-transparent" />
         </div>
-        <div className="lg:hidden flex justify-center gap-1.5 pb-2">
+        <div className="flex justify-center gap-1.5 pb-2">
           {Array.from({ length: TAB_DOT_COUNT }).map((_, i) => (
             <span key={i} className={`block rounded-full transition-all duration-300 ${i === tabDotIndex ? 'w-4 h-1.5 bg-[#4a3520]' : 'w-1.5 h-1.5 bg-[#4a3520]/30'}`} />
           ))}
