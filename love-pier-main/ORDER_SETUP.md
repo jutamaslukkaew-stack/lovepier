@@ -38,10 +38,29 @@ https://lovepier.cafe/delivery
 ตอนนี้เป็นแบบ **ส่งสลิปทาง LINE** (ฟรี ไม่มีค่าธรรมเนียม) ออเดอร์บันทึกสถานะ `pending`
 อนาคตถ้าต้องการยืนยันอัตโนมัติ ต่อ payment gateway (Omise / GB Prime Pay / LINE Pay) ได้ โดยเพิ่ม webhook อัปเดต `orders.status = 'paid'`
 
+## แจ้งเตือนออเดอร์ใหม่เข้า LINE ร้าน (ทางเลือก)
+ทุกครั้งที่มีออเดอร์ใหม่ ระบบจะ push ข้อความสรุปเข้า LINE ร้านได้ ต้องตั้ง 2 ค่า:
+
+| ตัวแปร | ได้จากไหน |
+|--------|-----------|
+| `LINE_MESSAGING_TOKEN` | LINE Developers → channel **Messaging API** ของ OA → **Channel access token (long-lived)** → Issue |
+| `LINE_ORDER_NOTIFY_TO` | userId หรือ groupId ปลายทางที่จะรับแจ้งเตือน |
+
+**วิธีหา `LINE_ORDER_NOTIFY_TO`:**
+- **ส่งเข้าตัวเอง (เจ้าของร้าน):** แอด OA เป็นเพื่อน → ใน LINE Developers → Messaging API → เลื่อนหา **"Your user ID"** = userId ของคุณ → ใช้ค่านี้
+- **ส่งเข้ากลุ่มพนักงาน:** สร้างกลุ่ม LINE + เชิญบอท OA เข้ากลุ่ม → ต้องดัก groupId ผ่าน webhook (ยุ่งกว่า) — แนะนำเริ่มแบบ userId ก่อน
+
+> ถ้าเว้นว่างไว้ = ปิดแจ้งเตือน (ระบบยังทำงานปกติ ไม่ error)
+
+## Badge ออเดอร์ใหม่ใน /admin
+Sidebar จะขึ้น **ตัวเลขสีแดง** ข้างเมนู "ออเดอร์" = จำนวนออเดอร์ที่ยังสถานะ `รอชำระเงิน (pending)` — อัปเดตอัตโนมัติเมื่อเปลี่ยนสถานะ
+
 ## ไฟล์ที่เกี่ยวข้อง
 - `components/CartDrawer.js` — UI เช็คเอาท์ 4 ขั้น
-- `pages/api/orders.js` — บันทึกออเดอร์ + จำข้อมูลลูกค้า
+- `pages/api/orders.js` — บันทึกออเดอร์ + จำข้อมูลลูกค้า + แจ้งเตือน LINE
 - `pages/api/customer.js` — ดึงข้อมูลลูกค้าเก่าจาก LINE userId
 - `lib/promptpay.js` — สร้าง payload QR (มาตรฐาน EMVCo)
 - `lib/liff.js` — LINE Login / ดึงโปรไฟล์
+- `lib/lineMessaging.js` — push แจ้งเตือนออเดอร์ใหม่
+- `app/admin/orders/` + `app/admin/actions/orders.ts` — หน้าดูออเดอร์ + เปลี่ยนสถานะ
 - `lib/db/schema.ts` + `lib/db/orders.sql` — ตาราง orders/customers

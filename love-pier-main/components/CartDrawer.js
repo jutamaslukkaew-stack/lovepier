@@ -10,7 +10,7 @@ import {
 
 const PROMPTPAY_ID = process.env.NEXT_PUBLIC_PROMPTPAY_ID || ''
 const PROMPTPAY_TYPE = process.env.NEXT_PUBLIC_PROMPTPAY_TYPE || '' // 'biller' | ''
-const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@891jhcya'
+const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@loverpier.cafe'
 
 // Short alphanumeric reference embedded in the bill-payment QR and saved with
 // the order, so the shop can match an incoming payment to the right order.

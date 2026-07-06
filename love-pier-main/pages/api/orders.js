@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { orders, customers } from '../../lib/db/schema'
+import { pushNewOrderNotification } from '../../lib/lineMessaging'
 
 function pickString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -82,6 +83,18 @@ export default async function handler(req, res) {
           set: { name, phone, address, updatedAt: sql`now()` },
         })
     }
+
+    // Alert the shop on LINE. Best-effort — don't fail the order if it errors.
+    await pushNewOrderNotification({
+      orderNo,
+      customerName: name,
+      phone,
+      address,
+      note,
+      items,
+      totalAmount,
+      paymentRef,
+    })
 
     return res.status(200).json({ ok: true, orderNo, totalAmount })
   } catch (err) {

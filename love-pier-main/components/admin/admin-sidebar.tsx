@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Home,
+  ShoppingBag,
   UtensilsCrossed,
   FolderOpen,
   Tag,
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/admin', label: 'ภาพรวม', icon: Home, exact: true },
+  { href: '/admin/orders', label: 'ออเดอร์', icon: ShoppingBag },
   { href: '/admin/menu', label: 'เมนูอาหาร', icon: UtensilsCrossed },
   { href: '/admin/categories', label: 'หมวดเมนู', icon: FolderOpen },
   { href: '/admin/promotions', label: 'โปรโมชัน', icon: Tag },
@@ -31,10 +33,12 @@ function NavLink({
   item,
   pathname,
   onClick,
+  badge = 0,
 }: {
   item: (typeof navItems)[number]
   pathname: string
   onClick?: () => void
+  badge?: number
 }) {
   const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
   const Icon = item.icon
@@ -50,7 +54,12 @@ function NavLink({
       )}
     >
       <Icon className="size-4 shrink-0" />
-      {item.label}
+      <span className="flex-1">{item.label}</span>
+      {badge > 0 && (
+        <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-semibold leading-5 text-white">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </Link>
   )
 }
@@ -58,9 +67,11 @@ function NavLink({
 export function AdminSidebar({
   email,
   signOut,
+  pendingOrders = 0,
 }: {
   email: string
   signOut: () => Promise<void>
+  pendingOrders?: number
 }) {
   const pathname = usePathname() ?? ''
   const [open, setOpen] = useState(false)
@@ -76,7 +87,13 @@ export function AdminSidebar({
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         {navItems.map((item) => (
-          <NavLink key={item.href} item={item} pathname={pathname} onClick={() => setOpen(false)} />
+          <NavLink
+            key={item.href}
+            item={item}
+            pathname={pathname}
+            onClick={() => setOpen(false)}
+            badge={item.href === '/admin/orders' ? pendingOrders : 0}
+          />
         ))}
       </nav>
 
