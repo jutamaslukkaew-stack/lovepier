@@ -1,0 +1,91 @@
+import { sql } from 'drizzle-orm'
+import { db } from '../../lib/db'
+import { orders, customers } from '../../lib/db/schema'
+
+function pickString(value) {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function makeOrderNo() {
+  const d = new Date()
+  const ymd =
+    String(d.getFullYear()).slice(2) +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    String(d.getDate()).padStart(2, '0')
+  const rand = Math.floor(1000 + Math.random() * 9000)
+  return `LP${ymd}-${rand}`
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST')
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  const name = pickString(req.body?.name)
+  const phone = pickString(req.body?.phone)
+  const address = pickString(req.body?.address)
+  const note = pickString(req.body?.note)
+  const paymentRef = pickString(req.body?.paymentRef)
+  const lineUserId = pickString(req.body?.lineUserId)
+  const rawItems = Array.isArray(req.body?.items) ? req.body.items : []
+
+  if (!name || !phone) {
+    return res.status(400).json({ error: 'กรุณากรอกชื่อและเบอร์โทร' })
+  }
+  if (rawItems.length === 0) {
+    return res.status(400).json({ error: 'ไม่มีรายการสั่งซื้อ' })
+  }
+
+  // Trust prices from the server-provided cart shape but recompute the total
+  // so the client can't tamper with the amount.
+  const items = rawItems.map((i) => ({
+    id: pickString(i?.id),
+    name: pickString(i?.name),
+    price: Number(i?.price) || 0,
+    qty: Math.max(1, parseInt(i?.qty, 10) || 1),
+  }))
+  const totalAmount = Math.round(
+    items.reduce((sum, i) => sum + i.price * i.qty, 0)
+  )
+
+  const orderNo = makeOrderNo()
+
+  try {
+    await db.insert(orders).values({
+      orderNo,
+      lineUserId: lineUserId || null,
+      customerName: name,
+      phone,
+      address,
+      note,
+      items,
+      totalAmount,
+      status: 'pending',
+      paymentMethod: 'promptpay',
+      paymentRef: paymentRef || null,
+    })
+
+    // Remember this customer for next time (auto-fill on their next order).
+    if (lineUserId) {
+      await db
+        .insert(customers)
+        .values({
+          lineUserId,
+          lineDisplayName: pickString(req.body?.lineDisplayName),
+          name,
+          phone,
+          address,
+        })
+        .onConflictDoUpdate({
+          target: customers.lineUserId,
+          set: { name, phone, address, updatedAt: sql`now()` },
+        })
+    }
+
+    return res.status(200).json({ ok: true, orderNo, totalAmount })
+  } catch (err) {
+    console.error('Create order failed:', err)
+    return res.status(500).json({ error: 'บันทึกออเดอร์ไม่สำเร็จ' })
+  }
+}

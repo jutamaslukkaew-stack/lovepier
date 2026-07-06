@@ -9,6 +9,7 @@ import {
   index,
   serial,
   date,
+  jsonb,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
@@ -132,3 +133,49 @@ export const events = pgTable('events', {
 
 export type Event = typeof events.$inferSelect
 export type NewEvent = typeof events.$inferInsert
+
+// ── Delivery ordering ─────────────────────────────────────────────────────────
+
+// Repeat customers, keyed by LINE userId so we can auto-fill name/phone/address.
+export const customers = pgTable('customers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  lineUserId: text('line_user_id').unique(),
+  lineDisplayName: text('line_display_name'),
+  name: text('name').notNull().default(''),
+  phone: text('phone').notNull().default(''),
+  address: text('address').notNull().default(''),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export type Customer = typeof customers.$inferSelect
+export type NewCustomer = typeof customers.$inferInsert
+
+export const orders = pgTable(
+  'orders',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orderNo: text('order_no').notNull().unique(),
+    lineUserId: text('line_user_id'),
+    customerName: text('customer_name').notNull(),
+    phone: text('phone').notNull(),
+    address: text('address').notNull().default(''),
+    note: text('note').notNull().default(''),
+    // [{ id, name, price, qty }]
+    items: jsonb('items').notNull().default([]),
+    totalAmount: integer('total_amount').notNull(),
+    // pending → paid → preparing → done → cancelled
+    status: text('status').notNull().default('pending'),
+    paymentMethod: text('payment_method').notNull().default('promptpay'),
+    paymentRef: text('payment_ref'),
+    slipUrl: text('slip_url'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    createdIdx: index('orders_created_at_idx').on(t.createdAt),
+    statusIdx: index('orders_status_idx').on(t.status),
+  })
+)
+
+export type Order = typeof orders.$inferSelect
+export type NewOrder = typeof orders.$inferInsert

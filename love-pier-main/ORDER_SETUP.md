@@ -1,0 +1,47 @@
+# ระบบสั่งเดลิเวอรี + LINE + QR PromptPay — คู่มือเปิดใช้งาน
+
+ระบบสั่งซื้อถูกฝังอยู่ในเว็บ (หน้า `/delivery`) เรียบร้อยแล้ว เหลือแค่กรอกค่า 3 อย่างเพื่อเปิดใช้งานครบทุกฟีเจอร์
+
+## 1. สร้างตารางในฐานข้อมูล (ทำครั้งเดียว)
+รันไฟล์ [`lib/db/orders.sql`](lib/db/orders.sql) ใน Supabase → SQL Editor
+> ✅ รันให้แล้วในระบบจริง — ตาราง `orders` และ `customers` พร้อมใช้งาน
+
+## 2. ตั้งค่า Environment variables
+เติมค่าใน `.env.local` (และใน Vercel → Project → Settings → Environment Variables):
+
+| ตัวแปร | ได้จากไหน | จำเป็น |
+|--------|-----------|--------|
+| `NEXT_PUBLIC_PROMPTPAY_ID` | ตั้งไว้ `010554511741402` (Biller ID บริษัท เลิฟเพียร์ จำกัด) | ✅ เพื่อให้ QR ทำงาน |
+| `NEXT_PUBLIC_PROMPTPAY_TYPE` | ตั้งไว้ `biller` (QR บิลเพย์เมนต์นิติบุคคล) — เว้นว่างถ้าใช้เบอร์/บัตร | ✅ คู่กับ ID ด้านบน |
+| `NEXT_PUBLIC_LIFF_ID` | LINE Developers → LINE Login channel → แท็บ LIFF (เช่น `2010601364-AbCdEfGh`) | ทางเลือก — เปิดปุ่ม "เข้าสู่ระบบด้วย LINE" |
+| `NEXT_PUBLIC_LINE_OA_ID` | LINE OA basic ID (มี @ นำหน้า) ปัจจุบันตั้งไว้ `@891jhcya` | ✅ ปุ่มส่งสลิป |
+
+> **QR เป็นแบบ Bill Payment (Biller ID) ของนิติบุคคล** — เงินเข้าบัญชีบริษัทโดยตรง และแนบเลขอ้างอิง (payment_ref เช่น `LPMR8WG1S9`) ไว้ในทุก QR + บันทึกในตาราง orders → ร้านเช็คยอดเงินเข้าตรงกับออเดอร์ได้จาก Ref บน statement
+>
+> ⚠️ **ก่อนใช้จริง: สแกน QR ที่เว็บสร้างด้วยแอปธนาคารเพื่อยืนยันว่าขึ้นชื่อ "บริษัท เลิฟเพียร์ จำกัด" และยอดถูกต้อง** (ไม่ต้องกดจ่าย แค่ดูว่าปลายทางถูก)
+
+> ระบบออกแบบให้ทำงานได้แม้ยังไม่ตั้ง LIFF ID — ปุ่ม LINE จะถูกซ่อน ลูกค้ากรอกข้อมูลเองได้ปกติ
+
+## 3. ตั้งค่า LIFF endpoint (เมื่อทำ LINE Login)
+ใน LINE Developers → LIFF app → **Endpoint URL** ใส่:
+```
+https://lovepier.cafe/delivery
+```
+
+## Flow การสั่งซื้อ (4 ขั้น อยู่ใน `components/CartDrawer.js`)
+1. **ตะกร้า** — เพิ่ม/ลดรายการ
+2. **ข้อมูลจัดส่ง** — ชื่อ/เบอร์/ที่อยู่ + ปุ่ม LINE Login (เติมชื่อ+ที่อยู่เดิมอัตโนมัติสำหรับลูกค้าเก่า)
+3. **ชำระเงิน** — QR PromptPay สร้างจากยอดในตะกร้าอัตโนมัติ
+4. **สำเร็จ** — แสดงเลขออเดอร์ + ปุ่มส่งสลิปทาง LINE
+
+## การยืนยันการชำระเงิน
+ตอนนี้เป็นแบบ **ส่งสลิปทาง LINE** (ฟรี ไม่มีค่าธรรมเนียม) ออเดอร์บันทึกสถานะ `pending`
+อนาคตถ้าต้องการยืนยันอัตโนมัติ ต่อ payment gateway (Omise / GB Prime Pay / LINE Pay) ได้ โดยเพิ่ม webhook อัปเดต `orders.status = 'paid'`
+
+## ไฟล์ที่เกี่ยวข้อง
+- `components/CartDrawer.js` — UI เช็คเอาท์ 4 ขั้น
+- `pages/api/orders.js` — บันทึกออเดอร์ + จำข้อมูลลูกค้า
+- `pages/api/customer.js` — ดึงข้อมูลลูกค้าเก่าจาก LINE userId
+- `lib/promptpay.js` — สร้าง payload QR (มาตรฐาน EMVCo)
+- `lib/liff.js` — LINE Login / ดึงโปรไฟล์
+- `lib/db/schema.ts` + `lib/db/orders.sql` — ตาราง orders/customers
