@@ -101,20 +101,20 @@ function Lightbox({ items, index, onIndexChange, onClose }) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex flex-col bg-black"
+      className="fixed inset-0 z-[200] flex flex-col bg-white"
       onClick={onClose}
     >
       {/* close */}
       <button
         type="button"
         onClick={onClose}
-        className="absolute top-4 right-4 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 text-white/80 hover:text-white text-xl leading-none"
+        className="absolute top-4 right-4 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/5 text-black/60 hover:bg-black/10 hover:text-black text-xl leading-none"
         aria-label="Close"
       >✕</button>
 
-      {/* image — flex-1 so it fills available space, object-contain shows full image */}
+      {/* image — flex-1 so it fills available space, object-contain shows full image, padded so it never touches the edges */}
       <div
-        className="relative flex-1 min-h-0 w-full"
+        className="relative flex-1 min-h-0 w-full px-6 py-6 sm:px-10 sm:py-8"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
@@ -124,7 +124,7 @@ function Lightbox({ items, index, onIndexChange, onClose }) {
           src={current.image}
           alt={current.name}
           loading="eager"
-          className="absolute inset-0 w-full h-full object-contain"
+          className="w-full h-full object-contain rounded-xl"
         />
         {hasPrev && (
           <button
@@ -146,16 +146,16 @@ function Lightbox({ items, index, onIndexChange, onClose }) {
 
       {/* info panel — fixed height below image */}
       <div
-        className="shrink-0 px-6 pt-6 pb-8 text-center border-t border-white/10"
+        className="shrink-0 px-6 pt-6 pb-8 text-center border-t border-black/10"
         onClick={(e) => e.stopPropagation()}
         style={{ fontFamily: 'system-ui,-apple-system,sans-serif' }}
       >
-        <p className="text-white text-3xl sm:text-4xl font-semibold tracking-wide leading-tight">{current.name}</p>
+        <p className="text-black text-3xl sm:text-4xl font-semibold tracking-wide leading-tight">{current.name}</p>
         {current.priceText ? (
-          <p className="mt-2 text-[#e3c77a] text-2xl sm:text-3xl tabular-nums font-semibold">{current.priceText}</p>
+          <p className="mt-2 text-[#b8952f] text-2xl sm:text-3xl tabular-nums font-semibold">{current.priceText}</p>
         ) : null}
         {current.description ? (
-          <p className="mt-3 mx-auto text-white/80 text-xl sm:text-2xl font-light leading-relaxed" style={{ maxWidth: '400px' }}>
+          <p className="mt-3 mx-auto text-black/60 text-xl sm:text-2xl font-light leading-relaxed" style={{ maxWidth: '400px' }}>
             {current.description}
           </p>
         ) : null}
