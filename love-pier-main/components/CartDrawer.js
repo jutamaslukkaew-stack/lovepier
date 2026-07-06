@@ -10,10 +10,15 @@ import {
 
 const PROMPTPAY_ID = process.env.NEXT_PUBLIC_PROMPTPAY_ID || ''
 const PROMPTPAY_TYPE = process.env.NEXT_PUBLIC_PROMPTPAY_TYPE || '' // 'biller' | ''
+// Optional fixed reference for the bill-payment QR. Bill-payment billers validate
+// Ref1 against their own rules, so a random ref is rejected ("reference invalid").
+// Leave blank to omit Ref1 from the QR; set it only if your biller expects a
+// specific fixed reference.
+const PROMPTPAY_REF = process.env.NEXT_PUBLIC_PROMPTPAY_REF || ''
 const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@loverpier.cafe'
 
-// Short alphanumeric reference embedded in the bill-payment QR and saved with
-// the order, so the shop can match an incoming payment to the right order.
+// Internal reference saved with the order so the shop can track it in /admin.
+// (Not embedded in the payment QR — see PROMPTPAY_REF above.)
 function makePaymentRef() {
   return 'LP' + Date.now().toString(36).toUpperCase()
 }
@@ -201,7 +206,9 @@ export default function CartDrawer() {
           type: PROMPTPAY_TYPE,
           target: PROMPTPAY_ID,
           amount,
-          ref1: ref,
+          // Only embed a Ref the biller actually expects; otherwise omit it so
+          // the bank doesn't reject the QR with "reference invalid".
+          ref1: PROMPTPAY_REF,
         })
         const url = await QRCode.toDataURL(payload, { margin: 1, width: 320 })
         setQrDataUrl(url)
