@@ -74,7 +74,7 @@ function LangFlagDropdown({ lang, setLang }) {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`Language: ${current.label}`}
-        className="flex items-center gap-2 border border-black/[0.12] bg-[rgba(245,243,239,0.92)] px-2.5 py-1.5 hover:border-ink/40 focus:outline-none focus:border-ink transition-colors cursor-pointer"
+        className="flex items-center gap-2 border border-black/[0.12] bg-[rgba(245,243,239,0.92)] h-9 px-2.5 hover:border-ink focus:outline-none focus:border-ink transition-colors cursor-pointer"
       >
         <span className="text-[17px] leading-none">{current.flag}</span>
         <span className="text-[11px] font-semibold tracking-[0.08em] text-ink leading-none">{current.code}</span>
