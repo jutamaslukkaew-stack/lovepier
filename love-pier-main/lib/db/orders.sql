@@ -28,6 +28,7 @@ create table if not exists orders (
   payment_method text not null default 'promptpay',
   payment_ref    text,
   slip_url       text,
+  distance_km    numeric(5,1),
   created_at     timestamptz not null default now()
 );
 

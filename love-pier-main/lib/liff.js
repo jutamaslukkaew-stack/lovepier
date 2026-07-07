@@ -51,6 +51,20 @@ export async function loginAndGetProfile() {
   }
 }
 
+// Send messages into the LINE chat the LIFF was opened from (works only inside
+// the LINE app). Best-effort: returns false when unavailable instead of throwing.
+export async function sendMessagesToChat(messages) {
+  if (!LIFF_ID) return false
+  try {
+    const liff = await initLiff()
+    if (!liff.isApiAvailable || !liff.isApiAvailable('sendMessages')) return false
+    await liff.sendMessages(messages)
+    return true
+  } catch {
+    return false
+  }
+}
+
 // If we're already logged in (e.g. after the login redirect), grab the profile
 // silently without triggering another login.
 export async function getProfileIfLoggedIn() {

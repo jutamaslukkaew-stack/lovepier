@@ -29,6 +29,8 @@ export default async function handler(req, res) {
   const note = pickString(req.body?.note)
   const paymentRef = pickString(req.body?.paymentRef)
   const lineUserId = pickString(req.body?.lineUserId)
+  const distanceRaw = Number(req.body?.distanceKm)
+  const distanceKm = Number.isFinite(distanceRaw) ? distanceRaw : null
   const rawItems = Array.isArray(req.body?.items) ? req.body.items : []
 
   if (!name || !phone) {
@@ -65,6 +67,7 @@ export default async function handler(req, res) {
       status: 'pending',
       paymentMethod: 'promptpay',
       paymentRef: paymentRef || null,
+      distanceKm: distanceKm != null ? String(distanceKm) : null,
     })
 
     // Remember this customer for next time (auto-fill on their next order).
@@ -94,6 +97,7 @@ export default async function handler(req, res) {
       items,
       totalAmount,
       paymentRef,
+      distanceKm,
     })
 
     return res.status(200).json({ ok: true, orderNo, totalAmount })

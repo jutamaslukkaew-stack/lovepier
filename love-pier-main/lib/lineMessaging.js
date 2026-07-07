@@ -37,6 +37,7 @@ export async function pushNewOrderNotification(order) {
     `📞 ${order.phone}\n` +
     (order.address ? `📍 ${order.address}\n` : '') +
     (order.note ? `📝 ${order.note}\n` : '') +
+    (order.distanceKm != null ? `📍 ระยะจัดส่ง ${order.distanceKm} กม.\n` : '') +
     `━━━━━━━━━━━━━━\n` +
     `${lines}\n` +
     `รวม ฿${order.totalAmount}` +

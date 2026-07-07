@@ -169,6 +169,8 @@ export const orders = pgTable(
     paymentMethod: text('payment_method').notNull().default('promptpay'),
     paymentRef: text('payment_ref'),
     slipUrl: text('slip_url'),
+    // driving distance from the shop (km), null when unknown
+    distanceKm: numeric('distance_km', { precision: 5, scale: 1 }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

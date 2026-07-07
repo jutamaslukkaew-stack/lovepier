@@ -6,6 +6,7 @@ import {
   isLiffConfigured,
   loginAndGetProfile,
   getProfileIfLoggedIn,
+  sendMessagesToChat,
 } from '../lib/liff'
 
 const PROMPTPAY_ID = process.env.NEXT_PUBLIC_PROMPTPAY_ID || ''
@@ -40,6 +41,11 @@ const COPY = {
     phone: 'เบอร์โทร',
     address: 'ที่อยู่จัดส่ง',
     note: 'หมายเหตุ (ไม่บังคับ)',
+    useLocation: '📍 เช็คระยะจัดส่ง',
+    locating: 'กำลังหาตำแหน่ง...',
+    distanceLabel: 'ระยะจัดส่ง',
+    outOfArea: (r) => `นอกพื้นที่จัดส่ง (เกิน ${r} กม.) — สั่งได้ แต่ร้านอาจคิดค่าส่งเพิ่ม`,
+    locationDenied: 'ไม่ได้ตำแหน่ง — สั่งต่อได้ ร้านจะเช็คระยะให้เอง',
     toPayment: 'ไปชำระเงิน',
     // payment step
     payTitle: 'สแกนจ่ายด้วย PromptPay',
@@ -70,6 +76,11 @@ const COPY = {
     phone: 'Phone',
     address: 'Delivery address',
     note: 'Note (optional)',
+    useLocation: '📍 Check delivery distance',
+    locating: 'Locating...',
+    distanceLabel: 'Distance',
+    outOfArea: (r) => `Outside delivery area (over ${r} km) — you can still order, extra fee may apply`,
+    locationDenied: 'Location unavailable — you can still order; we\'ll check distance',
     toPayment: 'Go to payment',
     payTitle: 'Pay with PromptPay',
     payHint: 'Scan the QR with your banking app, then confirm below',
@@ -98,6 +109,11 @@ const COPY = {
     phone: '电话',
     address: '配送地址',
     note: '备注（选填）',
+    useLocation: '📍 检查配送距离',
+    locating: '定位中...',
+    distanceLabel: '配送距离',
+    outOfArea: (r) => `超出配送范围（超过 ${r} 公里）— 仍可下单，可能加收运费`,
+    locationDenied: '无法定位 — 仍可下单，我们会为您确认距离',
     toPayment: '前往付款',
     payTitle: '使用 PromptPay 付款',
     payHint: '用银行 App 扫描二维码，然后在下方确认',
@@ -129,6 +145,10 @@ export default function CartDrawer() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [orderNo, setOrderNo] = useState('')
+  // delivery distance
+  const [distanceKm, setDistanceKm] = useState(null)
+  const [distanceMsg, setDistanceMsg] = useState('')
+  const [locating, setLocating] = useState(false)
 
   const amount = Math.round(totalPrice)
 
@@ -189,6 +209,42 @@ export default function CartDrawer() {
     }
   }
 
+  function checkDistance() {
+    setDistanceMsg('')
+    if (!('geolocation' in navigator)) {
+      setDistanceMsg(t.locationDenied)
+      return
+    }
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch('/api/delivery-distance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          })
+          const data = await res.json()
+          if (data.distanceKm != null) {
+            setDistanceKm(data.distanceKm)
+            setDistanceMsg(data.withinRadius ? '' : t.outOfArea(data.radiusKm))
+          } else {
+            setDistanceMsg(t.locationDenied)
+          }
+        } catch {
+          setDistanceMsg(t.locationDenied)
+        } finally {
+          setLocating(false)
+        }
+      },
+      () => {
+        setLocating(false)
+        setDistanceMsg(t.locationDenied)
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
   async function goToPayment() {
     setError('')
     if (!form.name.trim() || !form.phone.trim()) {
@@ -233,6 +289,7 @@ export default function CartDrawer() {
           address: form.address,
           note: form.note,
           paymentRef,
+          distanceKm,
           lineUserId: profile?.userId || '',
           lineDisplayName: profile?.displayName || '',
           items: items.map((i) => ({ id: i.id, name: i.name, price: parseFloat(i.price) || 0, qty: i.qty })),
@@ -240,6 +297,17 @@ export default function CartDrawer() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'error')
+
+      // Post the order summary into the LINE chat (only works inside LINE).
+      const orderLines = items.map((i) => `${i.name} x${i.qty}`).join('\n')
+      const distanceLine = distanceKm != null ? `\n📍 ${t.distanceLabel} ${distanceKm} กม.` : ''
+      await sendMessagesToChat([
+        {
+          type: 'text',
+          text: `🛒 ${t.orderNo} ${data.orderNo}\n${orderLines}\n\n${t.total} ฿${amount}${distanceLine}`,
+        },
+      ])
+
       setOrderNo(data.orderNo)
       setStep('success')
       clearCart()
@@ -272,6 +340,8 @@ export default function CartDrawer() {
         setStep('cart')
         setOrderNo('')
         setForm({ name: '', phone: '', address: '', note: '' })
+        setDistanceKm(null)
+        setDistanceMsg('')
       }
     }, 350)
   }
@@ -395,6 +465,28 @@ export default function CartDrawer() {
                 <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.note}</span>
                 <input className={`mt-1 ${inputCls}`} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
               </label>
+
+              {/* delivery distance check */}
+              <div>
+                <button
+                  type="button"
+                  onClick={checkDistance}
+                  disabled={locating}
+                  className="w-full py-2.5 rounded-xl border border-[#4a3520]/25 text-[#4a3520] font-medium text-[13px] hover:bg-[#4a3520]/[0.04] transition disabled:opacity-60"
+                >
+                  {locating ? t.locating : t.useLocation}
+                </button>
+                {distanceKm != null && (
+                  <div className="mt-2 flex items-center justify-center gap-1.5 text-[13px] text-[#2d6a1f]">
+                    <span>📍</span>
+                    <span>{t.distanceLabel} {distanceKm} กม.</span>
+                  </div>
+                )}
+                {distanceMsg && (
+                  <p className="mt-1.5 text-[12px] text-amber-700 text-center leading-snug">⚠️ {distanceMsg}</p>
+                )}
+              </div>
+
               {error && <p className="text-[12px] text-red-600">{error}</p>}
             </div>
 

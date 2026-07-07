@@ -72,6 +72,9 @@ export default async function AdminOrdersPage() {
                     {o.address && (
                       <p className="text-muted-foreground text-[13px] leading-snug mt-0.5">
                         {o.address}
+                        {o.distanceKm != null && (
+                          <span className="ml-1 text-[#2d6a1f]">· 📍 {o.distanceKm} กม.</span>
+                        )}
                       </p>
                     )}
                     {o.note && (
