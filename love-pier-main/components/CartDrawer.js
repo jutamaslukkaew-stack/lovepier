@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useCart } from '../lib/cart'
 import { useLanguage } from '../lib/language'
 import { buildPaymentPayload } from '../lib/promptpay'
+import { buildOrderFlex } from '../lib/orderFlex'
 import {
   isLiffConfigured,
   loginAndGetProfile,
@@ -59,6 +60,7 @@ const COPY = {
     orderNo: 'เลขที่ออเดอร์',
     successMsg: 'กรุณาส่งสลิปการโอนให้ร้านทาง LINE เพื่อยืนยันการชำระเงิน',
     sendSlip: 'ส่งสลิปทาง LINE',
+    sentToShop: 'ส่งออเดอร์ให้ร้านทาง LINE แล้ว',
     done: 'เสร็จสิ้น',
   },
   en: {
@@ -92,6 +94,7 @@ const COPY = {
     orderNo: 'Order no.',
     successMsg: 'Please send your payment slip to us on LINE to confirm.',
     sendSlip: 'Send slip via LINE',
+    sentToShop: 'Order sent to the shop on LINE',
     done: 'Done',
   },
   zh: {
@@ -125,6 +128,7 @@ const COPY = {
     orderNo: '订单号',
     successMsg: '请通过 LINE 将付款凭证发给我们以确认。',
     sendSlip: '通过 LINE 发送凭证',
+    sentToShop: '订单已通过 LINE 发送给店家',
     done: '完成',
   },
 }
@@ -147,6 +151,7 @@ export default function CartDrawer() {
   const [orderNo, setOrderNo] = useState('')
   // snapshot of the placed order, captured before the cart is cleared
   const [completed, setCompleted] = useState(null) // { lines, total, distanceKm }
+  const [sentToLine, setSentToLine] = useState(false) // auto-posted the order card into the LINE chat
   // delivery distance
   const [distanceKm, setDistanceKm] = useState(null)
   const [distanceMsg, setDistanceMsg] = useState('')
@@ -300,15 +305,19 @@ export default function CartDrawer() {
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'error')
 
-      // Post the order summary into the LINE chat (only works inside LINE).
-      const orderLines = items.map((i) => `${i.name} x${i.qty}`).join('\n')
-      const distanceLine = distanceKm != null ? `\n📍 ${t.distanceLabel} ${distanceKm} กม.` : ''
-      await sendMessagesToChat([
-        {
-          type: 'text',
-          text: `🛒 ${t.orderNo} ${data.orderNo}\n${orderLines}\n\n${t.total} ฿${amount}${distanceLine}`,
-        },
-      ])
+      // Auto-post the order card (Flex message) into the LINE chat — no button
+      // press needed. Only works inside LINE; returns false in a plain browser.
+      const flex = buildOrderFlex({
+        orderNo: data.orderNo,
+        name: form.name,
+        phone: form.phone,
+        address: form.address,
+        items: items.map((i) => ({ name: i.name, price: parseFloat(i.price) || 0, qty: i.qty })),
+        total: amount,
+        distanceKm,
+      })
+      const sent = await sendMessagesToChat([flex])
+      setSentToLine(sent)
 
       // Snapshot for the success screen / slip message before the cart clears.
       setCompleted({
@@ -349,6 +358,7 @@ export default function CartDrawer() {
         setDistanceKm(null)
         setDistanceMsg('')
         setCompleted(null)
+        setSentToLine(false)
       }
     }, 350)
   }
@@ -553,10 +563,21 @@ export default function CartDrawer() {
                 </p>
               )}
             </div>
-            <p className="text-[13px] text-black/55 leading-relaxed max-w-xs">{t.successMsg}</p>
-            <button onClick={sendSlipViaLine} className="mt-2 w-full py-3.5 rounded-xl bg-[#06C755] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition">
-              <span className="text-[16px]">💬</span> {t.sendSlip}
-            </button>
+            {sentToLine ? (
+              <>
+                <div className="mt-1 flex items-center gap-2 rounded-xl bg-[#f0f7ef] border border-[#2d6a1f]/20 px-3.5 py-2.5 text-[13px] text-[#2d6a1f]">
+                  <span>✅</span><span>{t.sentToShop}</span>
+                </div>
+                <p className="text-[13px] text-black/55 leading-relaxed max-w-xs">{t.successMsg}</p>
+              </>
+            ) : (
+              <>
+                <p className="text-[13px] text-black/55 leading-relaxed max-w-xs">{t.successMsg}</p>
+                <button onClick={sendSlipViaLine} className="mt-1 w-full py-3.5 rounded-xl bg-[#06C755] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition">
+                  <span className="text-[16px]">💬</span> {t.sendSlip}
+                </button>
+              </>
+            )}
             <button onClick={close} className="w-full py-3 rounded-xl bg-black/[0.06] text-ink font-semibold text-[13px] hover:bg-black/10 transition">
               {t.done}
             </button>
