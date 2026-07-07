@@ -181,3 +181,13 @@ export const orders = pgTable(
 
 export type Order = typeof orders.$inferSelect
 export type NewOrder = typeof orders.$inferInsert
+
+// Simple key/value store for shop settings editable from /admin/settings.
+export const settings = pgTable('settings', {
+  key: text('key').primaryKey(),
+  value: text('value'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export type Setting = typeof settings.$inferSelect
+export type NewSetting = typeof settings.$inferInsert

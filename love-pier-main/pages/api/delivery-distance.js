@@ -1,11 +1,33 @@
-// Driving-distance check via the Google Routes API (computeRoutes).
-// The API key stays server-side. Given the customer's coordinates, returns the
-// driving distance from the shop and whether it's within the delivery radius.
+// Delivery distance check. Method (straight-line vs Google Routes driving
+// distance), shop location, radius, and API key all come from the shop settings
+// (editable at /admin/settings), with env vars as fallback.
 
-const API_KEY = process.env.GOOGLE_MAPS_API_KEY || ''
-const SHOP_LAT = parseFloat(process.env.SHOP_LAT || '')
-const SHOP_LNG = parseFloat(process.env.SHOP_LNG || '')
-const RADIUS_KM = parseFloat(process.env.DELIVERY_RADIUS_KM || '5')
+import { getShopSettings } from '../../lib/settings'
+import { haversineKm } from '../../lib/geo'
+
+async function googleDrivingKm(apiKey, from, to) {
+  const resp = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': apiKey,
+      'X-Goog-FieldMask': 'routes.distanceMeters',
+    },
+    body: JSON.stringify({
+      origin: { location: { latLng: { latitude: from.lat, longitude: from.lng } } },
+      destination: { location: { latLng: { latitude: to.lat, longitude: to.lng } } },
+      travelMode: 'DRIVE',
+      routingPreference: 'TRAFFIC_UNAWARE',
+    }),
+  })
+  if (!resp.ok) {
+    console.error('Routes API failed:', resp.status, await resp.text())
+    return null
+  }
+  const data = await resp.json()
+  const meters = data?.routes?.[0]?.distanceMeters
+  return meters == null ? null : meters / 1000
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -19,48 +41,36 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'พิกัดไม่ถูกต้อง' })
   }
 
-  // If the shop location or API key isn't configured, degrade gracefully:
-  // report distance as unknown so the checkout ("warn but allow") still works.
-  if (!API_KEY || !Number.isFinite(SHOP_LAT) || !Number.isFinite(SHOP_LNG)) {
-    return res.status(200).json({ distanceKm: null, radiusKm: RADIUS_KM, withinRadius: true, configured: false })
+  const s = await getShopSettings()
+
+  // Shop location not set → can't measure. Degrade gracefully ("warn but allow").
+  if (!Number.isFinite(s.shopLat) || !Number.isFinite(s.shopLng)) {
+    return res.status(200).json({ distanceKm: null, radiusKm: s.radiusKm, withinRadius: true, configured: false })
   }
 
+  const from = { lat: s.shopLat, lng: s.shopLng }
+  const to = { lat, lng }
+
   try {
-    const resp = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': API_KEY,
-        'X-Goog-FieldMask': 'routes.distanceMeters,routes.duration',
-      },
-      body: JSON.stringify({
-        origin: { location: { latLng: { latitude: SHOP_LAT, longitude: SHOP_LNG } } },
-        destination: { location: { latLng: { latitude: lat, longitude: lng } } },
-        travelMode: 'DRIVE',
-        routingPreference: 'TRAFFIC_UNAWARE',
-      }),
-    })
-
-    if (!resp.ok) {
-      console.error('Routes API failed:', resp.status, await resp.text())
-      return res.status(200).json({ distanceKm: null, radiusKm: RADIUS_KM, withinRadius: true, configured: true })
+    let km = null
+    if (s.distanceMethod === 'google' && s.googleApiKey) {
+      km = await googleDrivingKm(s.googleApiKey, from, to)
+    }
+    // Straight-line either by choice, or as a fallback when Google is unavailable.
+    if (km == null) {
+      km = haversineKm(from.lat, from.lng, to.lat, to.lng)
     }
 
-    const data = await resp.json()
-    const meters = data?.routes?.[0]?.distanceMeters
-    if (meters == null) {
-      return res.status(200).json({ distanceKm: null, radiusKm: RADIUS_KM, withinRadius: true, configured: true })
-    }
-
-    const distanceKm = Math.round((meters / 1000) * 10) / 10
+    const distanceKm = Math.round(km * 10) / 10
     return res.status(200).json({
       distanceKm,
-      radiusKm: RADIUS_KM,
-      withinRadius: distanceKm <= RADIUS_KM,
+      radiusKm: s.radiusKm,
+      withinRadius: distanceKm <= s.radiusKm,
+      method: s.distanceMethod === 'google' && s.googleApiKey ? 'google' : 'straight',
       configured: true,
     })
   } catch (err) {
     console.error('delivery-distance error:', err)
-    return res.status(200).json({ distanceKm: null, radiusKm: RADIUS_KM, withinRadius: true, configured: true })
+    return res.status(200).json({ distanceKm: null, radiusKm: s.radiusKm, withinRadius: true, configured: true })
   }
 }

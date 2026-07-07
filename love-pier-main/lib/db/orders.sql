@@ -35,6 +35,13 @@ create table if not exists orders (
 create index if not exists orders_created_at_idx on orders (created_at);
 create index if not exists orders_status_idx    on orders (status);
 
+create table if not exists settings (
+  key        text primary key,
+  value      text,
+  updated_at timestamptz not null default now()
+);
+alter table settings enable row level security;
+
 -- The app writes orders through the server (service-role key), which bypasses RLS,
 -- so no public policies are needed. Enable RLS to keep the tables private to clients.
 alter table customers enable row level security;

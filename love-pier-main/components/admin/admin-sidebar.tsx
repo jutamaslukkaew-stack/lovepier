@@ -12,6 +12,7 @@ import {
   CalendarDays,
   Image,
   Waves,
+  Settings,
   Menu,
   X,
   LogOut,
@@ -27,6 +28,7 @@ const navItems = [
   { href: '/admin/events', label: 'อีเวนต์', icon: CalendarDays },
   { href: '/admin/gallery', label: 'แกลเลอรี', icon: Image },
   { href: '/admin/activities', label: 'กิจกรรม', icon: Waves },
+  { href: '/admin/settings', label: 'ตั้งค่า', icon: Settings },
 ]
 
 function NavLink({
