@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useCart } from '../lib/cart'
 import { useLanguage } from '../lib/language'
 import { buildPaymentPayload } from '../lib/promptpay'
@@ -145,6 +145,8 @@ export default function CartDrawer() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [orderNo, setOrderNo] = useState('')
+  // snapshot of the placed order, captured before the cart is cleared
+  const [completed, setCompleted] = useState(null) // { lines, total, distanceKm }
   // delivery distance
   const [distanceKm, setDistanceKm] = useState(null)
   const [distanceMsg, setDistanceMsg] = useState('')
@@ -308,6 +310,12 @@ export default function CartDrawer() {
         },
       ])
 
+      // Snapshot for the success screen / slip message before the cart clears.
+      setCompleted({
+        lines: items.map((i) => `• ${i.name} x${i.qty}`).join('\n'),
+        total: amount,
+        distanceKm,
+      })
       setOrderNo(data.orderNo)
       setStep('success')
       clearCart()
@@ -319,18 +327,16 @@ export default function CartDrawer() {
   }
 
   function sendSlipViaLine() {
-    const lines = summaryLines
+    const lines = completed?.lines || ''
+    const total = completed?.total ?? 0
     const refLine = paymentRef ? `\nRef: ${paymentRef}` : ''
+    const distanceLine =
+      completed?.distanceKm != null ? `\n📍 ${t.distanceLabel} ${completed.distanceKm} กม.` : ''
     const msg = encodeURIComponent(
-      `📦 ${t.orderNo} ${orderNo}${refLine}\n${lines}\n\n${t.total} ฿${amount}\n\n(แนบสลิปการโอนในแชทนี้ได้เลยครับ)`
+      `📦 ${t.orderNo} ${orderNo}${refLine}\n${lines}\n\n${t.total} ฿${total}${distanceLine}\n\n(แนบสลิปการโอนในแชทนี้ได้เลยครับ)`
     )
     window.open(`https://line.me/R/oaMessage/${LINE_OA_ID}/?${msg}`, '_blank')
   }
-
-  const summaryLines = useMemo(
-    () => items.map((i) => `• ${i.name} x${i.qty}`).join('\n'),
-    [items]
-  )
 
   function close() {
     closeCart()
@@ -342,6 +348,7 @@ export default function CartDrawer() {
         setForm({ name: '', phone: '', address: '', note: '' })
         setDistanceKm(null)
         setDistanceMsg('')
+        setCompleted(null)
       }
     }, 350)
   }
@@ -540,6 +547,11 @@ export default function CartDrawer() {
             <div>
               <span className="text-[11px] tracking-[0.12em] uppercase text-black/45">{t.orderNo}</span>
               <p className="font-display text-[24px] text-ink tracking-wide">{orderNo}</p>
+              {completed && (
+                <p className="text-[15px] font-semibold text-ink tabular-nums mt-1">
+                  {t.total} ฿{completed.total}
+                </p>
+              )}
             </div>
             <p className="text-[13px] text-black/55 leading-relaxed max-w-xs">{t.successMsg}</p>
             <button onClick={sendSlipViaLine} className="mt-2 w-full py-3.5 rounded-xl bg-[#06C755] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition">
