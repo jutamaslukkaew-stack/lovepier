@@ -16,7 +16,7 @@ const PROMPTPAY_TYPE = process.env.NEXT_PUBLIC_PROMPTPAY_TYPE || '' // 'biller' 
 // Leave blank to omit Ref1 from the QR; set it only if your biller expects a
 // specific fixed reference.
 const PROMPTPAY_REF = process.env.NEXT_PUBLIC_PROMPTPAY_REF || ''
-const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@loverpier.cafe'
+const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@lovepier.cafe'
 
 // Internal reference saved with the order so the shop can track it in /admin.
 // (Not embedded in the payment QR — see PROMPTPAY_REF above.)
