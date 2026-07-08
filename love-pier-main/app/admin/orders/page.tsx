@@ -3,10 +3,29 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { OrderStatusSelect } from '@/components/admin/order-status-select'
 import { STATUS_LABELS, STATUS_VARIANT } from '@/app/admin/orders/status'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
 type OrderItem = { id?: string; name?: string; price?: number; qty?: number }
+
+// Slips live in a private bucket — mint short-lived signed URLs to view them.
+async function signSlipUrls(paths: string[]): Promise<Record<string, string>> {
+  const out: Record<string, string> = {}
+  if (paths.length === 0) return out
+  try {
+    const sb = createAdminClient()
+    await Promise.all(
+      paths.map(async (p) => {
+        const { data } = await sb.storage.from('slips').createSignedUrl(p, 3600)
+        if (data?.signedUrl) out[p] = data.signedUrl
+      })
+    )
+  } catch {
+    // ignore — just won't show the slip link
+  }
+  return out
+}
 
 function formatDate(d: Date | string | null) {
   if (!d) return ''
@@ -20,6 +39,9 @@ function formatDate(d: Date | string | null) {
 
 export default async function AdminOrdersPage() {
   const orders = await listOrders()
+  const slipUrls = await signSlipUrls(
+    orders.map((o) => o.slipUrl).filter((p): p is string => Boolean(p))
+  )
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 space-y-6">
@@ -79,6 +101,16 @@ export default async function AdminOrdersPage() {
                     )}
                     {o.note && (
                       <p className="text-[13px] text-amber-700 mt-0.5">📝 {o.note}</p>
+                    )}
+                    {o.slipUrl && slipUrls[o.slipUrl] && (
+                      <a
+                        href={slipUrls[o.slipUrl]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block mt-1 text-[13px] text-blue-600 hover:underline"
+                      >
+                        🧾 ดูสลิปการโอน
+                      </a>
                     )}
                   </div>
 

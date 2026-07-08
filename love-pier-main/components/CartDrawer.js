@@ -64,6 +64,7 @@ const COPY = {
     attachSlip: '📎 แนบสลิปเพื่อยืนยันการชำระเงิน',
     verifyingSlip: 'กำลังตรวจสอบสลิป...',
     slipVerified: 'ยืนยันการชำระเงินแล้ว ✅',
+    slipUploaded: 'แนบสลิปแล้ว รอร้านตรวจสอบ ✅',
     slipRetry: 'แนบสลิปใหม่อีกครั้ง',
     verifyHint: 'ระบบตรวจสลิปอัตโนมัติ (จับสลิปปลอมได้)',
     done: 'เสร็จสิ้น',
@@ -103,6 +104,7 @@ const COPY = {
     attachSlip: '📎 Attach slip to confirm payment',
     verifyingSlip: 'Verifying slip...',
     slipVerified: 'Payment verified ✅',
+    slipUploaded: 'Slip attached — pending review ✅',
     slipRetry: 'Attach a different slip',
     verifyHint: 'Automatic slip check (detects fakes)',
     done: 'Done',
@@ -142,6 +144,7 @@ const COPY = {
     attachSlip: '📎 上传凭证以确认付款',
     verifyingSlip: '正在核验凭证...',
     slipVerified: '付款已确认 ✅',
+    slipUploaded: '凭证已上传 — 等待店家核对 ✅',
     slipRetry: '重新上传凭证',
     verifyHint: '自动核验凭证（可识别伪造）',
     done: '完成',
@@ -371,7 +374,9 @@ export default function CartDrawer() {
         })
         const data = await res.json()
         if (data.ok && data.verified) {
-          setSlipStatus('ok')
+          setSlipStatus('ok') // auto-verified as paid (SlipOK)
+        } else if (data.ok && data.stored && !data.error) {
+          setSlipStatus('stored') // saved for the shop to review manually
         } else {
           setSlipStatus('fail')
           setSlipError(data.error || 'ตรวจสอบสลิปไม่สำเร็จ')
@@ -625,37 +630,36 @@ export default function CartDrawer() {
               </div>
             )}
 
-            {/* Payment confirmation */}
-            {slipVerify ? (
-              slipStatus === 'ok' ? (
-                <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#2d6a1f] text-white px-3.5 py-3 text-[14px] font-semibold">
-                  <span>✅</span><span>{t.slipVerified}</span>
-                </div>
-              ) : (
-                <div className="w-full">
-                  <label className={`w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] flex items-center justify-center gap-2 cursor-pointer hover:bg-[#3a2818] transition ${slipStatus === 'verifying' ? 'opacity-60 pointer-events-none' : ''}`}>
-                    {slipStatus === 'verifying'
-                      ? t.verifyingSlip
-                      : slipStatus === 'fail'
-                        ? t.slipRetry
-                        : t.attachSlip}
-                    <input type="file" accept="image/*" className="hidden" onChange={handleSlipFile} disabled={slipStatus === 'verifying'} />
-                  </label>
-                  <p className="text-[11px] text-black/40 text-center mt-1.5">{t.verifyHint}</p>
-                  {slipStatus === 'fail' && slipError && (
-                    <p className="text-[12px] text-red-600 text-center mt-1">⚠️ {slipError}</p>
-                  )}
-                </div>
-              )
+            {/* Payment confirmation — always offer to attach the slip */}
+            {slipStatus === 'ok' ? (
+              <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#2d6a1f] text-white px-3.5 py-3 text-[14px] font-semibold">
+                <span>✅</span><span>{t.slipVerified}</span>
+              </div>
+            ) : slipStatus === 'stored' ? (
+              <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#2d6a1f] text-white px-3.5 py-3 text-[14px] font-semibold">
+                <span>✅</span><span>{t.slipUploaded}</span>
+              </div>
             ) : (
-              !sentToLine && (
-                <>
-                  <p className="text-[13px] text-black/55 leading-relaxed max-w-xs">{t.successMsg}</p>
-                  <button onClick={sendSlipViaLine} className="mt-1 w-full py-3.5 rounded-xl bg-[#06C755] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition">
-                    <span className="text-[16px]">💬</span> {t.sendSlip}
-                  </button>
-                </>
-              )
+              <div className="w-full">
+                <label className={`w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] flex items-center justify-center gap-2 cursor-pointer hover:bg-[#3a2818] transition ${slipStatus === 'verifying' ? 'opacity-60 pointer-events-none' : ''}`}>
+                  {slipStatus === 'verifying'
+                    ? t.verifyingSlip
+                    : slipStatus === 'fail'
+                      ? t.slipRetry
+                      : t.attachSlip}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleSlipFile} disabled={slipStatus === 'verifying'} />
+                </label>
+                <p className="text-[11px] text-black/40 text-center mt-1.5">
+                  {slipVerify ? t.verifyHint : t.successMsg}
+                </p>
+                {slipStatus === 'fail' && slipError && (
+                  <p className="text-[12px] text-red-600 text-center mt-1">⚠️ {slipError}</p>
+                )}
+                {/* secondary: send in the LINE chat instead */}
+                <button onClick={sendSlipViaLine} className="w-full mt-2 py-2 text-[12px] text-[#06C755] font-medium hover:underline">
+                  💬 {t.sendSlip}
+                </button>
+              </div>
             )}
 
             <button onClick={close} className="w-full py-3 rounded-xl bg-black/[0.06] text-ink font-semibold text-[13px] hover:bg-black/10 transition">
