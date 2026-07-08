@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { orders, customers } from '../../lib/db/schema'
 import { pushNewOrderNotification } from '../../lib/lineMessaging'
+import { getShopSettings } from '../../lib/settings'
 
 function pickString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -100,7 +101,14 @@ export default async function handler(req, res) {
       distanceKm,
     })
 
-    return res.status(200).json({ ok: true, orderNo, totalAmount })
+    // Tell the client whether automatic slip verification is available.
+    let slipVerify = false
+    try {
+      const s = await getShopSettings()
+      slipVerify = Boolean(s.slipokApiKey && s.slipokBranchId)
+    } catch {}
+
+    return res.status(200).json({ ok: true, orderNo, totalAmount, slipVerify })
   } catch (err) {
     console.error('Create order failed:', err)
     return res.status(500).json({ error: 'บันทึกออเดอร์ไม่สำเร็จ' })

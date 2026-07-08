@@ -8,6 +8,8 @@ export const SETTING_KEYS = {
   shopLng: 'shop_lng',
   radiusKm: 'delivery_radius_km',
   googleApiKey: 'google_maps_api_key',
+  slipokApiKey: 'slipok_api_key',
+  slipokBranchId: 'slipok_branch_id',
 }
 
 function num(v) {
@@ -36,5 +38,7 @@ export async function getShopSettings() {
       ? num(m[SETTING_KEYS.radiusKm])
       : num(process.env.DELIVERY_RADIUS_KM) || 5,
     googleApiKey: m[SETTING_KEYS.googleApiKey] || process.env.GOOGLE_MAPS_API_KEY || '',
+    slipokApiKey: m[SETTING_KEYS.slipokApiKey] || process.env.SLIPOK_API_KEY || '',
+    slipokBranchId: m[SETTING_KEYS.slipokBranchId] || process.env.SLIPOK_BRANCH_ID || '',
   }
 }

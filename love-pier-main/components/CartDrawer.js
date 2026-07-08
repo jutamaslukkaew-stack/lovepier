@@ -61,6 +61,11 @@ const COPY = {
     successMsg: 'กรุณาส่งสลิปการโอนให้ร้านทาง LINE เพื่อยืนยันการชำระเงิน',
     sendSlip: 'ส่งสลิปทาง LINE',
     sentToShop: 'ส่งออเดอร์ให้ร้านทาง LINE แล้ว',
+    attachSlip: '📎 แนบสลิปเพื่อยืนยันการชำระเงิน',
+    verifyingSlip: 'กำลังตรวจสอบสลิป...',
+    slipVerified: 'ยืนยันการชำระเงินแล้ว ✅',
+    slipRetry: 'แนบสลิปใหม่อีกครั้ง',
+    verifyHint: 'ระบบตรวจสลิปอัตโนมัติ (จับสลิปปลอมได้)',
     done: 'เสร็จสิ้น',
   },
   en: {
@@ -95,6 +100,11 @@ const COPY = {
     successMsg: 'Please send your payment slip to us on LINE to confirm.',
     sendSlip: 'Send slip via LINE',
     sentToShop: 'Order sent to the shop on LINE',
+    attachSlip: '📎 Attach slip to confirm payment',
+    verifyingSlip: 'Verifying slip...',
+    slipVerified: 'Payment verified ✅',
+    slipRetry: 'Attach a different slip',
+    verifyHint: 'Automatic slip check (detects fakes)',
     done: 'Done',
   },
   zh: {
@@ -129,6 +139,11 @@ const COPY = {
     successMsg: '请通过 LINE 将付款凭证发给我们以确认。',
     sendSlip: '通过 LINE 发送凭证',
     sentToShop: '订单已通过 LINE 发送给店家',
+    attachSlip: '📎 上传凭证以确认付款',
+    verifyingSlip: '正在核验凭证...',
+    slipVerified: '付款已确认 ✅',
+    slipRetry: '重新上传凭证',
+    verifyHint: '自动核验凭证（可识别伪造）',
     done: '完成',
   },
 }
@@ -152,6 +167,10 @@ export default function CartDrawer() {
   // snapshot of the placed order, captured before the cart is cleared
   const [completed, setCompleted] = useState(null) // { lines, total, distanceKm }
   const [sentToLine, setSentToLine] = useState(false) // auto-posted the order card into the LINE chat
+  // automatic slip verification (SlipOK)
+  const [slipVerify, setSlipVerify] = useState(false) // shop has SlipOK configured
+  const [slipStatus, setSlipStatus] = useState('idle') // idle | verifying | ok | fail
+  const [slipError, setSlipError] = useState('')
   // delivery distance
   const [distanceKm, setDistanceKm] = useState(null)
   const [distanceMsg, setDistanceMsg] = useState('')
@@ -325,6 +344,7 @@ export default function CartDrawer() {
         total: amount,
         distanceKm,
       })
+      setSlipVerify(Boolean(data.slipVerify))
       setOrderNo(data.orderNo)
       setStep('success')
       clearCart()
@@ -333,6 +353,39 @@ export default function CartDrawer() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  function handleSlipFile(e) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-selecting the same file
+    if (!file) return
+    setSlipError('')
+    setSlipStatus('verifying')
+    const reader = new FileReader()
+    reader.onload = async () => {
+      try {
+        const res = await fetch('/api/verify-slip', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderNo, imageBase64: reader.result }),
+        })
+        const data = await res.json()
+        if (data.ok && data.verified) {
+          setSlipStatus('ok')
+        } else {
+          setSlipStatus('fail')
+          setSlipError(data.error || 'ตรวจสอบสลิปไม่สำเร็จ')
+        }
+      } catch {
+        setSlipStatus('fail')
+        setSlipError('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง')
+      }
+    }
+    reader.onerror = () => {
+      setSlipStatus('fail')
+      setSlipError('อ่านไฟล์รูปไม่ได้')
+    }
+    reader.readAsDataURL(file)
   }
 
   function sendSlipViaLine() {
@@ -359,6 +412,9 @@ export default function CartDrawer() {
         setDistanceMsg('')
         setCompleted(null)
         setSentToLine(false)
+        setSlipVerify(false)
+        setSlipStatus('idle')
+        setSlipError('')
       }
     }, 350)
   }
@@ -563,21 +619,45 @@ export default function CartDrawer() {
                 </p>
               )}
             </div>
-            {sentToLine ? (
-              <>
-                <div className="mt-1 flex items-center gap-2 rounded-xl bg-[#f0f7ef] border border-[#2d6a1f]/20 px-3.5 py-2.5 text-[13px] text-[#2d6a1f]">
-                  <span>✅</span><span>{t.sentToShop}</span>
-                </div>
-                <p className="text-[13px] text-black/55 leading-relaxed max-w-xs">{t.successMsg}</p>
-              </>
-            ) : (
-              <>
-                <p className="text-[13px] text-black/55 leading-relaxed max-w-xs">{t.successMsg}</p>
-                <button onClick={sendSlipViaLine} className="mt-1 w-full py-3.5 rounded-xl bg-[#06C755] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition">
-                  <span className="text-[16px]">💬</span> {t.sendSlip}
-                </button>
-              </>
+            {sentToLine && (
+              <div className="mt-1 flex items-center gap-2 rounded-xl bg-[#f0f7ef] border border-[#2d6a1f]/20 px-3.5 py-2.5 text-[13px] text-[#2d6a1f]">
+                <span>✅</span><span>{t.sentToShop}</span>
+              </div>
             )}
+
+            {/* Payment confirmation */}
+            {slipVerify ? (
+              slipStatus === 'ok' ? (
+                <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#2d6a1f] text-white px-3.5 py-3 text-[14px] font-semibold">
+                  <span>✅</span><span>{t.slipVerified}</span>
+                </div>
+              ) : (
+                <div className="w-full">
+                  <label className={`w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] flex items-center justify-center gap-2 cursor-pointer hover:bg-[#3a2818] transition ${slipStatus === 'verifying' ? 'opacity-60 pointer-events-none' : ''}`}>
+                    {slipStatus === 'verifying'
+                      ? t.verifyingSlip
+                      : slipStatus === 'fail'
+                        ? t.slipRetry
+                        : t.attachSlip}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleSlipFile} disabled={slipStatus === 'verifying'} />
+                  </label>
+                  <p className="text-[11px] text-black/40 text-center mt-1.5">{t.verifyHint}</p>
+                  {slipStatus === 'fail' && slipError && (
+                    <p className="text-[12px] text-red-600 text-center mt-1">⚠️ {slipError}</p>
+                  )}
+                </div>
+              )
+            ) : (
+              !sentToLine && (
+                <>
+                  <p className="text-[13px] text-black/55 leading-relaxed max-w-xs">{t.successMsg}</p>
+                  <button onClick={sendSlipViaLine} className="mt-1 w-full py-3.5 rounded-xl bg-[#06C755] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition">
+                    <span className="text-[16px]">💬</span> {t.sendSlip}
+                  </button>
+                </>
+              )
+            )}
+
             <button onClick={close} className="w-full py-3 rounded-xl bg-black/[0.06] text-ink font-semibold text-[13px] hover:bg-black/10 transition">
               {t.done}
             </button>

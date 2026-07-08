@@ -12,6 +12,8 @@ const SETTING_KEYS = {
   shopLng: 'shop_lng',
   radiusKm: 'delivery_radius_km',
   googleApiKey: 'google_maps_api_key',
+  slipokApiKey: 'slipok_api_key',
+  slipokBranchId: 'slipok_branch_id',
 } as const
 
 export type ShopSettingsForm = {
@@ -20,6 +22,8 @@ export type ShopSettingsForm = {
   shopLng: string
   radiusKm: string
   googleApiKey: string
+  slipokApiKey: string
+  slipokBranchId: string
 }
 
 export async function getSettings(): Promise<ShopSettingsForm> {
@@ -32,6 +36,8 @@ export async function getSettings(): Promise<ShopSettingsForm> {
     shopLng: m[SETTING_KEYS.shopLng] || '',
     radiusKm: m[SETTING_KEYS.radiusKm] || '5',
     googleApiKey: m[SETTING_KEYS.googleApiKey] || '',
+    slipokApiKey: m[SETTING_KEYS.slipokApiKey] || '',
+    slipokBranchId: m[SETTING_KEYS.slipokBranchId] || '',
   }
 }
 
@@ -50,6 +56,8 @@ export async function saveSettings(data: ShopSettingsForm) {
   await put(SETTING_KEYS.shopLng, (data.shopLng || '').trim())
   await put(SETTING_KEYS.radiusKm, (data.radiusKm || '5').trim())
   await put(SETTING_KEYS.googleApiKey, (data.googleApiKey || '').trim())
+  await put(SETTING_KEYS.slipokApiKey, (data.slipokApiKey || '').trim())
+  await put(SETTING_KEYS.slipokBranchId, (data.slipokBranchId || '').trim())
   revalidatePath('/admin/settings')
   return { ok: true as const }
 }

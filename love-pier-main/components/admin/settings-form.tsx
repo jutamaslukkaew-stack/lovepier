@@ -98,6 +98,35 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
         </div>
       )}
 
+      <div className="border-t pt-5 space-y-4">
+        <div>
+          <p className="font-medium text-sm">ตรวจสลิปอัตโนมัติ (SlipOK)</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            ลูกค้าแนบสลิป → ระบบเช็คกับธนาคารว่าจริง/ยอดตรง แล้วอัปเดตเป็น &ldquo;จ่ายแล้ว&rdquo;
+            อัตโนมัติ · สมัคร + รับ API key ที่ slipok.com
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label>SlipOK API Key</Label>
+          <Input
+            value={form.slipokApiKey}
+            onChange={(e) => set('slipokApiKey', e.target.value)}
+            placeholder="SLIPOK..."
+            type="password"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>SlipOK Branch ID</Label>
+          <Input
+            value={form.slipokBranchId}
+            onChange={(e) => set('slipokBranchId', e.target.value)}
+            placeholder="เช่น 12345"
+            className="w-40"
+          />
+          <p className="text-xs text-muted-foreground">เว้นว่างทั้งคู่ = ปิดระบบตรวจสลิป (ลูกค้าส่งสลิปทาง LINE เอง)</p>
+        </div>
+      </div>
+
       <Button onClick={onSave} disabled={pending}>
         {pending ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
       </Button>
