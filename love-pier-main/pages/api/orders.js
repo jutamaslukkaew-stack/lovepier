@@ -1,7 +1,8 @@
 import { sql } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { orders, customers } from '../../lib/db/schema'
-import { pushNewOrderNotification } from '../../lib/lineMessaging'
+import { pushNewOrderNotification, pushToUser } from '../../lib/lineMessaging'
+import { buildOrderFlex } from '../../lib/orderFlex'
 import { getShopSettings } from '../../lib/settings'
 
 function pickString(value) {
@@ -88,7 +89,7 @@ export default async function handler(req, res) {
         })
     }
 
-    // Alert the shop on LINE. Best-effort — don't fail the order if it errors.
+    // Alert the shop staff on LINE. Best-effort — don't fail the order if it errors.
     await pushNewOrderNotification({
       orderNo,
       customerName: name,
@@ -100,6 +101,14 @@ export default async function handler(req, res) {
       paymentRef,
       distanceKm,
     })
+
+    // Send the order card "from the shop" to the customer (Messaging API push).
+    // Complements the customer-side liff.sendMessages(); best-effort, skips
+    // when no messaging token or no LINE userId.
+    if (lineUserId) {
+      const flex = buildOrderFlex({ orderNo, name, phone, address, items, total: totalAmount, distanceKm })
+      await pushToUser(lineUserId, [flex])
+    }
 
     // Tell the client whether automatic slip verification is available.
     let slipVerify = false

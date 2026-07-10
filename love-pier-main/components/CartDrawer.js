@@ -193,6 +193,17 @@ export default function CartDrawer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
+  // On load inside LINE: silently grab the profile (no login popup). This logs
+  // the customer to Google Sheets and pre-fills their name for checkout.
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const p = await getProfileIfLoggedIn()
+      if (p && !cancelled) setProfile(p)
+    })()
+    return () => { cancelled = true }
+  }, [])
+
   // Silently pick up an existing LINE session (e.g. after login redirect) and
   // pre-fill the form for returning customers.
   useEffect(() => {

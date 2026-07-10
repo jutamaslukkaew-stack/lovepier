@@ -1,81 +1,106 @@
-// Builds a LINE Flex Message (order-detail card, LINE MAN style) for an order.
-// Sent into the shop's LINE chat via liff.sendMessages() right after checkout.
+// Builds a LINE Flex Message (order-confirmation card, Tassana-style) for an order.
+// Used both by liff.sendMessages() (customer side) and the Messaging API push
+// (shop side), so the card looks identical whichever way it's sent.
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://lovepier.cafe'
 
 function money(n) {
-  return `฿${Math.round(Number(n) || 0)}`
+  return `${(Number(n) || 0).toLocaleString('th-TH')}`
+}
+
+function checkRow(label, value, action) {
+  return {
+    type: 'box',
+    layout: 'baseline',
+    margin: 'md',
+    contents: [
+      { type: 'text', text: '✅', flex: 0, size: 'sm' },
+      { type: 'text', text: label, size: 'sm', color: '#8c8c8c', flex: 0, margin: 'sm' },
+      {
+        type: 'text',
+        text: value,
+        size: 'sm',
+        color: action ? '#1a73e8' : '#333333',
+        align: 'end',
+        wrap: true,
+        ...(action ? { action } : {}),
+      },
+    ],
+  }
+}
+
+function plainRow(icon, label, value) {
+  return {
+    type: 'box',
+    layout: 'baseline',
+    margin: 'md',
+    contents: [
+      { type: 'text', text: icon, flex: 0, size: 'sm' },
+      { type: 'text', text: label, size: 'sm', color: '#8c8c8c', flex: 0, margin: 'sm' },
+      { type: 'text', text: value, size: 'sm', color: '#333333', align: 'end', wrap: true },
+    ],
+  }
 }
 
 export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, distanceKm }) {
+  const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
+
   const itemRows = items.map((i) => ({
     type: 'box',
     layout: 'horizontal',
     margin: 'sm',
     contents: [
-      { type: 'text', text: String(i.name || ''), size: 'sm', color: '#555555', flex: 5, wrap: true },
-      { type: 'text', text: `x${i.qty}`, size: 'sm', color: '#999999', flex: 1, align: 'center' },
-      { type: 'text', text: money((Number(i.price) || 0) * (Number(i.qty) || 0)), size: 'sm', color: '#111111', flex: 3, align: 'end' },
+      { type: 'text', text: `${i.name}`, size: 'sm', color: '#555555', flex: 5, wrap: true },
+      { type: 'text', text: `x${i.qty}`, size: 'sm', color: '#aaaaaa', flex: 1, align: 'center' },
+      { type: 'text', text: `฿${money((Number(i.price) || 0) * (Number(i.qty) || 0))}`, size: 'sm', color: '#333333', flex: 3, align: 'end' },
     ],
   }))
 
-  const infoRow = (label, value) => ({
-    type: 'box',
-    layout: 'horizontal',
-    margin: 'sm',
-    contents: [
-      { type: 'text', text: label, size: 'sm', color: '#999999', flex: 3 },
-      { type: 'text', text: value, size: 'sm', color: '#111111', flex: 4, align: 'end', wrap: true },
-    ],
-  })
-
-  const recipient = [
-    { type: 'text', text: 'ผู้รับ', size: 'xs', color: '#999999' },
-    { type: 'text', text: String(name || ''), size: 'md', weight: 'bold', wrap: true },
-    { type: 'text', text: String(phone || ''), size: 'sm', color: '#555555' },
+  const detail = [
+    checkRow('ชื่อ', String(name || '-')),
+    checkRow('เบอร์โทร', String(phone || '-'), phone ? { type: 'uri', label: 'call', uri: `tel:${String(phone).replace(/[^0-9+]/g, '')}` } : undefined),
   ]
-  if (address) recipient.push({ type: 'text', text: String(address), size: 'sm', color: '#555555', wrap: true })
-  if (distanceKm != null)
-    recipient.push({ type: 'text', text: `📍 ระยะจัดส่ง ${distanceKm} กม.`, size: 'sm', color: '#2d6a1f' })
+  if (address) detail.push(plainRow('📍', 'ที่อยู่', String(address)))
+  if (distanceKm != null) detail.push(plainRow('🛵', 'ระยะส่ง', `${distanceKm} กม.`))
+  detail.push(plainRow('💳', 'ชำระโดย', 'QR PromptPay'))
 
   const bubble = {
     type: 'bubble',
     header: {
       type: 'box',
       layout: 'vertical',
-      backgroundColor: '#4a3520',
-      paddingAll: '16px',
+      backgroundColor: '#2d6a1f',
+      paddingAll: '18px',
       contents: [
-        { type: 'text', text: 'Love Pier Beach Cafe', color: '#ffffff', weight: 'bold', size: 'lg' },
-        { type: 'text', text: 'ออเดอร์เดลิเวอรี', color: '#e6d9c7', size: 'xs', margin: 'xs' },
+        { type: 'text', text: '🛒 รับออเดอร์แล้ว', color: '#ffffff', weight: 'bold', size: 'xl' },
+        { type: 'text', text: 'Love Pier Beach Cafe', color: '#d7ecd0', size: 'xs', margin: 'sm' },
       ],
     },
     body: {
       type: 'box',
       layout: 'vertical',
-      spacing: 'md',
+      spacing: 'sm',
       contents: [
-        { type: 'text', text: String(orderNo), weight: 'bold', size: 'xl', align: 'center' },
-        {
-          type: 'text',
-          text: new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }),
-          size: 'xs',
-          color: '#aaaaaa',
-          align: 'center',
-        },
-        { type: 'separator', margin: 'md' },
-        { type: 'box', layout: 'vertical', margin: 'md', spacing: 'xs', contents: recipient },
-        { type: 'separator', margin: 'md' },
-        { type: 'box', layout: 'vertical', margin: 'md', contents: itemRows },
-        { type: 'separator', margin: 'md' },
-        infoRow('ประเภท', 'เดลิเวอรี'),
-        infoRow('ชำระเงิน', 'PromptPay'),
-        { type: 'separator', margin: 'md' },
+        { type: 'text', text: `เลขที่ออเดอร์`, size: 'xs', color: '#aaaaaa', align: 'center' },
+        { type: 'text', text: String(orderNo), weight: 'bold', size: 'xl', align: 'center', color: '#2d6a1f' },
+        { type: 'separator', margin: 'lg' },
+
+        // items
+        { type: 'box', layout: 'vertical', margin: 'lg', contents: itemRows },
+        { type: 'separator', margin: 'lg' },
+
+        // customer details with ✅ rows
+        { type: 'box', layout: 'vertical', margin: 'sm', contents: detail },
+        { type: 'separator', margin: 'lg' },
+
+        // total
         {
           type: 'box',
           layout: 'horizontal',
-          margin: 'md',
+          margin: 'lg',
           contents: [
-            { type: 'text', text: 'รวมทั้งหมด', weight: 'bold', size: 'lg', flex: 1 },
-            { type: 'text', text: money(total), weight: 'bold', size: 'lg', color: '#2d6a1f', align: 'end', flex: 1 },
+            { type: 'text', text: '💰 ยอดชำระ', weight: 'bold', size: 'md', color: '#333333' },
+            { type: 'text', text: `฿${money(total)}`, weight: 'bold', size: 'lg', color: '#2d6a1f', align: 'end' },
           ],
         },
       ],
@@ -83,12 +108,20 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
     footer: {
       type: 'box',
       layout: 'vertical',
+      spacing: 'sm',
       contents: [
         {
+          type: 'button',
+          style: 'primary',
+          color: '#2d6a1f',
+          height: 'sm',
+          action: { type: 'uri', label: '🧾 ตรวจสอบออเดอร์', uri: orderUrl },
+        },
+        {
           type: 'text',
-          text: 'กรุณาแนบสลิปการโอนในแชทนี้เพื่อยืนยันการชำระเงิน',
-          size: 'xs',
-          color: '#999999',
+          text: 'กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
+          size: 'xxs',
+          color: '#aaaaaa',
           wrap: true,
           align: 'center',
         },
@@ -96,5 +129,5 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
     },
   }
 
-  return { type: 'flex', altText: `ออเดอร์ ${orderNo} — รวม ${money(total)}`, contents: bubble }
+  return { type: 'flex', altText: `รับออเดอร์แล้ว ${orderNo} — รวม ฿${money(total)}`, contents: bubble }
 }

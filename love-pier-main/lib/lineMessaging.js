@@ -13,6 +13,36 @@ export function isLineNotifyConfigured() {
 }
 
 /**
+ * Push any LINE messages from the OA to a specific user (Messaging API).
+ * Used to send the order card "from the shop" to the customer. Best-effort.
+ * @param {string} userId  the customer's LINE userId
+ * @param {object[]} messages  LINE message objects (e.g. a Flex message)
+ */
+export async function pushToUser(userId, messages) {
+  if (!TOKEN || !userId || !Array.isArray(messages) || messages.length === 0) {
+    return { ok: false, skipped: true }
+  }
+  try {
+    const res = await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${TOKEN}`,
+      },
+      body: JSON.stringify({ to: userId, messages }),
+    })
+    if (!res.ok) {
+      console.error('LINE push to user failed:', res.status, await res.text())
+      return { ok: false }
+    }
+    return { ok: true }
+  } catch (err) {
+    console.error('LINE push to user error:', err)
+    return { ok: false }
+  }
+}
+
+/**
  * @param {object} order
  * @param {string} order.orderNo
  * @param {string} order.customerName

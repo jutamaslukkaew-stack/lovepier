@@ -3,9 +3,35 @@
 // rest of the site keeps working outside LINE / before LIFF is set up.
 
 const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || ''
+// Google Apps Script Web App that logs LINE customers into a Google Sheet.
+const SHEETS_WEBHOOK = process.env.NEXT_PUBLIC_SHEETS_WEBHOOK_URL || ''
 
 let _liff = null
 let _initPromise = null
+let _sheetLogged = false
+
+// Best-effort: log the LINE profile (name/picture/userId) to Google Sheets,
+// once per session. Fire-and-forget, never throws.
+export function logProfileToSheet(profile) {
+  if (!SHEETS_WEBHOOK || !profile?.userId || _sheetLogged) return
+  _sheetLogged = true
+  try {
+    fetch(SHEETS_WEBHOOK, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        source: 'liff',
+        deliveryUrl: 'https://lovepier.cafe/delivery',
+        userId: profile.userId,
+        displayName: profile.displayName || '',
+        pictureUrl: profile.pictureUrl || '',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+        timestamp: new Date().toISOString(),
+      }),
+    }).catch(() => {})
+  } catch {}
+}
 
 export function isLiffConfigured() {
   return Boolean(LIFF_ID)
@@ -44,11 +70,13 @@ export async function loginAndGetProfile() {
     return null // page will redirect; profile is fetched after it comes back
   }
   const profile = await liff.getProfile()
-  return {
+  const p = {
     userId: profile.userId,
     displayName: profile.displayName,
     pictureUrl: profile.pictureUrl || '',
   }
+  logProfileToSheet(p)
+  return p
 }
 
 // Send messages into the LINE chat the LIFF was opened from (works only inside
@@ -73,11 +101,13 @@ export async function getProfileIfLoggedIn() {
     const liff = await initLiff()
     if (!liff.isLoggedIn()) return null
     const profile = await liff.getProfile()
-    return {
+    const p = {
       userId: profile.userId,
       displayName: profile.displayName,
       pictureUrl: profile.pictureUrl || '',
     }
+    logProfileToSheet(p)
+    return p
   } catch {
     return null
   }
