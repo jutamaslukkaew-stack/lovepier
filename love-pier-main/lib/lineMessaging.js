@@ -70,6 +70,7 @@ export async function pushNewOrderNotification(order) {
     (order.distanceKm != null ? `📍 ระยะจัดส่ง ${order.distanceKm} กม.\n` : '') +
     `━━━━━━━━━━━━━━\n` +
     `${lines}\n` +
+    (order.deliveryFee ? `ค่าจัดส่ง ฿${order.deliveryFee}\n` : '') +
     `รวม ฿${order.totalAmount}` +
     (order.paymentRef ? `\nRef: ${order.paymentRef}` : '')
 

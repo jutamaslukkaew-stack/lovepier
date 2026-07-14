@@ -4,6 +4,7 @@
 
 import { getShopSettings } from '../../lib/settings'
 import { haversineKm } from '../../lib/geo'
+import { calcDeliveryFee } from '../../lib/deliveryFee'
 
 async function googleDrivingKm(apiKey, from, to) {
   const resp = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
@@ -45,7 +46,7 @@ export default async function handler(req, res) {
 
   // Shop location not set → can't measure. Degrade gracefully ("warn but allow").
   if (!Number.isFinite(s.shopLat) || !Number.isFinite(s.shopLng)) {
-    return res.status(200).json({ distanceKm: null, radiusKm: s.radiusKm, withinRadius: true, configured: false })
+    return res.status(200).json({ distanceKm: null, radiusKm: s.radiusKm, withinRadius: true, configured: false, deliveryFee: 0 })
   }
 
   const from = { lat: s.shopLat, lng: s.shopLng }
@@ -62,15 +63,22 @@ export default async function handler(req, res) {
     }
 
     const distanceKm = Math.round(km * 10) / 10
+    const deliveryFee = calcDeliveryFee(distanceKm, {
+      baseFee: s.deliveryBaseFee,
+      perKmRate: s.deliveryPerKmRate,
+    })
     return res.status(200).json({
       distanceKm,
       radiusKm: s.radiusKm,
       withinRadius: distanceKm <= s.radiusKm,
       method: s.distanceMethod === 'google' && s.googleApiKey ? 'google' : 'straight',
       configured: true,
+      deliveryFee,
+      shopLat: s.shopLat,
+      shopLng: s.shopLng,
     })
   } catch (err) {
     console.error('delivery-distance error:', err)
-    return res.status(200).json({ distanceKm: null, radiusKm: s.radiusKm, withinRadius: true, configured: true })
+    return res.status(200).json({ distanceKm: null, radiusKm: s.radiusKm, withinRadius: true, configured: true, deliveryFee: 0 })
   }
 }

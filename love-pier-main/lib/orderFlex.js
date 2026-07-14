@@ -42,7 +42,7 @@ function plainRow(icon, label, value) {
   }
 }
 
-export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, distanceKm }) {
+export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, distanceKm }) {
   const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
 
   const itemRows = items.map((i) => ({
@@ -92,6 +92,11 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
         // customer details with ✅ rows
         { type: 'box', layout: 'vertical', margin: 'sm', contents: detail },
         { type: 'separator', margin: 'lg' },
+
+        // delivery fee (only when there is one)
+        ...(deliveryFee
+          ? [plainRow('🛵', 'ค่าจัดส่ง', `฿${money(deliveryFee)}`)]
+          : []),
 
         // total
         {

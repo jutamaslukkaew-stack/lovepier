@@ -23,6 +23,8 @@ create table if not exists orders (
   address        text not null default '',
   note           text not null default '',
   items          jsonb not null default '[]'::jsonb,
+  items_subtotal integer not null default 0,
+  delivery_fee   integer not null default 0,
   total_amount   integer not null,
   status         text not null default 'pending',
   payment_method text not null default 'promptpay',

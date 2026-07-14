@@ -4,6 +4,7 @@ import { orders, customers } from '../../lib/db/schema'
 import { pushNewOrderNotification, pushToUser } from '../../lib/lineMessaging'
 import { buildOrderFlex } from '../../lib/orderFlex'
 import { getShopSettings } from '../../lib/settings'
+import { calcDeliveryFee } from '../../lib/deliveryFee'
 
 function pickString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -50,11 +51,19 @@ export default async function handler(req, res) {
     price: Number(i?.price) || 0,
     qty: Math.max(1, parseInt(i?.qty, 10) || 1),
   }))
-  const totalAmount = Math.round(
+  const itemsSubtotal = Math.round(
     items.reduce((sum, i) => sum + i.price * i.qty, 0)
   )
 
   const orderNo = makeOrderNo()
+  const s = await getShopSettings()
+  // Recompute the delivery fee server-side from distance + settings — never
+  // trust a fee number sent by the client.
+  const deliveryFee = calcDeliveryFee(distanceKm, {
+    baseFee: s.deliveryBaseFee,
+    perKmRate: s.deliveryPerKmRate,
+  })
+  const totalAmount = itemsSubtotal + deliveryFee
 
   try {
     await db.insert(orders).values({
@@ -65,6 +74,8 @@ export default async function handler(req, res) {
       address,
       note,
       items,
+      itemsSubtotal,
+      deliveryFee,
       totalAmount,
       status: 'pending',
       paymentMethod: 'promptpay',
@@ -98,6 +109,7 @@ export default async function handler(req, res) {
       note,
       items,
       totalAmount,
+      deliveryFee,
       paymentRef,
       distanceKm,
     })
@@ -106,18 +118,13 @@ export default async function handler(req, res) {
     // Complements the customer-side liff.sendMessages(); best-effort, skips
     // when no messaging token or no LINE userId.
     if (lineUserId) {
-      const flex = buildOrderFlex({ orderNo, name, phone, address, items, total: totalAmount, distanceKm })
+      const flex = buildOrderFlex({ orderNo, name, phone, address, items, total: totalAmount, deliveryFee, distanceKm })
       await pushToUser(lineUserId, [flex])
     }
 
-    // Tell the client whether automatic slip verification is available.
-    let slipVerify = false
-    try {
-      const s = await getShopSettings()
-      slipVerify = Boolean(s.slipokApiKey && s.slipokBranchId)
-    } catch {}
+    const slipVerify = Boolean(s.slipokApiKey && s.slipokBranchId)
 
-    return res.status(200).json({ ok: true, orderNo, totalAmount, slipVerify })
+    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, deliveryFee, slipVerify })
   } catch (err) {
     console.error('Create order failed:', err)
     return res.status(500).json({ error: 'บันทึกออเดอร์ไม่สำเร็จ' })

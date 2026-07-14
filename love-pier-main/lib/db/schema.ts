@@ -163,6 +163,9 @@ export const orders = pgTable(
     note: text('note').notNull().default(''),
     // [{ id, name, price, qty }]
     items: jsonb('items').notNull().default([]),
+    // subtotal (items only); totalAmount = itemsSubtotal + deliveryFee
+    itemsSubtotal: integer('items_subtotal').notNull().default(0),
+    deliveryFee: integer('delivery_fee').notNull().default(0),
     totalAmount: integer('total_amount').notNull(),
     // pending → paid → preparing → done → cancelled
     status: text('status').notNull().default('pending'),

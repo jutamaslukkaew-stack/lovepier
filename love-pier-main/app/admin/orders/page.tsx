@@ -126,7 +126,13 @@ export default async function AdminOrdersPage() {
                         </span>
                       </div>
                     ))}
-                    <div className="flex justify-between border-t border-gray-200 pt-1 mt-1 font-semibold">
+                    {o.deliveryFee > 0 && (
+                      <div className="flex justify-between border-t border-gray-200 pt-1 mt-1 text-muted-foreground">
+                        <span>ค่าจัดส่ง</span>
+                        <span className="tabular-nums">฿{o.deliveryFee}</span>
+                      </div>
+                    )}
+                    <div className={`flex justify-between font-semibold ${o.deliveryFee > 0 ? '' : 'border-t border-gray-200 pt-1 mt-1'}`}>
                       <span>รวม</span>
                       <span className="tabular-nums">฿{o.totalAmount}</span>
                     </div>

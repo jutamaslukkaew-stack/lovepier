@@ -14,6 +14,8 @@ const SETTING_KEYS = {
   googleApiKey: 'google_maps_api_key',
   slipokApiKey: 'slipok_api_key',
   slipokBranchId: 'slipok_branch_id',
+  deliveryBaseFee: 'delivery_base_fee',
+  deliveryPerKmRate: 'delivery_per_km_rate',
 } as const
 
 export type ShopSettingsForm = {
@@ -24,6 +26,8 @@ export type ShopSettingsForm = {
   googleApiKey: string
   slipokApiKey: string
   slipokBranchId: string
+  deliveryBaseFee: string
+  deliveryPerKmRate: string
 }
 
 export async function getSettings(): Promise<ShopSettingsForm> {
@@ -38,6 +42,8 @@ export async function getSettings(): Promise<ShopSettingsForm> {
     googleApiKey: m[SETTING_KEYS.googleApiKey] || '',
     slipokApiKey: m[SETTING_KEYS.slipokApiKey] || '',
     slipokBranchId: m[SETTING_KEYS.slipokBranchId] || '',
+    deliveryBaseFee: m[SETTING_KEYS.deliveryBaseFee] || '0',
+    deliveryPerKmRate: m[SETTING_KEYS.deliveryPerKmRate] || '0',
   }
 }
 
@@ -58,6 +64,8 @@ export async function saveSettings(data: ShopSettingsForm) {
   await put(SETTING_KEYS.googleApiKey, (data.googleApiKey || '').trim())
   await put(SETTING_KEYS.slipokApiKey, (data.slipokApiKey || '').trim())
   await put(SETTING_KEYS.slipokBranchId, (data.slipokBranchId || '').trim())
+  await put(SETTING_KEYS.deliveryBaseFee, (data.deliveryBaseFee || '0').trim())
+  await put(SETTING_KEYS.deliveryPerKmRate, (data.deliveryPerKmRate || '0').trim())
   revalidatePath('/admin/settings')
   return { ok: true as const }
 }

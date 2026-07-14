@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useCart } from '../lib/cart'
 import { useLanguage } from '../lib/language'
 import { buildPaymentPayload } from '../lib/promptpay'
@@ -9,6 +9,7 @@ import {
   getProfileIfLoggedIn,
   sendMessagesToChat,
 } from '../lib/liff'
+import { getDeliverySession } from '../lib/deliverySession'
 
 const PROMPTPAY_ID = process.env.NEXT_PUBLIC_PROMPTPAY_ID || ''
 const PROMPTPAY_TYPE = process.env.NEXT_PUBLIC_PROMPTPAY_TYPE || '' // 'biller' | ''
@@ -45,6 +46,8 @@ const COPY = {
     useLocation: '📍 เช็คระยะจัดส่ง',
     locating: 'กำลังหาตำแหน่ง...',
     distanceLabel: 'ระยะจัดส่ง',
+    deliveryFeeLabel: 'ค่าจัดส่ง',
+    itemsSubtotalLabel: 'ค่าอาหาร',
     outOfArea: (r) => `นอกพื้นที่จัดส่ง (เกิน ${r} กม.) — สั่งได้ แต่ร้านอาจคิดค่าส่งเพิ่ม`,
     locationDenied: 'ไม่ได้ตำแหน่ง — สั่งต่อได้ ร้านจะเช็คระยะให้เอง',
     toPayment: 'ไปชำระเงิน',
@@ -87,6 +90,8 @@ const COPY = {
     useLocation: '📍 Check delivery distance',
     locating: 'Locating...',
     distanceLabel: 'Distance',
+    deliveryFeeLabel: 'Delivery fee',
+    itemsSubtotalLabel: 'Food total',
     outOfArea: (r) => `Outside delivery area (over ${r} km) — you can still order, extra fee may apply`,
     locationDenied: 'Location unavailable — you can still order; we\'ll check distance',
     toPayment: 'Go to payment',
@@ -127,6 +132,8 @@ const COPY = {
     useLocation: '📍 检查配送距离',
     locating: '定位中...',
     distanceLabel: '配送距离',
+    deliveryFeeLabel: '配送费',
+    itemsSubtotalLabel: '餐点小计',
     outOfArea: (r) => `超出配送范围（超过 ${r} 公里）— 仍可下单，可能加收运费`,
     locationDenied: '无法定位 — 仍可下单，我们会为您确认距离',
     toPayment: '前往付款',
@@ -168,18 +175,22 @@ export default function CartDrawer() {
   const [error, setError] = useState('')
   const [orderNo, setOrderNo] = useState('')
   // snapshot of the placed order, captured before the cart is cleared
-  const [completed, setCompleted] = useState(null) // { lines, total, distanceKm }
+  const [completed, setCompleted] = useState(null) // { lines, total, distanceKm, deliveryFee }
   const [sentToLine, setSentToLine] = useState(false) // auto-posted the order card into the LINE chat
   // automatic slip verification (SlipOK)
   const [slipVerify, setSlipVerify] = useState(false) // shop has SlipOK configured
   const [slipStatus, setSlipStatus] = useState('idle') // idle | verifying | ok | fail
   const [slipError, setSlipError] = useState('')
-  // delivery distance
+  // delivery distance + fee (fee is always computed server-side, from the
+  // same /api/delivery-distance call — never duplicated as a client formula)
   const [distanceKm, setDistanceKm] = useState(null)
   const [distanceMsg, setDistanceMsg] = useState('')
   const [locating, setLocating] = useState(false)
+  const [deliveryFee, setDeliveryFee] = useState(0)
+  const triedSilentLoginRef = useRef(false)
 
-  const amount = Math.round(totalPrice)
+  const itemsSubtotal = Math.round(totalPrice)
+  const amount = itemsSubtotal + deliveryFee
 
   useEffect(() => {
     if (isOpen) document.body.style.overflow = 'hidden'
@@ -189,35 +200,45 @@ export default function CartDrawer() {
 
   // Reset to cart view each time the drawer is reopened (unless mid-success).
   useEffect(() => {
-    if (isOpen && step !== 'success') setStep('cart')
+    if (!isOpen || step === 'success') return
+    const id = setTimeout(() => setStep('cart'), 0)
+    return () => clearTimeout(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
-  // On load inside LINE: silently grab the profile (no login popup). This logs
-  // the customer to Google Sheets and pre-fills their name for checkout.
+  // Every time the drawer opens: reuse whatever DeliveryGate already learned
+  // (LINE profile, distance, fee) so checkout never re-asks for something we
+  // already know. Re-checked on each open (not just on app mount) because
+  // DeliveryGate's GPS scan finishes *after* CartDrawer first mounts —
+  // reading the session only once at mount would miss it.
   useEffect(() => {
+    if (!isOpen) return
     let cancelled = false
-    ;(async () => {
-      const p = await getProfileIfLoggedIn()
-      if (p && !cancelled) setProfile(p)
-    })()
-    return () => { cancelled = true }
-  }, [])
+    // Deferred one tick so this doesn't setState synchronously in the effect
+    // body (still runs before paint — no visible flash).
+    Promise.resolve().then(() => {
+      if (cancelled) return
+      const { profile: knownProfile, distance: knownDistance } = getDeliverySession()
+      if (knownProfile) setProfile(knownProfile)
+      if (knownDistance?.distanceKm != null) {
+        setDistanceKm(knownDistance.distanceKm)
+        setDeliveryFee(knownDistance.deliveryFee || 0)
+        setDistanceMsg(knownDistance.withinRadius === false ? t.outOfArea(knownDistance.radiusKm) : '')
+      }
+      if (knownProfile || triedSilentLoginRef.current) return
+      triedSilentLoginRef.current = true
 
-  // Silently pick up an existing LINE session (e.g. after login redirect) and
-  // pre-fill the form for returning customers.
-  useEffect(() => {
-    if (step !== 'info') return
-    let cancelled = false
-    ;(async () => {
-      const p = await getProfileIfLoggedIn()
-      if (!p || cancelled) return
-      setProfile(p)
-      await applyProfile(p, cancelled)
-    })()
+      // Inside LINE without a DeliveryGate result yet (e.g. cart opened from
+      // /menu): silently grab the profile if a session already exists. This
+      // also logs the customer to Google Sheets. Only attempted once.
+      ;(async () => {
+        const p = await getProfileIfLoggedIn()
+        if (p && !cancelled) setProfile(p)
+      })()
+    })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step])
+  }, [isOpen])
 
   async function applyProfile(p, cancelled) {
     // Fill name from LINE, then look up saved phone/address by userId.
@@ -235,6 +256,20 @@ export default function CartDrawer() {
       }
     } catch {}
   }
+
+  // Silently pick up an existing LINE session (e.g. after login redirect) and
+  // pre-fill the form for returning customers.
+  useEffect(() => {
+    if (step !== 'info') return
+    let cancelled = false
+    ;(async () => {
+      const p = await getProfileIfLoggedIn()
+      if (!p || cancelled) return
+      setProfile(p)
+      await applyProfile(p, cancelled)
+    })()
+    return () => { cancelled = true }
+  }, [step])
 
   async function handleLineLogin() {
     setError('')
@@ -267,6 +302,7 @@ export default function CartDrawer() {
           const data = await res.json()
           if (data.distanceKm != null) {
             setDistanceKm(data.distanceKm)
+            setDeliveryFee(data.deliveryFee || 0)
             setDistanceMsg(data.withinRadius ? '' : t.outOfArea(data.radiusKm))
           } else {
             setDistanceMsg(t.locationDenied)
@@ -338,6 +374,10 @@ export default function CartDrawer() {
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'error')
 
+      // Use the server-computed total (authoritative) for everything downstream.
+      const finalDeliveryFee = data.deliveryFee || 0
+      const finalTotal = data.totalAmount ?? amount
+
       // Auto-post the order card (Flex message) into the LINE chat — no button
       // press needed. Only works inside LINE; returns false in a plain browser.
       const flex = buildOrderFlex({
@@ -346,7 +386,8 @@ export default function CartDrawer() {
         phone: form.phone,
         address: form.address,
         items: items.map((i) => ({ name: i.name, price: parseFloat(i.price) || 0, qty: i.qty })),
-        total: amount,
+        total: finalTotal,
+        deliveryFee: finalDeliveryFee,
         distanceKm,
       })
       const sent = await sendMessagesToChat([flex])
@@ -355,7 +396,8 @@ export default function CartDrawer() {
       // Snapshot for the success screen / slip message before the cart clears.
       setCompleted({
         lines: items.map((i) => `• ${i.name} x${i.qty}`).join('\n'),
-        total: amount,
+        total: finalTotal,
+        deliveryFee: finalDeliveryFee,
         distanceKm,
       })
       setSlipVerify(Boolean(data.slipVerify))
@@ -410,8 +452,9 @@ export default function CartDrawer() {
     const refLine = paymentRef ? `\nRef: ${paymentRef}` : ''
     const distanceLine =
       completed?.distanceKm != null ? `\n📍 ${t.distanceLabel} ${completed.distanceKm} กม.` : ''
+    const feeLine = completed?.deliveryFee ? `\n${t.deliveryFeeLabel} ฿${completed.deliveryFee}` : ''
     const msg = encodeURIComponent(
-      `📦 ${t.orderNo} ${orderNo}${refLine}\n${lines}\n\n${t.total} ฿${total}${distanceLine}\n\n(แนบสลิปการโอนในแชทนี้ได้เลยครับ)`
+      `📦 ${t.orderNo} ${orderNo}${refLine}\n${lines}${feeLine}\n\n${t.total} ฿${total}${distanceLine}\n\n(แนบสลิปการโอนในแชทนี้ได้เลยครับ)`
     )
     window.open(`https://line.me/R/oaMessage/${LINE_OA_ID}/?${msg}`, '_blank')
   }
@@ -426,6 +469,7 @@ export default function CartDrawer() {
         setForm({ name: '', phone: '', address: '', note: '' })
         setDistanceKm(null)
         setDistanceMsg('')
+        setDeliveryFee(0)
         setCompleted(null)
         setSentToLine(false)
         setSlipVerify(false)
@@ -566,9 +610,14 @@ export default function CartDrawer() {
                   {locating ? t.locating : t.useLocation}
                 </button>
                 {distanceKm != null && (
-                  <div className="mt-2 flex items-center justify-center gap-1.5 text-[13px] text-[#2d6a1f]">
-                    <span>📍</span>
-                    <span>{t.distanceLabel} {distanceKm} กม.</span>
+                  <div className="mt-2 flex flex-col items-center gap-0.5 text-[13px] text-[#2d6a1f]">
+                    <div className="flex items-center gap-1.5">
+                      <span>📍</span>
+                      <span>{t.distanceLabel} {distanceKm} กม.</span>
+                    </div>
+                    {deliveryFee > 0 && (
+                      <span className="text-[12px] text-black/50">{t.deliveryFeeLabel} +฿{deliveryFee}</span>
+                    )}
                   </div>
                 )}
                 {distanceMsg && (
@@ -603,6 +652,12 @@ export default function CartDrawer() {
                       <div className="w-56 h-56 flex items-center justify-center text-black/30 text-sm">...</div>
                     )}
                   </div>
+                  {deliveryFee > 0 && (
+                    <div className="text-[12px] text-black/50 flex flex-col items-center gap-0.5">
+                      <span>{t.itemsSubtotalLabel} ฿{itemsSubtotal}</span>
+                      <span>{t.deliveryFeeLabel} +฿{deliveryFee}</span>
+                    </div>
+                  )}
                   <div className="flex items-baseline gap-2">
                     <span className="text-[11px] tracking-[0.12em] uppercase text-black/50">{t.amount}</span>
                     <span className="font-display text-[28px] text-ink tabular-nums leading-none">฿{amount}</span>
@@ -630,9 +685,16 @@ export default function CartDrawer() {
               <span className="text-[11px] tracking-[0.12em] uppercase text-black/45">{t.orderNo}</span>
               <p className="font-display text-[24px] text-ink tracking-wide">{orderNo}</p>
               {completed && (
-                <p className="text-[15px] font-semibold text-ink tabular-nums mt-1">
-                  {t.total} ฿{completed.total}
-                </p>
+                <>
+                  {completed.deliveryFee > 0 && (
+                    <p className="text-[12px] text-black/45 mt-1">
+                      {t.itemsSubtotalLabel} ฿{completed.total - completed.deliveryFee} + {t.deliveryFeeLabel} ฿{completed.deliveryFee}
+                    </p>
+                  )}
+                  <p className="text-[15px] font-semibold text-ink tabular-nums mt-0.5">
+                    {t.total} ฿{completed.total}
+                  </p>
+                </>
               )}
             </div>
             {sentToLine && (

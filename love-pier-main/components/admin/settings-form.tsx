@@ -100,6 +100,36 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
 
       <div className="border-t pt-5 space-y-4">
         <div>
+          <p className="font-medium text-sm">ค่าจัดส่ง</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            ค่าจัดส่ง = ค่าเริ่มต้น + (ระยะทาง กม. × อัตราต่อกม.) คำนวณอัตโนมัติจากระยะที่เช็คได้
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>ค่าเริ่มต้น (บาท)</Label>
+            <Input
+              value={form.deliveryBaseFee}
+              onChange={(e) => set('deliveryBaseFee', e.target.value)}
+              placeholder="0"
+              inputMode="decimal"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>อัตราต่อกม. (บาท)</Label>
+            <Input
+              value={form.deliveryPerKmRate}
+              onChange={(e) => set('deliveryPerKmRate', e.target.value)}
+              placeholder="0"
+              inputMode="decimal"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">เว้นว่างทั้งคู่ (หรือ 0) = ไม่คิดค่าจัดส่งเพิ่ม</p>
+      </div>
+
+      <div className="border-t pt-5 space-y-4">
+        <div>
           <p className="font-medium text-sm">ตรวจสลิปอัตโนมัติ (SlipOK)</p>
           <p className="text-xs text-muted-foreground mt-0.5">
             ลูกค้าแนบสลิป → ระบบเช็คกับธนาคารว่าจริง/ยอดตรง แล้วอัปเดตเป็น &ldquo;จ่ายแล้ว&rdquo;

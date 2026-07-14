@@ -10,6 +10,8 @@ export const SETTING_KEYS = {
   googleApiKey: 'google_maps_api_key',
   slipokApiKey: 'slipok_api_key',
   slipokBranchId: 'slipok_branch_id',
+  deliveryBaseFee: 'delivery_base_fee',
+  deliveryPerKmRate: 'delivery_per_km_rate',
 }
 
 function num(v) {
@@ -40,5 +42,7 @@ export async function getShopSettings() {
     googleApiKey: m[SETTING_KEYS.googleApiKey] || process.env.GOOGLE_MAPS_API_KEY || '',
     slipokApiKey: m[SETTING_KEYS.slipokApiKey] || process.env.SLIPOK_API_KEY || '',
     slipokBranchId: m[SETTING_KEYS.slipokBranchId] || process.env.SLIPOK_BRANCH_ID || '',
+    deliveryBaseFee: m[SETTING_KEYS.deliveryBaseFee] ? num(m[SETTING_KEYS.deliveryBaseFee]) || 0 : 0,
+    deliveryPerKmRate: m[SETTING_KEYS.deliveryPerKmRate] ? num(m[SETTING_KEYS.deliveryPerKmRate]) || 0 : 0,
   }
 }

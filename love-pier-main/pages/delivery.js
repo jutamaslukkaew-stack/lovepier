@@ -3,6 +3,7 @@ import { useLanguage } from '../lib/language'
 import Footer from '../components/Footer'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import MenuExperience from '../components/menu/MenuExperience'
+import DeliveryGate from '../components/delivery/DeliveryGate'
 import { getMenuPageData } from '../lib/db/menuPageData'
 
 const PAGE_COPY = {
@@ -12,7 +13,8 @@ const PAGE_COPY = {
 }
 
 // Same layout and data as /menu (components/menu/MenuExperience) — this page
-// just turns on "Add to Cart" and floating-cart. Edit the shared menu
+// turns on "Add to Cart" and the floating cart, and gates entry behind LINE
+// login + a GPS distance check (DeliveryGate). Edit the shared menu
 // components, not this file, to change section layout/copy for both pages.
 export default function Delivery({ dbMenuData, dbPromotions }) {
   const { lang } = useLanguage()
@@ -29,7 +31,9 @@ export default function Delivery({ dbMenuData, dbPromotions }) {
         <meta property="og:type" content="website" />
       </Head>
 
-      <MenuExperience dbMenuData={dbMenuData} dbPromotions={dbPromotions} showAddToCart heroTitle={t.hero} />
+      <DeliveryGate>
+        <MenuExperience dbMenuData={dbMenuData} dbPromotions={dbPromotions} showAddToCart heroTitle={t.hero} />
+      </DeliveryGate>
 
       <Footer tagline={FOOTER_TAGLINES.menu} />
     </>
