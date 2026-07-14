@@ -1,5 +1,5 @@
 /**
- * Full seed — mirrors MENU_DATA in pages/menu.js exactly.
+ * Full seed — the canonical starting menu for Love Pier Beach Cafe.
  * CLEARS existing categories + items then re-inserts everything.
  * Run:  npm run db:seed-full
  */
