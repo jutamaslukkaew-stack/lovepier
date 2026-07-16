@@ -3,6 +3,7 @@ import { useLanguage } from '../lib/language'
 import Footer from '../components/Footer'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import OrderFlow from '../components/delivery/OrderFlow'
+import { useChrome } from '../lib/chrome'
 import { getMenuPageData } from '../lib/db/menuPageData'
 
 const PAGE_COPY = {
@@ -18,6 +19,7 @@ const PAGE_COPY = {
 export default function Delivery({ dbMenuData, dbPromotions }) {
   const { lang } = useLanguage()
   const t = PAGE_COPY[lang] || PAGE_COPY.en
+  const { hidden } = useChrome()
 
   return (
     <>
@@ -32,7 +34,7 @@ export default function Delivery({ dbMenuData, dbPromotions }) {
 
       <OrderFlow dbMenuData={dbMenuData} dbPromotions={dbPromotions} heroTitle={t.hero} />
 
-      <Footer tagline={FOOTER_TAGLINES.menu} />
+      {!hidden && <Footer tagline={FOOTER_TAGLINES.menu} />}
     </>
   )
 }

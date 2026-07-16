@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Nav from './Nav'
 import MenuOverlay from './MenuOverlay'
+import { useChrome } from '../lib/chrome'
 
 function BackToTop() {
   const [visible, setVisible] = useState(false)
@@ -26,6 +27,7 @@ function BackToTop() {
 
 export default function Layout({ children }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { hidden } = useChrome()
   const openMenu = () => {
     setMenuOpen(true)
     if (typeof document !== 'undefined') document.body.classList.add('menu-open')
@@ -37,10 +39,10 @@ export default function Layout({ children }) {
 
   return (
     <>
-      <Nav onOpenMenu={openMenu} />
+      {!hidden && <Nav onOpenMenu={openMenu} />}
       <MenuOverlay isOpen={menuOpen} onClose={closeMenu} />
       <main className="bg-bg font-sans text-ink" style={{ overflowX: 'clip' }}>{children}</main>
-      <BackToTop />
+      {!hidden && <BackToTop />}
     </>
   )
 }

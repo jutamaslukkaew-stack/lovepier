@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import Layout from '../components/Layout'
 import { LanguageProvider, useLanguage } from '../lib/language'
 import { CartProvider } from '../lib/cart'
+import { ChromeProvider } from '../lib/chrome'
 import CartDrawer from '../components/CartDrawer'
 
 function LangSync() {
@@ -46,10 +47,12 @@ export default function App({ Component, pageProps }) {
   return (
     <LanguageProvider>
       <LangSync />
-      <CartProvider>
-        <Layout><Component {...pageProps} /></Layout>
-        <CartDrawer />
-      </CartProvider>
+      <ChromeProvider>
+        <CartProvider>
+          <Layout><Component {...pageProps} /></Layout>
+          <CartDrawer />
+        </CartProvider>
+      </ChromeProvider>
     </LanguageProvider>
   )
 }

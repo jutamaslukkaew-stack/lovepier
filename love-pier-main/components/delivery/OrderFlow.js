@@ -5,10 +5,12 @@
 // explicit, un-skippable acknowledgement instead of a bottom-sheet a
 // customer could dismiss without reading.
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import PageHero from '../PageHero'
 import { useLanguage } from '../../lib/language'
 import { useCart } from '../../lib/cart'
+import { useChrome } from '../../lib/chrome'
 import { isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessagesToChat } from '../../lib/liff'
 import { setDeliverySessionProfile, setDeliverySessionDistance } from '../../lib/deliverySession'
 import { buildPaymentPayload } from '../../lib/promptpay'
@@ -33,8 +35,8 @@ const STEP_ORDER = ['welcome', 'distance', 'menu', 'summary', 'payment', 'succes
 
 const COPY = {
   th: {
-    steps: ['ต้อนรับ', 'ระยะทาง', 'เมนู', 'สรุป', 'ชำระเงิน', 'สำเร็จ'],
     back: 'ย้อนกลับ',
+    close: 'ปิด',
     next: 'ถัดไป',
     // step 1 — welcome
     welcomeSubtitle: 'อาหารและเครื่องดื่มริมทะเล สั่งง่าย ส่งตรงถึงคุณ',
@@ -49,10 +51,11 @@ const COPY = {
     calculating: 'กำลังคำนวณระยะทาง...',
     withinRadius: (km) => `พบตำแหน่งแล้ว — ห่างจากร้าน ${km} กม. ✅`,
     inServiceArea: 'อยู่ในพื้นที่บริการของร้าน ไปเลือกเมนูต่อได้เลย',
-    canOrderNow: 'ยินดีต้อนรับ! คุณสั่งอาหารได้เลย 🎉',
-    distanceBadge: (km) => `ห่างจากร้านเพียง ${km} กม.`,
+    canOrderNow: (r) => `ยินดีด้วย คุณอยู่ในรัศมี ${r} กม. สามารถสั่งอาหารได้เลย`,
+    canOrderUnknown: 'คุณสามารถสั่งอาหารได้ตามปกติ',
+    distanceBadge: (km) => `ห่างจากร้าน ${km} กม.`,
     outOfRadiusHeading: 'นอกพื้นที่บริการจัดส่ง',
-    outOfRadius: (km, r) => `⚠️ ห่างจากร้าน ${km} กม. — นอกระยะจัดส่ง ${r} กม.`,
+    outOfRadius: (km, r) => `ห่างจากร้าน ${km} กม. — นอกระยะจัดส่ง ${r} กม.`,
     outOfRadiusNote: 'คุณยังสั่งอาหารได้ตามปกติ แต่ร้านจัดส่งได้เฉพาะในรัศมีที่กำหนด — กรุณาเรียกรถแมสเซนเจอร์ (เช่น Grab, Lalamove) มารับอาหารที่ร้านด้วยตนเอง และรับผิดชอบค่าส่งส่วนนี้เอง',
     ackCheckbox: 'ฉันอ่านและเข้าใจเงื่อนไขข้างต้นแล้ว',
     gpsDenied: 'คุณไม่ได้อนุญาตให้เข้าถึงตำแหน่ง',
@@ -104,8 +107,8 @@ const COPY = {
     done: 'เสร็จสิ้น — สั่งใหม่',
   },
   en: {
-    steps: ['Welcome', 'Distance', 'Menu', 'Summary', 'Payment', 'Done'],
     back: 'Back',
+    close: 'Close',
     next: 'Next',
     welcomeSubtitle: 'Beachside food and drinks, delivered to you.',
     startOrder: 'Start ordering',
@@ -118,10 +121,11 @@ const COPY = {
     calculating: 'Calculating distance...',
     withinRadius: (km) => `Location found — ${km} km from the shop ✅`,
     inServiceArea: "You're inside our delivery area — go ahead and pick a menu.",
-    canOrderNow: "Welcome! You're all set to order 🎉",
-    distanceBadge: (km) => `Just ${km} km from the shop`,
+    canOrderNow: (r) => `Good news — you're within our ${r} km radius. You can order now.`,
+    canOrderUnknown: 'You can go ahead and order.',
+    distanceBadge: (km) => `${km} km from the shop`,
     outOfRadiusHeading: 'Outside our delivery area',
-    outOfRadius: (km, r) => `⚠️ ${km} km from the shop — outside the ${r} km delivery area`,
+    outOfRadius: (km, r) => `${km} km from the shop — outside the ${r} km delivery area`,
     outOfRadiusNote: "You can still place an order, but we only deliver within our radius — please arrange your own courier (e.g. Grab, Lalamove) to pick up the food from the shop, and cover that delivery cost yourself.",
     ackCheckbox: 'I have read and understood the above',
     gpsDenied: 'Location permission was denied',
@@ -169,8 +173,8 @@ const COPY = {
     done: 'Done — order again',
   },
   zh: {
-    steps: ['欢迎', '距离', '菜单', '摘要', '付款', '完成'],
     back: '返回',
+    close: '关闭',
     next: '下一步',
     welcomeSubtitle: '海边美食与饮品，直接为您送达。',
     startOrder: '开始点餐',
@@ -183,10 +187,11 @@ const COPY = {
     calculating: '正在计算距离...',
     withinRadius: (km) => `已定位 — 距离门店 ${km} 公里 ✅`,
     inServiceArea: '您在配送范围内，可以继续选择菜单。',
-    canOrderNow: '欢迎！您现在可以下单了 🎉',
-    distanceBadge: (km) => `距离门店仅 ${km} 公里`,
+    canOrderNow: (r) => `好消息 — 您在 ${r} 公里配送范围内，现在可以下单了。`,
+    canOrderUnknown: '您现在可以正常下单。',
+    distanceBadge: (km) => `距离门店 ${km} 公里`,
     outOfRadiusHeading: '超出配送范围',
-    outOfRadius: (km, r) => `⚠️ 距离门店 ${km} 公里 — 超出 ${r} 公里配送范围`,
+    outOfRadius: (km, r) => `距离门店 ${km} 公里 — 超出 ${r} 公里配送范围`,
     outOfRadiusNote: '您仍然可以下单，但本店仅在配送范围内配送 — 请自行安排快递员（如 Grab、Lalamove）到店取餐，配送费用由您自行承担。',
     ackCheckbox: '我已阅读并理解以上内容',
     gpsDenied: '您未允许访问位置信息',
@@ -238,23 +243,38 @@ const COPY = {
 const inputCls =
   'w-full rounded-xl border border-black/15 bg-[#faf8f5] px-3.5 py-2.5 text-[14px] text-ink placeholder-black/30 focus:border-[#4a3520] focus:outline-none focus:ring-1 focus:ring-[#4a3520]/30 transition-colors'
 
+// Shared width for every step's content column — keeps the flow feeling
+// like one consistent app screen instead of pages with mismatched margins.
+const CONTENT_WIDTH = 'max-w-md'
+
 function StepHeader({ t, step, onBack }) {
   const idx = STEP_ORDER.indexOf(step)
   return (
     <div className="sticky top-0 z-[60] bg-[#f5f2ee]/95 backdrop-blur-sm border-b border-black/10 px-4 py-3">
-      <div className="max-w-lg mx-auto flex items-center gap-3">
+      <div className={`${CONTENT_WIDTH} mx-auto flex items-center gap-3`}>
         {onBack ? (
-          <button onClick={onBack} className="text-black/40 hover:text-black text-lg leading-none shrink-0" aria-label={t.back}>‹</button>
+          <button onClick={onBack} className="text-black/40 hover:text-black text-lg leading-none shrink-0 w-5" aria-label={t.back}>‹</button>
         ) : (
-          <span className="w-3 shrink-0" />
+          <span className="w-5 shrink-0" />
         )}
         <div className="flex-1 flex items-center gap-1.5">
           {STEP_ORDER.map((s, i) => (
             <div key={s} className={`h-1 flex-1 rounded-full transition-colors ${i <= idx ? 'bg-[#4a3520]' : 'bg-black/10'}`} />
           ))}
         </div>
-        <span className="text-[11px] tracking-wide text-black/45 shrink-0">{t.steps[idx]}</span>
+        <Link href="/" className="text-black/40 hover:text-black text-lg leading-none shrink-0 w-5 text-right" aria-label={t.close}>✕</Link>
       </div>
+    </div>
+  )
+}
+
+// Primary action button, pinned to the bottom of the viewport — the
+// checkout-app pattern of a persistent CTA bar instead of a button that
+// scrolls away with the content.
+function StickyActionBar({ children }) {
+  return (
+    <div className="sticky bottom-0 left-0 right-0 bg-[#f5f2ee]/95 backdrop-blur-sm border-t border-black/10 px-5 pt-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+      <div className={`${CONTENT_WIDTH} mx-auto`}>{children}</div>
     </div>
   )
 }
@@ -263,8 +283,19 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
   const { items, addItem, removeItem, clearCart, totalQty, totalPrice } = useCart()
+  const { setHidden: setChromeHidden } = useChrome()
 
   const [step, setStep] = useState('welcome')
+
+  // Once the customer commits to ordering (past the welcome screen), hide
+  // the site nav/footer so the flow reads as a dedicated full-screen app
+  // rather than a webpage with marketing chrome wrapped around it.
+  useEffect(() => {
+    setChromeHidden(step !== 'welcome')
+  }, [step, setChromeHidden])
+  // Restore normal chrome if the customer navigates away entirely (separate
+  // effect so this only fires on unmount, not on every step change).
+  useEffect(() => () => setChromeHidden(false), [setChromeHidden])
 
   // step 1 — welcome / login
   const [profile, setProfile] = useState(null)
@@ -621,10 +652,10 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
       locatePhase === 'calculating' ? t.calculating : ''
 
     return (
-      <div className="min-h-[70vh] flex flex-col">
+      <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
         <StepHeader t={t} step={step} onBack={() => setStep('welcome')} />
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 bg-[#f5f2ee]">
-          <div className="w-full max-w-sm">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
+          <div className={`w-full ${CONTENT_WIDTH}`}>
             {locatePhase !== 'found' && (
               <h1 className="text-[13px] font-semibold tracking-wide text-[#4a3520]/50 text-center uppercase mb-1">
                 {t.distanceTitle}
@@ -697,28 +728,28 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
             )}
 
             {locatePhase === 'found' && withinRadius && distanceResult?.distanceKm != null && (
-              <div className="text-center mb-5">
-                <div className="text-[48px] leading-none mb-2" style={{ animation: 'pinDrop 0.6s cubic-bezier(.34,1.56,.64,1) forwards' }}>🎉</div>
-                <h1 className="font-display text-[28px] text-ink leading-tight mb-2">{t.canOrderNow}</h1>
-                <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 rounded-full">
-                  📍 {t.distanceBadge(distanceResult.distanceKm)}
+              <div className="text-center mb-6">
+                <p className="text-[11px] tracking-[0.25em] uppercase text-[#4a3520]/40 mb-2">{t.distanceTitle}</p>
+                <h1 className="font-display text-[26px] text-ink leading-snug mb-3">{t.canOrderNow(distanceResult.radiusKm)}</h1>
+                <span className="inline-block text-[12px] font-medium tracking-wide text-[#4a3520]/70 border border-[#4a3520]/20 px-4 py-1.5 rounded-full">
+                  {t.distanceBadge(distanceResult.distanceKm)}
                 </span>
               </div>
             )}
 
             {locatePhase === 'found' && distanceResult?.distanceKm == null && (
-              <div className="text-center mb-5">
-                <div className="text-[48px] leading-none mb-2">👋</div>
-                <h1 className="font-display text-[26px] text-ink leading-tight">{t.canOrderNow}</h1>
+              <div className="text-center mb-6">
+                <p className="text-[11px] tracking-[0.25em] uppercase text-[#4a3520]/40 mb-2">{t.distanceTitle}</p>
+                <h1 className="font-display text-[26px] text-ink leading-snug">{t.canOrderUnknown}</h1>
               </div>
             )}
 
             {locatePhase === 'found' && !withinRadius && (
               <>
-                <div className="text-center mb-3">
-                  <div className="text-[44px] leading-none mb-2">⚠️</div>
-                  <h1 className="font-display text-[24px] text-ink leading-tight mb-2">{t.outOfRadiusHeading}</h1>
-                  <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-amber-800 bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-full">
+                <div className="text-center mb-4">
+                  <p className="text-[11px] tracking-[0.25em] uppercase text-amber-700/60 mb-2">{t.distanceTitle}</p>
+                  <h1 className="font-display text-[24px] text-ink leading-snug mb-3">{t.outOfRadiusHeading}</h1>
+                  <span className="inline-block text-[12px] font-medium tracking-wide text-amber-800 border border-amber-300 px-4 py-1.5 rounded-full">
                     {t.outOfRadius(distanceResult.distanceKm, distanceResult.radiusKm)}
                   </span>
                 </div>
@@ -750,17 +781,19 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
               </div>
             )}
 
-            {locatePhase === 'found' && (
-              <button
-                onClick={() => setStep('menu')}
-                disabled={!distanceContinueEnabled}
-                className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {t.next}
-              </button>
-            )}
           </div>
         </div>
+        {locatePhase === 'found' && (
+          <StickyActionBar>
+            <button
+              onClick={() => setStep('menu')}
+              disabled={!distanceContinueEnabled}
+              className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {t.next}
+            </button>
+          </StickyActionBar>
+        )}
       </div>
     )
   }
@@ -770,7 +803,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'menu') {
     return (
-      <div className="min-h-[70vh]">
+      <div className="min-h-[100dvh]">
         <StepHeader t={t} step={step} onBack={() => setStep('distance')} />
         <p className="text-center text-[12px] text-black/45 py-2 bg-[#f5f2ee]">{t.menuHint}</p>
         <MenuExperience
@@ -789,9 +822,9 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'summary') {
     return (
-      <div className="min-h-[70vh] flex flex-col bg-[#f5f2ee]">
+      <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
         <StepHeader t={t} step={step} onBack={() => setStep('menu')} />
-        <div className="flex-1 max-w-lg w-full mx-auto px-5 py-5 flex flex-col gap-4">
+        <div className={`flex-1 ${CONTENT_WIDTH} w-full mx-auto px-5 py-5 flex flex-col gap-4`}>
           <h1 className="font-display text-[22px] text-ink">{t.summaryTitle}</h1>
 
           {items.length === 0 ? (
@@ -862,14 +895,17 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
                 </label>
                 {summaryError && <p className="text-[12px] text-red-600">{summaryError}</p>}
               </div>
-
-              <button onClick={goToPayment} className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors flex items-center justify-between px-5">
-                <span>{t.next}</span>
-                <span className="tabular-nums">฿{amount}</span>
-              </button>
             </>
           )}
         </div>
+        {items.length > 0 && (
+          <StickyActionBar>
+            <button onClick={goToPayment} className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors flex items-center justify-between px-5">
+              <span>{t.next}</span>
+              <span className="tabular-nums">฿{amount}</span>
+            </button>
+          </StickyActionBar>
+        )}
       </div>
     )
   }
@@ -880,9 +916,9 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
   if (step === 'payment') {
     const canSubmit = confirmPay && !submitting && (!PROMPTPAY_ID || amount <= 0 || Boolean(qrDataUrl))
     return (
-      <div className="min-h-[70vh] flex flex-col bg-[#f5f2ee]">
+      <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
         <StepHeader t={t} step={step} onBack={() => setStep('summary')} />
-        <div className="flex-1 max-w-lg w-full mx-auto px-5 py-5 flex flex-col gap-4">
+        <div className={`flex-1 ${CONTENT_WIDTH} w-full mx-auto px-5 py-5 flex flex-col gap-4`}>
           <h1 className="font-display text-[22px] text-ink">{t.paymentTitle}</h1>
 
           <div>
@@ -926,8 +962,9 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
               </div>
             </div>
           </div>
-
-          <label className="flex items-start gap-2 px-1 cursor-pointer select-none">
+        </div>
+        <StickyActionBar>
+          <label className="flex items-start gap-2 px-1 mb-3 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={confirmPay}
@@ -937,7 +974,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
             <span className="text-[13px] text-[#4a3520] leading-snug">{t.confirmCheckbox}</span>
           </label>
 
-          {submitError && <p className="text-[12px] text-red-600">{submitError}</p>}
+          {submitError && <p className="mb-2 text-[12px] text-red-600">{submitError}</p>}
 
           <button
             onClick={submitOrder}
@@ -946,7 +983,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
           >
             {submitting ? t.submitting : t.submit}
           </button>
-        </div>
+        </StickyActionBar>
       </div>
     )
   }
@@ -955,8 +992,8 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
   // Step 6 — Success
   // ═══════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-[70vh] bg-[#f5f2ee] flex items-start justify-center px-5 py-10">
-      <div className="w-full max-w-sm flex flex-col items-center text-center gap-3">
+    <div className="min-h-[100dvh] bg-[#f5f2ee] flex items-start justify-center px-5 py-10">
+      <div className={`w-full ${CONTENT_WIDTH} flex flex-col items-center text-center gap-3`}>
         <div className="w-16 h-16 rounded-full bg-[#f0f7ef] flex items-center justify-center text-3xl">🎉</div>
         <h1 className="font-display text-[22px] text-ink">{t.successTitle}</h1>
         <div>
