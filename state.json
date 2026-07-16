@@ -1,0 +1,117 @@
+{
+  "project": "lovepier (love-pier-main)",
+  "savedAt": "2026-07-14",
+  "branch": "main",
+  "lastCommit": "2676ad3",
+  "summary": "LINE-integrated delivery ordering system for Love Pier Beach Cafe: LIFF login + GPS delivery-radius gate, distance-based delivery fee, PromptPay QR (company Bill Payment), automatic slip verification (SlipOK), LINE Flex order cards, and an admin backoffice for orders/settings.",
+
+  "sessionTasks": [
+    { "id": 1, "subject": "Install leaflet + vitest dependencies", "status": "completed" },
+    { "id": 2, "subject": "Add delivery-fee calculation (util + admin settings + wiring)", "status": "completed" },
+    { "id": 3, "subject": "Build locating animation (radar sweep, pulse rings, pin drop)", "status": "completed" },
+    { "id": 4, "subject": "Build Leaflet radius map component", "status": "completed" },
+    { "id": 5, "subject": "Build DeliveryGate (mandatory login + GPS gate before menu)", "status": "completed" },
+    { "id": 6, "subject": "Wire deliverySession into CartDrawer + delivery.js", "status": "completed" },
+    { "id": 7, "subject": "Write unit tests for haversine + delivery fee", "status": "completed" },
+    { "id": 8, "subject": "Verify full flow in browser + typecheck/build, then commit+push", "status": "completed" }
+  ],
+
+  "featureAreas": [
+    {
+      "area": "LINE ordering core",
+      "status": "done",
+      "notes": "4-step checkout in components/CartDrawer.js (cart -> info -> payment -> success). LINE Login via lib/liff.js. PromptPay QR is a company Bill Payment QR (lib/promptpay.js), not phone PromptPay — Biller ID 010554511741402 for บริษัท เลิฟเพียร์ จำกัด."
+    },
+    {
+      "area": "Delivery distance + fee",
+      "status": "done",
+      "notes": "pages/api/delivery-distance.js computes distance (haversine or Google Routes, chosen in /admin/settings) and delivery fee (lib/deliveryFee.js: base + per-km, server-side only). Out-of-radius customers are warned but not blocked (explicit shop decision)."
+    },
+    {
+      "area": "DeliveryGate (mandatory login + GPS gate)",
+      "status": "done",
+      "notes": "components/delivery/DeliveryGate.js sits in front of /delivery only (not /menu). Forces LINE login then GPS scan with LocatingAnimation + DeliveryRadiusMap (Leaflet/OSM, no API key). Degrades gracefully if LIFF unset or GPS fails. Result cached in lib/deliverySession.js so CartDrawer doesn't re-ask."
+    },
+    {
+      "area": "Slip verification",
+      "status": "done",
+      "notes": "Attach-slip button always shown; auto-verifies via SlipOK when configured in /admin/settings, otherwise stores the slip image (private Supabase bucket 'slips') for manual review in /admin/orders."
+    },
+    {
+      "area": "LINE Flex order cards",
+      "status": "done",
+      "notes": "lib/orderFlex.js builds a Tassana-style card sent both customer-side (liff.sendMessages) and shop-side (Messaging API push to the customer) via lib/lineMessaging.js. Links to a public /order/[orderNo] status page."
+    },
+    {
+      "area": "Admin backoffice",
+      "status": "done",
+      "notes": "/admin/orders (list + status dropdown + pending badge in sidebar), /admin/settings (distance method, shop coords, radius, delivery fee, SlipOK keys). Login: cafe.lovepier@gmail.com."
+    },
+    {
+      "area": "/menu + /delivery unification",
+      "status": "done",
+      "notes": "Both pages now render the same components/menu/MenuExperience.js (single source of truth) so future menu-layout edits apply to both pages automatically. /delivery adds showAddToCart + DeliveryGate on top."
+    },
+    {
+      "area": "Unit tests",
+      "status": "done",
+      "notes": "vitest added (npm run test). lib/geo.test.js (haversineKm), lib/deliveryFee.test.js (calcDeliveryFee) — 10 tests passing."
+    }
+  ],
+
+  "knownBugsFixedThisSession": [
+    "GPS error text froze in the wrong language (stale-closure i18n bug) — fixed by storing error codes instead of pre-translated strings, deriving text at render time.",
+    "Leaflet crash 'Cannot read properties of undefined (reading layerPointToLatLng)' — fixed by calling map.setView() before circle.getBounds().",
+    "CartDrawer read lib/deliverySession.js only once on app mount (before DeliveryGate finished) — fixed to re-check every time the drawer opens."
+  ],
+
+  "followUps": [
+    {
+      "item": "Fix pre-existing React Compiler lint errors (unrelated to this session's feature work)",
+      "location": "pages/reservation.js:181 (setState sync in effect), tweaks-panel.jsx:235/303 (ref access during render)",
+      "spawnedTaskId": "task_57488e83",
+      "status": "not started — flagged as a separate background task, not yet applied"
+    },
+    {
+      "item": "SlipOK not yet configured in production",
+      "detail": "slipok_api_key / slipok_branch_id are empty in the settings table — slips are stored for manual review until the shop signs up at slipok.com and enters keys in /admin/settings."
+    },
+    {
+      "item": "Google Routes API not yet configured",
+      "detail": "distance_method is 'straight' (free haversine). Switch to 'google' in /admin/settings + add a Google Maps API key for real driving-distance."
+    },
+    {
+      "item": "delivery_base_fee / delivery_per_km_rate currently 0",
+      "detail": "Delivery fee feature is live but set to charge nothing until the shop sets real values in /admin/settings."
+    }
+  ],
+
+  "envVarsToVerifyInVercel": [
+    "NEXT_PUBLIC_PROMPTPAY_ID=010554511741402",
+    "NEXT_PUBLIC_PROMPTPAY_TYPE=biller",
+    "NEXT_PUBLIC_LIFF_ID=2010601364-PyUPQa7l",
+    "NEXT_PUBLIC_LINE_OA_ID=@lovepier.cafe",
+    "NEXT_PUBLIC_SHEETS_WEBHOOK_URL=(Apps Script URL, already set)",
+    "LINE_MESSAGING_TOKEN=(optional — enables shop-side Flex push)",
+    "LINE_ORDER_NOTIFY_TO=(optional — plain-text staff alert)"
+  ],
+
+  "recentCommits": [
+    "2676ad3 feat: mandatory LINE login + GPS gate on /delivery, delivery fee, unit tests",
+    "b56cf05 update",
+    "08fddca refactor: unify /menu and /delivery onto one shared layout",
+    "965d37c feat: Tassana-style order card, shop-side push, order page, Sheets capture",
+    "0d64b3d feat: always show slip-attach button; store slip image for review",
+    "b12da11 docs: add LINE LIFF order-flow guide (brief)",
+    "1543314 feat: automatic slip verification via SlipOK",
+    "b617737 feat: auto-send order as a LINE Flex card on checkout (no button)",
+    "4a20785 fix: match language switcher border/height to the hamburger button",
+    "050eaad feat: /admin/settings — choose distance method (straight-line or Google)",
+    "e794192 fix: slip message showed ฿0 — snapshot order before clearing cart",
+    "c91708c chore: update LINE OA id to @lovepier.cafe",
+    "2c666ca feat: delivery-distance check + post order to LINE chat",
+    "e41bfa1 fix: omit Ref from bill-payment QR to avoid \"reference invalid\"",
+    "892d7af feat: admin orders page, LINE new-order alerts, pending badge",
+    "4c177ee feat: LINE ordering — delivery checkout with LINE Login + PromptPay QR"
+  ]
+}
