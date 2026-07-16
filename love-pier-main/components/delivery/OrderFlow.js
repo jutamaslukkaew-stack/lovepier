@@ -49,6 +49,9 @@ const COPY = {
     calculating: 'กำลังคำนวณระยะทาง...',
     withinRadius: (km) => `พบตำแหน่งแล้ว — ห่างจากร้าน ${km} กม. ✅`,
     inServiceArea: 'อยู่ในพื้นที่บริการของร้าน ไปเลือกเมนูต่อได้เลย',
+    canOrderNow: 'ยินดีต้อนรับ! คุณสั่งอาหารได้เลย 🎉',
+    distanceBadge: (km) => `ห่างจากร้านเพียง ${km} กม.`,
+    outOfRadiusHeading: 'นอกพื้นที่บริการจัดส่ง',
     outOfRadius: (km, r) => `⚠️ ห่างจากร้าน ${km} กม. — นอกระยะจัดส่ง ${r} กม.`,
     outOfRadiusNote: 'คุณยังสั่งอาหารได้ตามปกติ แต่ร้านจัดส่งได้เฉพาะในรัศมีที่กำหนด — กรุณาเรียกรถแมสเซนเจอร์ (เช่น Grab, Lalamove) มารับอาหารที่ร้านด้วยตนเอง และรับผิดชอบค่าส่งส่วนนี้เอง',
     ackCheckbox: 'ฉันอ่านและเข้าใจเงื่อนไขข้างต้นแล้ว',
@@ -115,6 +118,9 @@ const COPY = {
     calculating: 'Calculating distance...',
     withinRadius: (km) => `Location found — ${km} km from the shop ✅`,
     inServiceArea: "You're inside our delivery area — go ahead and pick a menu.",
+    canOrderNow: "Welcome! You're all set to order 🎉",
+    distanceBadge: (km) => `Just ${km} km from the shop`,
+    outOfRadiusHeading: 'Outside our delivery area',
     outOfRadius: (km, r) => `⚠️ ${km} km from the shop — outside the ${r} km delivery area`,
     outOfRadiusNote: "You can still place an order, but we only deliver within our radius — please arrange your own courier (e.g. Grab, Lalamove) to pick up the food from the shop, and cover that delivery cost yourself.",
     ackCheckbox: 'I have read and understood the above',
@@ -177,6 +183,9 @@ const COPY = {
     calculating: '正在计算距离...',
     withinRadius: (km) => `已定位 — 距离门店 ${km} 公里 ✅`,
     inServiceArea: '您在配送范围内，可以继续选择菜单。',
+    canOrderNow: '欢迎！您现在可以下单了 🎉',
+    distanceBadge: (km) => `距离门店仅 ${km} 公里`,
+    outOfRadiusHeading: '超出配送范围',
     outOfRadius: (km, r) => `⚠️ 距离门店 ${km} 公里 — 超出 ${r} 公里配送范围`,
     outOfRadiusNote: '您仍然可以下单，但本店仅在配送范围内配送 — 请自行安排快递员（如 Grab、Lalamove）到店取餐，配送费用由您自行承担。',
     ackCheckbox: '我已阅读并理解以上内容',
@@ -609,24 +618,18 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
 
     const statusText =
       locatePhase === 'locating' ? t.locating :
-      locatePhase === 'calculating' ? t.calculating :
-      locatePhase === 'found' ? (
-        distanceResult?.distanceKm == null
-          ? (lang === 'th' ? 'ไม่ทราบตำแหน่งของคุณ — ยังสั่งอาหารได้ตามปกติ' : "Couldn't determine your location")
-          : withinRadius ? t.withinRadius(distanceResult.distanceKm)
-          : t.outOfRadius(distanceResult.distanceKm, distanceResult.radiusKm)
-      ) : ''
-
-    const tone = locatePhase === 'found' && distanceResult?.distanceKm != null ? (withinRadius ? 'success' : 'warning') : 'neutral'
+      locatePhase === 'calculating' ? t.calculating : ''
 
     return (
       <div className="min-h-[70vh] flex flex-col">
         <StepHeader t={t} step={step} onBack={() => setStep('welcome')} />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 bg-[#f5f2ee]">
           <div className="w-full max-w-sm">
-            <h1 className="text-[13px] font-semibold tracking-wide text-[#4a3520]/50 text-center uppercase mb-1">
-              {t.distanceTitle}
-            </h1>
+            {locatePhase !== 'found' && (
+              <h1 className="text-[13px] font-semibold tracking-wide text-[#4a3520]/50 text-center uppercase mb-1">
+                {t.distanceTitle}
+              </h1>
+            )}
 
             {locatePhase === 'idle' && (
               <div className="flex flex-col items-center gap-3 py-10">
@@ -661,11 +664,11 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
               </div>
             )}
 
-            {locatePhase !== 'idle' && locatePhase !== 'gps-error' && (
+            {(locatePhase === 'locating' || locatePhase === 'calculating') && (
               <LocatingAnimation
-                phase={locatePhase === 'found' ? 'found' : locatePhase === 'calculating' ? 'calculating' : 'locating'}
+                phase={locatePhase === 'calculating' ? 'calculating' : 'locating'}
                 statusText={statusText}
-                tone={tone}
+                tone="neutral"
               />
             )}
 
@@ -694,12 +697,32 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
             )}
 
             {locatePhase === 'found' && withinRadius && distanceResult?.distanceKm != null && (
-              <p className="text-[13px] text-emerald-700 text-center -mt-4 mb-2">{t.inServiceArea}</p>
+              <div className="text-center mb-5">
+                <div className="text-[48px] leading-none mb-2" style={{ animation: 'pinDrop 0.6s cubic-bezier(.34,1.56,.64,1) forwards' }}>🎉</div>
+                <h1 className="font-display text-[28px] text-ink leading-tight mb-2">{t.canOrderNow}</h1>
+                <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 rounded-full">
+                  📍 {t.distanceBadge(distanceResult.distanceKm)}
+                </span>
+              </div>
+            )}
+
+            {locatePhase === 'found' && distanceResult?.distanceKm == null && (
+              <div className="text-center mb-5">
+                <div className="text-[48px] leading-none mb-2">👋</div>
+                <h1 className="font-display text-[26px] text-ink leading-tight">{t.canOrderNow}</h1>
+              </div>
             )}
 
             {locatePhase === 'found' && !withinRadius && (
               <>
-                <div className="mb-3 -mt-2 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-[13px] text-amber-800 leading-relaxed text-center">
+                <div className="text-center mb-3">
+                  <div className="text-[44px] leading-none mb-2">⚠️</div>
+                  <h1 className="font-display text-[24px] text-ink leading-tight mb-2">{t.outOfRadiusHeading}</h1>
+                  <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-amber-800 bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-full">
+                    {t.outOfRadius(distanceResult.distanceKm, distanceResult.radiusKm)}
+                  </span>
+                </div>
+                <div className="mb-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-[13px] text-amber-800 leading-relaxed text-center">
                   {t.outOfRadiusNote}
                 </div>
                 <label className="flex items-start gap-2 mb-3 px-1 cursor-pointer select-none">
