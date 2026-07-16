@@ -1,62 +1,53 @@
-// Radar-sweep + pulse-ring + pin-drop animation shown while we look up the
-// customer's GPS position and compute the delivery distance. Pure CSS
-// keyframes (see styles/globals.css: radarSpin / pulseRing / pinDrop) — no
-// animation library needed.
+// Lottie search animation (while scanning) + pin-drop (once found), shown
+// while we look up the customer's GPS position and compute the delivery
+// distance. The scanning animation is a hosted Lottie file rendered via the
+// <dotlottie-wc> web component (script loaded once via next/script below);
+// the pin-drop is a small CSS keyframe (see styles/globals.css: pinDrop).
 //
 // phase: 'locating' (waiting on navigator.geolocation) | 'calculating'
 // (got coords, computing distance) | 'found' (done — pin drops in).
-export default function LocatingAnimation({ phase, statusText }) {
+//
+// tone colors the status text so the outcome reads at a glance: 'success'
+// (within delivery radius), 'warning' (outside radius — needs the customer's
+// attention, not just a flash), or 'neutral' (still scanning / unknown).
+import Script from 'next/script'
+
+export default function LocatingAnimation({ phase, statusText, tone = 'neutral' }) {
   const scanning = phase === 'locating' || phase === 'calculating'
+  const toneClass =
+    tone === 'success' ? 'text-emerald-700' :
+    tone === 'warning' ? 'text-amber-700' :
+    'text-[#4a3520]/80'
 
   return (
     <div className="flex flex-col items-center justify-center gap-6 py-10">
+      <Script
+        id="dotlottie-wc"
+        type="module"
+        src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.14/dist/dotlottie-wc.js"
+        strategy="afterInteractive"
+      />
+
       <div className="relative w-40 h-40 flex items-center justify-center">
-        {/* pulse rings */}
         {scanning && (
-          <>
-            <span
-              className="absolute inset-0 rounded-full border-2 border-[#4a3520]/40"
-              style={{ animation: 'pulseRing 2.2s ease-out infinite' }}
-            />
-            <span
-              className="absolute inset-0 rounded-full border-2 border-[#4a3520]/40"
-              style={{ animation: 'pulseRing 2.2s ease-out infinite', animationDelay: '0.7s' }}
-            />
-            <span
-              className="absolute inset-0 rounded-full border-2 border-[#4a3520]/40"
-              style={{ animation: 'pulseRing 2.2s ease-out infinite', animationDelay: '1.4s' }}
-            />
-          </>
+          <dotlottie-wc
+            src="https://lottie.host/0cea9896-4b5b-446e-a85e-e262f12b3955/jnqkx5A7at.lottie"
+            autoplay
+            loop
+            style={{ width: '160px', height: '160px' }}
+          />
         )}
 
-        {/* radar sweep */}
-        {scanning && (
-          <div className="absolute inset-2 rounded-full overflow-hidden">
-            <div
-              className="absolute inset-0"
-              style={{
-                animation: 'radarSpin 1.6s linear infinite',
-                background: 'conic-gradient(from 0deg, rgba(74,53,32,0.35), transparent 35%)',
-              }}
-            />
-          </div>
-        )}
-
-        {/* base ring */}
-        <div className="absolute inset-2 rounded-full border border-[#4a3520]/15 bg-[#faf8f5]" />
-
-        {/* center marker: dot while scanning, pin once found */}
-        {phase === 'found' ? (
+        {/* pin drop once found */}
+        {phase === 'found' && (
           <span
             className="relative text-[34px] leading-none"
             style={{ animation: 'pinDrop 0.6s cubic-bezier(.34,1.56,.64,1) forwards' }}
           >📍</span>
-        ) : (
-          <span className="relative w-3 h-3 rounded-full bg-[#4a3520]" />
         )}
       </div>
 
-      <p className="text-[13px] text-[#4a3520]/80 font-medium text-center px-6 min-h-[1.5em]">
+      <p className={`text-[15px] ${toneClass} font-semibold text-center px-6 min-h-[1.5em] leading-snug`}>
         {statusText}
       </p>
     </div>

@@ -206,11 +206,11 @@ export default function CartDrawer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
-  // Every time the drawer opens: reuse whatever DeliveryGate already learned
-  // (LINE profile, distance, fee) so checkout never re-asks for something we
-  // already know. Re-checked on each open (not just on app mount) because
-  // DeliveryGate's GPS scan finishes *after* CartDrawer first mounts —
-  // reading the session only once at mount would miss it.
+  // Every time the drawer opens: reuse whatever /delivery's OrderFlow already
+  // learned (LINE profile, distance, fee) so checkout never re-asks for
+  // something we already know. Re-checked on each open (not just on app
+  // mount) since a customer may open the cart here (e.g. from /promotion)
+  // after already completing that flow in another tab/visit.
   useEffect(() => {
     if (!isOpen) return
     let cancelled = false
@@ -228,9 +228,9 @@ export default function CartDrawer() {
       if (knownProfile || triedSilentLoginRef.current) return
       triedSilentLoginRef.current = true
 
-      // Inside LINE without a DeliveryGate result yet (e.g. cart opened from
-      // /menu): silently grab the profile if a session already exists. This
-      // also logs the customer to Google Sheets. Only attempted once.
+      // Inside LINE without a cached profile yet (e.g. cart opened from
+      // /promotion): silently grab the profile if a session already exists.
+      // This also logs the customer to Google Sheets. Only attempted once.
       ;(async () => {
         const p = await getProfileIfLoggedIn()
         if (p && !cancelled) setProfile(p)

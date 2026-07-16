@@ -112,17 +112,19 @@ const CARD_COPY = {
 
 // showAddToCart: false on /menu (browse only), true on /delivery (orderable).
 export function MenuCard({ id, name, badge, desc, price, prices, image, lang, onImageClick, showAddToCart }) {
-  const { addItem, openCart } = useCart()
+  const { addItem } = useCart()
   const [flash, setFlash] = useState(false)
   const t = CARD_COPY[lang] || CARD_COPY.en
 
   const displayPrice = prices ? Object.values(prices).find(Boolean) : price
 
+  // Just add + flash "Added ✓" — doesn't pop the cart open, so customers can
+  // keep tapping through the menu and add several items in a row (only
+  // reachable with showAddToCart, i.e. only on /delivery's guided order flow).
   function handleAdd() {
     addItem({ id, name, price: displayPrice, image })
     setFlash(true)
     setTimeout(() => setFlash(false), 1200)
-    openCart()
   }
 
   return (
@@ -288,7 +290,7 @@ const PROMO_CARD_COPY = {
 }
 
 function PromoOrderCard({ deal, lang, onImageClick }) {
-  const { addItem, openCart } = useCart()
+  const { addItem } = useCart()
   const [flash, setFlash] = useState(false)
   const t = PROMO_CARD_COPY[lang] || PROMO_CARD_COPY.en
 
@@ -296,7 +298,6 @@ function PromoOrderCard({ deal, lang, onImageClick }) {
     addItem({ id: `promo-${deal.id}`, name: deal.title, price: deal.rawPrice, image: deal.img })
     setFlash(true)
     setTimeout(() => setFlash(false), 1200)
-    openCart()
   }
 
   return (

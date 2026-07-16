@@ -23,9 +23,10 @@ import {
 
 const CART_BTN_LABEL = { th: 'ตะกร้า', en: 'Cart', zh: '购物车' }
 
-export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddToCart = false, heroTitle }) {
+export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddToCart = false, heroTitle, onCartClick }) {
   const { lang } = useLanguage()
   const { totalQty, openCart } = useCart()
+  const handleCartClick = onCartClick || openCart
   const primaryTabs = primaryTabsForLang(lang)
   const menuData = useMemo(() => buildMenuData(dbMenuData, lang), [dbMenuData, lang])
   const [activeAnchor, setActiveAnchor] = useState('signature')
@@ -331,7 +332,7 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
 
       {showAddToCart && totalQty > 0 && (
         <button
-          onClick={openCart}
+          onClick={handleCartClick}
           className="fixed bottom-6 right-5 z-[170] flex items-center gap-2 bg-[#4a3520] text-white px-4 py-3 rounded-full shadow-lg font-semibold text-[13px] hover:bg-[#3a2818] transition-colors active:scale-95"
         >
           <span>🛒</span>

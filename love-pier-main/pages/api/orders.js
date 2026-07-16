@@ -58,11 +58,13 @@ export default async function handler(req, res) {
   const orderNo = makeOrderNo()
   const s = await getShopSettings()
   // Recompute the delivery fee server-side from distance + settings — never
-  // trust a fee number sent by the client.
-  const deliveryFee = calcDeliveryFee(distanceKm, {
-    baseFee: s.deliveryBaseFee,
-    perKmRate: s.deliveryPerKmRate,
-  })
+  // trust a fee number sent by the client. Outside the delivery radius the
+  // shop doesn't deliver at all (the customer arranges + pays their own
+  // courier), so no shop delivery fee applies regardless of configured rates.
+  const withinRadius = distanceKm == null || distanceKm <= s.radiusKm
+  const deliveryFee = withinRadius
+    ? calcDeliveryFee(distanceKm, { baseFee: s.deliveryBaseFee, perKmRate: s.deliveryPerKmRate })
+    : 0
   const totalAmount = itemsSubtotal + deliveryFee
 
   try {

@@ -2,8 +2,7 @@ import Head from 'next/head'
 import { useLanguage } from '../lib/language'
 import Footer from '../components/Footer'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
-import MenuExperience from '../components/menu/MenuExperience'
-import DeliveryGate from '../components/delivery/DeliveryGate'
+import OrderFlow from '../components/delivery/OrderFlow'
 import { getMenuPageData } from '../lib/db/menuPageData'
 
 const PAGE_COPY = {
@@ -12,10 +11,10 @@ const PAGE_COPY = {
   zh: { title: '外卖 — Love Pier Beach Cafe', hero: '外卖' },
 }
 
-// Same layout and data as /menu (components/menu/MenuExperience) — this page
-// turns on "Add to Cart" and the floating cart, and gates entry behind LINE
-// login + a GPS distance check (DeliveryGate). Edit the shared menu
-// components, not this file, to change section layout/copy for both pages.
+// Guided 6-step order flow (welcome → distance check → menu → summary →
+// payment → success) — see components/delivery/OrderFlow.js. The menu step
+// reuses components/menu/MenuExperience, the same shared menu layout as
+// /menu, so section/layout edits there apply to both pages.
 export default function Delivery({ dbMenuData, dbPromotions }) {
   const { lang } = useLanguage()
   const t = PAGE_COPY[lang] || PAGE_COPY.en
@@ -31,9 +30,7 @@ export default function Delivery({ dbMenuData, dbPromotions }) {
         <meta property="og:type" content="website" />
       </Head>
 
-      <DeliveryGate>
-        <MenuExperience dbMenuData={dbMenuData} dbPromotions={dbPromotions} showAddToCart heroTitle={t.hero} />
-      </DeliveryGate>
+      <OrderFlow dbMenuData={dbMenuData} dbPromotions={dbPromotions} heroTitle={t.hero} />
 
       <Footer tagline={FOOTER_TAGLINES.menu} />
     </>

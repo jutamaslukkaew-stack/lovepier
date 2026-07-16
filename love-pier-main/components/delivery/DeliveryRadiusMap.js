@@ -1,6 +1,6 @@
 // Leaflet map showing the shop, its delivery radius, and the customer's
 // pinned location. Client-only (Leaflet touches `window` at import time), so
-// this must be loaded via next/dynamic with { ssr: false } — see DeliveryGate.js.
+// this must be loaded via next/dynamic with { ssr: false } — see OrderFlow.js.
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 
