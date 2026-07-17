@@ -15,7 +15,10 @@ import {
 } from './menuData'
 
 // ── Lightbox ──────────────────────────────────────────────────────────────────
-export function Lightbox({ items, index, onIndexChange, onClose }) {
+// thumbnails: swap the menu-item caption footer (name/price/description) for
+// a scrollable thumbnail strip — used by the event gallery, where images
+// don't have that per-item metadata but do want quick strip navigation.
+export function Lightbox({ items, index, onIndexChange, onClose, thumbnails = false }) {
   const hasPrev = index > 0
   const hasNext = index < items.length - 1
   const goPrev = useCallback(() => { onIndexChange((i) => (i > 0 ? i - 1 : i)) }, [onIndexChange])
@@ -83,21 +86,45 @@ export function Lightbox({ items, index, onIndexChange, onClose }) {
         )}
       </div>
 
-      <div
-        className="shrink-0 px-6 pt-6 pb-8 text-center border-t border-black/10"
-        onClick={(e) => e.stopPropagation()}
-        style={{ fontFamily: 'system-ui,-apple-system,sans-serif' }}
-      >
-        <p className="text-black text-3xl sm:text-4xl font-semibold tracking-wide leading-tight">{current.name}</p>
-        {current.priceText ? (
-          <p className="mt-2 text-[#b8952f] text-2xl sm:text-3xl tabular-nums font-semibold">{current.priceText}</p>
-        ) : null}
-        {current.description ? (
-          <p className="mt-3 mx-auto text-black/60 text-xl sm:text-2xl font-light leading-relaxed" style={{ maxWidth: '400px' }}>
-            {current.description}
-          </p>
-        ) : null}
-      </div>
+      {thumbnails ? (
+        items.length > 1 && (
+          <div
+            className="shrink-0 flex gap-2 overflow-x-auto px-6 py-4 border-t border-black/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {items.map((item, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onIndexChange(() => i)}
+                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                  i === index ? 'border-[#4a3520]' : 'border-transparent opacity-60 hover:opacity-100'
+                }`}
+                aria-label={`Image ${i + 1}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.image} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )
+      ) : (
+        <div
+          className="shrink-0 px-6 pt-6 pb-8 text-center border-t border-black/10"
+          onClick={(e) => e.stopPropagation()}
+          style={{ fontFamily: 'system-ui,-apple-system,sans-serif' }}
+        >
+          <p className="text-black text-3xl sm:text-4xl font-semibold tracking-wide leading-tight">{current.name}</p>
+          {current.priceText ? (
+            <p className="mt-2 text-[#b8952f] text-2xl sm:text-3xl tabular-nums font-semibold">{current.priceText}</p>
+          ) : null}
+          {current.description ? (
+            <p className="mt-3 mx-auto text-black/60 text-xl sm:text-2xl font-light leading-relaxed" style={{ maxWidth: '400px' }}>
+              {current.description}
+            </p>
+          ) : null}
+        </div>
+      )}
     </div>,
     document.body
   )

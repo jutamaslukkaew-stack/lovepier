@@ -8,8 +8,37 @@ import Head from 'next/head'
 import Link from 'next/link'
 import Footer from '../components/Footer'
 import PageHero from '../components/PageHero'
+import EventCard from '../components/events/EventCard'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
+
+// Fixed-English section labels — this page already treats some labels as
+// intentionally untranslated (e.g. t.featured is the literal string
+// 'THE SYMPHONY CLUB' in all three language dicts below), so these follow
+// the same established convention rather than being duplicated per language.
+const LABELS = {
+  upcoming: 'Upcoming Events',
+  past: 'Past Events',
+  eventsCount: 'Events',
+}
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-[18px] h-[18px]">
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M8 3v4M16 3v4M3 10h18" />
+    </svg>
+  )
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-[18px] h-[18px]">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" />
+    </svg>
+  )
+}
 
 const EVENTS_COPY = {
   th: {
@@ -20,7 +49,6 @@ const EVENTS_COPY = {
     featured: 'THE SYMPHONY CLUB',
     reserve: 'จองโต๊ะ',
     add: 'เพิ่มลงปฏิทิน',
-    next: 'กิจกรรมถัดไป',
     weekly: 'กิจกรรมประจำวัน',
     weeklyDesc: 'กิจกรรมที่คุณมาได้ทุกวัน',
     weeklyGallery: [
@@ -47,7 +75,6 @@ const EVENTS_COPY = {
     featured: 'THE SYMPHONY CLUB',
     reserve: '预订座位',
     add: '加入日历',
-    next: '接下来',
     weekly: '每日固定活动',
     weeklyDesc: '每天都有，直接到店即可。',
     weeklyGallery: [
@@ -74,7 +101,6 @@ const EVENTS_COPY = {
     featured: 'THE SYMPHONY CLUB',
     reserve: 'Reserve a Table',
     add: 'Add to calendar',
-    next: "What's next",
     weekly: 'Daily activities',
     weeklyDesc: 'Something to enjoy every day — just show up.',
     weeklyGallery: [
@@ -123,7 +149,6 @@ export default function Events({ dbEvents = [] }) {
 
   const activeEvents = dbEvents.filter((e) => e.isActive)
   const dbFeatured = activeEvents.find((e) => e.isFeatured) || null
-  const dbEventList = activeEvents.filter((e) => !e.isFeatured)
 
   const titleKey = lang === 'th' ? 'titleTh' : lang === 'zh' ? 'titleZh' : 'titleEn'
   const descKey = lang === 'th' ? 'descriptionTh' : lang === 'zh' ? 'descriptionZh' : 'descriptionEn'
@@ -150,19 +175,26 @@ export default function Events({ dbEvents = [] }) {
       })()
     : null
 
-  const eventList = dbEventList.map((e) => {
+  // Upcoming vs Past is always derived from the date (never a manual admin
+  // toggle) — effective end = endDate if set, else the single eventDate.
+  // The featured event is included here too so it also shows as a card,
+  // in addition to its hero spotlight above.
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const gridEvents = activeEvents.map((e) => {
     const d = formatEventDate(e.eventDate, lang)
-    const priceStr = e.price != null ? `฿${e.price.toLocaleString()}` : freeLabel
+    const effectiveEnd = e.endDate || e.eventDate
     return {
-      day: d.day,
-      month: d.month,
+      id: e.id,
       title: e[titleKey] || e.titleEn,
-      sub: [e.timeRange, e.location].filter(Boolean).join(' · '),
-      cat: e[catKey],
-      price: priceStr,
-      free: e.price == null,
+      imageUrl: e.imageUrl,
+      location: e.location,
+      dateLabel: d.dateFull ? `${d.dateFull} ${d.year}` : '',
+      isPast: effectiveEnd ? effectiveEnd < todayStr : false,
+      sortKey: effectiveEnd || '',
     }
   })
+  const upcomingEvents = gridEvents.filter((e) => !e.isPast).sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+  const pastEvents = gridEvents.filter((e) => e.isPast).sort((a, b) => b.sortKey.localeCompare(a.sortKey))
 
   return (
     <>
@@ -205,25 +237,35 @@ export default function Events({ dbEvents = [] }) {
         </div>
       </section>}
 
-      {eventList.length > 0 && (
+      {upcomingEvents.length > 0 && (
         <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 border-b border-black/10 reveal">
-          <h3 className="font-display font-light text-ink mb-8 text-[clamp(26px,3.5vw,40px)]">{t.next}</h3>
-          <div className="space-y-px">
-            {eventList.map((ev, i) => (
-              <div key={i} className="flex items-center gap-6 py-5 border-t border-black/10 last:border-b group hover:bg-[#f5f2ee] transition-colors px-2 -mx-2">
-                <div className="w-12 text-center shrink-0">
-                  <div className="text-2xl font-display font-light text-ink leading-none">{ev.day}</div>
-                  <div className="text-[10px] tracking-[0.15em] uppercase text-muted mt-0.5">{ev.month}</div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm text-ink truncate">{ev.title}</div>
-                  <div className="text-xs text-muted mt-0.5 truncate">{ev.sub}</div>
-                </div>
-                <div className="shrink-0 text-right">
-                  {ev.cat && <div className="text-[10px] tracking-[0.15em] uppercase text-gold mb-0.5">{ev.cat}</div>}
-                  <div className="text-sm font-medium text-ink">{ev.free ? t.freeLabel : ev.price}</div>
-                </div>
-              </div>
+          <div className="flex items-center gap-2.5 mb-8">
+            <CalendarIcon />
+            <h3 className="font-display font-light text-ink text-[clamp(26px,3.5vw,40px)]">{LABELS.upcoming}</h3>
+            <span className="text-[11px] tracking-[0.1em] uppercase text-muted border border-black/15 rounded-full px-2.5 py-1">
+              {upcomingEvents.length} {LABELS.eventsCount}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+            {upcomingEvents.map((ev) => (
+              <EventCard key={ev.id} href={`/events/${ev.id}`} imageUrl={ev.imageUrl} title={ev.title} dateLabel={ev.dateLabel} location={ev.location} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {pastEvents.length > 0 && (
+        <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 border-b border-black/10 reveal">
+          <div className="flex items-center gap-2.5 mb-8">
+            <ClockIcon />
+            <h3 className="font-display font-light text-ink text-[clamp(26px,3.5vw,40px)]">{LABELS.past}</h3>
+            <span className="text-[11px] tracking-[0.1em] uppercase text-muted border border-black/15 rounded-full px-2.5 py-1">
+              {pastEvents.length} {LABELS.eventsCount}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+            {pastEvents.map((ev) => (
+              <EventCard key={ev.id} href={`/events/${ev.id}`} imageUrl={ev.imageUrl} title={ev.title} dateLabel={ev.dateLabel} location={ev.location} desaturate />
             ))}
           </div>
         </section>

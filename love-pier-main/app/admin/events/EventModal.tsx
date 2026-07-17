@@ -7,19 +7,26 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import type { Event } from '@/lib/db/schema'
 
+const MAX_ALBUM_IMAGES = 10
+
 type FormData = {
   titleTh: string
   titleEn: string
   titleZh: string
   titleEm: string
   eventDate: string
+  endDate: string
   timeRange: string
   timeSub: string
   location: string
+  organizer: string
   price: string
   entrySubTh: string
   entrySubEn: string
   entrySubZh: string
+  registrationInfoTh: string
+  registrationInfoEn: string
+  registrationInfoZh: string
   descriptionTh: string
   descriptionEn: string
   descriptionZh: string
@@ -34,8 +41,9 @@ type FormData = {
 
 const EMPTY: FormData = {
   titleTh: '', titleEn: '', titleZh: '', titleEm: '',
-  eventDate: '', timeRange: '', timeSub: '', location: '',
+  eventDate: '', endDate: '', timeRange: '', timeSub: '', location: '', organizer: '',
   price: '', entrySubTh: '', entrySubEn: '', entrySubZh: '',
+  registrationInfoTh: '', registrationInfoEn: '', registrationInfoZh: '',
   descriptionTh: '', descriptionEn: '', descriptionZh: '',
   categoryTh: '', categoryEn: '', categoryZh: '',
   imageUrl: '', albumImages: [], isFeatured: false, isActive: true,
@@ -57,6 +65,7 @@ export function EventModal({
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadingAlbum, setUploadingAlbum] = useState(false)
+  const [albumLimitMsg, setAlbumLimitMsg] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const albumFileRef = useRef<HTMLInputElement>(null)
 
@@ -68,13 +77,18 @@ export function EventModal({
         titleZh: event.titleZh,
         titleEm: event.titleEm,
         eventDate: event.eventDate ?? '',
+        endDate: (event as any).endDate ?? '',
         timeRange: event.timeRange,
         timeSub: event.timeSub,
         location: event.location,
+        organizer: (event as any).organizer ?? '',
         price: event.price != null ? String(event.price) : '',
         entrySubTh: event.entrySubTh,
         entrySubEn: event.entrySubEn,
         entrySubZh: event.entrySubZh,
+        registrationInfoTh: (event as any).registrationInfoTh ?? '',
+        registrationInfoEn: (event as any).registrationInfoEn ?? '',
+        registrationInfoZh: (event as any).registrationInfoZh ?? '',
         descriptionTh: event.descriptionTh,
         descriptionEn: event.descriptionEn,
         descriptionZh: event.descriptionZh,
@@ -107,15 +121,26 @@ export function EventModal({
   }
 
   async function handleAlbumUpload(files: FileList) {
+    setAlbumLimitMsg('')
+    const remaining = MAX_ALBUM_IMAGES - form.albumImages.length
+    const incoming = Array.from(files)
+    const toUpload = incoming.slice(0, remaining)
+    if (incoming.length > toUpload.length) {
+      setAlbumLimitMsg(`อัลบัมรูปภาพได้สูงสุด ${MAX_ALBUM_IMAGES} รูป — เพิ่มได้อีกแค่ ${remaining} รูป`)
+    }
+    if (toUpload.length === 0) {
+      if (albumFileRef.current) albumFileRef.current.value = ''
+      return
+    }
     setUploadingAlbum(true)
     try {
       const { uploadImage } = await import('@/lib/upload-image')
       const urls: string[] = []
-      for (const file of Array.from(files)) {
+      for (const file of toUpload) {
         const { url } = await uploadImage(file)
         urls.push(url)
       }
-      setForm((f) => ({ ...f, albumImages: [...f.albumImages, ...urls] }))
+      setForm((f) => ({ ...f, albumImages: [...f.albumImages, ...urls].slice(0, MAX_ALBUM_IMAGES) }))
     } finally {
       setUploadingAlbum(false)
       if (albumFileRef.current) albumFileRef.current.value = ''
@@ -123,6 +148,7 @@ export function EventModal({
   }
 
   function removeAlbumImage(idx: number) {
+    setAlbumLimitMsg('')
     setForm((f) => ({ ...f, albumImages: f.albumImages.filter((_, i) => i !== idx) }))
   }
 
@@ -183,11 +209,17 @@ export function EventModal({
           </div>
 
           {/* Date / time */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">วันที่</label>
+              <label className="text-xs text-muted-foreground">วันที่เริ่ม</label>
               <Input type="date" value={form.eventDate} onChange={(e) => set('eventDate', e.target.value)} />
             </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">วันที่สิ้นสุด (ถ้ามีหลายวัน)</label>
+              <Input type="date" value={form.endDate} onChange={(e) => set('endDate', e.target.value)} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-xs text-muted-foreground">เวลา</label>
               <Input value={form.timeRange} onChange={(e) => set('timeRange', e.target.value)} placeholder="16:00 – 20:00" />
@@ -198,20 +230,24 @@ export function EventModal({
             </div>
           </div>
 
-          {/* Location / Category */}
+          {/* Location / Organizer / Category */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">สถานที่</label>
+              <label className="text-xs text-muted-foreground">สถานที่ (Venue)</label>
               <Input value={form.location} onChange={(e) => set('location', e.target.value)} placeholder="The Symphony Club" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">หมวดหมู่ ({lang.toUpperCase()})</label>
-              <Input
-                value={form[`category${langSuffix}` as keyof FormData] as string}
-                onChange={(e) => set(`category${langSuffix}` as keyof FormData, e.target.value)}
-                placeholder={lang === 'th' ? 'ปาร์ตี้' : lang === 'en' ? 'Party' : '派对'}
-              />
+              <label className="text-xs text-muted-foreground">ผู้จัด (Organizer)</label>
+              <Input value={form.organizer} onChange={(e) => set('organizer', e.target.value)} placeholder="Love Pier Beach Cafe" />
             </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">หมวดหมู่ ({lang.toUpperCase()})</label>
+            <Input
+              value={form[`category${langSuffix}` as keyof FormData] as string}
+              onChange={(e) => set(`category${langSuffix}` as keyof FormData, e.target.value)}
+              placeholder={lang === 'th' ? 'ปาร์ตี้' : lang === 'en' ? 'Party' : '派对'}
+            />
           </div>
 
           {/* Price */}
@@ -234,6 +270,16 @@ export function EventModal({
                 placeholder={lang === 'th' ? 'เล่นกิจกรรมไม่จำกัด' : lang === 'en' ? 'Unlimited activities' : '无限活动'}
               />
             </div>
+          </div>
+
+          {/* Registration & tickets */}
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">ข้อมูลการลงทะเบียน/บัตร ({lang.toUpperCase()})</label>
+            <Input
+              value={form[`registrationInfo${langSuffix}` as keyof FormData] as string}
+              onChange={(e) => set(`registrationInfo${langSuffix}` as keyof FormData, e.target.value)}
+              placeholder={lang === 'th' ? 'ไม่ต้องสำรองที่นั่งล่วงหน้า' : lang === 'en' ? 'No reservation required' : '无需预订'}
+            />
           </div>
 
           {/* Description */}
@@ -270,13 +316,15 @@ export function EventModal({
           {/* Album images */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs text-muted-foreground">อัลบัมรูปภาพ ({form.albumImages.length} รูป)</label>
+              <label className="text-xs text-muted-foreground">
+                อัลบัมรูปภาพ ({form.albumImages.length}/{MAX_ALBUM_IMAGES} รูป)
+              </label>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => albumFileRef.current?.click()}
-                disabled={uploadingAlbum}
+                disabled={uploadingAlbum || form.albumImages.length >= MAX_ALBUM_IMAGES}
               >
                 {uploadingAlbum ? 'กำลังอัปโหลด...' : '+ เพิ่มรูป'}
               </Button>
@@ -289,6 +337,7 @@ export function EventModal({
                 onChange={(e) => { if (e.target.files?.length) handleAlbumUpload(e.target.files) }}
               />
             </div>
+            {albumLimitMsg && <p className="text-xs text-amber-600">{albumLimitMsg}</p>}
             {form.albumImages.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {form.albumImages.map((url, i) => (

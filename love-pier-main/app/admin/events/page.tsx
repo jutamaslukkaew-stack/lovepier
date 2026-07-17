@@ -32,6 +32,15 @@ function formatDate(d: string | null) {
   return `${parseInt(day)} ${months[parseInt(m) - 1]} ${y}`
 }
 
+// Derived from the date, never stored/editable — mirrors the split used on
+// the public /events page (effective end = endDate, falling back to eventDate).
+function eventStatus(event: Event): 'upcoming' | 'past' | null {
+  const effectiveEnd = (event as any).endDate || event.eventDate
+  if (!effectiveEnd) return null
+  const todayStr = new Date().toISOString().slice(0, 10)
+  return effectiveEnd >= todayStr ? 'upcoming' : 'past'
+}
+
 function SortableRow({
   event,
   onEdit,
@@ -62,6 +71,19 @@ function SortableRow({
         <div className="flex items-center gap-1.5">
           <span className="font-medium text-sm truncate">{event.titleTh}</span>
           {event.isFeatured && <Star className="size-3 fill-amber-400 text-amber-400 shrink-0" />}
+          {(() => {
+            const status = eventStatus(event)
+            if (!status) return null
+            return (
+              <span
+                className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                  status === 'upcoming' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                }`}
+              >
+                {status === 'upcoming' ? 'Upcoming' : 'Past'}
+              </span>
+            )
+          })()}
         </div>
         <div className="text-xs text-muted-foreground truncate">
           {formatDate(event.eventDate)}{event.timeRange ? ` · ${event.timeRange}` : ''}{event.location ? ` · ${event.location}` : ''}
