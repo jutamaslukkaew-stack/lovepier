@@ -1,36 +1,38 @@
 {
   "project": "lovepier (love-pier-main)",
-  "savedAt": "2026-07-14",
+  "savedAt": "2026-07-16",
   "branch": "main",
-  "lastCommit": "2676ad3",
-  "summary": "LINE-integrated delivery ordering system for Love Pier Beach Cafe: LIFF login + GPS delivery-radius gate, distance-based delivery fee, PromptPay QR (company Bill Payment), automatic slip verification (SlipOK), LINE Flex order cards, and an admin backoffice for orders/settings.",
+  "lastCommit": "91a4447",
+  "syncStatus": "local main is in sync with origin/main — nothing to push",
+  "summary": "LINE-integrated delivery ordering system for Love Pier Beach Cafe: a guided full-screen order wizard (LINE login -> GPS distance check -> menu -> summary -> PromptPay QR -> success) plus an Events feature (list, detail page, gallery) and an admin backoffice for orders/settings/events.",
 
-  "sessionTasks": [
-    { "id": 1, "subject": "Install leaflet + vitest dependencies", "status": "completed" },
-    { "id": 2, "subject": "Add delivery-fee calculation (util + admin settings + wiring)", "status": "completed" },
-    { "id": 3, "subject": "Build locating animation (radar sweep, pulse rings, pin drop)", "status": "completed" },
-    { "id": 4, "subject": "Build Leaflet radius map component", "status": "completed" },
-    { "id": 5, "subject": "Build DeliveryGate (mandatory login + GPS gate before menu)", "status": "completed" },
-    { "id": 6, "subject": "Wire deliverySession into CartDrawer + delivery.js", "status": "completed" },
-    { "id": 7, "subject": "Write unit tests for haversine + delivery fee", "status": "completed" },
-    { "id": 8, "subject": "Verify full flow in browser + typecheck/build, then commit+push", "status": "completed" }
-  ],
+  "note": "Commits after 2676ad3 (guided order flow rewrite + events feature) were made in a separate session, not this one. This file reflects the current state of the repo regardless of which session did the work.",
 
   "featureAreas": [
     {
-      "area": "LINE ordering core",
+      "area": "Guided order flow (components/delivery/OrderFlow.js)",
+      "status": "current architecture — replaced the earlier DeliveryGate + CartDrawer bottom-sheet",
+      "notes": "Single linear wizard on /delivery: welcome -> distance check -> menu -> summary -> payment -> success. Full-screen, app-like — site nav/footer are hidden during steps 2-6 via lib/chrome.js. Out-of-radius customers must tick an explicit acknowledgement (courier is their own responsibility, no shop delivery fee) before continuing; a second checkbox gates final payment submission. Includes a visible distance-simulation toggle for testing both radius cases without real GPS. DeliveryGate.js and the old CartDrawer wizard steps were deleted as part of this rewrite."
+    },
+    {
+      "area": "Distance check result screen",
       "status": "done",
-      "notes": "4-step checkout in components/CartDrawer.js (cart -> info -> payment -> success). LINE Login via lib/liff.js. PromptPay QR is a company Bill Payment QR (lib/promptpay.js), not phone PromptPay — Biller ID 010554511741402 for บริษัท เลิฟเพียร์ จำกัด."
+      "notes": "Redesigned as a proper welcome/warning screen (big emoji + heading + distance badge) instead of small scanning-animation text. Radar/pin scanning animation (components/delivery/LocatingAnimation.js) now only shows during the actual locating/calculating phases — LocatingAnimation was also switched from hand-rolled CSS radar/pulse to a hosted Lottie animation (via <dotlottie-wc> web component, loaded from unpkg) plus a CSS pin-drop."
     },
     {
       "area": "Delivery distance + fee",
-      "status": "done",
-      "notes": "pages/api/delivery-distance.js computes distance (haversine or Google Routes, chosen in /admin/settings) and delivery fee (lib/deliveryFee.js: base + per-km, server-side only). Out-of-radius customers are warned but not blocked (explicit shop decision)."
+      "status": "done (from earlier session, still active)",
+      "notes": "pages/api/delivery-distance.js computes distance (haversine or Google Routes, chosen in /admin/settings) and delivery fee (lib/deliveryFee.js: base + per-km, server-side only, recomputed again in /api/orders — never trusts a client-sent fee)."
     },
     {
-      "area": "DeliveryGate (mandatory login + GPS gate)",
+      "area": "deliverySession cache",
       "status": "done",
-      "notes": "components/delivery/DeliveryGate.js sits in front of /delivery only (not /menu). Forces LINE login then GPS scan with LocatingAnimation + DeliveryRadiusMap (Leaflet/OSM, no API key). Degrades gracefully if LIFF unset or GPS fails. Result cached in lib/deliverySession.js so CartDrawer doesn't re-ask."
+      "notes": "lib/deliverySession.js — module-scoped cache of LINE profile + distance/fee learned during OrderFlow, so re-adding items later (e.g. from /promotion) doesn't ask the customer to log in or share location again."
+    },
+    {
+      "area": "LINE ordering core",
+      "status": "done",
+      "notes": "LINE Login via lib/liff.js. PromptPay QR is a company Bill Payment QR (lib/promptpay.js) — Biller ID 010554511741402 for บริษัท เลิฟเพียร์ จำกัด, not phone PromptPay."
     },
     {
       "area": "Slip verification",
@@ -43,46 +45,61 @@
       "notes": "lib/orderFlex.js builds a Tassana-style card sent both customer-side (liff.sendMessages) and shop-side (Messaging API push to the customer) via lib/lineMessaging.js. Links to a public /order/[orderNo] status page."
     },
     {
+      "area": "Events feature",
+      "status": "done (new this round)",
+      "notes": "/events now splits into Upcoming/Past sections derived from the date (never manual), with portrait cards, a location badge, and desaturated styling for past events. New /events/[id] detail page: hero image, sticky info sidebar (date/time range, venue, organizer, registration info), category + price badges, description, photo gallery. Admin event form gained organizer/registration/end-date fields and a 10-image gallery cap (client + server). Additive schema columns: end_date, organizer, registration_info_th/en/zh. Fixed a bug where a partial PUT (e.g. drag-reorder sending only {sortOrder}) reset every other field including the gallery — now only touches fields present in the request."
+    },
+    {
+      "area": "Shared Lightbox",
+      "status": "done",
+      "notes": "components/menu/MenuSections.js Lightbox gained an optional thumbnail-strip mode (thumbnails prop), used by the new event gallery; /menu's lightbox usage is unchanged."
+    },
+    {
       "area": "Admin backoffice",
       "status": "done",
-      "notes": "/admin/orders (list + status dropdown + pending badge in sidebar), /admin/settings (distance method, shop coords, radius, delivery fee, SlipOK keys). Login: cafe.lovepier@gmail.com."
+      "notes": "/admin/orders (list + status dropdown + pending badge in sidebar), /admin/settings (distance method, shop coords, radius, delivery fee, SlipOK keys), /admin/events (extended CRUD). Login: cafe.lovepier@gmail.com."
     },
     {
       "area": "/menu + /delivery unification",
       "status": "done",
-      "notes": "Both pages now render the same components/menu/MenuExperience.js (single source of truth) so future menu-layout edits apply to both pages automatically. /delivery adds showAddToCart + DeliveryGate on top."
+      "notes": "Both pages render components/menu/MenuExperience.js (single source of truth) so future menu-layout edits apply to both. MenuCard's Add-to-cart no longer auto-opens the cart drawer (added onCartClick prop) — lets customers keep tapping through the menu and add several items in a row inside the new OrderFlow menu step."
     },
     {
       "area": "Unit tests",
       "status": "done",
-      "notes": "vitest added (npm run test). lib/geo.test.js (haversineKm), lib/deliveryFee.test.js (calcDeliveryFee) — 10 tests passing."
+      "notes": "vitest (npm run test). lib/geo.test.js (haversineKm), lib/deliveryFee.test.js (calcDeliveryFee) — 10 tests passing as of the last check."
     }
   ],
 
-  "knownBugsFixedThisSession": [
-    "GPS error text froze in the wrong language (stale-closure i18n bug) — fixed by storing error codes instead of pre-translated strings, deriving text at render time.",
+  "knownBugsFixedHistorically": [
+    "GPS error text froze in the wrong language (stale-closure i18n bug) — fixed by storing error codes instead of pre-translated strings.",
     "Leaflet crash 'Cannot read properties of undefined (reading layerPointToLatLng)' — fixed by calling map.setView() before circle.getBounds().",
-    "CartDrawer read lib/deliverySession.js only once on app mount (before DeliveryGate finished) — fixed to re-check every time the drawer opens."
+    "CartDrawer/OrderFlow read deliverySession only once on app mount (before the gate finished) — fixed to re-check on relevant open/step events.",
+    "Event PUT route reset all fields (including gallery) on a partial update like drag-reorder — fixed to only touch fields present in the request."
   ],
 
   "followUps": [
     {
-      "item": "Fix pre-existing React Compiler lint errors (unrelated to this session's feature work)",
+      "item": "Fix pre-existing React Compiler lint errors (unrelated to delivery/events feature work)",
       "location": "pages/reservation.js:181 (setState sync in effect), tweaks-panel.jsx:235/303 (ref access during render)",
       "spawnedTaskId": "task_57488e83",
       "status": "not started — flagged as a separate background task, not yet applied"
     },
     {
       "item": "SlipOK not yet configured in production",
-      "detail": "slipok_api_key / slipok_branch_id are empty in the settings table — slips are stored for manual review until the shop signs up at slipok.com and enters keys in /admin/settings."
+      "detail": "slipok_api_key / slipok_branch_id were empty in the settings table as of the last check — slips are stored for manual review until the shop signs up at slipok.com and enters keys in /admin/settings."
     },
     {
       "item": "Google Routes API not yet configured",
-      "detail": "distance_method is 'straight' (free haversine). Switch to 'google' in /admin/settings + add a Google Maps API key for real driving-distance."
+      "detail": "distance_method was 'straight' (free haversine) as of the last check. Switch to 'google' in /admin/settings + add a Google Maps API key for real driving-distance."
     },
     {
-      "item": "delivery_base_fee / delivery_per_km_rate currently 0",
-      "detail": "Delivery fee feature is live but set to charge nothing until the shop sets real values in /admin/settings."
+      "item": "delivery_base_fee / delivery_per_km_rate were 0 as of the last check",
+      "detail": "Delivery fee feature is live but charges nothing until the shop sets real values in /admin/settings."
+    },
+    {
+      "item": "Re-verify current CartDrawer.js role",
+      "detail": "components/delivery/OrderFlow.js is now the primary /delivery checkout; CartDrawer.js still exists and was touched in the same range of commits (16 lines) — its exact current role (e.g. whether it still opens on other pages) hasn't been re-audited this session."
     }
   ],
 
@@ -91,12 +108,17 @@
     "NEXT_PUBLIC_PROMPTPAY_TYPE=biller",
     "NEXT_PUBLIC_LIFF_ID=2010601364-PyUPQa7l",
     "NEXT_PUBLIC_LINE_OA_ID=@lovepier.cafe",
-    "NEXT_PUBLIC_SHEETS_WEBHOOK_URL=(Apps Script URL, already set)",
+    "NEXT_PUBLIC_SHEETS_WEBHOOK_URL=(Apps Script URL)",
     "LINE_MESSAGING_TOKEN=(optional — enables shop-side Flex push)",
     "LINE_ORDER_NOTIFY_TO=(optional — plain-text staff alert)"
   ],
 
   "recentCommits": [
+    "91a4447 feat: Upcoming/Past events, detail page, gallery + lightbox, admin fields",
+    "93e99cc polish: full-screen app-like order flow with unified sizing",
+    "a7c4fd5 polish: turn distance-check result into a proper welcome/warning screen",
+    "229a7c5 update",
+    "d2bac9e feat: guided 6-step LINE order flow with two-tier confirmation",
     "2676ad3 feat: mandatory LINE login + GPS gate on /delivery, delivery fee, unit tests",
     "b56cf05 update",
     "08fddca refactor: unify /menu and /delivery onto one shared layout",
@@ -107,11 +129,6 @@
     "b617737 feat: auto-send order as a LINE Flex card on checkout (no button)",
     "4a20785 fix: match language switcher border/height to the hamburger button",
     "050eaad feat: /admin/settings — choose distance method (straight-line or Google)",
-    "e794192 fix: slip message showed ฿0 — snapshot order before clearing cart",
-    "c91708c chore: update LINE OA id to @lovepier.cafe",
-    "2c666ca feat: delivery-distance check + post order to LINE chat",
-    "e41bfa1 fix: omit Ref from bill-payment QR to avoid \"reference invalid\"",
-    "892d7af feat: admin orders page, LINE new-order alerts, pending badge",
-    "4c177ee feat: LINE ordering — delivery checkout with LINE Login + PromptPay QR"
+    "e794192 fix: slip message showed ฿0 — snapshot order before clearing cart"
   ]
 }
