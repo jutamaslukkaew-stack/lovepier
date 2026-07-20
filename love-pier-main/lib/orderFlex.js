@@ -148,11 +148,11 @@ export function buildPaymentConfirmedFlex({ orderNo, total }) {
     header: {
       type: 'box',
       layout: 'vertical',
-      backgroundColor: '#1a73e8',
+      backgroundColor: '#2d6a1f',
       paddingAll: '18px',
       contents: [
         { type: 'text', text: '✅ ชำระเงินสำเร็จ', color: '#ffffff', weight: 'bold', size: 'xl' },
-        { type: 'text', text: 'Love Pier Beach Cafe', color: '#d6e4fb', size: 'xs', margin: 'sm' },
+        { type: 'text', text: 'Love Pier Beach Cafe', color: '#d7ecd0', size: 'xs', margin: 'sm' },
       ],
     },
     body: {
@@ -161,7 +161,7 @@ export function buildPaymentConfirmedFlex({ orderNo, total }) {
       spacing: 'sm',
       contents: [
         { type: 'text', text: 'เลขที่ออเดอร์', size: 'xs', color: '#aaaaaa', align: 'center' },
-        { type: 'text', text: String(orderNo), weight: 'bold', size: 'xl', align: 'center', color: '#1a73e8' },
+        { type: 'text', text: String(orderNo), weight: 'bold', size: 'xl', align: 'center', color: '#2d6a1f' },
         { type: 'separator', margin: 'lg' },
         {
           type: 'box',
@@ -169,7 +169,7 @@ export function buildPaymentConfirmedFlex({ orderNo, total }) {
           margin: 'lg',
           contents: [
             { type: 'text', text: '💰 ยอดที่ชำระ', weight: 'bold', size: 'md', color: '#333333' },
-            { type: 'text', text: `฿${money(total)}`, weight: 'bold', size: 'lg', color: '#1a73e8', align: 'end' },
+            { type: 'text', text: `฿${money(total)}`, weight: 'bold', size: 'lg', color: '#2d6a1f', align: 'end' },
           ],
         },
         {
@@ -191,7 +191,7 @@ export function buildPaymentConfirmedFlex({ orderNo, total }) {
         {
           type: 'button',
           style: 'primary',
-          color: '#1a73e8',
+          color: '#2d6a1f',
           height: 'sm',
           action: { type: 'uri', label: '🧾 ตรวจสอบออเดอร์', uri: orderUrl },
         },
