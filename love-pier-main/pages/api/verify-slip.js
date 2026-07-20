@@ -4,6 +4,8 @@ import { orders } from '../../lib/db/schema'
 import { getShopSettings } from '../../lib/settings'
 import { verifySlip } from '../../lib/slipok'
 import { createAdminClient } from '../../lib/supabase/admin'
+import { buildPaymentConfirmedFlex } from '../../lib/orderFlex'
+import { pushToUser } from '../../lib/lineMessaging'
 
 // Allow a slip image (base64) in the request body.
 export const config = { api: { bodyParser: { sizeLimit: '8mb' } } }
@@ -107,6 +109,12 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error('mark paid failed:', err)
     return res.status(200).json({ ok: true, verified: false, stored: true, duplicate: true, error: 'สลิปนี้ถูกใช้ไปแล้ว' })
+  }
+
+  // Best-effort — a push failure shouldn't affect the verified response.
+  if (order.lineUserId) {
+    const flex = buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount })
+    await pushToUser(order.lineUserId, [flex])
   }
 
   return res.status(200).json({ ok: true, verified: true, stored: true, amount: order.totalAmount })

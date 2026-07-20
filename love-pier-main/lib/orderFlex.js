@@ -136,3 +136,68 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
 
   return { type: 'flex', altText: `รับออเดอร์แล้ว ${orderNo} — รวม ฿${money(total)}`, contents: bubble }
 }
+
+// Sent right after SlipOK auto-verifies a payment (pages/api/verify-slip.js),
+// so the customer sees a Love Pier-branded confirmation alongside SlipOK's own
+// reply card in the LINE chat.
+export function buildPaymentConfirmedFlex({ orderNo, total }) {
+  const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
+
+  const bubble = {
+    type: 'bubble',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      backgroundColor: '#1a73e8',
+      paddingAll: '18px',
+      contents: [
+        { type: 'text', text: '✅ ชำระเงินสำเร็จ', color: '#ffffff', weight: 'bold', size: 'xl' },
+        { type: 'text', text: 'Love Pier Beach Cafe', color: '#d6e4fb', size: 'xs', margin: 'sm' },
+      ],
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: 'เลขที่ออเดอร์', size: 'xs', color: '#aaaaaa', align: 'center' },
+        { type: 'text', text: String(orderNo), weight: 'bold', size: 'xl', align: 'center', color: '#1a73e8' },
+        { type: 'separator', margin: 'lg' },
+        {
+          type: 'box',
+          layout: 'horizontal',
+          margin: 'lg',
+          contents: [
+            { type: 'text', text: '💰 ยอดที่ชำระ', weight: 'bold', size: 'md', color: '#333333' },
+            { type: 'text', text: `฿${money(total)}`, weight: 'bold', size: 'lg', color: '#1a73e8', align: 'end' },
+          ],
+        },
+        {
+          type: 'text',
+          text: 'ขอบคุณที่อุดหนุน Love Pier 🌊 กำลังเตรียมออเดอร์ให้แล้ว',
+          size: 'xs',
+          color: '#8c8c8c',
+          wrap: true,
+          margin: 'md',
+          align: 'center',
+        },
+      ],
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        {
+          type: 'button',
+          style: 'primary',
+          color: '#1a73e8',
+          height: 'sm',
+          action: { type: 'uri', label: '🧾 ตรวจสอบออเดอร์', uri: orderUrl },
+        },
+      ],
+    },
+  }
+
+  return { type: 'flex', altText: `ชำระเงินสำเร็จ ${orderNo} — ฿${money(total)}`, contents: bubble }
+}
