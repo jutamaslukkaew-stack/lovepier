@@ -36,25 +36,28 @@ export async function POST(req: Request) {
   const base = `img/${crypto.randomUUID()}`
   const supabase = serviceSupabase()
 
-  // Generate and upload each size
-  const uploaded: { width: number; url: string }[] = []
+  // Generate and upload each size in parallel — each width is independent
+  let uploaded: { width: number; url: string }[]
+  try {
+    uploaded = await Promise.all(WIDTHS.map(async (w) => {
+      const webp = await sharp(buffer)
+        .resize({ width: w, withoutEnlargement: true })
+        .webp({ quality: 82, effort: 4 })
+        .toBuffer()
 
-  for (const w of WIDTHS) {
-    const webp = await sharp(buffer)
-      .resize({ width: w, withoutEnlargement: true })
-      .webp({ quality: 82, effort: 4 })
-      .toBuffer()
+      const path = `${base}-${w}w.webp`
+      const { error } = await supabase.storage.from(BUCKET).upload(path, webp, {
+        contentType: 'image/webp',
+        cacheControl: '31536000',
+        upsert: false,
+      })
+      if (error) throw new Error(error.message)
 
-    const path = `${base}-${w}w.webp`
-    const { error } = await supabase.storage.from(BUCKET).upload(path, webp, {
-      contentType: 'image/webp',
-      cacheControl: '31536000',
-      upsert: false,
-    })
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
-    uploaded.push({ width: w, url: data.publicUrl })
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
+      return { width: w, url: data.publicUrl }
+    }))
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Upload failed' }, { status: 500 })
   }
 
   // Default URL = 960w (middle size)
