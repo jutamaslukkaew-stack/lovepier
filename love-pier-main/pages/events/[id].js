@@ -116,7 +116,7 @@ export default function EventDetail({ event }) {
 
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-10 items-start">
           {/* Hero image */}
-          <div className="relative overflow-hidden rounded-2xl bg-[#f2ede6]" style={{ aspectRatio: '4 / 3' }}>
+          <div className="relative overflow-hidden rounded-2xl bg-[#f2ede6]" style={{ aspectRatio: '3 / 4' }}>
             {event.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
