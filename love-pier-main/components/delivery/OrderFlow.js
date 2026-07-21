@@ -476,7 +476,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
           type: PROMPTPAY_TYPE,
           target: PROMPTPAY_ID,
           amount,
-          ref1: PROMPTPAY_REF,
+          ref1: PROMPTPAY_REF || ref,
         })
         const url = await QRCode.toDataURL(payload, { margin: 1, width: 320 })
         setQrDataUrl(url)

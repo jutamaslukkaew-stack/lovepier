@@ -338,9 +338,10 @@ export default function CartDrawer() {
           type: PROMPTPAY_TYPE,
           target: PROMPTPAY_ID,
           amount,
-          // Only embed a Ref the biller actually expects; otherwise omit it so
-          // the bank doesn't reject the QR with "reference invalid".
-          ref1: PROMPTPAY_REF,
+          // Thai Bill Payment (tag 30) QRs require Ref.1 to be present for the
+          // template to be well-formed — an explicit PROMPTPAY_REF wins if the
+          // biller needs a fixed value, otherwise fall back to the per-order ref.
+          ref1: PROMPTPAY_REF || ref,
         })
         const url = await QRCode.toDataURL(payload, { margin: 1, width: 320 })
         setQrDataUrl(url)
