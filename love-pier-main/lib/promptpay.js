@@ -67,12 +67,16 @@ export function promptpayPayload(target, amount) {
  * This is a different template (tag 30) from the transfer QR above.
  * @param {string} billerId  15-digit Biller ID (e.g. 010554511741402).
  * @param {number} [amount]  Amount in THB. Omit for a static QR.
- * @param {string} [ref1]  Reference 1 — use the order/payment ref so the shop
- *   can reconcile the incoming payment with the order. Alphanumeric.
+ * @param {string} [ref1]  Reference 1. Some billers (e.g. this shop's SCB Mae
+ *   Manee setup) reject anything but a fixed, pre-registered value — verified
+ *   against the biller's own printed static QR — so this is NOT safe to fill
+ *   with a per-order/dynamic value unless you've confirmed the biller allows it.
  * @param {string} [ref2]  Reference 2 — optional.
+ * @param {string} [terminalLabel]  Terminal Label (EMVCo tag 62 sub-tag 07) —
+ *   required by this biller alongside ref1/ref2, also from the static QR.
  * @returns {string} EMVCo payload ready to be rendered as a QR code.
  */
-export function billPaymentPayload(billerId, amount, ref1, ref2) {
+export function billPaymentPayload(billerId, amount, ref1, ref2, terminalLabel) {
   const bid = String(billerId).replace(/\D/g, '')
   const clean = (s) => String(s || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
 
@@ -90,6 +94,9 @@ export function billPaymentPayload(billerId, amount, ref1, ref2) {
   if (amount != null) {
     parts.push(tag('54', Number(amount).toFixed(2)))
   }
+  if (terminalLabel) {
+    parts.push(tag('62', tag('07', clean(terminalLabel)))) // additional data — terminal label
+  }
 
   const withoutCrc = parts.join('') + '6304'
   return withoutCrc + crc16(withoutCrc)
@@ -99,7 +106,7 @@ export function billPaymentPayload(billerId, amount, ref1, ref2) {
  * Convenience dispatcher used by the checkout. Picks the right template based
  * on `type` ('biller' → bill payment, otherwise phone/ID transfer).
  */
-export function buildPaymentPayload({ type, target, amount, ref1 }) {
-  if (type === 'biller') return billPaymentPayload(target, amount, ref1)
+export function buildPaymentPayload({ type, target, amount, ref1, ref2, terminalLabel }) {
+  if (type === 'biller') return billPaymentPayload(target, amount, ref1, ref2, terminalLabel)
   return promptpayPayload(target, amount)
 }

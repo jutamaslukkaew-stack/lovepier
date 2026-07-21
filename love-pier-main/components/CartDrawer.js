@@ -13,17 +13,17 @@ import { getDeliverySession } from '../lib/deliverySession'
 
 const PROMPTPAY_ID = process.env.NEXT_PUBLIC_PROMPTPAY_ID || ''
 const PROMPTPAY_TYPE = process.env.NEXT_PUBLIC_PROMPTPAY_TYPE || '' // 'biller' | ''
-// Optional fixed reference for the bill-payment QR. Bill-payment billers validate
-// Ref1 against their own rules, so a random ref is rejected ("reference invalid").
-// Leave blank to omit Ref1 from the QR; set it only if your biller expects a
-// specific fixed reference.
+// Fixed Ref1/Ref2/Terminal Label for the bill-payment QR. This biller's SCB
+// Mae Manee setup rejects any Ref1 that isn't the exact registered value
+// ("เลขที่อ้างอิงไม่ถูกต้อง") — confirmed against the biller's own printed
+// static QR sticker. Don't feed a per-order/dynamic value in here.
 const PROMPTPAY_REF = process.env.NEXT_PUBLIC_PROMPTPAY_REF || ''
+const PROMPTPAY_REF2 = process.env.NEXT_PUBLIC_PROMPTPAY_REF2 || ''
+const PROMPTPAY_TERMINAL_LABEL = process.env.NEXT_PUBLIC_PROMPTPAY_TERMINAL_LABEL || ''
 const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@lovepier.cafe'
 
 // Internal reference saved with the order so the shop can track it in /admin.
 // (Not embedded in the payment QR — see PROMPTPAY_REF above.)
-// Digits only — the biller's Bill Payment backend rejects a Ref.1 that mixes
-// in letters ("เลขที่อ้างอิงไม่ถูกต้อง").
 function makePaymentRef() {
   return Date.now().toString().slice(-10)
 }
@@ -340,10 +340,9 @@ export default function CartDrawer() {
           type: PROMPTPAY_TYPE,
           target: PROMPTPAY_ID,
           amount,
-          // Thai Bill Payment (tag 30) QRs require Ref.1 to be present for the
-          // template to be well-formed — an explicit PROMPTPAY_REF wins if the
-          // biller needs a fixed value, otherwise fall back to the per-order ref.
-          ref1: PROMPTPAY_REF || ref,
+          ref1: PROMPTPAY_REF,
+          ref2: PROMPTPAY_REF2,
+          terminalLabel: PROMPTPAY_TERMINAL_LABEL,
         })
         const url = await QRCode.toDataURL(payload, { margin: 1, width: 320 })
         setQrDataUrl(url)

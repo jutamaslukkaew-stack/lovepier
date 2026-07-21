@@ -25,10 +25,14 @@ const DeliveryRadiusMap = dynamic(() => import('./DeliveryRadiusMap'), { ssr: fa
 const PROMPTPAY_ID = process.env.NEXT_PUBLIC_PROMPTPAY_ID || ''
 const PROMPTPAY_TYPE = process.env.NEXT_PUBLIC_PROMPTPAY_TYPE || ''
 const PROMPTPAY_REF = process.env.NEXT_PUBLIC_PROMPTPAY_REF || ''
+const PROMPTPAY_REF2 = process.env.NEXT_PUBLIC_PROMPTPAY_REF2 || ''
+const PROMPTPAY_TERMINAL_LABEL = process.env.NEXT_PUBLIC_PROMPTPAY_TERMINAL_LABEL || ''
 const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@lovepier.cafe'
 
-// Digits only — the biller's Bill Payment backend rejects a Ref.1 that mixes
-// in letters ("เลขที่อ้างอิงไม่ถูกต้อง").
+// Our own per-order reference, for display/reconciliation only (shown in the
+// LINE message, stored on the order) — NOT embedded in the QR. The QR's own
+// Ref.1 must be the biller's fixed PROMPTPAY_REF; this biller's SCB Mae Manee
+// setup rejects any other value ("เลขที่อ้างอิงไม่ถูกต้อง").
 function makePaymentRef() {
   return Date.now().toString().slice(-10)
 }
@@ -478,7 +482,9 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
           type: PROMPTPAY_TYPE,
           target: PROMPTPAY_ID,
           amount,
-          ref1: PROMPTPAY_REF || ref,
+          ref1: PROMPTPAY_REF,
+          ref2: PROMPTPAY_REF2,
+          terminalLabel: PROMPTPAY_TERMINAL_LABEL,
         })
         const url = await QRCode.toDataURL(payload, { margin: 1, width: 320 })
         setQrDataUrl(url)
