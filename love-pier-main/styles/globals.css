@@ -11,6 +11,7 @@
 
 body {
   font-family: "LINESeedSansTH", Jost, "Noto Sans Thai", sans-serif;
+  background-color: var(--color-bg);
 }
 
 /* Thai text: disable letter-spacing for readability */
@@ -29,7 +30,7 @@ body {
   100% { transform: translateY(0) scale(1); }
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; background-color: var(--color-bg); }
 
 body.menu-open {
   overflow: hidden;
