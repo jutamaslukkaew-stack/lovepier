@@ -4,6 +4,13 @@
 //
 // Config (from /admin/settings): slipokApiKey, slipokBranchId.
 
+// The Bill Payment / Mae Manee biller account is shared across many merchants
+// under the same bank account number, so SlipOK's own "main account" check
+// (triggered by log:true) doesn't recognize it and reports code 1014 even for
+// a genuine payment. SlipOK's docs say to match on Ref.1 instead for this
+// case — this is the shop's fixed Ref.1 (see NEXT_PUBLIC_PROMPTPAY_REF).
+const BILLER_REF1 = process.env.NEXT_PUBLIC_PROMPTPAY_REF || ''
+
 /**
  * Verify a transfer slip image.
  * @param {object} cfg  { apiKey, branchId }
@@ -63,6 +70,20 @@ export async function verifySlip({ apiKey, branchId }, { imageBase64, amount }) 
 
   // Common failure codes (e.g. 1012 = duplicate slip). Surface a readable reason.
   const code = data?.code
+
+  // code 1014 = "บัญชีผู้รับไม่ตรงกับบัญชีหลักของร้าน" — SlipOK's automatic
+  // account-match doesn't apply to Bill Payment receivers; fall back to our
+  // own Ref.1 match (the slip read itself already succeeded at this point).
+  if (code === 1014 && BILLER_REF1 && data?.data?.ref1 === BILLER_REF1) {
+    const d = data.data
+    return {
+      ok: true,
+      verified: true,
+      amount: Number(d.amount),
+      transRef: d.transRef || d.transRefNumber || d.ref || null,
+    }
+  }
+
   const duplicate = code === 1012 || /ซ้ำ|duplicate/i.test(data?.message || '')
   return {
     ok: true,
