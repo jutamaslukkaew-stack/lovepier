@@ -27,8 +27,10 @@ const PROMPTPAY_TYPE = process.env.NEXT_PUBLIC_PROMPTPAY_TYPE || ''
 const PROMPTPAY_REF = process.env.NEXT_PUBLIC_PROMPTPAY_REF || ''
 const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@lovepier.cafe'
 
+// Digits only — the biller's Bill Payment backend rejects a Ref.1 that mixes
+// in letters ("เลขที่อ้างอิงไม่ถูกต้อง").
 function makePaymentRef() {
-  return 'LP' + Date.now().toString(36).toUpperCase()
+  return Date.now().toString().slice(-10)
 }
 
 const STEP_ORDER = ['welcome', 'distance', 'menu', 'summary', 'payment', 'success']

@@ -22,8 +22,10 @@ const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@lovepier.cafe'
 
 // Internal reference saved with the order so the shop can track it in /admin.
 // (Not embedded in the payment QR — see PROMPTPAY_REF above.)
+// Digits only — the biller's Bill Payment backend rejects a Ref.1 that mixes
+// in letters ("เลขที่อ้างอิงไม่ถูกต้อง").
 function makePaymentRef() {
-  return 'LP' + Date.now().toString(36).toUpperCase()
+  return Date.now().toString().slice(-10)
 }
 
 const COPY = {
