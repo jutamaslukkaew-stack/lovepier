@@ -1,43 +1,75 @@
 {
   "project": "lovepier (love-pier-main)",
-  "savedAt": "2026-07-16",
+  "savedAt": "2026-07-22",
   "branch": "main",
-  "lastCommit": "91a4447",
+  "lastCommit": "944910c",
   "syncStatus": "local main is in sync with origin/main — nothing to push",
   "summary": "LINE-integrated delivery ordering system for Love Pier Beach Cafe: a guided full-screen order wizard (LINE login -> GPS distance check -> menu -> summary -> PromptPay QR -> success) plus an Events feature (list, detail page, gallery) and an admin backoffice for orders/settings/events.",
 
-  "note": "Commits after 2676ad3 (guided order flow rewrite + events feature) were made in a separate session, not this one. This file reflects the current state of the repo regardless of which session did the work.",
+  "note": "This session (2026-07-22, continued) hardened the live payment path. Three things landed + verified against REAL production payments: (1) the SlipOK code-1014 Ref.1 fallback was silently disabled in prod because it was gated on NEXT_PUBLIC_PROMPTPAY_REF, which Next.js inlines at BUILD time — a build predating that Vercel env var baked it as undefined, so every genuine Bill Payment slip failed 1014. Now defaults to the shop's fixed Ref.1/biller id so it works regardless of build-time env (commit 5a83cb9). (2) Vercel build broke again with 'No Next.js version detected' — Vercel CLI 56.x now resolves the next VERSION from installed node_modules, not just the package.json dependency string, so installCommand 'echo skip' left nothing to detect; changed it to 'npm install' at root (commit b50f926). (3) LINE_MESSAGING_TOKEN was finally set in Vercel — the payment-confirmation Flex card now actually reaches the LINE OA (verified live on order LP260722-4082: both the order-received card AND the '✅ ชำระเงินสำเร็จ' card arrived). REMAINING: SlipOK still returns 1014 for Mae Manee Bill Payment even after the shop linked the แม่มณี account to branch 71639 — because the slip's receiver biller id comes back MASKED ('XXXXXXXXXXX1402') so SlipOK can't match it to the registered full '010554511741402'. This is a SlipOK-side limitation; shop must contact SlipOK support. It does NOT affect taking payment (our fallback marks paid) — only SlipOK's own dashboard tally + SlipOK's cross-slip duplicate detection. >>> RESOLVED LATER THE SAME DAY (see the SlipOK featureArea): SlipOK now accepts the masked Mae Manee biller and returns success for genuine shop payments.",
+
+  "noteLatest": "Later on 2026-07-22 (same day, continued): (1) SlipOK 1014 is RESOLVED — re-tested real stored slips through the live SlipOK API and genuine shop payments (receiver BILLERID ...1402, ref1 REF001) now return success:true natively, so they log in the SlipOK dashboard AND SlipOK's cross-slip duplicate detection now covers Bill Payment slips. Our 1014 Ref.1 fallback is now just a safety net. The 3 pending orders that still return 1014 are NOT shop payments at all — inspecting receiver revealed LP260717-2240 (฿735) was paid to METROPOLITAN WATERWORKS (a water bill!), and LP260720-7453 (฿20) + LP260721-2094 (฿550) went to personal e-wallets (...8206, ...6002). SlipOK is correctly rejecting bogus slips; do NOT mark them paid. (2) Fixed event images not rendering in /admin/events — the list thumbnail was the only admin <Image> missing `unoptimized` and next.config had no images.remotePatterns for Supabase (commit 8b3ef50). (3) Recolored the LINE Flex cards (commit 4c91891) and the public order-status page (commit 944910c) from the old green #2d6a1f to the site's warm palette, and stripped the emoji icons off the order-status card.",
 
   "featureAreas": [
     {
-      "area": "Guided order flow (components/delivery/OrderFlow.js)",
-      "status": "current architecture — replaced the earlier DeliveryGate + CartDrawer bottom-sheet",
-      "notes": "Single linear wizard on /delivery: welcome -> distance check -> menu -> summary -> payment -> success. Full-screen, app-like — site nav/footer are hidden during steps 2-6 via lib/chrome.js. Out-of-radius customers must tick an explicit acknowledgement (courier is their own responsibility, no shop delivery fee) before continuing; a second checkbox gates final payment submission. Includes a visible distance-simulation toggle for testing both radius cases without real GPS. DeliveryGate.js and the old CartDrawer wizard steps were deleted as part of this rewrite."
+      "area": "PromptPay Bill Payment QR (lib/promptpay.js)",
+      "status": "done — fixed a live payment-blocking bug this session",
+      "notes": "The QR was missing Ref.1 entirely, then (once added) used a per-order dynamic Ref.1 — both rejected by the bank ('QR code ไม่ถูกต้อง' / 'เลขที่อ้างอิงไม่ถูกต้อง'). Root cause found by decoding the shop's real physical Mae Manee QR sticker with a QR reader: this SCB Bill Payment biller (010554511741402) requires exact FIXED values — Ref.1='REF001', Ref.2='0', and a Terminal Label (EMVCo tag 62 sub-tag 07)='SKD68W744913' — which the code never sent at all. billPaymentPayload() now accepts terminalLabel; verified byte-for-byte identical to the real sticker's payload (CRC included), then confirmed with a real K PLUS bank payment. New env vars: NEXT_PUBLIC_PROMPTPAY_REF=REF001, NEXT_PUBLIC_PROMPTPAY_REF2=0, NEXT_PUBLIC_PROMPTPAY_TERMINAL_LABEL=SKD68W744913 (set in Vercel, not just .env.local — NEXT_PUBLIC_ vars are baked at build time)."
     },
     {
-      "area": "Distance check result screen",
+      "area": "SlipOK auto-verification (lib/slipok.js)",
+      "status": "done — SlipOK now accepts the Mae Manee Bill Payment biller; 1014 fully resolved (verified live 2026-07-22)",
+      "notes": "History: (1) the API key kept changing when viewed in the dashboard (regeneration); working key captured (SLIPOKL4KI95U, len 13, branch 71639). (2) SlipOK's log:true 'main account' check doesn't recognize the Mae Manee Bill Payment receiver (shared account) and returns code 1014 for genuine payments; added a Ref.1 fallback. (3) THIS session: that fallback was silently DEAD in production. It was gated on `const BILLER_REF1 = process.env.NEXT_PUBLIC_PROMPTPAY_REF || ''` — NEXT_PUBLIC_* is inlined at build time, so a deploy built before the var was set in Vercel baked it as undefined, making the `&& BILLER_REF1` guard false and disabling the whole fallback. Fixed (commit 5a83cb9): default to the shop's fixed values `BILLER_REF1='REF001'` and `BILLER_ID='010554511741402'` (both printed on the physical QR sticker, not secret), and match on Ref.1 OR receiver biller-id (receiver.proxy.value comes back MASKED like 'XXXXXXXXXXX1402' so we compare trailing visible digits via BILLER_ID.endsWith). Verified by replaying real stored slips through the actual verifySlip() with env present AND env cleared — both return verified:true. IMPORTANT UNRESOLVED: SlipOK's OWN API still returns 1014 even after the shop linked the แม่มณี account (010554511741402) to branch 71639 with the toggle on — confirmed by re-testing a FRESH slip (LP260722-4082) live: still code 1014. Root cause is the masked biller id; SlipOK can't be configured around it from the dashboard. Shop must ask SlipOK support to accept biller 010554511741402 for branch 71639. Consequence: SlipOK never logs these transactions, so (a) the amount never shows in the SlipOK dashboard and (b) SlipOK's cross-slip duplicate detection does NOT cover Bill Payment slips — a customer could reuse one slip across multiple orders. Our only current dup guard is 'this order is already paid'. >>> RESOLVED 2026-07-22 (later same day): replayed real stored slips through the live SlipOK API — genuine shop payments (LP260722-4082, LP260721-4425; receiver proxy BILLERID 'XXXXXXXXXXX1402', ref1 'REF001') now return success:true from SlipOK itself, so verifySlip() hits the primary success branch and never needs the 1014 fallback. Consequences reversed: SlipOK DOES log these now, so the dashboard tally works and SlipOK's own cross-slip duplicate detection covers Bill Payment slips."
+    },
+    {
+      "area": "LINE payment-confirmation push (LINE_MESSAGING_TOKEN)",
+      "status": "done — now verified live",
+      "notes": "The '✅ ชำระเงินสำเร็จ' Flex card (buildPaymentConfirmedFlex, pushed via pushToUser in pages/api/verify-slip.js) requires LINE_MESSAGING_TOKEN. It was previously unset in Vercel, so pushToUser returned {skipped:true} silently and no card reached the LINE OA even though the order stored a valid lineUserId. Shop set the token in Vercel this session; verified on order LP260722-4082 that both the order-received card and the payment-confirmed card now arrive in the @lovepier.cafe chat. NB for future debugging: pushToUser also needs the LIFF's LINE Login channel and the OA's Messaging API channel to belong to the same OA/provider, or the userId won't be pushable."
+    },
+    {
+      "area": "Payment-confirmation LINE Flex card (lib/orderFlex.js)",
+      "status": "done (new this session)",
+      "notes": "buildPaymentConfirmedFlex() — sent via pages/api/verify-slip.js the moment SlipOK verifies a slip, alongside SlipOK's own reply card in the same LINE chat. Styled in the shop's green brand tone (#2d6a1f, matching the existing order-received card) rather than a new color."
+    },
+    {
+      "area": "Brand colour of LINE cards + order status page",
+      "status": "done (2026-07-22)",
+      "notes": "The LINE Flex cards (lib/orderFlex.js) and the public order-status page (pages/order/[orderNo].js) were green (#2d6a1f), which matched nothing on the site. Both now use the real theme tokens from styles/globals.css: espresso #3a2818 for card headers and primary buttons, gold #c9a96e for the 'Love Pier Beach Cafe' subtitle (gold is only ever used on dark backgrounds — it fails contrast on white), deep brown #4a3520 for order numbers and totals on white, cream #f5f3ef page background. The order page's 'paid' badge became a SOLID espresso pill with cream text so it stays visually distinct from the pale amber 'pending' badge; the other status colours (pending amber / preparing blue / cancelled red) stay semantic on purpose. All emoji icons (✅ 📍 🛵 💰) were removed from the order-status card at the user's request — the address row gained a real 'ที่อยู่ :' label because the pin emoji had been its only label. Green #2d6a1f still remains in components/CartDrawer.js, components/delivery/OrderFlow.js and app/admin/orders/page.tsx — not yet rethemed."
+    },
+    {
+      "area": "Event images not rendering in /admin/events",
+      "status": "done (2026-07-22, commit 8b3ef50)",
+      "notes": "Uploaded event images showed a broken-image icon in the admin list. Storage was fine all along (bucket public, files present, URLs return 200 image/webp with access-control-allow-origin *). Cause: app/admin/events/page.tsx rendered the thumbnail with next/image and was the ONLY admin <Image> missing `unoptimized` (menu-manager, promotions page and PromotionModal all had it), while next.config.mjs had no images.remotePatterns — so Next refused the external Supabase host. Fixed both ways: added `unoptimized` to the thumbnail and whitelisted https://*.supabase.co/storage/v1/object/public/** in remotePatterns. NB: the in-app preview browser cannot display ANY external-host image (localhost images load, Supabase ones do not) — that is a sandbox limitation and must not be mistaken for this bug; verify external images on a real device."
+    },
+    {
+      "area": "Admin image upload speed (app/api/admin/upload/route.ts)",
       "status": "done",
-      "notes": "Redesigned as a proper welcome/warning screen (big emoji + heading + distance badge) instead of small scanning-animation text. Radar/pin scanning animation (components/delivery/LocatingAnimation.js) now only shows during the actual locating/calculating phases — LocatingAnimation was also switched from hand-rolled CSS radar/pulse to a hosted Lottie animation (via <dotlottie-wc> web component, loaded from unpkg) plus a CSS pin-drop."
+      "notes": "Was generating the 3 responsive widths (480/960/1440) sequentially — 3 stacked resize+upload round-trips per click. Now runs them in Promise.all (each width is independent), ~2-3x faster."
+    },
+    {
+      "area": "Vercel build",
+      "status": "done — fixed twice; latest fix this session",
+      "notes": "The real app lives in love-pier-main/, built via a custom buildCommand in vercel.json that cd's into it. Vercel's framework detection runs at the repo root and hard-fails with 'No Next.js version detected' before the custom build command. First fix (e8779ff) declared `next` in the root package.json and kept installCommand 'echo skip'. That stopped working: Vercel CLI 56.x now resolves the next VERSION from the installed node_modules (reading next/package.json), not just the dependency string, so 'echo skip' left nothing installed and detection failed again. Current fix (commit b50f926): installCommand = 'npm install --no-audit --no-fund' at root, whose only dependency is next@16.2.6 — a ~16-package / ~4s install (dry-run verified) that gives Vercel a resolvable node_modules/next. buildCommand still does the real install+build inside love-pier-main. outputDirectory stays love-pier-main/.next."
+    },
+    {
+      "area": "Global background color (styles/globals.css)",
+      "status": "done",
+      "notes": "Short pages (e.g. /delivery's welcome step — just a hero + footer, no full-height wrapper) showed a jarring blank white gap below the footer on tall viewports, since html/body had no background set. Added background-color: var(--color-bg) to both — had to be added as two separate rules, since Turbopack's CSS build silently drops the html side when declared as a compound `html, body` selector alongside the project's existing standalone `html { scroll-behavior }` rule (a real build-tool quirk, not a CSS mistake)."
+    },
+    {
+      "area": "Event detail hero aspect ratio",
+      "status": "done",
+      "notes": "pages/events/[id].js hero image changed from 4:3 to 3:4 to match the /events grid card poster ratio, per explicit user request for visual consistency."
+    },
+    {
+      "area": "Guided order flow (components/delivery/OrderFlow.js)",
+      "status": "current architecture — replaced the earlier DeliveryGate + CartDrawer bottom-sheet",
+      "notes": "Single linear wizard on /delivery: welcome -> distance check -> menu -> summary -> payment -> success. Full-screen, app-like — site nav/footer are hidden during steps 2-6 via lib/chrome.js. Out-of-radius customers must tick an explicit acknowledgement before continuing. makePaymentRef() still generates a per-order reference for our own reconciliation (LINE message, order record) but it is NOT embedded in the QR anymore — the QR's Ref.1 must be the biller's fixed value (see PromptPay entry above)."
     },
     {
       "area": "Delivery distance + fee",
       "status": "done (from earlier session, still active)",
       "notes": "pages/api/delivery-distance.js computes distance (haversine or Google Routes, chosen in /admin/settings) and delivery fee (lib/deliveryFee.js: base + per-km, server-side only, recomputed again in /api/orders — never trusts a client-sent fee)."
-    },
-    {
-      "area": "deliverySession cache",
-      "status": "done",
-      "notes": "lib/deliverySession.js — module-scoped cache of LINE profile + distance/fee learned during OrderFlow, so re-adding items later (e.g. from /promotion) doesn't ask the customer to log in or share location again."
-    },
-    {
-      "area": "LINE ordering core",
-      "status": "done",
-      "notes": "LINE Login via lib/liff.js. PromptPay QR is a company Bill Payment QR (lib/promptpay.js) — Biller ID 010554511741402 for บริษัท เลิฟเพียร์ จำกัด, not phone PromptPay."
-    },
-    {
-      "area": "Slip verification",
-      "status": "done",
-      "notes": "Attach-slip button always shown; auto-verifies via SlipOK when configured in /admin/settings, otherwise stores the slip image (private Supabase bucket 'slips') for manual review in /admin/orders."
     },
     {
       "area": "LINE Flex order cards",
@@ -46,13 +78,8 @@
     },
     {
       "area": "Events feature",
-      "status": "done (new this round)",
-      "notes": "/events now splits into Upcoming/Past sections derived from the date (never manual), with portrait cards, a location badge, and desaturated styling for past events. New /events/[id] detail page: hero image, sticky info sidebar (date/time range, venue, organizer, registration info), category + price badges, description, photo gallery. Admin event form gained organizer/registration/end-date fields and a 10-image gallery cap (client + server). Additive schema columns: end_date, organizer, registration_info_th/en/zh. Fixed a bug where a partial PUT (e.g. drag-reorder sending only {sortOrder}) reset every other field including the gallery — now only touches fields present in the request."
-    },
-    {
-      "area": "Shared Lightbox",
       "status": "done",
-      "notes": "components/menu/MenuSections.js Lightbox gained an optional thumbnail-strip mode (thumbnails prop), used by the new event gallery; /menu's lightbox usage is unchanged."
+      "notes": "/events splits into Upcoming/Past sections derived from the date, with portrait cards, a location badge, and desaturated styling for past events. /events/[id] detail page: hero image, sticky info sidebar, category + price badges, description, photo gallery."
     },
     {
       "area": "Admin backoffice",
@@ -62,12 +89,7 @@
     {
       "area": "/menu + /delivery unification",
       "status": "done",
-      "notes": "Both pages render components/menu/MenuExperience.js (single source of truth) so future menu-layout edits apply to both. MenuCard's Add-to-cart no longer auto-opens the cart drawer (added onCartClick prop) — lets customers keep tapping through the menu and add several items in a row inside the new OrderFlow menu step."
-    },
-    {
-      "area": "Unit tests",
-      "status": "done",
-      "notes": "vitest (npm run test). lib/geo.test.js (haversineKm), lib/deliveryFee.test.js (calcDeliveryFee) — 10 tests passing as of the last check."
+      "notes": "Both pages render components/menu/MenuExperience.js (single source of truth) so future menu-layout edits apply to both."
     }
   ],
 
@@ -75,19 +97,23 @@
     "GPS error text froze in the wrong language (stale-closure i18n bug) — fixed by storing error codes instead of pre-translated strings.",
     "Leaflet crash 'Cannot read properties of undefined (reading layerPointToLatLng)' — fixed by calling map.setView() before circle.getBounds().",
     "CartDrawer/OrderFlow read deliverySession only once on app mount (before the gate finished) — fixed to re-check on relevant open/step events.",
-    "Event PUT route reset all fields (including gallery) on a partial update like drag-reorder — fixed to only touch fields present in the request."
+    "Event PUT route reset all fields (including gallery) on a partial update like drag-reorder — fixed to only touch fields present in the request.",
+    "PromptPay Bill Payment QR missing/wrong Ref.1, Ref.2, and Terminal Label — customers could not pay at all. Fixed by matching the biller's registered fixed values exactly (see PromptPay entry above).",
+    "SlipOK auto-verification rejected every real payment with 'บัญชีผู้รับไม่ตรงกับบัญชีหลักของร้าน' — fixed with a Ref.1 fallback match for Bill Payment receivers.",
+    "Vercel deploy hard-failed with 'No Next.js version detected' — fixed by declaring next in the root package.json."
   ],
 
   "followUps": [
+    {
+      "item": "Customer-reported: no popup/notification when entering /delivery from LINE OA while far from the shop",
+      "detail": "User flagged this alongside a (now-fixed) blank-space CSS bug, but never confirmed what specifically they meant — asked directly whether they want an immediate out-of-radius warning popup on first page load (before the customer even taps 'เริ่มสั่งอาหาร'), or something else (e.g. a rich-menu link pointing to the wrong page). Unanswered as of end of session — needs a reply before any code change.",
+      "status": "blocked on user clarification"
+    },
     {
       "item": "Fix pre-existing React Compiler lint errors (unrelated to delivery/events feature work)",
       "location": "pages/reservation.js:181 (setState sync in effect), tweaks-panel.jsx:235/303 (ref access during render)",
       "spawnedTaskId": "task_57488e83",
       "status": "not started — flagged as a separate background task, not yet applied"
-    },
-    {
-      "item": "SlipOK not yet configured in production",
-      "detail": "slipok_api_key / slipok_branch_id were empty in the settings table as of the last check — slips are stored for manual review until the shop signs up at slipok.com and enters keys in /admin/settings."
     },
     {
       "item": "Google Routes API not yet configured",
@@ -99,36 +125,63 @@
     },
     {
       "item": "Re-verify current CartDrawer.js role",
-      "detail": "components/delivery/OrderFlow.js is now the primary /delivery checkout; CartDrawer.js still exists and was touched in the same range of commits (16 lines) — its exact current role (e.g. whether it still opens on other pages) hasn't been re-audited this session."
+      "detail": "components/delivery/OrderFlow.js is the primary /delivery checkout; CartDrawer.js still exists and received the same Ref.1/Ref.2/Terminal Label fix this session for consistency, but its exact current role (e.g. whether it still opens on other pages) hasn't been re-audited."
+    },
+    {
+      "item": "[DIAGNOSED 2026-07-22] Pending orders whose slips fail SlipOK are BOGUS SLIPS, not a system fault",
+      "detail": "Inspected each failing slip's actual receiver via the live SlipOK API: LP260717-2240 (฿735) was paid to 'METROPOLITAN WATERWORKS' biller ...6309 — the customer attached their WATER BILL slip; LP260720-7453 (฿20) went to a personal e-wallet (...8206, น.ส. วิลาสินี); LP260721-2094 (฿550) went to a personal e-wallet (...6002, น.ส. ณัฐชาริณีย์). None were paid to the shop's biller (...1402), so SlipOK's 1014 is CORRECT. Do NOT mark these paid — they are wrong or fraudulent slips. Leave pending / cancel."
+    },
+    {
+      "item": "[RESOLVED 2026-07-22] SlipOK returned 1014 for Mae Manee Bill Payment — no longer an issue",
+      "detail": "Shop linked the แม่มณี account (010554511741402) to branch 71639 in the SlipOK dashboard (shows 'เชื่อมต่อแล้ว', toggle on, alongside the SCB acct 6402723755). Re-tested a FRESH live slip (LP260722-4082) through the real SlipOK API afterwards: STILL code 1014. Root cause is that the slip's receiver.proxy.value comes back MASKED ('XXXXXXXXXXX1402'), so SlipOK can't match the shared Mae Manee biller. Cannot be fixed from the dashboard. Shop was given a ready-to-send Thai support message asking SlipOK to accept biller 010554511741402 for branch 71639. Until then the SlipOK dashboard won't tally these and SlipOK's duplicate check won't cover them. Our own verify-slip fallback still marks orders paid correctly.",
+      "status": "resolved — verified live: genuine shop payments now return success:true from SlipOK"
+    },
+    {
+      "item": "Our own cross-order duplicate-slip guard — now largely unnecessary, but still a cheap belt-and-braces",
+      "detail": "The original reason (SlipOK never logged Bill Payment slips, so its dedup didn't cover them) is gone as of 2026-07-22: SlipOK now logs and dedups these slips itself. A local guard in pages/api/verify-slip.js (reject if result.transRef already exists on another paid order) would still add defence-in-depth if SlipOK ever regresses. Low priority now.",
+      "status": "optional — no longer urgent"
+    },
+    {
+      "item": "Stale files noticed but not touched",
+      "detail": "lovepier/lovepier/ is a leftover default create-next-app scaffold from June 13 (unrelated to the real app in love-pier-main/); .claude/worktrees/agent-a1881b6cfde376324 is an orphaned git submodule reference (no .gitmodules entry) causing a harmless 'Failed to fetch one or more git submodules' warning on every Vercel build. Neither blocks anything — cleanup deferred, user hasn't asked for it."
     }
   ],
 
   "envVarsToVerifyInVercel": [
     "NEXT_PUBLIC_PROMPTPAY_ID=010554511741402",
     "NEXT_PUBLIC_PROMPTPAY_TYPE=biller",
+    "NEXT_PUBLIC_PROMPTPAY_REF=REF001 — REQUIRED, fixed value, confirmed set this session",
+    "NEXT_PUBLIC_PROMPTPAY_REF2=0 — REQUIRED, confirmed set this session",
+    "NEXT_PUBLIC_PROMPTPAY_TERMINAL_LABEL=SKD68W744913 — REQUIRED, confirmed set this session",
     "NEXT_PUBLIC_LIFF_ID=2010601364-PyUPQa7l",
     "NEXT_PUBLIC_LINE_OA_ID=@lovepier.cafe",
     "NEXT_PUBLIC_SHEETS_WEBHOOK_URL=(Apps Script URL)",
-    "LINE_MESSAGING_TOKEN=(optional — enables shop-side Flex push)",
-    "LINE_ORDER_NOTIFY_TO=(optional — plain-text staff alert)"
+    "LINE_MESSAGING_TOKEN=CONFIRMED SET this session — payment-confirmation + order Flex cards now reach the LINE OA (verified on LP260722-4082)",
+    "LINE_ORDER_NOTIFY_TO=(optional — plain-text staff alert)",
+    "slipok_api_key=SLIPOKL4KI95U / slipok_branch_id=71639 — in the DB settings table (/admin/settings), not env vars. Key/branch are valid, but SlipOK still rejects Bill Payment with 1014 (see followUps)."
   ],
 
   "recentCommits": [
+    "944910c style: retheme order status page to the warm palette + remove all emoji icons from the card",
+    "4c91891 style: recolor LINE order/payment Flex cards to Love Pier theme (espresso #3a2818 / gold #c9a96e / brown #4a3520)",
+    "8b3ef50 fix: render Supabase-hosted event images in admin list (unoptimized + images.remotePatterns)",
+    "b50f926 fix: install next at root so Vercel can detect the version (installCommand npm install, replacing echo skip)",
+    "5a83cb9 fix: make SlipOK 1014 Bill Payment fallback robust to unbaked env (default REF001/biller id, match ref1 OR receiver biller)",
+    "b853b4f fix: give html/body the site's background color, not default white",
+    "b4077a9 fix: fall back to Ref.1 match for SlipOK Bill Payment receiver check",
+    "e8779ff fix: declare next in root package.json for Vercel framework detection",
+    "4999279 fix: match PromptPay Bill Payment QR to biller's registered fixed refs",
+    "b3b7f43 fix: make PromptPay payment Ref.1 numeric-only (superseded by 4999279's fixed-ref approach)",
+    "b394c19 fix: include Ref.1 in PromptPay Bill Payment QR",
+    "e5b3377 update",
+    "8bbc8a5 perf: parallelize image-size generation in admin upload",
+    "072c13c polish: match payment-confirmation card to existing green brand tone",
+    "362dd04 feat: push branded payment-confirmation Flex card on SlipOK verify",
+    "0e27298 polish: match event detail hero aspect ratio to card (3:4)",
     "91a4447 feat: Upcoming/Past events, detail page, gallery + lightbox, admin fields",
     "93e99cc polish: full-screen app-like order flow with unified sizing",
     "a7c4fd5 polish: turn distance-check result into a proper welcome/warning screen",
     "229a7c5 update",
-    "d2bac9e feat: guided 6-step LINE order flow with two-tier confirmation",
-    "2676ad3 feat: mandatory LINE login + GPS gate on /delivery, delivery fee, unit tests",
-    "b56cf05 update",
-    "08fddca refactor: unify /menu and /delivery onto one shared layout",
-    "965d37c feat: Tassana-style order card, shop-side push, order page, Sheets capture",
-    "0d64b3d feat: always show slip-attach button; store slip image for review",
-    "b12da11 docs: add LINE LIFF order-flow guide (brief)",
-    "1543314 feat: automatic slip verification via SlipOK",
-    "b617737 feat: auto-send order as a LINE Flex card on checkout (no button)",
-    "4a20785 fix: match language switcher border/height to the hamburger button",
-    "050eaad feat: /admin/settings — choose distance method (straight-line or Google)",
-    "e794192 fix: slip message showed ฿0 — snapshot order before clearing cart"
+    "d2bac9e feat: guided 6-step LINE order flow with two-tier confirmation"
   ]
 }
