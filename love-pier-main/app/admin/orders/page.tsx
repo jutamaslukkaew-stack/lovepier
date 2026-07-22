@@ -95,12 +95,12 @@ export default async function AdminOrdersPage() {
                       <p className="text-muted-foreground text-[13px] leading-snug mt-0.5">
                         {o.address}
                         {o.distanceKm != null && (
-                          <span className="ml-1 text-[#2d6a1f]">· 📍 {o.distanceKm} กม.</span>
+                          <span className="ml-1 text-[#4a3520]">· {o.distanceKm} กม.</span>
                         )}
                       </p>
                     )}
                     {o.note && (
-                      <p className="text-[13px] text-amber-700 mt-0.5">📝 {o.note}</p>
+                      <p className="text-[13px] text-amber-700 mt-0.5">หมายเหตุ: {o.note}</p>
                     )}
                     {o.slipUrl && slipUrls[o.slipUrl] && (
                       <a
@@ -109,7 +109,7 @@ export default async function AdminOrdersPage() {
                         rel="noopener noreferrer"
                         className="inline-block mt-1 text-[13px] text-blue-600 hover:underline"
                       >
-                        🧾 ดูสลิปการโอน
+                        ดูสลิปการโอน
                       </a>
                     )}
                   </div>

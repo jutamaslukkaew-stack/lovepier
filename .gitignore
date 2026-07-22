@@ -1,0 +1,6 @@
+# Agent worktrees. These are throwaway checkouts; when one gets committed it
+# lands as a gitlink with no .gitmodules entry, which makes every Vercel build
+# warn "Failed to fetch one or more git submodules".
+.claude/worktrees/
+
+.DS_Store
