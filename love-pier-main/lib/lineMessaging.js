@@ -61,13 +61,13 @@ export async function pushNewOrderNotification(order) {
     .join('\n')
 
   const text =
-    `🔔 ออเดอร์ใหม่ ${order.orderNo}\n` +
+    `ออเดอร์ใหม่ ${order.orderNo}\n` +
     `━━━━━━━━━━━━━━\n` +
-    `👤 ${order.customerName}\n` +
-    `📞 ${order.phone}\n` +
-    (order.address ? `📍 ${order.address}\n` : '') +
-    (order.note ? `📝 ${order.note}\n` : '') +
-    (order.distanceKm != null ? `📍 ระยะจัดส่ง ${order.distanceKm} กม.\n` : '') +
+    `ชื่อ: ${order.customerName}\n` +
+    `เบอร์โทร: ${order.phone}\n` +
+    (order.address ? `ที่อยู่: ${order.address}\n` : '') +
+    (order.note ? `หมายเหตุ: ${order.note}\n` : '') +
+    (order.distanceKm != null ? `ระยะจัดส่ง: ${order.distanceKm} กม.\n` : '') +
     `━━━━━━━━━━━━━━\n` +
     `${lines}\n` +
     (order.deliveryFee ? `ค่าจัดส่ง ฿${order.deliveryFee}\n` : '') +

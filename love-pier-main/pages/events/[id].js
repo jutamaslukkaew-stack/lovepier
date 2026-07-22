@@ -117,7 +117,7 @@ export default function EventDetail({ event }) {
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-10 items-start">
           {/* Hero image */}
           <div className="relative overflow-hidden rounded-2xl bg-[#f2ede6]" style={{ aspectRatio: '3 / 4' }}>
-            {event.imageUrl ? (
+            {event.imageUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={event.imageUrl}
@@ -128,8 +128,6 @@ export default function EventDetail({ event }) {
                 fetchPriority="high"
                 className="absolute inset-0 w-full h-full object-cover"
               />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-6xl opacity-20">🎉</div>
             )}
           </div>
 

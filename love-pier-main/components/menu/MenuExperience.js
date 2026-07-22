@@ -335,7 +335,6 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
           onClick={handleCartClick}
           className="fixed bottom-6 right-5 z-[170] flex items-center gap-2 bg-[#4a3520] text-white px-4 py-3 rounded-full shadow-lg font-semibold text-[13px] hover:bg-[#3a2818] transition-colors active:scale-95"
         >
-          <span>🛒</span>
           <span>{cartLabel}</span>
           <span className="bg-white text-[#4a3520] text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{totalQty}</span>
         </button>

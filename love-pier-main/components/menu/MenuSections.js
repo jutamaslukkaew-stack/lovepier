@@ -157,7 +157,7 @@ export function MenuCard({ id, name, badge, desc, price, prices, image, lang, on
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.08)] flex flex-col">
       <div className="relative bg-[#f2ede6]" style={{ paddingTop: '75%' }}>
-        {image ? (
+        {image && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image}
@@ -168,8 +168,6 @@ export function MenuCard({ id, name, badge, desc, price, prices, image, lang, on
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className={`absolute inset-0 w-full h-full object-cover object-center ${onImageClick ? 'cursor-zoom-in' : ''}`}
           />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-20">☕</div>
         )}
         {image && onImageClick && (
           <button

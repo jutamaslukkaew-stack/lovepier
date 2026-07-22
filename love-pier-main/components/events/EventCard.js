@@ -24,7 +24,7 @@ export default function EventCard({ href, imageUrl, title, dateLabel, location, 
         className={`relative overflow-hidden rounded-2xl bg-[#f2ede6] ${desaturate ? 'grayscale' : ''}`}
         style={{ aspectRatio: '3 / 4' }}
       >
-        {imageUrl ? (
+        {imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageUrl}
@@ -34,8 +34,6 @@ export default function EventCard({ href, imageUrl, title, dateLabel, location, 
             loading="lazy"
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-20">🎉</div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
         {location && (
