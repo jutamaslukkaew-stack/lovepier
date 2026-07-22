@@ -45,7 +45,7 @@ const COPY = {
     phone: 'เบอร์โทร',
     address: 'ที่อยู่จัดส่ง',
     note: 'หมายเหตุ (ไม่บังคับ)',
-    useLocation: '📍 เช็คระยะจัดส่ง',
+    useLocation: 'เช็คระยะจัดส่ง',
     locating: 'กำลังหาตำแหน่ง...',
     distanceLabel: 'ระยะจัดส่ง',
     deliveryFeeLabel: 'ค่าจัดส่ง',
@@ -61,15 +61,15 @@ const COPY = {
     confirm: 'ยืนยันสั่งซื้อ',
     submitting: 'กำลังส่ง...',
     // success step
-    successTitle: 'รับออเดอร์แล้ว! 🎉',
+    successTitle: 'รับออเดอร์แล้ว!',
     orderNo: 'เลขที่ออเดอร์',
     successMsg: 'กรุณาส่งสลิปการโอนให้ร้านทาง LINE เพื่อยืนยันการชำระเงิน',
     sendSlip: 'ส่งสลิปทาง LINE',
     sentToShop: 'ส่งออเดอร์ให้ร้านทาง LINE แล้ว',
-    attachSlip: '📎 แนบสลิปเพื่อยืนยันการชำระเงิน',
+    attachSlip: 'แนบสลิปเพื่อยืนยันการชำระเงิน',
     verifyingSlip: 'กำลังตรวจสอบสลิป...',
-    slipVerified: 'ยืนยันการชำระเงินแล้ว ✅',
-    slipUploaded: 'แนบสลิปแล้ว รอร้านตรวจสอบ ✅',
+    slipVerified: 'ยืนยันการชำระเงินแล้ว',
+    slipUploaded: 'แนบสลิปแล้ว รอร้านตรวจสอบ',
     slipRetry: 'แนบสลิปใหม่อีกครั้ง',
     verifyHint: 'ระบบตรวจสลิปอัตโนมัติ (จับสลิปปลอมได้)',
     done: 'เสร็จสิ้น',
@@ -89,7 +89,7 @@ const COPY = {
     phone: 'Phone',
     address: 'Delivery address',
     note: 'Note (optional)',
-    useLocation: '📍 Check delivery distance',
+    useLocation: 'Check delivery distance',
     locating: 'Locating...',
     distanceLabel: 'Distance',
     deliveryFeeLabel: 'Delivery fee',
@@ -103,15 +103,15 @@ const COPY = {
     noPromptpay: 'Shop PromptPay not configured — please contact us on LINE',
     confirm: 'Confirm order',
     submitting: 'Sending...',
-    successTitle: 'Order received! 🎉',
+    successTitle: 'Order received!',
     orderNo: 'Order no.',
     successMsg: 'Please send your payment slip to us on LINE to confirm.',
     sendSlip: 'Send slip via LINE',
     sentToShop: 'Order sent to the shop on LINE',
-    attachSlip: '📎 Attach slip to confirm payment',
+    attachSlip: 'Attach slip to confirm payment',
     verifyingSlip: 'Verifying slip...',
-    slipVerified: 'Payment verified ✅',
-    slipUploaded: 'Slip attached — pending review ✅',
+    slipVerified: 'Payment verified',
+    slipUploaded: 'Slip attached — pending review',
     slipRetry: 'Attach a different slip',
     verifyHint: 'Automatic slip check (detects fakes)',
     done: 'Done',
@@ -131,7 +131,7 @@ const COPY = {
     phone: '电话',
     address: '配送地址',
     note: '备注（选填）',
-    useLocation: '📍 检查配送距离',
+    useLocation: '检查配送距离',
     locating: '定位中...',
     distanceLabel: '配送距离',
     deliveryFeeLabel: '配送费',
@@ -145,15 +145,15 @@ const COPY = {
     noPromptpay: '商店 PromptPay 未设置 — 请通过 LINE 联系我们',
     confirm: '确认订单',
     submitting: '发送中...',
-    successTitle: '订单已收到！🎉',
+    successTitle: '订单已收到！',
     orderNo: '订单号',
     successMsg: '请通过 LINE 将付款凭证发给我们以确认。',
     sendSlip: '通过 LINE 发送凭证',
     sentToShop: '订单已通过 LINE 发送给店家',
-    attachSlip: '📎 上传凭证以确认付款',
+    attachSlip: '上传凭证以确认付款',
     verifyingSlip: '正在核验凭证...',
-    slipVerified: '付款已确认 ✅',
-    slipUploaded: '凭证已上传 — 等待店家核对 ✅',
+    slipVerified: '付款已确认',
+    slipUploaded: '凭证已上传 — 等待店家核对',
     slipRetry: '重新上传凭证',
     verifyHint: '自动核验凭证（可识别伪造）',
     done: '完成',
@@ -453,10 +453,10 @@ export default function CartDrawer() {
     const total = completed?.total ?? 0
     const refLine = paymentRef ? `\nRef: ${paymentRef}` : ''
     const distanceLine =
-      completed?.distanceKm != null ? `\n📍 ${t.distanceLabel} ${completed.distanceKm} กม.` : ''
+      completed?.distanceKm != null ? `\n${t.distanceLabel} ${completed.distanceKm} กม.` : ''
     const feeLine = completed?.deliveryFee ? `\n${t.deliveryFeeLabel} ฿${completed.deliveryFee}` : ''
     const msg = encodeURIComponent(
-      `📦 ${t.orderNo} ${orderNo}${refLine}\n${lines}${feeLine}\n\n${t.total} ฿${total}${distanceLine}\n\n(แนบสลิปการโอนในแชทนี้ได้เลยครับ)`
+      `${t.orderNo} ${orderNo}${refLine}\n${lines}${feeLine}\n\n${t.total} ฿${total}${distanceLine}\n\n(แนบสลิปการโอนในแชทนี้ได้เลยครับ)`
     )
     window.open(`https://line.me/R/oaMessage/${LINE_OA_ID}/?${msg}`, '_blank')
   }
@@ -574,12 +574,12 @@ export default function CartDrawer() {
             <div className="overflow-y-auto overscroll-contain px-5 py-4 flex flex-col gap-3" style={{ maxHeight: 'calc(88dvh - 160px)' }}>
               {isLiffConfigured() && (
                 profile ? (
-                  <div className="flex items-center gap-2 rounded-xl bg-[#f0f7ef] border border-[#2d6a1f]/20 px-3.5 py-2.5 text-[13px] text-[#2d6a1f]">
-                    <span>✅</span><span>{t.lineHi} {profile.displayName}</span>
+                  <div className="flex items-center gap-2 rounded-xl bg-[#efe9e1] border border-[#4a3520]/15 px-4 py-3 text-[13px] leading-[1.75] text-[#4a3520]">
+                    <span>{t.lineHi} {profile.displayName}</span>
                   </div>
                 ) : (
                   <button onClick={handleLineLogin} className="w-full py-3 rounded-xl bg-[#06C755] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition">
-                    <span className="text-[16px]">💬</span> {t.lineLogin}
+                    {t.lineLogin}
                   </button>
                 )
               )}
@@ -612,18 +612,15 @@ export default function CartDrawer() {
                   {locating ? t.locating : t.useLocation}
                 </button>
                 {distanceKm != null && (
-                  <div className="mt-2 flex flex-col items-center gap-0.5 text-[13px] text-[#2d6a1f]">
-                    <div className="flex items-center gap-1.5">
-                      <span>📍</span>
-                      <span>{t.distanceLabel} {distanceKm} กม.</span>
-                    </div>
+                  <div className="mt-2 flex flex-col items-center gap-0.5 text-[13px] text-[#4a3520]">
+                    <span>{t.distanceLabel} {distanceKm} กม.</span>
                     {deliveryFee > 0 && (
                       <span className="text-[12px] text-black/50">{t.deliveryFeeLabel} +฿{deliveryFee}</span>
                     )}
                   </div>
                 )}
                 {distanceMsg && (
-                  <p className="mt-1.5 text-[12px] text-amber-700 text-center leading-snug">⚠️ {distanceMsg}</p>
+                  <p className="mt-1.5 text-[12px] text-amber-700 text-center leading-snug">{distanceMsg}</p>
                 )}
               </div>
 
@@ -672,7 +669,7 @@ export default function CartDrawer() {
             </div>
 
             <div className="border-t border-black/10 px-5 py-4">
-              <button onClick={submitOrder} disabled={submitting} className="w-full py-3.5 rounded-xl bg-[#2d6a1f] text-white font-semibold text-[14px] tracking-wide hover:bg-[#245517] transition-colors disabled:opacity-60">
+              <button onClick={submitOrder} disabled={submitting} className="w-full py-3.5 rounded-xl bg-[#3a2818] text-white font-semibold text-[14px] tracking-wide hover:bg-[#4a3520] transition-colors disabled:opacity-60">
                 {submitting ? t.submitting : t.confirm}
               </button>
             </div>
@@ -681,8 +678,7 @@ export default function CartDrawer() {
 
         {/* ── SUCCESS STEP ──────────────────────────────────────── */}
         {step === 'success' && (
-          <div className="px-6 py-8 flex flex-col items-center text-center gap-3">
-            <div className="w-16 h-16 rounded-full bg-[#f0f7ef] flex items-center justify-center text-3xl">🎉</div>
+          <div className="px-6 py-8 flex flex-col items-center text-center gap-4">
             <div>
               <span className="text-[11px] tracking-[0.12em] uppercase text-black/45">{t.orderNo}</span>
               <p className="font-display text-[24px] text-ink tracking-wide">{orderNo}</p>
@@ -700,19 +696,19 @@ export default function CartDrawer() {
               )}
             </div>
             {sentToLine && (
-              <div className="mt-1 flex items-center gap-2 rounded-xl bg-[#f0f7ef] border border-[#2d6a1f]/20 px-3.5 py-2.5 text-[13px] text-[#2d6a1f]">
-                <span>✅</span><span>{t.sentToShop}</span>
+              <div className="mt-1 flex items-center gap-2 rounded-xl bg-[#efe9e1] border border-[#4a3520]/15 px-4 py-3 text-[13px] leading-[1.75] text-[#4a3520]">
+                <span>{t.sentToShop}</span>
               </div>
             )}
 
             {/* Payment confirmation — always offer to attach the slip */}
             {slipStatus === 'ok' ? (
-              <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#2d6a1f] text-white px-3.5 py-3 text-[14px] font-semibold">
-                <span>✅</span><span>{t.slipVerified}</span>
+              <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#3a2818] text-white px-3.5 py-3 text-[14px] font-semibold">
+                <span>{t.slipVerified}</span>
               </div>
             ) : slipStatus === 'stored' ? (
-              <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#2d6a1f] text-white px-3.5 py-3 text-[14px] font-semibold">
-                <span>✅</span><span>{t.slipUploaded}</span>
+              <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#3a2818] text-white px-3.5 py-3 text-[14px] font-semibold">
+                <span>{t.slipUploaded}</span>
               </div>
             ) : (
               <div className="w-full">
@@ -728,11 +724,11 @@ export default function CartDrawer() {
                   {slipVerify ? t.verifyHint : t.successMsg}
                 </p>
                 {slipStatus === 'fail' && slipError && (
-                  <p className="text-[12px] text-red-600 text-center mt-1">⚠️ {slipError}</p>
+                  <p className="text-[12px] text-red-600 text-center mt-1">{slipError}</p>
                 )}
                 {/* secondary: send in the LINE chat instead */}
                 <button onClick={sendSlipViaLine} className="w-full mt-2 py-2 text-[12px] text-[#06C755] font-medium hover:underline">
-                  💬 {t.sendSlip}
+                  {t.sendSlip}
                 </button>
               </div>
             )}

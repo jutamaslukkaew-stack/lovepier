@@ -52,10 +52,10 @@ const COPY = {
     retry: 'ลองอีกครั้ง',
     // step 2 — distance
     distanceTitle: 'ตรวจสอบระยะทางจัดส่ง',
-    requestLocation: '📍 ขอตำแหน่งปัจจุบัน',
+    requestLocation: 'ขอตำแหน่งปัจจุบัน',
     locating: 'กำลังค้นหาตำแหน่งของคุณ...',
     calculating: 'กำลังคำนวณระยะทาง...',
-    withinRadius: (km) => `พบตำแหน่งแล้ว — ห่างจากร้าน ${km} กม. ✅`,
+    withinRadius: (km) => `พบตำแหน่งแล้ว — ห่างจากร้าน ${km} กม.`,
     inServiceArea: 'อยู่ในพื้นที่บริการของร้าน ไปเลือกเมนูต่อได้เลย',
     canOrderNow: (r) => `ยินดีด้วย คุณอยู่ในรัศมี ${r} กม. สามารถสั่งอาหารได้เลย`,
     canOrderUnknown: 'คุณสามารถสั่งอาหารได้ตามปกติ',
@@ -67,7 +67,7 @@ const COPY = {
     gpsDenied: 'คุณไม่ได้อนุญาตให้เข้าถึงตำแหน่ง',
     gpsTimeout: 'ค้นหาตำแหน่งไม่สำเร็จ (หมดเวลา)',
     gpsUnsupported: 'เบราว์เซอร์นี้ไม่รองรับการหาตำแหน่ง',
-    testModeToggle: '🧪 โหมดทดสอบระยะทาง',
+    testModeToggle: 'โหมดทดสอบระยะทาง',
     simulateWithin: 'จำลอง: อยู่ในรัศมี',
     simulateOutside: 'จำลอง: นอกรัศมี',
     // step 3 — menu
@@ -98,18 +98,18 @@ const COPY = {
     submit: 'สั่งซื้อและชำระเงิน',
     submitting: 'กำลังส่ง...',
     // step 6 — success
-    successTitle: 'สั่งซื้อสำเร็จ! 🎉',
+    successTitle: 'สั่งซื้อสำเร็จ!',
     orderNo: 'เลขที่ออเดอร์',
     sentToShop: 'ส่งออเดอร์ให้ร้านทาง LINE แล้ว',
     waitingDelivery: 'ร้านกำลังเตรียมอาหารและจะจัดส่งให้ภายในรัศมีบริการ กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
     pickupInstruction: 'กรุณาเรียกรถแมสเซนเจอร์ (เช่น Grab, Lalamove) มารับอาหารที่ร้าน Love Pier Beach Cafe เมื่อร้านแจ้งว่าอาหารพร้อม และกรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
-    attachSlip: '📎 แนบสลิปเพื่อยืนยันการชำระเงิน',
+    attachSlip: 'แนบสลิปเพื่อยืนยันการชำระเงิน',
     verifyingSlip: 'กำลังตรวจสอบสลิป...',
-    slipVerified: 'ยืนยันการชำระเงินแล้ว ✅',
-    slipUploaded: 'แนบสลิปแล้ว รอร้านตรวจสอบ ✅',
+    slipVerified: 'ยืนยันการชำระเงินแล้ว',
+    slipUploaded: 'แนบสลิปแล้ว รอร้านตรวจสอบ',
     slipRetry: 'แนบสลิปใหม่อีกครั้ง',
     verifyHint: 'ระบบตรวจสลิปอัตโนมัติ (จับสลิปปลอมได้)',
-    sendSlip: '💬 ส่งสลิปทาง LINE',
+    sendSlip: 'ส่งสลิปทาง LINE',
     done: 'เสร็จสิ้น — สั่งใหม่',
   },
   en: {
@@ -122,10 +122,10 @@ const COPY = {
     loginFailed: 'LINE login failed. Please try again.',
     retry: 'Retry',
     distanceTitle: 'Delivery distance check',
-    requestLocation: '📍 Request current location',
+    requestLocation: 'Request current location',
     locating: 'Finding your location...',
     calculating: 'Calculating distance...',
-    withinRadius: (km) => `Location found — ${km} km from the shop ✅`,
+    withinRadius: (km) => `Location found — ${km} km from the shop`,
     inServiceArea: "You're inside our delivery area — go ahead and pick a menu.",
     canOrderNow: (r) => `Good news — you're within our ${r} km radius. You can order now.`,
     canOrderUnknown: 'You can go ahead and order.',
@@ -137,7 +137,7 @@ const COPY = {
     gpsDenied: 'Location permission was denied',
     gpsTimeout: 'Locating timed out',
     gpsUnsupported: "This browser doesn't support location",
-    testModeToggle: '🧪 Distance test mode',
+    testModeToggle: 'Distance test mode',
     simulateWithin: 'Simulate: within radius',
     simulateOutside: 'Simulate: outside radius',
     menuHint: 'Pick items, tap + to add, then tap the cart to continue',
@@ -164,18 +164,18 @@ const COPY = {
     confirmCheckbox: "I've checked the order and total — confirm purchase",
     submit: 'Place order & pay',
     submitting: 'Sending...',
-    successTitle: 'Order placed! 🎉',
+    successTitle: 'Order placed!',
     orderNo: 'Order no.',
     sentToShop: 'Order sent to the shop on LINE',
     waitingDelivery: "We're preparing your order and will deliver within our service radius. Please attach your payment slip to confirm.",
     pickupInstruction: 'Please arrange your own courier (e.g. Grab, Lalamove) to pick up the food from Love Pier Beach Cafe once the shop confirms it is ready — and please attach your payment slip to confirm.',
-    attachSlip: '📎 Attach slip to confirm payment',
+    attachSlip: 'Attach slip to confirm payment',
     verifyingSlip: 'Verifying slip...',
-    slipVerified: 'Payment verified ✅',
-    slipUploaded: 'Slip attached — pending review ✅',
+    slipVerified: 'Payment verified',
+    slipUploaded: 'Slip attached — pending review',
     slipRetry: 'Attach a different slip',
     verifyHint: 'Automatic slip check (detects fakes)',
-    sendSlip: '💬 Send slip via LINE',
+    sendSlip: 'Send slip via LINE',
     done: 'Done — order again',
   },
   zh: {
@@ -188,10 +188,10 @@ const COPY = {
     loginFailed: 'LINE 登录失败，请重试',
     retry: '重试',
     distanceTitle: '配送距离检查',
-    requestLocation: '📍 获取当前位置',
+    requestLocation: '获取当前位置',
     locating: '正在定位您的位置...',
     calculating: '正在计算距离...',
-    withinRadius: (km) => `已定位 — 距离门店 ${km} 公里 ✅`,
+    withinRadius: (km) => `已定位 — 距离门店 ${km} 公里`,
     inServiceArea: '您在配送范围内，可以继续选择菜单。',
     canOrderNow: (r) => `好消息 — 您在 ${r} 公里配送范围内，现在可以下单了。`,
     canOrderUnknown: '您现在可以正常下单。',
@@ -203,7 +203,7 @@ const COPY = {
     gpsDenied: '您未允许访问位置信息',
     gpsTimeout: '定位超时',
     gpsUnsupported: '此浏览器不支持定位',
-    testModeToggle: '🧪 距离测试模式',
+    testModeToggle: '距离测试模式',
     simulateWithin: '模拟：范围内',
     simulateOutside: '模拟：范围外',
     menuHint: '选择菜品，点击 + 添加，然后点击购物车继续',
@@ -230,18 +230,18 @@ const COPY = {
     confirmCheckbox: '我已核对订单和金额，确认下单',
     submit: '下单并付款',
     submitting: '发送中...',
-    successTitle: '下单成功！🎉',
+    successTitle: '下单成功！',
     orderNo: '订单号',
     sentToShop: '订单已通过 LINE 发送给店家',
     waitingDelivery: '我们正在备餐，将在配送范围内为您送达。请附上付款凭证以确认。',
     pickupInstruction: '请在店家通知餐点备好后，自行安排快递员（如 Grab、Lalamove）到 Love Pier Beach Cafe 取餐 — 并请附上付款凭证以确认。',
-    attachSlip: '📎 上传凭证以确认付款',
+    attachSlip: '上传凭证以确认付款',
     verifyingSlip: '正在核验凭证...',
-    slipVerified: '付款已确认 ✅',
-    slipUploaded: '凭证已上传 — 等待店家核对 ✅',
+    slipVerified: '付款已确认',
+    slipUploaded: '凭证已上传 — 等待店家核对',
     slipRetry: '重新上传凭证',
     verifyHint: '自动核验凭证（可识别伪造）',
-    sendSlip: '💬 通过 LINE 发送凭证',
+    sendSlip: '通过 LINE 发送凭证',
     done: '完成 — 再次下单',
   },
 }
@@ -592,10 +592,10 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
     const lines = completed?.lines || ''
     const total = completed?.total ?? 0
     const refLine = paymentRef ? `\nRef: ${paymentRef}` : ''
-    const distanceLine = completed?.distanceKm != null ? `\n📍 ${completed.distanceKm} กม.` : ''
+    const distanceLine = completed?.distanceKm != null ? `\n${completed.distanceKm} กม.` : ''
     const feeLine = completed?.deliveryFee ? `\n${t.deliveryFeeLabel} ฿${completed.deliveryFee}` : ''
     const msg = encodeURIComponent(
-      `📦 ${t.orderNo} ${orderNo}${refLine}\n${lines}${feeLine}\n\n${t.total} ฿${total}${distanceLine}\n\n(แนบสลิปการโอนในแชทนี้ได้เลยครับ)`
+      `${t.orderNo} ${orderNo}${refLine}\n${lines}${feeLine}\n\n${t.total} ฿${total}${distanceLine}\n\n(แนบสลิปการโอนในแชทนี้ได้เลยครับ)`
     )
     window.open(`https://line.me/R/oaMessage/${LINE_OA_ID}/?${msg}`, '_blank')
   }
@@ -636,7 +636,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
             </button>
             {loginPhase === 'failed' && (
               <p className="text-white/90 text-[12px] flex items-center gap-2">
-                ⚠️ {t.loginFailed}
+                {t.loginFailed}
                 <button onClick={handleStart} className="underline">{t.retry}</button>
               </p>
             )}
@@ -713,7 +713,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
 
             {locatePhase === 'gps-error' && (
               <div className="flex flex-col gap-2 py-8">
-                <p className="text-[13px] text-red-600 text-center mb-1">⚠️ {gpsErrorText}</p>
+                <p className="text-[13px] text-red-600 text-center mb-1">{gpsErrorText}</p>
                 <button
                   onClick={startLocating}
                   className="w-full py-3 rounded-xl border border-[#4a3520]/25 text-[#4a3520] font-semibold text-[13px] hover:bg-[#4a3520]/[0.04] transition"
@@ -987,7 +987,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
           <button
             onClick={submitOrder}
             disabled={!canSubmit}
-            className="w-full py-3.5 rounded-xl bg-[#2d6a1f] text-white font-semibold text-[14px] tracking-wide hover:bg-[#245517] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full py-3.5 rounded-xl bg-[#3a2818] text-white font-semibold text-[14px] tracking-wide hover:bg-[#4a3520] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {submitting ? t.submitting : t.submit}
           </button>
@@ -1001,9 +1001,8 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
   // ═══════════════════════════════════════════════════════════════════
   return (
     <div className="min-h-[100dvh] bg-[#f5f2ee] flex items-start justify-center px-5 py-10">
-      <div className={`w-full ${CONTENT_WIDTH} flex flex-col items-center text-center gap-3`}>
-        <div className="w-16 h-16 rounded-full bg-[#f0f7ef] flex items-center justify-center text-3xl">🎉</div>
-        <h1 className="font-display text-[22px] text-ink">{t.successTitle}</h1>
+      <div className={`w-full ${CONTENT_WIDTH} flex flex-col items-center text-center gap-4`}>
+        <h1 className="font-display text-[24px] text-ink">{t.successTitle}</h1>
         <div>
           <span className="text-[11px] tracking-[0.12em] uppercase text-black/45">{t.orderNo}</span>
           <p className="font-display text-[24px] text-ink tracking-wide">{orderNo}</p>
@@ -1013,22 +1012,22 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
         </div>
 
         {sentToLine && (
-          <div className="flex items-center gap-2 rounded-xl bg-[#f0f7ef] border border-[#2d6a1f]/20 px-3.5 py-2.5 text-[13px] text-[#2d6a1f]">
-            <span>✅</span><span>{t.sentToShop}</span>
+          <div className="rounded-xl bg-[#efe9e1] border border-[#4a3520]/15 px-4 py-3 text-[13px] leading-[1.75] text-[#4a3520]">
+            {t.sentToShop}
           </div>
         )}
 
-        <p className={`text-[13px] leading-relaxed rounded-xl px-3.5 py-2.5 ${completed?.withinRadius === false ? 'bg-amber-50 border border-amber-200 text-amber-800' : 'bg-black/[0.03] text-black/60'}`}>
+        <p className={`w-full text-[13px] leading-[1.9] text-left rounded-xl px-4 py-3.5 ${completed?.withinRadius === false ? 'bg-[#faf3e4] border border-[#c9a96e]/45 text-[#6b5326]' : 'bg-black/[0.03] text-black/60'}`}>
           {completed?.withinRadius === false ? t.pickupInstruction : t.waitingDelivery}
         </p>
 
         {slipStatus === 'ok' ? (
-          <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#2d6a1f] text-white px-3.5 py-3 text-[14px] font-semibold">
-            <span>✅</span><span>{t.slipVerified}</span>
+          <div className="w-full text-center rounded-xl bg-[#3a2818] text-white px-4 py-3 text-[14px] font-semibold leading-[1.6]">
+            {t.slipVerified}
           </div>
         ) : slipStatus === 'stored' ? (
-          <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#2d6a1f] text-white px-3.5 py-3 text-[14px] font-semibold">
-            <span>✅</span><span>{t.slipUploaded}</span>
+          <div className="w-full text-center rounded-xl bg-[#3a2818] text-white px-4 py-3 text-[14px] font-semibold leading-[1.6]">
+            {t.slipUploaded}
           </div>
         ) : (
           <div className="w-full">
@@ -1037,7 +1036,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
               <input type="file" accept="image/*" className="hidden" onChange={handleSlipFile} disabled={slipStatus === 'verifying'} />
             </label>
             <p className="text-[11px] text-black/40 text-center mt-1.5">{slipVerify ? t.verifyHint : ''}</p>
-            {slipStatus === 'fail' && slipError && <p className="text-[12px] text-red-600 text-center mt-1">⚠️ {slipError}</p>}
+            {slipStatus === 'fail' && slipError && <p className="text-[12px] leading-[1.7] text-red-600 text-center mt-1">{slipError}</p>}
             <button onClick={sendSlipViaLine} className="w-full mt-2 py-2 text-[12px] text-[#06C755] font-medium hover:underline">{t.sendSlip}</button>
           </div>
         )}
