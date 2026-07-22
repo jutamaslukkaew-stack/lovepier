@@ -14,8 +14,7 @@ function checkRow(label, value, action) {
     layout: 'baseline',
     margin: 'md',
     contents: [
-      { type: 'text', text: '✅', flex: 0, size: 'sm' },
-      { type: 'text', text: label, size: 'sm', color: '#8c8c8c', flex: 0, margin: 'sm' },
+      { type: 'text', text: label, size: 'sm', color: '#8c8c8c', flex: 0 },
       {
         type: 'text',
         text: value,
@@ -29,14 +28,13 @@ function checkRow(label, value, action) {
   }
 }
 
-function plainRow(icon, label, value) {
+function plainRow(label, value) {
   return {
     type: 'box',
     layout: 'baseline',
     margin: 'md',
     contents: [
-      { type: 'text', text: icon, flex: 0, size: 'sm' },
-      { type: 'text', text: label, size: 'sm', color: '#8c8c8c', flex: 0, margin: 'sm' },
+      { type: 'text', text: label, size: 'sm', color: '#8c8c8c', flex: 0 },
       { type: 'text', text: value, size: 'sm', color: '#333333', align: 'end', wrap: true },
     ],
   }
@@ -60,9 +58,9 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
     checkRow('ชื่อ', String(name || '-')),
     checkRow('เบอร์โทร', String(phone || '-'), phone ? { type: 'uri', label: 'call', uri: `tel:${String(phone).replace(/[^0-9+]/g, '')}` } : undefined),
   ]
-  if (address) detail.push(plainRow('📍', 'ที่อยู่', String(address)))
-  if (distanceKm != null) detail.push(plainRow('🛵', 'ระยะส่ง', `${distanceKm} กม.`))
-  detail.push(plainRow('💳', 'ชำระโดย', 'QR PromptPay'))
+  if (address) detail.push(plainRow('ที่อยู่', String(address)))
+  if (distanceKm != null) detail.push(plainRow('ระยะส่ง', `${distanceKm} กม.`))
+  detail.push(plainRow('ชำระโดย', 'QR PromptPay'))
 
   const bubble = {
     type: 'bubble',
@@ -72,7 +70,7 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
       backgroundColor: '#3a2818',
       paddingAll: '18px',
       contents: [
-        { type: 'text', text: '🛒 รับออเดอร์แล้ว', color: '#ffffff', weight: 'bold', size: 'xl' },
+        { type: 'text', text: 'รับออเดอร์แล้ว', color: '#ffffff', weight: 'bold', size: 'xl' },
         { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm' },
       ],
     },
@@ -89,13 +87,13 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
         { type: 'box', layout: 'vertical', margin: 'lg', contents: itemRows },
         { type: 'separator', margin: 'lg' },
 
-        // customer details with ✅ rows
+        // customer details
         { type: 'box', layout: 'vertical', margin: 'sm', contents: detail },
         { type: 'separator', margin: 'lg' },
 
         // delivery fee (only when there is one)
         ...(deliveryFee
-          ? [plainRow('🛵', 'ค่าจัดส่ง', `฿${money(deliveryFee)}`)]
+          ? [plainRow('ค่าจัดส่ง', `฿${money(deliveryFee)}`)]
           : []),
 
         // total
@@ -104,7 +102,7 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
           layout: 'horizontal',
           margin: 'lg',
           contents: [
-            { type: 'text', text: '💰 ยอดชำระ', weight: 'bold', size: 'md', color: '#333333' },
+            { type: 'text', text: 'ยอดชำระ', weight: 'bold', size: 'md', color: '#333333' },
             { type: 'text', text: `฿${money(total)}`, weight: 'bold', size: 'lg', color: '#4a3520', align: 'end' },
           ],
         },
@@ -120,7 +118,7 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
           style: 'primary',
           color: '#3a2818',
           height: 'sm',
-          action: { type: 'uri', label: '🧾 ตรวจสอบออเดอร์', uri: orderUrl },
+          action: { type: 'uri', label: 'ตรวจสอบออเดอร์', uri: orderUrl },
         },
         {
           type: 'text',
@@ -151,7 +149,7 @@ export function buildPaymentConfirmedFlex({ orderNo, total }) {
       backgroundColor: '#3a2818',
       paddingAll: '18px',
       contents: [
-        { type: 'text', text: '✅ ชำระเงินสำเร็จ', color: '#ffffff', weight: 'bold', size: 'xl' },
+        { type: 'text', text: 'ชำระเงินสำเร็จ', color: '#ffffff', weight: 'bold', size: 'xl' },
         { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm' },
       ],
     },
@@ -168,13 +166,13 @@ export function buildPaymentConfirmedFlex({ orderNo, total }) {
           layout: 'horizontal',
           margin: 'lg',
           contents: [
-            { type: 'text', text: '💰 ยอดที่ชำระ', weight: 'bold', size: 'md', color: '#333333' },
+            { type: 'text', text: 'ยอดที่ชำระ', weight: 'bold', size: 'md', color: '#333333' },
             { type: 'text', text: `฿${money(total)}`, weight: 'bold', size: 'lg', color: '#4a3520', align: 'end' },
           ],
         },
         {
           type: 'text',
-          text: 'ขอบคุณที่อุดหนุน Love Pier 🌊 กำลังเตรียมออเดอร์ให้แล้ว',
+          text: 'ขอบคุณที่อุดหนุน Love Pier กำลังเตรียมออเดอร์ให้แล้ว',
           size: 'xs',
           color: '#8c8c8c',
           wrap: true,
@@ -193,7 +191,7 @@ export function buildPaymentConfirmedFlex({ orderNo, total }) {
           style: 'primary',
           color: '#3a2818',
           height: 'sm',
-          action: { type: 'uri', label: '🧾 ตรวจสอบออเดอร์', uri: orderUrl },
+          action: { type: 'uri', label: 'ตรวจสอบออเดอร์', uri: orderUrl },
         },
       ],
     },
