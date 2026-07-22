@@ -62,7 +62,7 @@ function SortableRow({
       </button>
 
       {event.imageUrl ? (
-        <Image src={event.imageUrl} alt={event.titleTh} width={48} height={48} className="size-12 shrink-0 rounded-md object-cover" />
+        <Image src={event.imageUrl} alt={event.titleTh} width={48} height={48} className="size-12 shrink-0 rounded-md object-cover" unoptimized />
       ) : (
         <div className="size-12 shrink-0 rounded-md bg-muted flex items-center justify-center text-muted-foreground text-[10px]">No img</div>
       )}
