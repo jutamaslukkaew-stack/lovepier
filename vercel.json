@@ -2,5 +2,5 @@
   "framework": "nextjs",
   "outputDirectory": "love-pier-main/.next",
   "buildCommand": "cd love-pier-main && npm install --no-package-lock && npm run build",
-  "installCommand": "echo skip"
+  "installCommand": "npm install --no-audit --no-fund"
 }
