@@ -5,7 +5,7 @@ import { orders } from '../../lib/db/schema'
 
 const STATUS = {
   pending: { label: 'รอชำระเงิน', color: '#b58900', bg: '#fdf6e3' },
-  paid: { label: 'ชำระเงินแล้ว', color: '#2d6a1f', bg: '#f0f7ef' },
+  paid: { label: 'ชำระเงินแล้ว', color: '#f5f3ef', bg: '#3a2818' },
   preparing: { label: 'กำลังเตรียม', color: '#1a73e8', bg: '#eaf1fd' },
   done: { label: 'เสร็จสิ้น', color: '#555', bg: '#f2f2f2' },
   cancelled: { label: 'ยกเลิก', color: '#c0392b', bg: '#fdeceb' },
@@ -14,7 +14,7 @@ const STATUS = {
 export default function OrderStatus({ order }) {
   if (!order) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f2ee] px-6 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f3ef] px-6 text-center">
         <p className="text-ink/60">ไม่พบออเดอร์นี้</p>
       </div>
     )
@@ -29,10 +29,10 @@ export default function OrderStatus({ order }) {
         <title>ออเดอร์ {order.orderNo} — Love Pier Beach Cafe</title>
         <meta name="robots" content="noindex" />
       </Head>
-      <div className="min-h-screen bg-[#f5f2ee] py-8 px-4">
+      <div className="min-h-screen bg-[#f5f3ef] py-8 px-4">
         <div className="mx-auto max-w-md bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="bg-[#2d6a1f] px-6 py-5 text-white">
-            <p className="text-[13px] text-white/80">Love Pier Beach Cafe</p>
+          <div className="bg-[#3a2818] px-6 py-5 text-white">
+            <p className="text-[13px] text-[#c9a96e]">Love Pier Beach Cafe</p>
             <p className="font-semibold text-lg">ออเดอร์ {order.orderNo}</p>
           </div>
 
@@ -61,15 +61,15 @@ export default function OrderStatus({ order }) {
             </div>
 
             <div className="border-t border-dashed border-black/15 pt-3 space-y-1 text-[13px] text-black/60">
-              <p>✅ ชื่อ : {order.customerName}</p>
-              <p>✅ เบอร์โทร : {order.phone}</p>
-              {order.address && <p>📍 {order.address}</p>}
-              {order.distanceKm != null && <p>🛵 ระยะส่ง {order.distanceKm} กม.</p>}
+              <p>ชื่อ : {order.customerName}</p>
+              <p>เบอร์โทร : {order.phone}</p>
+              {order.address && <p>ที่อยู่ : {order.address}</p>}
+              {order.distanceKm != null && <p>ระยะส่ง : {order.distanceKm} กม.</p>}
             </div>
 
             <div className="border-t border-dashed border-black/15 pt-3 flex items-center justify-between">
-              <span className="font-semibold text-ink">💰 ยอดชำระ</span>
-              <span className="font-bold text-[18px] text-[#2d6a1f] tabular-nums">฿{order.totalAmount}</span>
+              <span className="font-semibold text-ink">ยอดชำระ</span>
+              <span className="font-bold text-[18px] text-[#4a3520] tabular-nums">฿{order.totalAmount}</span>
             </div>
 
             {order.status === 'pending' && (
