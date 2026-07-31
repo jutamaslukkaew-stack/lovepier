@@ -21,6 +21,10 @@ export const categories = pgTable(
     nameEn: text('name_en').notNull(),
     nameZh: text('name_zh').notNull(),
     slug: text('slug').notNull().unique(),
+    // Stable key linking to the Excel `category_no` (e.g. "1", "9.5", "10").
+    // Text on purpose — "9.5" is a real category. Nullable: the original 10
+    // categories predate the importer.
+    categoryNo: text('category_no').unique(),
     sortOrder: integer('sort_order').notNull().default(0),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -54,6 +58,23 @@ export const menuItems = pgTable(
     isAvailable: boolean('is_available').notNull().default(true),
     sortOrder: integer('sort_order').notNull().default(0),
     isDeleted: boolean('is_deleted').notNull().default(false),
+    // ── Bulk-import fields (Excel menu import) ──────────────────────────────
+    // Upsert key from the Excel `image_code` (e.g. "1_01", "9.5_03"). Nullable
+    // because the original 60 rows predate the importer and have no code.
+    importCode: text('import_code').unique(),
+    subCategory: text('sub_category'),
+    // Excel `image_file` — overrides which photo filename belongs to this item
+    // (blank = match by import_code). Stored so the image matcher can use it.
+    imageFile: text('image_file'),
+    // 'published' | 'planned' | 'retired'. Incomplete import rows land as
+    // 'planned' (+ is_available=false) rather than being rejected.
+    status: text('status').notNull().default('published'),
+    // full/before-discount price for a struck-through display; numeric → string
+    priceOriginal: numeric('price_original', { precision: 10, scale: 2 }),
+    noteInternal: text('note_internal'),
+    // Bumped every time the item's images are (re)processed; appended to image
+    // URLs as ?v= so a re-uploaded photo isn't masked by CDN/browser cache.
+    imageVersion: integer('image_version').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -191,6 +212,26 @@ export const orders = pgTable(
 
 export type Order = typeof orders.$inferSelect
 export type NewOrder = typeof orders.$inferInsert
+
+// Audit log — one row per bulk menu-import run (see /admin/menu/import).
+// `report` keeps the full diff so a past import can be traced.
+export const menuImports = pgTable('menu_imports', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  filename: text('filename'),
+  uploadedBy: text('uploaded_by'),
+  rowsTotal: integer('rows_total').notNull().default(0),
+  rowsCreated: integer('rows_created').notNull().default(0),
+  rowsUpdated: integer('rows_updated').notNull().default(0),
+  rowsUnchanged: integer('rows_unchanged').notNull().default(0),
+  rowsIncomplete: integer('rows_incomplete').notNull().default(0),
+  imagesMatched: integer('images_matched').notNull().default(0),
+  imagesUnmatched: integer('images_unmatched').notNull().default(0),
+  report: jsonb('report'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export type MenuImport = typeof menuImports.$inferSelect
+export type NewMenuImport = typeof menuImports.$inferInsert
 
 // Simple key/value store for shop settings editable from /admin/settings.
 export const settings = pgTable('settings', {

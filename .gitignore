@@ -4,3 +4,9 @@
 .claude/worktrees/
 
 .DS_Store
+
+# Local data exports — may contain business data, never commit
+lovepier-data-export/
+
+# Internal handoff docs + real menu source data — never commit
+lovep/

@@ -16,13 +16,15 @@ import {
   Menu,
   X,
   LogOut,
+  FileUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/admin', label: 'ภาพรวม', icon: Home, exact: true },
   { href: '/admin/orders', label: 'ออเดอร์', icon: ShoppingBag },
-  { href: '/admin/menu', label: 'เมนูอาหาร', icon: UtensilsCrossed },
+  { href: '/admin/menu', label: 'เมนูอาหาร', icon: UtensilsCrossed, exact: true },
+  { href: '/admin/menu/import', label: 'นำเข้าเมนู', icon: FileUp },
   { href: '/admin/categories', label: 'หมวดเมนู', icon: FolderOpen },
   { href: '/admin/promotions', label: 'โปรโมชัน', icon: Tag },
   { href: '/admin/events', label: 'อีเวนต์', icon: CalendarDays },
