@@ -52,7 +52,10 @@ export async function processRawImage(importCode: string, ext: string): Promise<
           .resize({ width: w, withoutEnlargement: true })
           .webp(WEBP)
           .toBuffer()
-        const { error } = await sb.storage.from(BUCKET).upload(sizePath(importCode, w), webp, {
+        // Blob, not Buffer — a Node Buffer is sent as a raw fetch body that some
+        // serverless runtimes (Vercel) coerce to a UTF-8 string, corrupting the
+        // binary (high bytes → U+FFFD �). A Blob is sent as binary-safe multipart.
+        const { error } = await sb.storage.from(BUCKET).upload(sizePath(importCode, w), new Blob([new Uint8Array(webp)], { type: 'image/webp' }), {
           contentType: 'image/webp',
           cacheControl: '31536000',
           upsert: true, // re-import overwrites in place (cache-busting via image_version)

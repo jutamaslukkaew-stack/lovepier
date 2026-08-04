@@ -46,7 +46,11 @@ export async function POST(req: Request) {
         .toBuffer()
 
       const path = `${base}-${w}w.webp`
-      const { error } = await supabase.storage.from(BUCKET).upload(path, webp, {
+      // Upload as a Blob, not a Node Buffer: supabase-js sends a Buffer as a raw
+      // fetch body, which some serverless runtimes (Vercel) coerce to a UTF-8
+      // string — corrupting the binary (high bytes become the U+FFFD �, EF BF BD)
+      // so the stored .webp is broken. A Blob is sent as multipart, always binary-safe.
+      const { error } = await supabase.storage.from(BUCKET).upload(path, new Blob([new Uint8Array(webp)], { type: 'image/webp' }), {
         contentType: 'image/webp',
         cacheControl: '31536000',
         upsert: false,
