@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-04T00:00:00Z",
+  "title": "Design System: Love Pier Beach Cafe",
+  "extensions": {
+    "colorMeta": {
+      "brand-cocoa": {
+        "role": "primary",
+        "displayName": "Roasted Cocoa",
+        "canonical": "#4a3520",
+        "tonalRamp": ["#100b06", "#1f160c", "#2e2011", "#3a2818", "#4a3520", "#6a4d2f", "#9a7c5a", "#cbb79a", "#ece2d2"]
+      },
+      "brand-espresso": {
+        "role": "primary",
+        "displayName": "Espresso Bark",
+        "canonical": "#3a2818",
+        "tonalRamp": ["#0d0905", "#18110a", "#241a0f", "#2f2113", "#3a2818", "#573c24", "#84603c", "#bda483", "#e7dccb"]
+      },
+      "brand-gold": {
+        "role": "tertiary",
+        "displayName": "Low-Sun Gold",
+        "canonical": "#c9a96e",
+        "tonalRamp": ["#3a2f1a", "#5a4826", "#7a6234", "#9c8047", "#c9a96e", "#d7bd8c", "#e4d1ac", "#f0e4cd", "#f9f3e7"]
+      },
+      "cream": {
+        "role": "neutral",
+        "displayName": "Sea-Foam Cream",
+        "canonical": "#f5f3ef",
+        "tonalRamp": ["#2b2a27", "#45433f", "#615f5a", "#807d77", "#a3a09a", "#c6c3bd", "#e0ddd7", "#f5f3ef", "#fbfaf8"]
+      },
+      "surface-warm": {
+        "role": "neutral",
+        "displayName": "Surface Warm",
+        "canonical": "#faf8f5",
+        "tonalRamp": ["#2c2a27", "#47443f", "#635f59", "#817d76", "#a4a099", "#c7c3bc", "#e1ded8", "#f0ede8", "#faf8f5"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Near-Black Ink",
+        "canonical": "#1a1a1a",
+        "tonalRamp": ["#050505", "#101010", "#1a1a1a", "#2e2e2e", "#4d4d4d", "#727272", "#9c9c9c", "#c9c9c9", "#ededed"]
+      },
+      "driftwood": {
+        "role": "neutral",
+        "displayName": "Driftwood Gray",
+        "canonical": "#888888",
+        "tonalRamp": ["#151515", "#292929", "#3e3e3e", "#565656", "#707070", "#888888", "#a8a8a8", "#cccccc", "#eeeeee"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero headlines and footer tagline. Cormorant Garamond at weight 300 — emphasis from size and space, never bold." },
+      "body": { "displayName": "Body", "purpose": "Reading text, Thai-first via LINE Seed Sans TH at generous line-height." },
+      "label": { "displayName": "Label", "purpose": "Eyebrow labels and step captions; Latin uppercase with 0.05em tracking (Thai never tracked)." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease-editorial", "value": "cubic-bezier(0.25, 0.1, 0.25, 1)", "purpose": "Scroll-reveal fades and image transforms (~1.2s)." },
+      { "name": "ease-mask-wipe", "value": "cubic-bezier(0.77, 0, 0.175, 1)", "purpose": "Image-reveal mask wipes and the full-screen menu overlay." },
+      { "name": "transition-color", "value": "0.2s", "purpose": "Button cocoa→espresso hover and input focus." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The customer-site call to action. Cocoa pill that darkens to espresso on hover.",
+      "html": "<button class=\"ds-btn-primary\">เริ่มสั่งอาหาร</button>",
+      "css": ".ds-btn-primary { background: #4a3520; color: #fff; padding: 14px 32px; border: none; border-radius: 9999px; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; cursor: pointer; transition: background 0.2s; } .ds-btn-primary:hover { background: #3a2818; } .ds-btn-primary:disabled { opacity: 0.6; cursor: default; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Warm inset field with a cocoa focus ring.",
+      "html": "<input class=\"ds-input\" placeholder=\"ชื่อผู้รับ\" />",
+      "css": ".ds-input { width: 100%; background: #faf8f5; color: #1a1a1a; border: 1px solid rgba(0,0,0,0.15); border-radius: 12px; padding: 10px 14px; font-size: 14px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; } .ds-input::placeholder { color: rgba(0,0,0,0.3); } .ds-input:focus { border-color: #4a3520; box-shadow: 0 0 0 3px rgba(74,53,32,0.30); }"
+    },
+    {
+      "name": "Underline Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "The lighter marketing/reservation form field — bottom rule only.",
+      "html": "<input class=\"ds-input-underline\" placeholder=\"Email\" />",
+      "css": ".ds-input-underline { border: none; border-bottom: 1px solid rgba(0,0,0,0.15); background: transparent; font-family: Jost, sans-serif; font-size: 14px; padding: 8px 0; outline: none; transition: border-color 0.2s; } .ds-input-underline:focus { border-bottom-color: #4a3520; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Flat warm container; separated by a hairline, not a shadow.",
+      "html": "<div class=\"ds-card\"><h3>ข้าวมันไก่สิงคโปร์</h3><p>150 ฿</p></div>",
+      "css": ".ds-card { background: #faf8f5; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 20px; color: #1a1a1a; } .ds-card h3 { margin: 0 0 6px; font-weight: 400; } .ds-card p { margin: 0; color: #4a3520; font-weight: 600; }"
+    },
+    {
+      "name": "Wizard Progress Bar",
+      "kind": "custom",
+      "refersTo": "delivery-wizard",
+      "description": "Sticky segmented step indicator; segments fill cocoa as steps complete.",
+      "html": "<div class=\"ds-steps\"><span class=\"on\"></span><span class=\"on\"></span><span></span><span></span></div>",
+      "css": ".ds-steps { display: flex; gap: 6px; padding: 12px 16px; background: rgba(245,242,238,0.95); backdrop-filter: blur(4px); border-bottom: 1px solid rgba(0,0,0,0.10); } .ds-steps span { height: 4px; flex: 1; border-radius: 9999px; background: rgba(0,0,0,0.10); } .ds-steps span.on { background: #4a3520; }"
+    },
+    {
+      "name": "Eyebrow Label",
+      "kind": "custom",
+      "refersTo": "label",
+      "description": "Small uppercase Latin caption; sits above headings.",
+      "html": "<span class=\"ds-eyebrow\">DELIVERY</span>",
+      "css": ".ds-eyebrow { font-family: 'LINESeedSansTH', Jost, sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(74,53,32,0.5); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Warm Pier at Golden Hour",
+    "overview": "Love Pier is a seaside cafe world rendered in the colors of roasted coffee and late-afternoon light: deep cocoa and espresso browns, a broad wash of sea-foam cream, and a single thread of low-sun gold used as sparingly as the sun itself. The personality is calm, editorial, and unhurried — a light-weight Cormorant serif carries the display voice while LINE Seed Sans keeps Thai text warm and readable. Nothing shouts; depth comes from stacking warm tones and hairline borders, not from heavy shadows. The system serves two contexts from one identity: the customer-facing world expresses the brand fully, while the admin backoffice runs on a deliberately neutral shadcn scaffold with cocoa reserved for its primary actions.",
+    "keyCharacteristics": [
+      "Warm, low-contrast, sunlit — cream fields with cocoa/espresso ink, never stark white-on-black drama.",
+      "Light editorial serif for display, humanist sans for Thai-first body text.",
+      "Pill-shaped primary actions; softly rounded cards and inputs.",
+      "Near-flat surfaces; depth from tonal layering, hairline borders, and backdrop blur.",
+      "Gold is a rare accent, reserved for dark backgrounds only."
+    ],
+    "rules": [
+      { "name": "The Gold-on-Dark Rule", "body": "Low-Sun Gold (#c9a96e) is only ever placed on dark backgrounds. It fails contrast on cream and white, so it is never used for text or icons on light surfaces — cocoa or ink carry those instead.", "section": "colors" },
+      { "name": "The Cocoa-then-Espresso Rule", "body": "Interactive elements rest at Roasted Cocoa (#4a3520) and darken to Espresso Bark (#3a2818) on hover/press. Never the reverse, and never a lighter tint on hover.", "section": "colors" },
+      { "name": "The Cream-Not-White Rule", "body": "Page and section grounds are Sea-Foam Cream, not #ffffff. Pure white belongs only to text sitting on cocoa/espresso fills.", "section": "colors" },
+      { "name": "The No-Tracking-Thai Rule", "body": "Thai text (:lang(th)) always sets letter-spacing: 0 — Latin letter-spacing breaks Thai clusters. Uppercase tracking applies to Latin labels only.", "section": "typography" },
+      { "name": "The Light-Display Rule", "body": "Display serif runs at weight 300, never bold. Emphasis comes from size and space, not weight.", "section": "typography" },
+      { "name": "The Flat-Warm Rule", "body": "Customer surfaces are flat at rest. Separation comes from a one-tone shift and a hairline border, not from a shadow. If a surface needs to float, use translucency + blur, not elevation.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do ground every customer surface on Sea-Foam Cream (#f5f3ef), not white.",
+      "Do use Roasted Cocoa (#4a3520) for the primary action and darken to Espresso Bark (#3a2818) on hover.",
+      "Do render display headlines in light-weight (300) Cormorant, letting size and whitespace carry emphasis.",
+      "Do keep Thai text at letter-spacing: 0 with generous line-height.",
+      "Do shape primary actions as pills and cards/inputs as rounded-xl.",
+      "Do convey depth with tonal layering, hairline borders, and backdrop blur."
+    ],
+    "donts": [
+      "Don't place Low-Sun Gold (#c9a96e) on cream or white — dark backgrounds only.",
+      "Don't add decorative emoji to customer-facing cards or the order-status page.",
+      "Don't reach for drop shadows to separate customer surfaces; use a tone shift and a hairline border.",
+      "Don't set Latin letter-spacing on Thai text, and don't bold the display serif.",
+      "Don't bleed the admin's neutral shadcn palette into customer surfaces, or the cocoa brand accent into every admin control."
+    ]
+  }
+}

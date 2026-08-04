@@ -125,9 +125,9 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
                 key={id}
                 type="button"
                 onClick={() => scrollTo(id)}
-                className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer ${
                   activeAnchor === id
-                    ? 'bg-[#4a3520] text-white'
+                    ? 'bg-[#4a3520] text-white shadow-sm shadow-[#4a3520]/20'
                     : 'bg-[#4a3520]/[0.07] text-[#4a3520]/70 hover:bg-[#4a3520]/15 hover:text-[#4a3520]'
                 }`}
               >
@@ -145,7 +145,7 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
       </div>
 
       {/* Full scrollable menu */}
-      <div className="w-full bg-white flore-menu">
+      <div className="w-full bg-[#f5f2ee] flore-menu">
         <div id="menu-section-promotion" className="border-b border-black/10">
           <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
             <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">

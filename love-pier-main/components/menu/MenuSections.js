@@ -155,8 +155,8 @@ export function MenuCard({ id, name, badge, desc, price, prices, image, lang, on
   }
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.08)] flex flex-col">
-      <div className="relative bg-[#f2ede6]" style={{ paddingTop: '75%' }}>
+    <div className="group bg-white rounded-2xl overflow-hidden border border-black/[0.06] shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_14px_30px_rgba(74,53,32,0.10)] hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] flex flex-col">
+      <div className="relative overflow-hidden bg-[#f2ede6]" style={{ paddingTop: '75%' }}>
         {image && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -166,7 +166,7 @@ export function MenuCard({ id, name, badge, desc, price, prices, image, lang, on
             loading="lazy"
             srcSet={getSrcSet(image)}
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className={`absolute inset-0 w-full h-full object-cover object-center ${onImageClick ? 'cursor-zoom-in' : ''}`}
+            className={`absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:scale-[1.04] ${onImageClick ? 'cursor-zoom-in' : ''}`}
           />
         )}
         {image && onImageClick && (
@@ -183,8 +183,8 @@ export function MenuCard({ id, name, badge, desc, price, prices, image, lang, on
         )}
       </div>
 
-      <div className="p-3.5 flex flex-col flex-1 gap-1.5">
-        <h3 className="font-display text-[17px] font-bold text-ink leading-snug line-clamp-2">{name}</h3>
+      <div className="p-4 flex flex-col flex-1 gap-1.5">
+        <h3 className="font-display text-[19px] font-semibold text-ink leading-tight line-clamp-2">{name}</h3>
         {desc && (
           <p className="text-[11px] text-black/50 font-light leading-relaxed line-clamp-2">{desc}</p>
         )}
@@ -203,7 +203,7 @@ export function MenuCard({ id, name, badge, desc, price, prices, image, lang, on
             <button
               onClick={handleAdd}
               disabled={!displayPrice || displayPrice === 'Free'}
-              className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors shrink-0 ${
+              className={`text-[11px] font-semibold px-3.5 py-1.5 rounded-full transition-colors duration-200 shrink-0 ${
                 flash ? 'bg-[#3a2818] text-white' : 'bg-[#4a3520] text-white hover:bg-[#3a2818]'
               } disabled:opacity-40 disabled:cursor-not-allowed`}
             >
@@ -343,7 +343,7 @@ function PromoOrderCard({ deal, lang, onImageClick }) {
       ) : null}
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center justify-between mb-2 gap-2">
-          <span className="text-[9px] tracking-[0.18em] uppercase text-gold font-medium">{deal.badge}</span>
+          <span className="text-[19px] font-semibold text-ink leading-snug">{deal.badge}</span>
           {deal.disc && <span className="text-[11px] font-semibold text-[#c0392b] tabular-nums shrink-0">{deal.disc}</span>}
         </div>
         <h3 className="text-[13px] font-semibold tracking-[0.06em] uppercase text-ink leading-snug mb-1.5">{deal.title}</h3>
@@ -355,7 +355,7 @@ function PromoOrderCard({ deal, lang, onImageClick }) {
           </div>
           <button
             onClick={handleAdd}
-            className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors shrink-0 ${
+            className={`text-[11px] font-semibold px-3.5 py-1.5 rounded-full transition-colors duration-200 shrink-0 ${
               flash ? 'bg-[#3a2818] text-white' : 'bg-[#4a3520] text-white hover:bg-[#3a2818]'
             }`}
           >
@@ -409,10 +409,10 @@ export function PromotionPanel({ lang, dbPromotions = [], showAddToCart, onImage
                 ) : null}
                 <div className="p-4 flex flex-col flex-1">
                   <div className="flex items-center justify-between mb-2 gap-2">
-                    <span className="text-[9px] tracking-[0.18em] uppercase text-gold font-medium">{deal.badge}</span>
+                    <span className="text-[19px] font-semibold text-ink leading-snug">{deal.badge}</span>
                     {deal.disc && <span className="text-[11px] font-semibold text-[#c0392b] tabular-nums shrink-0">{deal.disc}</span>}
                   </div>
-                  <h3 className="text-[13px] font-semibold tracking-[0.06em] uppercase text-ink leading-snug mb-1.5">{deal.title}</h3>
+                  <h3 className="text-[13px] font-medium text-[#4a3520]/70 leading-snug mb-1.5">{deal.title}</h3>
                   <p className="text-[11px] text-[#888] font-light leading-relaxed flex-1 mb-3">{deal.desc}</p>
                   <div className="flex items-baseline gap-2 pt-3 border-t border-black/10">
                     <span className="font-display text-[17px] text-gold tabular-nums">{deal.price}</span>
