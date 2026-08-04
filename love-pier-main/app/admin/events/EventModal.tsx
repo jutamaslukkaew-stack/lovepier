@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -115,8 +116,11 @@ export function EventModal({
       const { uploadImage } = await import('@/lib/upload-image')
       const { url } = await uploadImage(file)
       set('imageUrl', url)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'อัปโหลดรูปไม่สำเร็จ')
     } finally {
       setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
     }
   }
 
@@ -136,11 +140,19 @@ export function EventModal({
     try {
       const { uploadImage } = await import('@/lib/upload-image')
       const urls: string[] = []
+      let failed = 0
       for (const file of toUpload) {
-        const { url } = await uploadImage(file)
-        urls.push(url)
+        try {
+          const { url } = await uploadImage(file)
+          urls.push(url)
+        } catch {
+          failed++
+        }
       }
-      setForm((f) => ({ ...f, albumImages: [...f.albumImages, ...urls].slice(0, MAX_ALBUM_IMAGES) }))
+      if (urls.length) {
+        setForm((f) => ({ ...f, albumImages: [...f.albumImages, ...urls].slice(0, MAX_ALBUM_IMAGES) }))
+      }
+      if (failed) toast.error(`อัปโหลดไม่สำเร็จ ${failed} รูป`)
     } finally {
       setUploadingAlbum(false)
       if (albumFileRef.current) albumFileRef.current.value = ''
@@ -305,7 +317,7 @@ export function EventModal({
               <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
                 {uploading ? 'กำลังอัปโหลด...' : 'อัปโหลด'}
               </Button>
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleUpload(e.target.files[0]) }} />
+              <input ref={fileRef} type="file" accept="image/*,.heic,.heif" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleUpload(e.target.files[0]) }} />
             </div>
             {form.imageUrl && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -331,7 +343,7 @@ export function EventModal({
               <input
                 ref={albumFileRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,.heic,.heif"
                 multiple
                 className="hidden"
                 onChange={(e) => { if (e.target.files?.length) handleAlbumUpload(e.target.files) }}
