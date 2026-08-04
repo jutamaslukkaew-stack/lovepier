@@ -29,8 +29,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   set('titleEn', body.titleEn)
   set('titleZh', body.titleZh ?? '')
   set('titleEm', body.titleEm ?? '')
-  set('eventDate', body.eventDate ?? null)
-  set('endDate', body.endDate ?? null)
+  // '' (blank date field) must become null, not '': a date column rejects ''.
+  set('eventDate', body.eventDate || null)
+  set('endDate', body.endDate || null)
   set('timeRange', body.timeRange ?? '')
   set('timeSub', body.timeSub ?? '')
   set('location', body.location ?? '')
@@ -55,8 +56,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   set('isActive', body.isActive ?? true)
   set('sortOrder', body.sortOrder ?? 0)
 
-  const [row] = await db.update(events).set(updates).where(eq(events.id, Number(id))).returning()
-  return NextResponse.json(row)
+  try {
+    const [row] = await db.update(events).set(updates).where(eq(events.id, Number(id))).returning()
+    return NextResponse.json(row)
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Update failed' },
+      { status: 500 },
+    )
+  }
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {

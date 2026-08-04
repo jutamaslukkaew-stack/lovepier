@@ -172,7 +172,8 @@ export default function EventsPage() {
       setModalOpen(false)
       startTransition(() => { load() })
     } else {
-      toast.error('เกิดข้อผิดพลาด')
+      const { error } = await res.json().catch(() => ({ error: '' }))
+      toast.error(error ? `บันทึกไม่สำเร็จ: ${error}` : 'เกิดข้อผิดพลาด')
     }
   }
 

@@ -23,13 +23,16 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const [row] = await db.insert(events).values({
+  try {
+    const [row] = await db.insert(events).values({
     titleTh: body.titleTh,
     titleEn: body.titleEn,
     titleZh: body.titleZh ?? '',
     titleEm: body.titleEm ?? '',
-    eventDate: body.eventDate ?? null,
-    endDate: body.endDate ?? null,
+    // '' (blank date field) must become null, not '': a date column rejects ''.
+    // `?? null` keeps '' since it is not nullish, so use `|| null`.
+    eventDate: body.eventDate || null,
+    endDate: body.endDate || null,
     timeRange: body.timeRange ?? '',
     timeSub: body.timeSub ?? '',
     location: body.location ?? '',
@@ -53,6 +56,12 @@ export async function POST(req: Request) {
     isFeatured: body.isFeatured ?? false,
     isActive: body.isActive ?? true,
     sortOrder: body.sortOrder ?? 0,
-  }).returning()
-  return NextResponse.json(row, { status: 201 })
+    }).returning()
+    return NextResponse.json(row, { status: 201 })
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Insert failed' },
+      { status: 500 },
+    )
+  }
 }
