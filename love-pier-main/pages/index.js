@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
 import Footer from '../components/Footer'
+import EventCard from '../components/events/EventCard'
 import { ScrollStack, ScrollStackPanel } from '../components/ScrollStack'
 import { db } from '../lib/db'
 import { categories, events as eventsTable, menuItems } from '../lib/db/schema'
@@ -416,16 +417,25 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
         const dateStr = d.dateFull ? `${d.dateFull} ${d.year} · ${ev.timeRange}` : ev.timeRange
         const priceStr = ev.price != null ? `฿${ev.price.toLocaleString()} / ${perLabel}` : freeLabel
         return {
+          id: ev.id,
           tag: ev.location || 'Love Pier',
           title: titleMain,
           titleEm: em,
           date: dateStr,
+          // Short form for the poster cards, which have no room for the time range.
+          dateShort: d.dateFull ? `${d.dateFull} ${d.year}` : '',
+          location: ev.location,
+          fullTitle,
           desc: ev[descKey] || ev.descriptionEn,
           price: priceStr,
           img: ev.imageUrl || '',
           images: (ev.albumImages && ev.albumImages.length > 0) ? ev.albumImages : (ev.imageUrl ? [ev.imageUrl] : []),
         }
       })
+
+  // Nearest event leads at full width; any others follow as poster cards, so
+  // every upcoming event stays visible instead of being hidden behind a slide.
+  const [leadEvent, ...restEvents] = eventsItems
 
   return (
     <>
@@ -559,52 +569,71 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
               </Link>
             </div>
           ) : (
-          <div className="space-y-4">
-            {eventsItems.map((ev) => (
-              <div key={ev.title + ev.date} className="group grid grid-cols-1 sm:grid-cols-[300px_1fr] lg:grid-cols-[420px_1fr] gap-0 border border-black/10 overflow-hidden hover:border-black/25 transition-colors">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                {ev.img && (
-                  <div className="relative overflow-hidden">
-                    <img
-                      src={ev.img}
-                      alt={ev.title}
-                      loading="lazy"
-                      srcSet={getSrcSet(ev.img)}
-                      sizes="(min-width: 1024px) 420px, (min-width: 640px) 300px, 100vw"
-                      onClick={() => { if (ev.images?.length) { setEvLbImages(ev.images); setEvLbIdx(0) } }}
-                      className={`w-full h-48 sm:h-full object-cover [filter:saturate(0.72)] group-hover:[filter:saturate(1)] transition-[filter] duration-500 ${ev.images?.length ? 'cursor-zoom-in' : ''}`}
-                    />
-                    {ev.images?.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => { setEvLbImages(ev.images); setEvLbIdx(0) }}
-                        aria-label={`ดูรูปทั้งหมด ${ev.images.length} รูป`}
-                        className="absolute top-2.5 right-2.5 w-9 h-9 rounded-full bg-black/45 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/65 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                      >
-                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                          <path d="M9 3H4.5A1.5 1.5 0 0 0 3 4.5V9M15 3h4.5A1.5 1.5 0 0 1 21 4.5V9M9 21H4.5A1.5 1.5 0 0 1 3 19.5V15M15 21h4.5a1.5 1.5 0 0 0 1.5-1.5V15" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                )}
-                <div className="px-6 py-6 sm:py-8 flex flex-col gap-3">
-                  <span className="text-[9px] tracking-[0.3em] uppercase text-gold-deep font-semibold">{ev.tag}</span>
-                  <h3 className="font-display font-light text-[clamp(28px,4vw,44px)] leading-none text-ink">
-                    {ev.title} <em className="italic text-gold-deep">{ev.titleEm}</em>
-                  </h3>
-                  <p className="text-[10px] tracking-[0.18em] uppercase text-muted-strong">{ev.date}</p>
-                  <p className="text-[13px] text-[#555] font-light leading-relaxed mt-1">{ev.desc}</p>
-                  <div className="mt-auto pt-3 border-t border-black/10 flex items-center justify-between">
-                    <span className="font-display text-[18px] text-gold-deep">{ev.price}</span>
-                    <Link href="/events" className="text-[10px] tracking-[0.2em] uppercase text-muted-strong hover:text-ink transition-colors">
-                      {lang === 'th' ? 'ดูอีเวนต์' : lang === 'zh' ? '查看活动' : 'View events'} →
-                    </Link>
-                  </div>
+          <>
+            {/* Lead: the nearest event, full width */}
+            <div className="group grid grid-cols-1 sm:grid-cols-[300px_1fr] lg:grid-cols-[420px_1fr] gap-0 border border-black/10 overflow-hidden hover:border-black/25 transition-colors">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {leadEvent.img && (
+                <div className="relative overflow-hidden">
+                  <img
+                    src={leadEvent.img}
+                    alt={leadEvent.fullTitle}
+                    loading="lazy"
+                    srcSet={getSrcSet(leadEvent.img)}
+                    sizes="(min-width: 1024px) 420px, (min-width: 640px) 300px, 100vw"
+                    onClick={() => { if (leadEvent.images?.length) { setEvLbImages(leadEvent.images); setEvLbIdx(0) } }}
+                    className={`w-full h-48 sm:h-full object-cover [filter:saturate(0.72)] group-hover:[filter:saturate(1)] transition-[filter] duration-500 ${leadEvent.images?.length ? 'cursor-zoom-in' : ''}`}
+                  />
+                  {leadEvent.images?.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => { setEvLbImages(leadEvent.images); setEvLbIdx(0) }}
+                      aria-label={`ดูรูปทั้งหมด ${leadEvent.images.length} รูป`}
+                      className="absolute top-2.5 right-2.5 w-9 h-9 rounded-full bg-black/45 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/65 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    >
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                        <path d="M9 3H4.5A1.5 1.5 0 0 0 3 4.5V9M15 3h4.5A1.5 1.5 0 0 1 21 4.5V9M9 21H4.5A1.5 1.5 0 0 1 3 19.5V15M15 21h4.5a1.5 1.5 0 0 0 1.5-1.5V15" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              )}
+              <div className="px-6 py-6 sm:py-8 flex flex-col gap-3">
+                <span className="text-[9px] tracking-[0.3em] uppercase text-gold-deep font-semibold">{leadEvent.tag}</span>
+                <h3 className="font-display font-light text-[clamp(28px,4vw,44px)] leading-none text-ink">
+                  {leadEvent.title} <em className="italic text-gold-deep">{leadEvent.titleEm}</em>
+                </h3>
+                <p className="text-[10px] tracking-[0.18em] uppercase text-muted-strong">{leadEvent.date}</p>
+                <p className="text-[13px] text-[#555] font-light leading-relaxed mt-1">{leadEvent.desc}</p>
+                <div className="mt-auto pt-3 border-t border-black/10 flex items-center justify-between">
+                  <span className="font-display text-[18px] text-gold-deep">{leadEvent.price}</span>
+                  <Link
+                    href={`/events/${leadEvent.id}`}
+                    className="inline-flex items-center min-h-[24px] text-[10px] tracking-[0.2em] uppercase text-muted-strong hover:text-ink transition-colors rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4a3520]"
+                  >
+                    {lang === 'th' ? 'ดูรายละเอียด' : lang === 'zh' ? '查看详情' : 'View details'} <span aria-hidden="true" className="ml-1">→</span>
+                  </Link>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+
+            {/* Any further upcoming events, as poster cards — same component the
+                /events grid uses, so the two pages stay visually consistent. */}
+            {restEvents.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {restEvents.map((ev) => (
+                  <EventCard
+                    key={ev.id}
+                    href={`/events/${ev.id}`}
+                    imageUrl={ev.img}
+                    title={ev.fullTitle}
+                    dateLabel={ev.dateShort}
+                    location={ev.location}
+                  />
+                ))}
+              </div>
+            )}
+          </>
           )}
         </section>
       </ScrollStackPanel>
