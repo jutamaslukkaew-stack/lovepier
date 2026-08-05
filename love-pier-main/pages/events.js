@@ -1,11 +1,4 @@
-function getSrcSet(url) {
-  if (!url || !url.includes('-960w.webp')) return undefined
-  const base = url.replace('-960w.webp', '')
-  return `${base}-480w.webp 480w, ${base}-960w.webp 960w, ${base}-1440w.webp 1440w`
-}
-
 import Head from 'next/head'
-import Link from 'next/link'
 import Footer from '../components/Footer'
 import PageHero from '../components/PageHero'
 import EventCard from '../components/events/EventCard'
@@ -47,7 +40,6 @@ const EVENTS_COPY = {
     heroSuffix: 'เสิร์ฟความสนุก',
     desc: 'กิจกรรมพิเศษ ภายในร้านของเรา',
     featured: 'THE SYMPHONY CLUB',
-    reserve: 'จองโต๊ะ',
     add: 'เพิ่มลงปฏิทิน',
     weekly: 'กิจกรรมประจำวัน',
     weeklyDesc: 'กิจกรรมที่คุณมาได้ทุกวัน',
@@ -57,9 +49,6 @@ const EVENTS_COPY = {
       { src: '/uploads/events-skimboard.webp', alt: 'Sup Board & Skim Board' },
       { src: '/uploads/events-kayak.webp', alt: 'พายเรือคายัค' },
     ],
-    freeLabel: 'ฟรี',
-    featuredImageAlt: 'Featured Event',
-    perPerson: ' ต่อท่าน',
     recurring: [
       { day: 'ทุกวัน(ยกเว้นวันพุธ)', title: 'Surf Pool', text: 'สัมผัสความสนุกของการโต้คลื่นในสระคลื่นมาตรฐาน เหมาะทั้งมือใหม่และสายเซิร์ฟ', time: '10:00 – 20:00' },
       { day: 'ทุกวัน (ยกเว้นวันพุธ)', title: 'เจ็ตสกี', text: 'เร่งความเร็วบนผืนน้ำกับเจ็ตสกี สัมผัสความตื่นเต้นแบบเต็มสปีด', time: '10:00 – 20:00' },
@@ -73,7 +62,6 @@ const EVENTS_COPY = {
     heroSuffix: '带来欢乐',
     desc: '我们店里的特别活动。',
     featured: 'THE SYMPHONY CLUB',
-    reserve: '预订座位',
     add: '加入日历',
     weekly: '每日固定活动',
     weeklyDesc: '每天都有，直接到店即可。',
@@ -83,9 +71,6 @@ const EVENTS_COPY = {
       { src: '/uploads/events-skimboard.webp', alt: 'Sup Board & Skim Board' },
       { src: '/uploads/events-kayak.webp', alt: '皮划艇' },
     ],
-    freeLabel: '免费',
-    featuredImageAlt: 'Featured Event',
-    perPerson: ' 每人',
     recurring: [
       { day: '每天（周三除外）', title: 'Surf Pool', text: '在标准造浪池中体验冲浪乐趣，新手与冲浪爱好者都适合。', time: '10:00 – 20:00' },
       { day: '每天（周三除外）', title: '水上摩托', text: '驾驶水上摩托驰骋海面，感受全速刺激。', time: '10:00 – 20:00' },
@@ -99,7 +84,6 @@ const EVENTS_COPY = {
     heroSuffix: 'Serves the Fun',
     desc: 'Special activities at our cafe.',
     featured: 'THE SYMPHONY CLUB',
-    reserve: 'Reserve a Table',
     add: 'Add to calendar',
     weekly: 'Daily activities',
     weeklyDesc: 'Something to enjoy every day — just show up.',
@@ -109,9 +93,6 @@ const EVENTS_COPY = {
       { src: '/uploads/events-skimboard.webp', alt: 'Sup Board & Skim Board' },
       { src: '/uploads/events-kayak.webp', alt: 'Kayaking' },
     ],
-    freeLabel: 'Free',
-    featuredImageAlt: 'Featured Event',
-    perPerson: ' per person',
     recurring: [
       { day: 'Every day (except Wednesday)', title: 'Surf Pool', text: 'Ride the waves in a standard surf pool — great for beginners and seasoned surfers alike.', time: '10:00 – 20:00' },
       { day: 'Every day (except Wednesday)', title: 'Jet Ski', text: 'Pick up speed on the water with jet skis and feel the full-throttle thrill.', time: '10:00 – 20:00' },
@@ -148,37 +129,13 @@ export default function Events({ dbEvents = [] }) {
   const t = EVENTS_COPY[lang] || EVENTS_COPY.en
 
   const activeEvents = dbEvents.filter((e) => e.isActive)
-  const dbFeatured = activeEvents.find((e) => e.isFeatured) || null
 
   const titleKey = lang === 'th' ? 'titleTh' : lang === 'zh' ? 'titleZh' : 'titleEn'
-  const descKey = lang === 'th' ? 'descriptionTh' : lang === 'zh' ? 'descriptionZh' : 'descriptionEn'
-  const entrySubKey = lang === 'th' ? 'entrySubTh' : lang === 'zh' ? 'entrySubZh' : 'entrySubEn'
-  const catKey = lang === 'th' ? 'categoryTh' : lang === 'zh' ? 'categoryZh' : 'categoryEn'
-  const freeLabel = t.freeLabel
-
-  const fe = dbFeatured
-    ? (() => {
-        const d = formatEventDate(dbFeatured.eventDate, lang)
-        const priceStr = dbFeatured.price != null ? `฿${dbFeatured.price.toLocaleString()}` : freeLabel
-        return {
-          title: dbFeatured[titleKey] || dbFeatured.titleEn,
-          titleEm: dbFeatured.titleEm,
-          date: d.dateFull,
-          year: d.year,
-          time: dbFeatured.timeRange,
-          timeSub: dbFeatured.timeSub,
-          entry: dbFeatured.price != null ? `${priceStr}${t.perPerson}` : freeLabel,
-          entrySub: dbFeatured[entrySubKey],
-          desc: dbFeatured[descKey],
-          imageUrl: dbFeatured.imageUrl || null,
-        }
-      })()
-    : null
 
   // Upcoming vs Past is always derived from the date (never a manual admin
   // toggle) — effective end = endDate if set, else the single eventDate.
-  // The featured event is included here too so it also shows as a card,
-  // in addition to its hero spotlight above.
+  // The featured event has no separate spotlight anymore, so it simply shows
+  // as a card in whichever section its date puts it.
   const todayStr = new Date().toISOString().slice(0, 10)
   const gridEvents = activeEvents.map((e) => {
     const d = formatEventDate(e.eventDate, lang)
@@ -208,34 +165,6 @@ export default function Events({ dbEvents = [] }) {
         <p className="text-[11px] tracking-[0.05em] text-gold mb-1">{t.featured}</p>
         <p className="font-display font-light text-ink text-[clamp(22px,4vw,32px)] leading-tight">{t.desc}</p>
       </div>
-
-      {fe && <section className="grid grid-cols-1 lg:grid-cols-2 lg:items-stretch border-b border-black/10 reveal-img">
-        <div className="relative overflow-hidden aspect-[4/3] lg:aspect-auto lg:min-h-full">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            className="absolute inset-0 w-full h-full object-cover object-[50%_42%] scale-[1.14] origin-center [filter:saturate(0.58)_brightness(0.9)_contrast(1.04)]"
-            src={fe.imageUrl || '/uploads/events-flow-sunset.webp'}
-            alt={t.featuredImageAlt}
-            loading="eager"
-            fetchPriority="high"
-            srcSet={getSrcSet(fe.imageUrl)}
-            sizes="(min-width: 1024px) 50vw, 100vw"
-          />
-        </div>
-        <div className="px-4 py-12 flex flex-col justify-center sm:px-6 sm:py-12 lg:px-16 lg:py-20">
-          <span className="inline-flex text-[10px] tracking-[0.3em] uppercase text-gold border border-gold/50 px-3 py-1.5 mb-5 w-fit">{t.featured}</span>
-          <h2 className="font-display font-light leading-none text-ink tracking-[-0.02em] mb-4 text-[clamp(40px,5vw,64px)]">{fe.title}<br /><em className="italic text-gold">{fe.titleEm}</em></h2>
-          <div className="flex gap-8 mb-6 py-4 border-t border-b border-black/10 flex-wrap sm:gap-5">
-            <div className="text-[11px] tracking-[0.2em] text-muted uppercase"><strong className="text-ink font-medium">{fe.date}</strong><br />{fe.year}</div>
-            <div className="text-[11px] tracking-[0.2em] text-muted uppercase"><strong className="text-ink font-medium">{fe.time}</strong><br />{fe.timeSub}</div>
-            <div className="text-[11px] tracking-[0.2em] text-muted uppercase"><strong className="text-ink font-medium">{fe.entry}</strong><br />{fe.entrySub}</div>
-          </div>
-          <p className="text-sm text-[#555] leading-[1.9] font-light mb-8 max-w-[480px]">{fe.desc}</p>
-          <div className="flex gap-3 flex-wrap">
-            <Link href="/reservation" className="inline-block bg-[#4a3520] text-white text-[11px] tracking-[0.25em] uppercase px-7 py-3.5 hover:bg-[#3a2818] transition-colors duration-300">{t.reserve}</Link>
-          </div>
-        </div>
-      </section>}
 
       {upcomingEvents.length > 0 && (
         <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 border-b border-black/10 reveal">
