@@ -40,22 +40,16 @@ const COPY = {
     title: 'Love Pier Beach Cafe — หน้าหลัก',
     city: 'chonburi . thailand',
     hoursLabel: 'เวลาเปิดทำการ',
-    hoursValue: 'เปิดทุกวัน (ยกเว้นวันพุธ) 09:00-18:00',
-    location: 'ที่ตั้ง',
-    locationValue: '800 108 แสนสุข\nอำเภอเมือง จังหวัดชลบุรี 20130',
-    exploreMenu: 'ดูเมนู',
     tagline: ['Beach Vibes,', 'Cafe by The Sea,', 'คาเฟ่บรรยากาศดีริมทะเล'],
-    since: 'ตั้งแต่ปี 2026',
     about1: '<strong>LOVE PIER BEACH CAFE</strong> คาเฟ่ริมชายหาดบางแสน ที่อยากให้ทุกช่วงเวลาของคุณพิเศษกว่าที่เคย',
     about2: 'ที่นี่ไม่ใช่แค่คาเฟ่ริมทะเล แต่คือพื้นที่พักใจริมชายหาด สำหรับคนที่อยากหลบความวุ่นวาย มานั่งรับลม ฟังเสียงคลื่น และปล่อยเวลาให้เดินช้าลง ท่ามกลางบรรยากาศอบอุ่น โรแมนติก และวิวทะเลบางแสนที่สวยในแบบเรียบง่าย',
     about3: 'LOVE PIER BEACH CAFE ถูกออกแบบให้เป็นจุดนัดพบของความทรงจำ ไม่ว่าจะมานั่งจิบเครื่องดื่มแก้วโปรด ทานอาหารมื้อสบาย ๆ เก็บภาพกับมุมท่าเรือริมทะเล หรือใช้เวลาสนุกไปกับกิจกรรมกลางแจ้งริมชายหาด ทั้งเล่นเซิร์ฟ พายเรือ และกิจกรรมทางน้ำที่ทำให้วันพักผ่อนมีชีวิตชีวามากขึ้น',
-    about4: 'ในช่วงเย็น แสงพระอาทิตย์ที่ค่อย ๆ ลับขอบฟ้า เสียงคลื่นเบา ๆ และลมทะเลที่พัดผ่าน จะทำให้ทุกมื้อธรรมดากลายเป็นช่วงเวลาที่น่าจดจำ เพราะบางครั้งความสุขก็ไม่ได้ต้องการอะไรมากไปกว่า วิวสวย ๆ เครื่องดื่มดี ๆ กิจกรรมสนุก ๆ และใครสักคนที่นั่งอยู่ข้างกัน<br /><br /><strong class="italic text-gold font-normal tracking-[0.12em]">LOVE PIER BEACH CAFE</strong> คาเฟ่ริมทะเลบางแสน สำหรับมื้อพิเศษ วันพักผ่อน กิจกรรมริมชายหาด และความทรงจำดี ๆ ของคุณ',
+    about4: 'ในช่วงเย็น แสงพระอาทิตย์ที่ค่อย ๆ ลับขอบฟ้า เสียงคลื่นเบา ๆ และลมทะเลที่พัดผ่าน จะทำให้ทุกมื้อธรรมดากลายเป็นช่วงเวลาที่น่าจดจำ เพราะบางครั้งความสุขก็ไม่ได้ต้องการอะไรมากไปกว่า วิวสวย ๆ เครื่องดื่มดี ๆ กิจกรรมสนุก ๆ และใครสักคนที่นั่งอยู่ข้างกัน<br /><br /><strong class="italic text-gold-deep font-normal tracking-[0.12em]">LOVE PIER BEACH CAFE</strong> คาเฟ่ริมทะเลบางแสน สำหรับมื้อพิเศษ วันพักผ่อน กิจกรรมริมชายหาด และความทรงจำดี ๆ ของคุณ',
     address: 'ที่อยู่',
     addressValue: '800 108 แสนสุข\nอำเภอเมือง จังหวัดชลบุรี 20130',
     hoursCompact: 'เปิดทุกวัน (ยกเว้นวันพุธ) · 09:00-18:00',
     contact: 'ติดต่อ',
     follow: 'ติดตาม',
-    openInMaps: 'เปิดใน Google Maps',
     // new sections
     galleryTitle: 'บรรยากาศ',
     gallerySub: 'ริมทะเล บางแสน',
@@ -81,44 +75,23 @@ const COPY = {
     eventsTitle: 'อีเวนต์ที่กำลังจะมาถึง',
     eventsSub: 'กิจกรรมพิเศษประจำเดือน',
     eventsMore: 'ดูอีเวนต์ทั้งหมด',
-    eventsItems: [
-      {
-        tag: 'The Symphony Club',
-        title: 'Flow', titleEm: 'Sunset',
-        date: 'ส. 27 มิ.ย. 2026 · 16:00–20:00',
-        desc: 'Surf Pool · Skimboard · Kayak · SUP Board อาหาร เครื่องดื่ม และสินค้าพาร์ทเนอร์ตลอดงาน รับริสแบนด์และเครื่องดื่มกระป๋องฟรี 1 แก้ว',
-        price: '฿500 / คน',
-        img: '/uploads/events-flow-sunset.webp',
-        images: [
-          '/uploads/events-flow-sunset.webp',
-          '/uploads/events-surf-pool.webp',
-          '/uploads/events-skimboard.webp',
-          '/uploads/events-kayak.webp',
-          '/uploads/events-jet-ski.webp',
-        ],
-      },
-    ],
+    eventsEmpty: 'ยังไม่มีอีเวนต์ที่กำลังจะมาถึง',
+    eventsEmptySub: 'อีเวนต์รอบใหม่จะขึ้นที่นี่ทันทีที่ประกาศ — ระหว่างนี้ดูอีเวนต์ที่ผ่านมาได้',
   },
   en: {
     title: 'Love Pier Beach Cafe — Home',
     city: 'chonburi . thailand',
     hoursLabel: 'Hours',
-    hoursValue: 'Open daily (except Wednesday) 09:00-18:00',
-    location: 'Location',
-    locationValue: '800 108 Saensuk\nMueang Chonburi, Chonburi 20130',
-    exploreMenu: 'Explore Menu',
     tagline: ['Beach Vibes,', 'Cafe by The Sea,', 'Singapore Chicken Rice'],
-    since: 'Since 2026',
     about1: 'Love Pier Cafe is a beachside cafe in Bangsaen where every meal feels more special.',
-    about2: 'Enjoy <em class="italic text-gold">Singaporean and Hainanese chicken rice (original recipes)</em>, paired with signature drinks inspired by <em class="italic text-gold">Nong Mon khao lam</em>, reimagined with a softer, modern touch.',
+    about2: 'Enjoy <em class="italic text-gold-deep">Singaporean and Hainanese chicken rice (original recipes)</em>, paired with signature drinks inspired by <em class="italic text-gold-deep">Nong Mon khao lam</em>, reimagined with a softer, modern touch.',
     about3: 'Sit by the sea breeze, listen to the gentle waves, and capture memories at our romantic pier stretching out toward the water.',
-    about4: 'Some beautiful moments only need great food, a favorite drink, and someone special to watch the sunset with<br />at <strong class="italic text-gold font-normal tracking-[0.12em]">LOVE PIER BEACH CAFE</strong>.',
+    about4: 'Some beautiful moments only need great food, a favorite drink, and someone special to watch the sunset with<br />at <strong class="italic text-gold-deep font-normal tracking-[0.12em]">LOVE PIER BEACH CAFE</strong>.',
     address: 'Address',
     addressValue: '800 108 Saensuk\nMueang Chonburi, Chonburi 20130',
     hoursCompact: 'Open daily (except Wednesday) · 09:00-18:00',
     contact: 'Contact',
     follow: 'Follow',
-    openInMaps: 'Open in Google Maps',
     galleryTitle: 'Gallery',
     gallerySub: 'By the sea, Bangsaen',
     galleryMore: 'View full gallery',
@@ -143,38 +116,23 @@ const COPY = {
     eventsTitle: 'Upcoming Events',
     eventsSub: 'Special monthly activities',
     eventsMore: 'View all events',
-    eventsItems: [
-      {
-        tag: 'The Symphony Club',
-        title: 'Flow', titleEm: 'Sunset',
-        date: 'SAT 27 JUN 2026 · 16:00–20:00',
-        desc: 'Surf Pool · Skimboard · Kayak · SUP Board. Free wristband and one canned drink.',
-        price: '฿500 / person',
-        img: '/uploads/events-flow-sunset.webp',
-        images: ['/uploads/events-flow-sunset.webp','/uploads/events-surf-pool.webp','/uploads/events-skimboard.webp','/uploads/events-kayak.webp','/uploads/events-jet-ski.webp'],
-      },
-    ],
+    eventsEmpty: 'No upcoming events yet',
+    eventsEmptySub: 'The next one appears here as soon as it is announced — meanwhile, browse past events.',
   },
   zh: {
     title: 'Love Pier Beach Cafe — 首页',
     city: 'chonburi . thailand',
     hoursLabel: '营业时间',
-    hoursValue: '每日营业（周三除外） 09:00-18:00',
-    location: '地址',
-    locationValue: '800 108 Saensuk\nMueang Chonburi, Chonburi 20130',
-    exploreMenu: '查看菜单',
     tagline: ['海边氛围,', '海边咖啡馆,', '新加坡鸡饭'],
-    since: '自 2026 年起',
     about1: 'Love Pier Cafe 是邦盛海边的一家咖啡馆，让每一餐都比以往更特别。',
-    about2: '品尝<em class="italic text-gold">"新加坡鸡饭与海南鸡饭（传统原味）"</em>，再搭配受<em class="italic text-gold">"农蒙竹筒糯米饭"</em>启发的招牌饮品，把邦盛在地风味以更细腻的方式重新呈现。',
+    about2: '品尝<em class="italic text-gold-deep">"新加坡鸡饭与海南鸡饭（传统原味）"</em>，再搭配受<em class="italic text-gold-deep">"农蒙竹筒糯米饭"</em>启发的招牌饮品，把邦盛在地风味以更细腻的方式重新呈现。',
     about3: '在温暖的海边氛围里吹着海风、听着轻柔浪声，也在通往海面的浪漫码头留下属于你的回忆。',
-    about4: '有些美好时刻，其实只需要好食物、喜欢的那杯饮品，以及一起看夕阳的人。<br />就在 <strong class="italic text-gold font-normal tracking-[0.12em]">LOVE PIER BEACH CAFE</strong>。',
+    about4: '有些美好时刻，其实只需要好食物、喜欢的那杯饮品，以及一起看夕阳的人。<br />就在 <strong class="italic text-gold-deep font-normal tracking-[0.12em]">LOVE PIER BEACH CAFE</strong>。',
     address: '地址',
     addressValue: '800 108 Saensuk\nMueang Chonburi, Chonburi 20130',
     hoursCompact: '每日营业（周三除外） · 09:00-18:00',
     contact: '联系',
     follow: '关注我们',
-    openInMaps: '在 Google 地图中打开',
     galleryTitle: '环境照片',
     gallerySub: '海边 · 邦盛',
     galleryMore: '查看全部图库',
@@ -199,17 +157,8 @@ const COPY = {
     eventsTitle: '即将到来的活动',
     eventsSub: '每月特别活动',
     eventsMore: '查看全部活动',
-    eventsItems: [
-      {
-        tag: 'The Symphony Club',
-        title: 'Flow', titleEm: 'Sunset',
-        date: '2026年6月27日（周六） 16:00–20:00',
-        desc: 'Surf Pool · Skimboard · Kayak · SUP Board。免费腕带及一罐饮料。',
-        price: '฿500 / 人',
-        img: '/uploads/events-flow-sunset.webp',
-        images: ['/uploads/events-flow-sunset.webp','/uploads/events-surf-pool.webp','/uploads/events-skimboard.webp','/uploads/events-kayak.webp','/uploads/events-jet-ski.webp'],
-      },
-    ],
+    eventsEmpty: '暂无即将到来的活动',
+    eventsEmptySub: '新活动一经公布就会显示在这里 — 期间可查看过往活动。',
   },
 }
 
@@ -230,14 +179,59 @@ function SectionHeader({ title, sub, moreLabel, moreHref }) {
     <div className="mb-6 sm:mb-8">
       <h2 className="font-display font-light text-ink text-[clamp(28px,4vw,48px)] leading-none tracking-[-0.01em]">{title}</h2>
       <div className="flex items-center justify-between mt-2 gap-4">
-        {sub ? <p className="text-[13px] tracking-[0.03em] text-muted leading-relaxed">{sub}</p> : <span />}
+        {sub ? <p className="text-[13px] tracking-[0.03em] text-muted-strong leading-relaxed">{sub}</p> : <span />}
         {moreLabel && moreHref ? (
-          <Link href={moreHref} className="shrink-0 text-[13px] tracking-[0.03em] text-gold hover:text-ink transition-colors whitespace-nowrap">
-            {moreLabel} →
+          <Link
+            href={moreHref}
+            className="shrink-0 inline-flex items-center min-h-[24px] text-[13px] tracking-[0.03em] text-gold-deep hover:text-ink transition-colors whitespace-nowrap rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4a3520]"
+          >
+            {moreLabel} <span aria-hidden="true" className="ml-1">→</span>
           </Link>
         ) : null}
       </div>
     </div>
+  )
+}
+
+// Drinks / food / sweets are the same section three times over. Rendering them
+// from one definition also means the empty case is handled once: when the query
+// returns nothing the whole panel is dropped, rather than leaving a heading and
+// a "view all" link stranded above an empty grid.
+function MenuHighlights({ items, lang, href, title, sub, moreLabel, tone }) {
+  if (!items || items.length === 0) return null
+  return (
+    <ScrollStackPanel tone={tone}>
+      <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 reveal border-t border-black/10">
+        <SectionHeader title={title} sub={sub} moreLabel={moreLabel} moreHref={href} />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+          {items.map((item) => (
+            <Link
+              key={item.id}
+              href={href}
+              className="rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#4a3520]"
+            >
+              <MenuCard item={item} lang={lang} />
+            </Link>
+          ))}
+        </div>
+      </section>
+    </ScrollStackPanel>
+  )
+}
+
+// One CTA rendered in two places (beside the tagline on desktop, after the copy
+// on narrow screens) — kept as a single definition so the two never drift.
+function MenuCta({ lang }) {
+  return (
+    <Link
+      href="/menu"
+      className="group inline-flex items-center gap-3 px-8 py-4 rounded-full bg-[#4a3520] text-[rgba(245,243,239,0.95)] hover:bg-[#3a2818] transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4a3520]"
+    >
+      <span className="text-[13px] sm:text-[14px] tracking-[0.15em] uppercase font-light">
+        {lang === 'th' ? 'ดูเมนู อาหาร เครื่องดื่ม ขนม' : lang === 'zh' ? '查看菜单' : 'View Menu'}
+      </span>
+      <span aria-hidden="true" className="text-base transition-transform duration-200 group-hover:translate-x-1">→</span>
+    </Link>
   )
 }
 
@@ -260,11 +254,11 @@ function MenuCard({ item, lang }) {
         />
       ) : (
         <div className="w-full aspect-[4/5] bg-[#e8e4de] flex items-center justify-center">
-          <span className="text-[#b0aa9e] text-xs tracking-widest uppercase">No image</span>
+          <span className="text-muted-strong text-xs tracking-widest uppercase">No image</span>
         </div>
       )}
       <div className="font-display text-[18px] sm:text-[20px] font-light text-ink leading-snug line-clamp-2 flex-1 mt-3">{name}</div>
-      <div className="font-display text-[16px] text-gold mt-2">{price}{priceMax}</div>
+      <div className="font-display text-[16px] text-gold-deep mt-2">{price}{priceMax}</div>
     </div>
   )
 }
@@ -278,11 +272,23 @@ const HERO_SLIDES = [
   { src: '/uploads/home-cafe-exterior.webp', pos: '50% 50%' },
 ]
 
-function HeroSlideshow({ t, renderLines }) {
+function HeroSlideshow({ t }) {
   const [current, setCurrent] = useState(0)
   const [fading, setFading] = useState(false)
+  // Auto-advance is decorative: it stops while the visitor is reading (hover or
+  // keyboard focus) and never runs at all under prefers-reduced-motion, so the
+  // hero is not an unstoppable moving target (WCAG 2.2.2).
+  const [paused, setPaused] = useState(false)
+
+  const goTo = (i) => {
+    setFading(true)
+    setTimeout(() => { setCurrent(i); setFading(false) }, 600)
+  }
 
   useEffect(() => {
+    if (paused) return
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (reduced) return
     const timer = setInterval(() => {
       setFading(true)
       setTimeout(() => {
@@ -291,16 +297,24 @@ function HeroSlideshow({ t, renderLines }) {
       }, 600)
     }, 4500)
     return () => clearInterval(timer)
-  }, [])
+  }, [paused])
 
   return (
-    <div className="relative w-full bg-[#e8e4de] reveal-img overflow-hidden aspect-[4/5] sm:aspect-[3/2] lg:aspect-[16/7]">
+    <div
+      className="relative w-full bg-[#e8e4de] reveal-img overflow-hidden aspect-[4/5] sm:aspect-[3/2] lg:aspect-[16/7]"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={() => setPaused(false)}
+    >
       {HERO_SLIDES.map((slide, i) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           key={slide.src}
+          // Decorative: the <h1> below already names the place, so repeating it
+          // on five stacked images would just be screen-reader noise.
+          alt=""
           src={slide.src}
-          alt="Love Pier Beach Cafe"
           loading={i === 0 ? 'eager' : 'lazy'}
           fetchPriority={i === 0 ? 'high' : 'auto'}
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[600ms]"
@@ -322,16 +336,23 @@ function HeroSlideshow({ t, renderLines }) {
           <span className="block leading-[1.2] text-[clamp(15px,2.6vw,32px)]">Beach Cafe</span>
         </h1>
       </div>
-      {/* dot indicators */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-row gap-1.5" style={{ zIndex: 4 }}>
+      {/* dot indicators — the dot stays 6px, but each button carries a 24×40px
+          hit area so it is actually tappable on a phone */}
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-row" style={{ zIndex: 4 }}>
         {HERO_SLIDES.map((_, i) => (
           <button
             key={i}
             type="button"
-            onClick={() => { setFading(true); setTimeout(() => { setCurrent(i); setFading(false) }, 600) }}
-            className="w-1.5 h-1.5 rounded-full transition-all duration-300 border-0 cursor-pointer"
-            style={{ background: i === current ? 'rgba(245,243,239,0.9)' : 'rgba(245,243,239,0.35)' }}
-          />
+            onClick={() => goTo(i)}
+            aria-label={`ภาพที่ ${i + 1} จาก ${HERO_SLIDES.length}`}
+            aria-current={i === current ? 'true' : undefined}
+            className="w-6 h-10 flex items-center justify-center border-0 bg-transparent cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(245,243,239,0.9)]"
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full transition-all duration-300"
+              style={{ background: i === current ? 'rgba(245,243,239,0.9)' : 'rgba(245,243,239,0.35)' }}
+            />
+          </button>
         ))}
       </div>
     </div>
@@ -346,6 +367,23 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
   const [evLbIdx, setEvLbIdx] = useState(0)
   const evTouchX = useRef(null)
 
+  // Lightbox is a modal: Escape closes it, arrows page through it, and the page
+  // behind it stops scrolling (reusing the same body class the nav overlay uses).
+  useEffect(() => {
+    if (!evLbImages) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') setEvLbImages(null)
+      else if (e.key === 'ArrowRight') setEvLbIdx((i) => Math.min(i + 1, evLbImages.length - 1))
+      else if (e.key === 'ArrowLeft') setEvLbIdx((i) => Math.max(i - 1, 0))
+    }
+    window.addEventListener('keydown', onKey)
+    document.body.classList.add('menu-open')
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.classList.remove('menu-open')
+    }
+  }, [evLbImages])
+
   const renderLines = (text) => text.split('\n').map((line, idx, arr) => (
     <span key={`${line}-${idx}`}>{line}{idx < arr.length - 1 ? <br /> : null}</span>
   ))
@@ -355,9 +393,22 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
   const perLabel = lang === 'th' ? 'คน' : lang === 'zh' ? '人' : 'person'
   const freeLabel = lang === 'th' ? 'ฟรี' : lang === 'zh' ? '免费' : 'Free'
 
-  const activeEvents = dbEvents.filter((e) => e.isActive)
-  const eventsItems = activeEvents.length > 0
-    ? activeEvents.slice(0, 3).map((ev) => {
+  // The section is headed "อีเวนต์ที่กำลังจะมาถึง", so it must only carry events
+  // that have not finished yet — an event runs until endDate (or its single
+  // eventDate) — soonest first. Anything already over belongs on /events under
+  // Past Events, not on the home page.
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const upcomingEvents = dbEvents
+    .filter((e) => e.isActive)
+    .filter((e) => {
+      const effectiveEnd = e.endDate || e.eventDate
+      return effectiveEnd ? effectiveEnd >= todayStr : false
+    })
+    .sort((a, b) => (a.endDate || a.eventDate).localeCompare(b.endDate || b.eventDate))
+
+  const eventsItems = upcomingEvents
+    .slice(0, 3)
+    .map((ev) => {
         const d = formatEventDate(ev.eventDate, lang)
         const fullTitle = ev[titleKey] || ev.titleEn
         const em = ev.titleEm || ''
@@ -375,7 +426,6 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
           images: (ev.albumImages && ev.albumImages.length > 0) ? ev.albumImages : (ev.imageUrl ? [ev.imageUrl] : []),
         }
       })
-    : t.eventsItems
 
   return (
     <>
@@ -395,7 +445,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
       {/* ── 1. HERO ─────────────────────────────────────────────────────── */}
       <ScrollStackPanel>
         {/* Hero slideshow with text overlay */}
-        <HeroSlideshow t={t} renderLines={renderLines} />
+        <HeroSlideshow t={t} />
 
         {/* Tagline + About */}
         <div className="bg-[#e8e4de] px-8 sm:px-14 lg:px-20 py-16 sm:py-20 lg:py-28 border-b border-black/10">
@@ -405,15 +455,10 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
               <h2 className="font-display font-light leading-[1.25] text-ink tracking-[-0.02em] text-[clamp(26px,3.8vw,54px)]">
                 {t.tagline[0]}<br/>
                 {t.tagline[1]}<br/>
-                <em className="not-italic text-gold whitespace-nowrap">{t.tagline[2]}</em>
+                <em className="not-italic text-gold-deep whitespace-nowrap">{t.tagline[2]}</em>
               </h2>
               <div className="mt-10 hidden lg:flex">
-                <Link href="/menu" className="group inline-flex items-center gap-3 px-8 py-4 rounded-full bg-[#4a3520] text-[rgba(245,243,239,0.95)] hover:bg-[#3a2818] transition-colors duration-200">
-                  <span className="text-[13px] sm:text-[14px] tracking-[0.15em] uppercase font-light">
-                    {lang === 'th' ? 'ดูเมนู อาหาร เครื่องดื่ม ขนม' : lang === 'zh' ? '查看菜单' : 'View Menu'}
-                  </span>
-                  <span className="text-base transition-transform duration-200 group-hover:translate-x-1">→</span>
-                </Link>
+                <MenuCta lang={lang} />
               </div>
             </div>
             {/* Right col: about text */}
@@ -422,14 +467,9 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
               <p dangerouslySetInnerHTML={{ __html: `${t.about2} ${t.about3} ${t.about4}` }} />
             </div>
           </div>
-          {/* Button for mobile/tablet */}
+          {/* Same CTA, placed after the copy on narrow screens */}
           <div className="mt-10 flex justify-center lg:hidden">
-            <Link href="/menu" className="group inline-flex items-center gap-3 px-8 py-4 rounded-full bg-[#4a3520] text-[rgba(245,243,239,0.95)] hover:bg-[#3a2818] transition-colors duration-200">
-              <span className="text-[13px] sm:text-[14px] tracking-[0.15em] uppercase font-light">
-                {lang === 'th' ? 'ดูเมนู อาหาร เครื่องดื่ม ขนม' : lang === 'zh' ? '查看菜单' : 'View Menu'}
-              </span>
-              <span className="text-base transition-transform duration-200 group-hover:translate-x-1">→</span>
-            </Link>
+            <MenuCta lang={lang} />
           </div>
         </div>
 
@@ -440,10 +480,10 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
         <section className="py-10 sm:py-14 reveal border-t border-black/10">
           <div className="px-4 sm:px-6 lg:px-10 flex items-end justify-between mb-6">
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-gold mb-1">{t.gallerySub}</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-gold-deep mb-1">{t.gallerySub}</p>
               <h2 className="font-display font-light text-ink text-[clamp(28px,5vw,42px)] leading-none">{t.galleryTitle}</h2>
             </div>
-            <Link href="/gallery" className="text-[11px] tracking-[0.2em] uppercase text-[#888] hover:text-ink transition-colors flex items-center gap-1.5 shrink-0">{t.galleryMore} →</Link>
+            <Link href="/gallery" className="text-[11px] tracking-[0.2em] uppercase text-muted-strong hover:text-ink transition-colors inline-flex items-center min-h-[24px] gap-1.5 shrink-0 rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4a3520]">{t.galleryMore} <span aria-hidden="true">→</span></Link>
           </div>
           {/* Horizontal scroll strip — snap per card */}
           <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth snap-x snap-mandatory -mx-0 px-4 sm:px-6 lg:px-10 pb-1">
@@ -463,52 +503,16 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
       </ScrollStackPanel>
 
       {/* ── 4. DRINKS ───────────────────────────────────────────────────── */}
-      <ScrollStackPanel>
-        <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 reveal border-t border-black/10">
-          <SectionHeader title={t.drinksTitle} sub={t.drinksSub} moreLabel={t.drinksMore} moreHref="/menu#menu-section-coffee" />
-          {featuredDrinks.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-              {featuredDrinks.map((item) => (
-                <Link key={item.id} href="/menu#menu-section-coffee">
-                  <MenuCard item={item} lang={lang} />
-                </Link>
-              ))}
-            </div>
-          ) : null}
-        </section>
-      </ScrollStackPanel>
+      <MenuHighlights items={featuredDrinks} lang={lang} href="/menu#menu-section-coffee"
+        title={t.drinksTitle} sub={t.drinksSub} moreLabel={t.drinksMore} />
 
       {/* ── 5. FOOD ─────────────────────────────────────────────────────── */}
-      <ScrollStackPanel tone="white">
-        <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 reveal border-t border-black/10">
-          <SectionHeader title={t.foodTitle} sub={t.foodSub} moreLabel={t.foodMore} moreHref="/menu#menu-section-food" />
-          {featuredFood.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-              {featuredFood.map((item) => (
-                <Link key={item.id} href="/menu#menu-section-food">
-                  <MenuCard item={item} lang={lang} />
-                </Link>
-              ))}
-            </div>
-          ) : null}
-        </section>
-      </ScrollStackPanel>
+      <MenuHighlights items={featuredFood} lang={lang} href="/menu#menu-section-food" tone="white"
+        title={t.foodTitle} sub={t.foodSub} moreLabel={t.foodMore} />
 
       {/* ── 6. SWEETS ───────────────────────────────────────────────────── */}
-      <ScrollStackPanel>
-        <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 reveal border-t border-black/10">
-          <SectionHeader title={t.sweetsTitle} sub={t.sweetsSub} moreLabel={t.sweetsMore} moreHref="/menu#menu-section-sweets" />
-          {featuredSweets.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-              {featuredSweets.map((item) => (
-                <Link key={item.id} href="/menu#menu-section-sweets">
-                  <MenuCard item={item} lang={lang} />
-                </Link>
-              ))}
-            </div>
-          ) : null}
-        </section>
-      </ScrollStackPanel>
+      <MenuHighlights items={featuredSweets} lang={lang} href="/menu#menu-section-sweets"
+        title={t.sweetsTitle} sub={t.sweetsSub} moreLabel={t.sweetsMore} />
 
       {/* ── 7. ACTIVITIES ───────────────────────────────────────────────── */}
       <ScrollStackPanel tone="white">
@@ -518,17 +522,17 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
             {t.activitiesItems.map((act) => (
               <div key={act.name} className="border border-black/10 bg-white px-4 py-5 flex flex-col gap-2">
                 <span className="text-[11px] tracking-[0.1em] uppercase font-semibold text-ink leading-snug">{act.name}</span>
-                <span className="text-[10px] text-muted">{act.detail}</span>
-                <span className="font-display text-[18px] text-gold mt-auto">{act.price}</span>
+                <span className="text-[10px] text-muted-strong">{act.detail}</span>
+                <span className="font-display text-[18px] text-gold-deep mt-auto">{act.price}</span>
               </div>
             ))}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { src: '/uploads/events-surf-pool.webp', alt: 'surf pool' },
-              { src: '/uploads/events-kayak.webp', alt: 'kayak' },
-              { src: '/uploads/events-skimboard.webp', alt: 'skimboard' },
-              { src: '/uploads/events-jet-ski.webp', alt: 'jet ski' },
+              { src: '/uploads/events-surf-pool.webp', alt: 'Surf Pool' },
+              { src: '/uploads/events-kayak.webp', alt: 'Kayak' },
+              { src: '/uploads/events-skimboard.webp', alt: 'Skimboard' },
+              { src: '/uploads/events-jet-ski.webp', alt: 'Jet Ski' },
             ].map(({ src, alt }) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img key={src} src={src} alt={alt} loading="lazy" className="w-full aspect-square object-cover rounded-xl [filter:saturate(0.75)] hover:[filter:saturate(1)] transition-[filter] duration-500" />
@@ -541,6 +545,20 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
       <ScrollStackPanel>
         <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 reveal border-t border-black/10">
           <SectionHeader title={t.eventsTitle} sub={t.eventsSub} moreLabel={t.eventsMore} moreHref="/events" />
+          {eventsItems.length === 0 ? (
+            // The section always holds its place; when nothing is upcoming it
+            // says so rather than falling back to an event that already happened.
+            <div className="border border-black/10 rounded-xl px-6 py-10 sm:py-14 text-center">
+              <p className="font-display font-light text-ink text-[clamp(20px,2.6vw,28px)] leading-snug">{t.eventsEmpty}</p>
+              <p className="mt-2 text-[13px] text-muted-strong leading-relaxed max-w-[420px] mx-auto">{t.eventsEmptySub}</p>
+              <Link
+                href="/events"
+                className="mt-6 inline-flex items-center gap-2 min-h-[24px] text-[13px] tracking-[0.03em] text-gold-deep hover:text-ink transition-colors rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4a3520]"
+              >
+                {t.eventsMore} <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          ) : (
           <div className="space-y-4">
             {eventsItems.map((ev) => (
               <div key={ev.title + ev.date} className="group grid grid-cols-1 sm:grid-cols-[300px_1fr] lg:grid-cols-[420px_1fr] gap-0 border border-black/10 overflow-hidden hover:border-black/25 transition-colors">
@@ -556,29 +574,38 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
                       onClick={() => { if (ev.images?.length) { setEvLbImages(ev.images); setEvLbIdx(0) } }}
                       className={`w-full h-48 sm:h-full object-cover [filter:saturate(0.72)] group-hover:[filter:saturate(1)] transition-[filter] duration-500 ${ev.images?.length ? 'cursor-zoom-in' : ''}`}
                     />
-                    {ev.images?.length > 1 && (
+                    {ev.images?.length > 0 && (
                       <button
+                        type="button"
                         onClick={() => { setEvLbImages(ev.images); setEvLbIdx(0) }}
-                        className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white text-[13px] leading-none"
-                      >⛶</button>
+                        aria-label={`ดูรูปทั้งหมด ${ev.images.length} รูป`}
+                        className="absolute top-2.5 right-2.5 w-9 h-9 rounded-full bg-black/45 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/65 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                          <path d="M9 3H4.5A1.5 1.5 0 0 0 3 4.5V9M15 3h4.5A1.5 1.5 0 0 1 21 4.5V9M9 21H4.5A1.5 1.5 0 0 1 3 19.5V15M15 21h4.5a1.5 1.5 0 0 0 1.5-1.5V15" />
+                        </svg>
+                      </button>
                     )}
                   </div>
                 )}
                 <div className="px-6 py-6 sm:py-8 flex flex-col gap-3">
-                  <span className="text-[9px] tracking-[0.3em] uppercase text-gold font-semibold">{ev.tag}</span>
+                  <span className="text-[9px] tracking-[0.3em] uppercase text-gold-deep font-semibold">{ev.tag}</span>
                   <h3 className="font-display font-light text-[clamp(28px,4vw,44px)] leading-none text-ink">
-                    {ev.title} <em className="italic text-gold">{ev.titleEm}</em>
+                    {ev.title} <em className="italic text-gold-deep">{ev.titleEm}</em>
                   </h3>
-                  <p className="text-[10px] tracking-[0.18em] uppercase text-muted">{ev.date}</p>
+                  <p className="text-[10px] tracking-[0.18em] uppercase text-muted-strong">{ev.date}</p>
                   <p className="text-[13px] text-[#555] font-light leading-relaxed mt-1">{ev.desc}</p>
                   <div className="mt-auto pt-3 border-t border-black/10 flex items-center justify-between">
-                    <span className="font-display text-[18px] text-gold">{ev.price}</span>
-                    <Link href="/events" className="text-[10px] tracking-[0.2em] uppercase text-muted hover:text-ink transition-colors">More →</Link>
+                    <span className="font-display text-[18px] text-gold-deep">{ev.price}</span>
+                    <Link href="/events" className="text-[10px] tracking-[0.2em] uppercase text-muted-strong hover:text-ink transition-colors">
+                      {lang === 'th' ? 'ดูอีเวนต์' : lang === 'zh' ? '查看活动' : 'View events'} →
+                    </Link>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+          )}
         </section>
       </ScrollStackPanel>
 
@@ -626,22 +653,22 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
             {/* Info */}
             <div className="flex flex-col gap-6 lg:py-2">
               <div>
-                <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.address}</span>
+                <span className="block text-[9px] tracking-[0.35em] uppercase text-muted-strong mb-2">{t.address}</span>
                 <div className="text-[13px] text-[#444] leading-[1.7] font-light">{renderLines(t.addressValue)}</div>
               </div>
               <div>
-                <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.hoursLabel}</span>
+                <span className="block text-[9px] tracking-[0.35em] uppercase text-muted-strong mb-2">{t.hoursLabel}</span>
                 <div className="text-[13px] text-[#444] leading-[1.7] font-light">{t.hoursCompact}</div>
               </div>
               <div>
-                <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.contact}</span>
-                <div className="text-[13px] text-[#444] leading-[1.7] font-light">
-                  <a href="tel:0642523293" className="text-muted hover:text-ink transition-colors">064-252-3293</a><br/>
-                  <a href="mailto:lovepier.cafe@gmail.com" className="text-muted hover:text-ink transition-colors break-all">lovepier.cafe@gmail.com</a>
+                <span className="block text-[9px] tracking-[0.35em] uppercase text-muted-strong mb-2">{t.contact}</span>
+                <div className="text-[13px] text-[#444] leading-[1.7] font-light flex flex-col items-start">
+                  <a href="tel:0642523293" className="inline-flex items-center min-h-[24px] text-muted-strong hover:text-ink transition-colors rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4a3520]">064-252-3293</a>
+                  <a href="mailto:lovepier.cafe@gmail.com" className="inline-flex items-center min-h-[24px] text-muted-strong hover:text-ink transition-colors break-all rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4a3520]">lovepier.cafe@gmail.com</a>
                 </div>
               </div>
               <div>
-                <span className="block text-[9px] tracking-[0.35em] uppercase text-[#bbb] mb-2">{t.follow}</span>
+                <span className="block text-[9px] tracking-[0.35em] uppercase text-muted-strong mb-2">{t.follow}</span>
                 <div className="flex flex-col gap-2">
                   {[
                     { href: 'https://www.instagram.com/lovepiercafe/', label: 'Instagram', handle: 'lovepiercafe', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg> },
@@ -650,8 +677,8 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
                     { href: 'https://www.tiktok.com/@lovepier.cafe2?_r=1&_t=ZS-97V9HaUa8jE', label: 'TikTok', handle: 'lovepier.cafe', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.8a4.3 4.3 0 0 1-2.6-1.6 4.3 4.3 0 0 1-.8-2.2h-3v12c0 1-.8 1.9-1.9 1.9a1.9 1.9 0 0 1-1.9-1.9c0-1 .8-1.9 1.9-1.9.2 0 .4 0 .6.1V9.1a5 5 0 0 0-.6 0 5 5 0 1 0 5 5V8.4a7.4 7.4 0 0 0 4.3 1.4V6.7a4.4 4.4 0 0 1-1-.9z"/></svg> },
                   ].map(({ href, label, handle, icon }) => (
                     <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="flex flex-row items-center gap-3 group">
-                      <span className="text-muted border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink group-hover:[&_svg]:text-bg transition-all flex items-center justify-center w-9 h-9 shrink-0">{icon}</span>
-                      <span className="text-[13px] text-[#888] group-hover:text-ink transition-colors whitespace-nowrap">{handle}</span>
+                      <span className="text-muted-strong border border-black/[0.12] p-2 hover:border-ink hover:text-ink hover:bg-ink group-hover:[&_svg]:text-bg transition-all flex items-center justify-center w-9 h-9 shrink-0">{icon}</span>
+                      <span className="text-[13px] text-muted-strong group-hover:text-ink transition-colors whitespace-nowrap">{handle}</span>
                     </a>
                   ))}
                 </div>
@@ -667,8 +694,23 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
 
       {/* Event image lightbox */}
       {evLbImages && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[200] flex flex-col bg-black" onClick={() => setEvLbImages(null)}>
-          <button onClick={() => setEvLbImages(null)} className="absolute top-4 right-4 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 text-white/80 hover:text-white text-xl leading-none">✕</button>
+        <div
+          className="fixed inset-0 z-[200] flex flex-col bg-black"
+          onClick={() => setEvLbImages(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="รูปภาพอีเวนต์"
+        >
+          <button
+            type="button"
+            onClick={() => setEvLbImages(null)}
+            aria-label="ปิด"
+            className="absolute top-4 right-4 z-20 w-11 h-11 flex items-center justify-center rounded-full bg-black/50 text-white/80 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="w-5 h-5">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
           <div
             className="relative flex-1 min-h-0 w-full"
             onClick={e => e.stopPropagation()}
@@ -682,13 +724,44 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={evLbImages[evLbIdx]} alt="" className="absolute inset-0 w-full h-full object-contain" />
-            {evLbIdx > 0 && <button onClick={e => { e.stopPropagation(); setEvLbIdx(i => i - 1) }} className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-black/35 hover:bg-black/55 text-white text-2xl">‹</button>}
-            {evLbIdx < evLbImages.length - 1 && <button onClick={e => { e.stopPropagation(); setEvLbIdx(i => i + 1) }} className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-black/35 hover:bg-black/55 text-white text-2xl">›</button>}
+            <img
+              src={evLbImages[evLbIdx]}
+              alt={`รูปที่ ${evLbIdx + 1} จาก ${evLbImages.length}`}
+              className="absolute inset-0 w-full h-full object-contain"
+            />
+            {evLbIdx > 0 && (
+              <button
+                type="button"
+                aria-label="รูปก่อนหน้า"
+                onClick={e => { e.stopPropagation(); setEvLbIdx(i => i - 1) }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-black/35 hover:bg-black/55 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M15 5l-7 7 7 7" /></svg>
+              </button>
+            )}
+            {evLbIdx < evLbImages.length - 1 && (
+              <button
+                type="button"
+                aria-label="รูปถัดไป"
+                onClick={e => { e.stopPropagation(); setEvLbIdx(i => i + 1) }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-black/35 hover:bg-black/55 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M9 5l7 7-7 7" /></svg>
+              </button>
+            )}
           </div>
-          <div className="shrink-0 py-4 flex justify-center gap-1.5" onClick={e => e.stopPropagation()}>
+          <div className="shrink-0 py-2 flex justify-center" onClick={e => e.stopPropagation()}>
             {evLbImages.map((_, i) => (
-              <button key={i} onClick={() => setEvLbIdx(i)} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === evLbIdx ? 'bg-gold' : 'bg-white/30'}`} />
+              <button
+                key={i}
+                type="button"
+                onClick={() => setEvLbIdx(i)}
+                aria-label={`ไปที่รูปที่ ${i + 1}`}
+                aria-current={i === evLbIdx ? 'true' : undefined}
+                className="w-6 h-10 flex items-center justify-center bg-transparent border-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <span className={`w-1.5 h-1.5 rounded-full transition-colors ${i === evLbIdx ? 'bg-gold' : 'bg-white/30'}`} />
+              </button>
             ))}
           </div>
         </div>,

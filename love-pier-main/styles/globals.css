@@ -1,10 +1,16 @@
 @import "tailwindcss";
 
+/* --color-gold is the Gold-on-Dark accent: it only reaches 2.02:1 on cream, so
+   text and links on light surfaces use --color-gold-deep (4.59:1 on cream)
+   instead. --color-muted-strong is the readable weight of --color-muted for
+   small copy (5.46:1 vs 3.20:1). */
 @theme {
   --color-bg: #f5f3ef;
   --color-ink: #1a1a1a;
   --color-muted: #888888;
   --color-gold: #c9a96e;
+  --color-gold-deep: #8c682c;
+  --color-muted-strong: #67625a;
   --font-family-display: "Cormorant Garamond", "LINESeedSansTH", "Noto Serif Thai", serif;
   --font-family-sans: "LINESeedSansTH", Jost, "Noto Sans Thai", sans-serif;
 }
