@@ -66,6 +66,25 @@ export async function updateCategory(id: string, input: unknown): Promise<Action
 }
 
 /**
+ * Show/hide a whole category on the public menu. Separate from updateCategory
+ * because that one parses the full categorySchema, so a toggle would have to
+ * round-trip every name field just to flip one boolean.
+ */
+export async function toggleCategoryActive(id: string, value: boolean): Promise<ActionResult> {
+  try {
+    await requireUser()
+    await db
+      .update(categories)
+      .set({ isActive: value, updatedAt: new Date() })
+      .where(eq(categories.id, id))
+    revalidateAll()
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: errMessage(e) }
+  }
+}
+
+/**
  * Delete a category. If it still holds items, the caller must pass a
  * `moveToCategoryId` to relocate them first — otherwise the delete is refused.
  */

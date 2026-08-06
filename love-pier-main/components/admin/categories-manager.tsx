@@ -24,9 +24,11 @@ import {
   updateCategory,
   deleteCategory,
   reorderCategories,
+  toggleCategoryActive,
 } from '@/app/admin/actions/categories'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import { CategoryDialog } from '@/components/admin/category-dialog'
 import { DeleteCategoryDialog } from '@/components/admin/delete-category-dialog'
 
@@ -90,6 +92,24 @@ export function CategoriesManager({ initial }: { initial: CategoryRow[] }) {
                   row={row}
                   onEdit={() => setEditing(row)}
                   onDelete={() => setDeleting(row)}
+                  onToggle={(value) => {
+                    setRows((prev) =>
+                      prev.map((r) => (r.id === row.id ? { ...r, isActive: value } : r))
+                    )
+                    startTransition(async () => {
+                      const res = await toggleCategoryActive(row.id, value)
+                      if (res.ok) {
+                        toast.success(
+                          value
+                            ? `แสดง “${row.nameTh}” บนเว็บแล้ว`
+                            : `ซ่อน “${row.nameTh}” จากเว็บแล้ว`
+                        )
+                      } else {
+                        toast.error(res.error)
+                        router.refresh()
+                      }
+                    })
+                  }}
                 />
               ))}
             </ul>
@@ -146,10 +166,12 @@ function CategoryItem({
   row,
   onEdit,
   onDelete,
+  onToggle,
 }: {
   row: CategoryRow
   onEdit: () => void
   onDelete: () => void
+  onToggle: (value: boolean) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: row.id,
@@ -180,18 +202,25 @@ function CategoryItem({
           {row.nameEn} · {row.nameZh} · {row.itemCount} เมนู
         </p>
       </div>
-      <Button variant="ghost" size="icon" onClick={onEdit} aria-label="แก้ไข">
-        <Pencil className="size-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onDelete}
-        aria-label="ลบ"
-        className="text-destructive hover:text-destructive"
-      >
-        <Trash2 className="size-4" />
-      </Button>
+      <div className="flex items-center gap-1">
+        <Switch
+          checked={row.isActive}
+          onCheckedChange={onToggle}
+          aria-label={`แสดง “${row.nameTh}” บนเว็บ`}
+        />
+        <Button variant="ghost" size="icon" onClick={onEdit} aria-label="แก้ไข">
+          <Pencil className="size-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onDelete}
+          aria-label="ลบ"
+          className="text-destructive hover:text-destructive"
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
     </li>
   )
 }
