@@ -29,11 +29,31 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
   const handleCartClick = onCartClick || openCart
   const primaryTabs = primaryTabsForLang(lang)
   const menuData = useMemo(() => buildMenuData(dbMenuData, lang), [dbMenuData, lang])
+
+  // Sections behind each tab, in the order TAB_SECTION_CATS declares (not the
+  // order the DB returns), so a tab reads the same no matter which of its
+  // categories are active. An active category with no available items would
+  // otherwise render a heading over nothing, so it is dropped here too.
+  const sectionsByTab = useMemo(() => {
+    const map = {}
+    for (const [tabId, cats] of Object.entries(TAB_SECTION_CATS)) {
+      map[tabId] = cats.flatMap((cat) => menuData.filter((s) => s.cat === cat && s.items.length))
+    }
+    return map
+  }, [menuData])
+
+  // A tab whose categories are all inactive has no anchor to scroll to, and
+  // scrollTo() no-ops silently — so drop it from the bar rather than leave a dead
+  // button. Promotion and Signature are built from everything and always render.
+  const visibleTabs = primaryTabs.filter(
+    (t) => t.id === 'promotion' || t.id === 'signature' || sectionsByTab[t.id]?.length
+  )
+
   const [activeAnchor, setActiveAnchor] = useState('signature')
   const [globalLbIndex, setGlobalLbIndex] = useState(-1)
   const tabScrollRef = useRef(null)
   const [tabDotIndex, setTabDotIndex] = useState(0)
-  const TAB_DOT_COUNT = primaryTabs.length
+  const TAB_DOT_COUNT = visibleTabs.length
 
   useEffect(() => {
     const el = tabScrollRef.current
@@ -45,6 +65,22 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
   }, [TAB_DOT_COUNT])
+
+  // With twelve tabs the bar overflows even on desktop, so the highlighted tab
+  // can sit outside the visible strip as the page scrolls. Pull it back in.
+  useEffect(() => {
+    const bar = tabScrollRef.current
+    const btn = bar?.querySelector(`[data-tab="${activeAnchor}"]`)
+    if (!bar || !btn) return
+    const b = btn.getBoundingClientRect()
+    const c = bar.getBoundingClientRect()
+    if (b.left >= c.left && b.right <= c.right) return
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    bar.scrollTo({
+      left: bar.scrollLeft + (b.left - c.left) - (c.width - b.width) / 2,
+      behavior: reduce ? 'auto' : 'smooth',
+    })
+  }, [activeAnchor])
 
   // Build flat global gallery (promotions first, then every item with an image)
   // so the lightbox can page through everything in section order.
@@ -102,14 +138,6 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
     window.scrollTo({ top: y, behavior: 'smooth' })
   }
 
-  const foodSections = menuData.filter((s) => TAB_SECTION_CATS.food?.includes(s.cat))
-  const drinkSections = menuData.filter((s) => TAB_SECTION_CATS.drinks?.includes(s.cat))
-  const coffeeSections = menuData.filter((s) => s.cat === 'coffee')
-  const matchaSections = menuData.filter((s) => s.cat === 'matcha')
-  const sweetsSections = menuData.filter((s) => s.cat === 'sweets')
-  const iceCreamSections = menuData.filter((s) => s.cat === 'ice-cream')
-  const alcoholSections = menuData.filter((s) => s.cat === 'alcohol')
-
   const cartLabel = CART_BTN_LABEL[lang] || CART_BTN_LABEL.en
 
   return (
@@ -119,11 +147,16 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
       {/* Sticky anchor shortcut bar */}
       <div className="sticky top-[var(--nav-h,64px)] z-50 w-full bg-[#f5f2ee] border-b border-black/10">
         <div className="relative">
-          <div ref={tabScrollRef} className="flex justify-center overflow-x-auto gap-2 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {primaryTabs.map(({ id, label }) => (
+          {/* Auto margins on the end items, NOT justify-center: they centre the
+              row while it fits and collapse to 0 once it overflows. With
+              justify-center the leading tabs overflow past scrollLeft:0 and
+              become unreachable. */}
+          <div ref={tabScrollRef} className="flex overflow-x-auto gap-2 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>:first-child]:ml-auto [&>:last-child]:mr-auto">
+            {visibleTabs.map(({ id, label }) => (
               <button
                 key={id}
                 type="button"
+                data-tab={id}
                 onClick={() => scrollTo(id)}
                 className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer ${
                   activeAnchor === id
@@ -172,153 +205,34 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
           <SignaturePanel menuData={menuData} lang={lang} globalIndexMap={globalIndexMap} onImageClick={setGlobalLbIndex} showAddToCart={showAddToCart} />
         </div>
 
-        <div id="menu-section-food" className="border-b border-black/10">
-          {foodSections.map((section) => (
-            <div key={section.cat} className="border-b border-black/[0.06] last:border-b-0">
-              <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
-                <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
-                  {section.title}{section.titleEm ? <em className="not-italic text-gold"> · {section.titleEm}</em> : null}
-                </h2>
-                <div className="mt-3 w-12 h-px bg-gold/60" />
-              </div>
-              <MenuSectionPanel
-                section={section}
-                items={section.items}
-                lang={lang}
-                menuAddOns={menuAddOnsForCategory(section.cat, lang)}
-                globalIndexMap={globalIndexMap}
-                onImageClick={setGlobalLbIndex}
-                showAddToCart={showAddToCart}
-              />
-            </div>
-          ))}
-        </div>
-
-        <div id="menu-section-coffee" className="border-b border-black/10">
-          {coffeeSections.map((section) => (
-            <div key={section.cat}>
-              <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
-                <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">{section.title}</h2>
-                <div className="mt-3 w-12 h-px bg-gold/60" />
-              </div>
-              <MenuSectionPanel
-                section={section}
-                items={section.items}
-                lang={lang}
-                menuAddOns={menuAddOnsForCategory(section.cat, lang)}
-                globalIndexMap={globalIndexMap}
-                onImageClick={setGlobalLbIndex}
-                showAddToCart={showAddToCart}
-              />
-            </div>
-          ))}
-        </div>
-
-        <div id="menu-section-matcha" className="border-b border-black/10">
-          {matchaSections.map((section) => (
-            <div key={section.cat}>
-              <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
-                <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">{section.title}</h2>
-                <div className="mt-3 w-12 h-px bg-gold/60" />
-              </div>
-              <MenuSectionPanel
-                section={section}
-                items={section.items}
-                lang={lang}
-                tasteNotes={matchaTasteNotes(lang)}
-                globalIndexMap={globalIndexMap}
-                onImageClick={setGlobalLbIndex}
-                showAddToCart={showAddToCart}
-              />
-            </div>
-          ))}
-        </div>
-
-        <div id="menu-section-drinks" className="border-b border-black/10">
-          {drinkSections.map((section) => (
-            <div key={section.cat} className="border-b border-black/[0.06] last:border-b-0">
-              <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
-                <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">{section.title}</h2>
-                <div className="mt-3 w-12 h-px bg-gold/60" />
-              </div>
-              <MenuSectionPanel
-                section={section}
-                items={section.items}
-                lang={lang}
-                globalIndexMap={globalIndexMap}
-                onImageClick={setGlobalLbIndex}
-                showAddToCart={showAddToCart}
-              />
-            </div>
-          ))}
-        </div>
-
-        <div id="menu-section-sweets" className="border-b border-black/10">
-          {sweetsSections.map((section) => (
-            <div key={section.cat}>
-              <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
-                <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
-                  {section.title}{section.titleEm ? <em className="not-italic text-gold"> {section.titleEm}</em> : null}
-                </h2>
-                <div className="mt-3 w-12 h-px bg-gold/60" />
-              </div>
-              <MenuSectionPanel
-                section={section}
-                items={section.items}
-                lang={lang}
-                globalIndexMap={globalIndexMap}
-                onImageClick={setGlobalLbIndex}
-                showAddToCart={showAddToCart}
-              />
-            </div>
-          ))}
-        </div>
-
-        {iceCreamSections.length > 0 && (
-          <div id="menu-section-ice-cream" className="border-b border-black/10">
-            {iceCreamSections.map((section) => (
-              <div key={section.cat}>
-                <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
-                  <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
-                    {section.title}{section.titleEm ? <em className="not-italic text-gold"> {section.titleEm}</em> : null}
-                  </h2>
-                  <div className="mt-3 w-12 h-px bg-gold/60" />
+        {visibleTabs.map(({ id }) => {
+          const sections = sectionsByTab[id]
+          if (!sections?.length) return null
+          return (
+            <div key={id} id={`menu-section-${id}`} className="border-b border-black/10">
+              {sections.map((section) => (
+                <div key={section.cat} className="border-b border-black/[0.06] last:border-b-0">
+                  <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
+                    <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
+                      {section.title}{section.titleEm ? <em className="not-italic text-gold"> {section.titleEm}</em> : null}
+                    </h2>
+                    <div className="mt-3 w-12 h-px bg-gold/60" />
+                  </div>
+                  <MenuSectionPanel
+                    section={section}
+                    items={section.items}
+                    lang={lang}
+                    menuAddOns={menuAddOnsForCategory(section.cat, lang)}
+                    tasteNotes={section.cat === 'matcha' ? matchaTasteNotes(lang) : undefined}
+                    globalIndexMap={globalIndexMap}
+                    onImageClick={setGlobalLbIndex}
+                    showAddToCart={showAddToCart}
+                  />
                 </div>
-                <MenuSectionPanel
-                  section={section}
-                  items={section.items}
-                  lang={lang}
-                  globalIndexMap={globalIndexMap}
-                  onImageClick={setGlobalLbIndex}
-                  showAddToCart={showAddToCart}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {alcoholSections.length > 0 && (
-          <div id="menu-section-alcohol" className="border-b border-black/10">
-            {alcoholSections.map((section) => (
-              <div key={section.cat}>
-                <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
-                  <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
-                    {section.title}{section.titleEm ? <em className="not-italic text-gold"> {section.titleEm}</em> : null}
-                  </h2>
-                  <div className="mt-3 w-12 h-px bg-gold/60" />
-                </div>
-                <MenuSectionPanel
-                  section={section}
-                  items={section.items}
-                  lang={lang}
-                  globalIndexMap={globalIndexMap}
-                  onImageClick={setGlobalLbIndex}
-                  showAddToCart={showAddToCart}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )
+        })}
       </div>
 
       {globalLbIndex >= 0 && (

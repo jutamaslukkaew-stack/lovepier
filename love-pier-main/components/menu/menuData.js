@@ -2,10 +2,36 @@
 // /delivery. Edit this file (not the pages) to change section titles,
 // subtitles, or how DB rows map to menu sections — both pages pick it up.
 
+const SRCSET_WIDTHS = [480, 960, 1440]
+
+// Two storage layouts produce responsive sources:
+//   legacy uploads → <base>-960w.webp   (siblings -480w / -1440w)
+//   bulk import    → menu/<code>/960.webp (siblings 480 / 1440, see
+//                    lib/menuImport/imageProcess.ts)
+// A ?v= cache-buster may be attached by withImageVersion; it is re-applied to
+// every candidate so the whole set busts together.
 export function getSrcSet(url) {
-  if (!url || !url.includes('-960w.webp')) return undefined
-  const base = url.replace('-960w.webp', '')
-  return `${base}-480w.webp 480w, ${base}-960w.webp 960w, ${base}-1440w.webp 1440w`
+  if (!url) return undefined
+  const [path, query] = url.split('?')
+  const suffix = query ? `?${query}` : ''
+  const widths = (make) => SRCSET_WIDTHS.map((w) => `${make(w)}${suffix} ${w}w`).join(', ')
+
+  if (path.includes('-960w.webp')) {
+    const base = path.replace('-960w.webp', '')
+    return widths((w) => `${base}-${w}w.webp`)
+  }
+  if (path.endsWith('/960.webp')) {
+    const base = path.slice(0, -'960.webp'.length)
+    return widths((w) => `${base}${w}.webp`)
+  }
+  return undefined
+}
+
+// Imported images keep the same storage path when re-uploaded, so the only
+// thing that changes is image_version — append it or browsers serve the old file.
+export function withImageVersion(url, version) {
+  if (!url || !version) return url ?? null
+  return `${url}${url.includes('?') ? '&' : '?'}v=${version}`
 }
 
 export function formatMenuPrice(price) {
@@ -42,7 +68,7 @@ const COFFEE_ADDONS_COPY = {
 }
 
 export function menuAddOnsForCategory(cat, lang) {
-  if (cat === 'coffee') return COFFEE_ADDONS_COPY[lang] || COFFEE_ADDONS_COPY.en
+  if (cat === 'coffee' || cat === 'coffee-drinks') return COFFEE_ADDONS_COPY[lang] || COFFEE_ADDONS_COPY.en
   return undefined
 }
 
@@ -141,17 +167,28 @@ export const SLUG_TO_CAT = {
   alcohol: 'alcohol',
 }
 
+// Tab id → the category keys rendered under it, in render order. Categories
+// that are not in SLUG_TO_CAT keep their slug as the key, which is how the ten
+// bulk-import categories land here. Each tab lists the imported category first
+// and the legacy hand-built equivalent after it, so the two generations of the
+// menu share one tab instead of appearing as duplicate tabs. A tab whose
+// categories are all inactive renders nothing and is hidden from the tab bar.
 export const TAB_SECTION_CATS = {
-  food: ['chickenRice', 'breakfast'],
-  coffee: ['coffee'],
-  matcha: ['matcha'],
-  drinks: ['nonCoffee', 'italianSoda', 'other'],
-  sweets: ['sweets'],
-  'ice-cream': ['ice-cream'],
-  alcohol: ['alcohol'],
+  'chicken-rice': ['chicken-rice-1', 'chickenRice'],
+  'pasta-western': ['pasta-western'],
+  'sushi-roll': ['sushi-roll'],
+  'bbq-seafood': ['bbq-seafood'],
+  'oyster-bar': ['oyster-bar'],
+  breakfast: ['breakfast-7', 'breakfast'],
+  bakery: ['cake-bakery', 'sweets'],
+  drinks: ['coffee-drinks', 'coffee', 'matcha', 'nonCoffee', 'italianSoda', 'other'],
+  icecream: ['icecream', 'ice-cream'],
+  bar: ['bar-wine', 'alcohol'],
 }
 
-export const SECTION_IDS = ['signature', 'food', 'coffee', 'matcha', 'drinks', 'sweets', 'promotion']
+// Anchor ids in page order. 'promotion' and 'signature' are built from every
+// category rather than from one, so they are not in TAB_SECTION_CATS.
+export const SECTION_IDS = ['promotion', 'signature', ...Object.keys(TAB_SECTION_CATS)]
 
 // Build the section/item view-model both pages render from raw DB rows.
 export function buildMenuData(dbData, lang) {
@@ -173,51 +210,32 @@ export function buildMenuData(dbData, lang) {
         price: item.price === '0' ? 'Free' : (item.price ?? ''),
         priceMax: item.priceMax ?? null,
         badge: item.badge ? (BADGE_COPY[lang]?.[item.badge] ?? item.badge) : null,
-        image: item.imageUrl ?? null,
+        image: withImageVersion(item.imageUrl, item.imageVersion),
         featured: item.isFeatured ?? false,
       })),
     }
   })
 }
 
+// Tab bar labels, keyed by the anchor ids in SECTION_IDS. Keep every id here —
+// a tab with no entry falls back to its raw id, which would show a slug.
+export const TAB_LABELS = {
+  promotion: { th: 'โปรโมชัน', en: 'Promotion', zh: '优惠' },
+  signature: { th: 'แนะนำ', en: 'Signature', zh: '招牌' },
+  'chicken-rice': { th: 'ข้าวมันไก่', en: 'Chicken Rice', zh: '鸡饭' },
+  'pasta-western': { th: 'พาสต้า & ตะวันตก', en: 'Pasta & Western', zh: '意面 & 西餐' },
+  'sushi-roll': { th: 'ซูชิ & โรล', en: 'Sushi & Roll', zh: '寿司 & 卷物' },
+  'bbq-seafood': { th: 'บาร์บีคิว & ซีฟู้ด', en: 'BBQ & Seafood', zh: '烧烤 & 海鲜' },
+  'oyster-bar': { th: 'หอยนางรม', en: 'Oyster Bar', zh: '生蚝吧' },
+  breakfast: { th: 'อาหารเช้า', en: 'Breakfast', zh: '早餐' },
+  bakery: { th: 'เค้ก & เบเกอรี่', en: 'Cake & Bakery', zh: '蛋糕 & 烘焙' },
+  drinks: { th: 'เครื่องดื่ม', en: 'Drinks', zh: '饮品' },
+  icecream: { th: 'ไอศกรีม', en: 'Ice Cream', zh: '冰淇淋' },
+  bar: { th: 'บาร์ & ไวน์', en: 'Bar & Wine', zh: '酒吧 & 葡萄酒' },
+}
+
 export function primaryTabsForLang(lang) {
-  if (lang === 'th') {
-    return [
-      { id: 'promotion', label: 'โปรโมชัน' },
-      { id: 'signature', label: 'แนะนำ' },
-      { id: 'food', label: 'อาหาร' },
-      { id: 'coffee', label: 'กาแฟ' },
-      { id: 'matcha', label: 'มัทฉะ' },
-      { id: 'drinks', label: 'เครื่องดื่ม' },
-      { id: 'sweets', label: 'ของหวาน' },
-      { id: 'ice-cream', label: 'ไอศครีม' },
-      { id: 'alcohol', label: 'แอลกอฮอล์' },
-    ]
-  }
-  if (lang === 'zh') {
-    return [
-      { id: 'promotion', label: '优惠' },
-      { id: 'signature', label: '招牌' },
-      { id: 'food', label: '餐食' },
-      { id: 'coffee', label: '咖啡' },
-      { id: 'matcha', label: '抹茶' },
-      { id: 'drinks', label: '饮品' },
-      { id: 'sweets', label: '甜品' },
-      { id: 'ice-cream', label: '冰淇淋' },
-      { id: 'alcohol', label: '酒类' },
-    ]
-  }
-  return [
-    { id: 'promotion', label: 'Promotion' },
-    { id: 'signature', label: 'Signature' },
-    { id: 'food', label: 'Food' },
-    { id: 'coffee', label: 'Coffee' },
-    { id: 'matcha', label: 'Matcha' },
-    { id: 'drinks', label: 'Drinks' },
-    { id: 'sweets', label: 'Sweets' },
-    { id: 'ice-cream', label: 'Ice Cream' },
-    { id: 'alcohol', label: 'Alcohol' },
-  ]
+  return SECTION_IDS.map((id) => ({ id, label: TAB_LABELS[id]?.[lang] ?? TAB_LABELS[id]?.en ?? id }))
 }
 
 // ── Promotions (DB-backed — same rows on /menu and /delivery) ────────────────

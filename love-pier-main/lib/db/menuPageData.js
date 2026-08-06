@@ -39,6 +39,7 @@ export async function getMenuPageData() {
         priceMax: i.priceMax != null ? String(i.priceMax) : null,
         badge: i.badge,
         imageUrl: i.imageUrl,
+        imageVersion: i.imageVersion,
         isFeatured: i.isFeatured,
         sortOrder: i.sortOrder,
       })),
