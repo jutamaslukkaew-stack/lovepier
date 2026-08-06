@@ -131,7 +131,13 @@ export default function Nav({ onOpenMenu }) {
     update()
     const ro = new ResizeObserver(update)
     ro.observe(el)
-    return () => ro.disconnect()
+    return () => {
+      ro.disconnect()
+      // Layout unmounts the Nav on /delivery. Leaving the last measured height
+      // behind would make everything that sticks below --nav-h offset by a nav
+      // that is no longer on screen.
+      document.documentElement.style.removeProperty('--nav-h')
+    }
   }, [])
 
   return (

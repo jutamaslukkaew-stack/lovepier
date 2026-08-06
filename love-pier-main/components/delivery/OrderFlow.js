@@ -255,8 +255,30 @@ const CONTENT_WIDTH = 'max-w-md'
 
 function StepHeader({ t, step, onBack }) {
   const idx = STEP_ORDER.indexOf(step)
+  // --nav-h is "how tall the sticky chrome at the top of the page is"; anything
+  // that sticks below it offsets by it (the menu tab bar, gallery, activities).
+  // The site Nav normally publishes it, but OrderFlow hides the Nav, so THIS
+  // header is the chrome and must publish it instead — otherwise the tab bar
+  // offsets by the 64px fallback (or a stale value left by the previous page)
+  // and floats below this header with a strip of hero showing through the gap.
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const update = () => document.documentElement.style.setProperty('--nav-h', `${el.offsetHeight}px`)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => {
+      ro.disconnect()
+      document.documentElement.style.removeProperty('--nav-h')
+    }
+    // Re-asserted on every step so it wins even if the Nav's unmount cleanup
+    // happens to run after this effect and clears the value.
+  }, [step])
+
   return (
-    <div className="sticky top-0 z-[60] bg-[#f5f2ee]/95 backdrop-blur-sm border-b border-black/10 px-4 py-3">
+    <div ref={ref} className="sticky top-0 z-[60] bg-[#f5f2ee]/95 backdrop-blur-sm border-b border-black/10 px-4 py-3">
       <div className={`${CONTENT_WIDTH} mx-auto flex items-center gap-3`}>
         {onBack ? (
           <button onClick={onBack} className="text-black/40 hover:text-black text-lg leading-none shrink-0 w-5" aria-label={t.back}>‹</button>
