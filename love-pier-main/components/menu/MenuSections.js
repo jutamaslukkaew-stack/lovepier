@@ -131,6 +131,10 @@ export function Lightbox({ items, index, onIndexChange, onClose, thumbnails = fa
 }
 
 // ── MenuCard ──────────────────────────────────────────────────────────────────
+// Shown in the image well of items that have no photo yet — the bulk-imported
+// menu arrives with 200+ of them.
+const LOGO_PLACEHOLDER = '/uploads/logo-8dc1f126.webp'
+
 const CARD_COPY = {
   th: { add: 'เพิ่มลงตะกร้า', added: 'เพิ่มแล้ว ✓' },
   en: { add: 'Add to Cart', added: 'Added ✓' },
@@ -156,12 +160,9 @@ export function MenuCard({ id, name, badge, desc, price, prices, image, lang, on
 
   return (
     <div className="group bg-white rounded-2xl overflow-hidden border border-black/[0.06] shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_14px_30px_rgba(74,53,32,0.10)] hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] flex flex-col">
-      {/* Only reserve the 4:3 well when there is something to put in it. Menus
-          imported from Excel arrive with no photo, and an empty well left every
-          card ~75% blank. */}
-      {image && (
-        <div className="relative overflow-hidden bg-[#f2ede6]" style={{ paddingTop: '75%' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+      <div className="relative overflow-hidden bg-[#f2ede6]" style={{ paddingTop: '75%' }}>
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image}
             alt={name}
@@ -171,27 +172,36 @@ export function MenuCard({ id, name, badge, desc, price, prices, image, lang, on
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className={`absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:scale-[1.04] ${onImageClick ? 'cursor-zoom-in' : ''}`}
           />
-          {onImageClick && (
-            <button
-              onClick={onImageClick}
-              className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white text-[15px] leading-none"
-              aria-label="ดูรูปเต็ม"
-            >⛶</button>
-          )}
-          {badge && (
-            <span className="absolute top-2.5 left-2.5 bg-[#4a3520] text-white text-[9px] tracking-[0.15em] uppercase font-semibold px-2 py-0.5 rounded-full">
-              {badge}
-            </span>
-          )}
-        </div>
-      )}
-
-      <div className="p-4 flex flex-col flex-1 gap-1.5">
-        {!image && badge && (
-          <span className="self-start bg-[#4a3520] text-white text-[9px] tracking-[0.15em] uppercase font-semibold px-2 py-0.5 rounded-full">
+        ) : (
+          // Branded stand-in until the shop uploads a photo. Decorative only —
+          // it carries no alt text because it says nothing about the dish, and
+          // labelling it with the dish name would mislead a screen reader.
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-[#f7f2ec] to-[#eae1d4]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={LOGO_PLACEHOLDER}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              className="w-1/2 max-w-[150px] object-contain opacity-[0.28]"
+            />
+          </div>
+        )}
+        {image && onImageClick && (
+          <button
+            onClick={onImageClick}
+            className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white text-[15px] leading-none"
+            aria-label="ดูรูปเต็ม"
+          >⛶</button>
+        )}
+        {badge && (
+          <span className="absolute top-2.5 left-2.5 bg-[#4a3520] text-white text-[9px] tracking-[0.15em] uppercase font-semibold px-2 py-0.5 rounded-full">
             {badge}
           </span>
         )}
+      </div>
+
+      <div className="p-4 flex flex-col flex-1 gap-1.5">
         <h3 className="font-display text-[19px] font-semibold text-ink leading-tight line-clamp-2">{name}</h3>
         {desc && (
           <p className="text-[11px] text-black/50 font-light leading-relaxed line-clamp-2">{desc}</p>
