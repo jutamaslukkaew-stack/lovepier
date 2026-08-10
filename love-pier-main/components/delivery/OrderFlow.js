@@ -51,7 +51,6 @@ const COPY = {
     welcomeStep1: 'เลือกเมนูที่ต้องการ แล้วยืนยันออเดอร์ผ่าน LINE',
     welcomeStep2: (r) => `ร้านจัดส่งเองในรัศมี ${r} กม. จากร้าน`,
     welcomeStep3: 'อยู่ไกลกว่านั้นก็ยังสั่งได้ เพียงเรียกไรเดอร์มารับอาหารที่ร้านเอง',
-    welcomeHowto: 'กดปุ่มด้านบนเพื่อเข้าสู่ระบบด้วย LINE และแชร์ตำแหน่ง เพื่อให้ระบบตรวจว่าคุณอยู่ในระยะจัดส่งหรือไม่',
     startOrder: 'เริ่มสั่งอาหาร',
     loggingIn: 'กำลังเข้าสู่ระบบ LINE...',
     loginFailed: 'เข้าสู่ระบบ LINE ไม่สำเร็จ กรุณาลองใหม่',
@@ -128,7 +127,6 @@ const COPY = {
     welcomeStep1: 'Choose what you want and confirm the order through LINE',
     welcomeStep2: (r) => `We deliver ourselves within ${r} km of the shop`,
     welcomeStep3: 'Further away? You can still order — just send your own rider to collect it',
-    welcomeHowto: 'Tap the button above to sign in with LINE and share your location, so we can check whether you are inside the delivery area.',
     startOrder: 'Start ordering',
     loggingIn: 'Logging in with LINE...',
     loginFailed: 'LINE login failed. Please try again.',
@@ -200,7 +198,6 @@ const COPY = {
     welcomeStep1: '选好菜品，并通过 LINE 确认订单',
     welcomeStep2: (r) => `门店周边 ${r} 公里内由本店配送`,
     welcomeStep3: '超出范围仍可下单，只需自行安排骑手到店取餐',
-    welcomeHowto: '点击上方按钮以 LINE 登录并共享位置，我们会为您确认是否在配送范围内。',
     startOrder: '开始点餐',
     loggingIn: '正在使用 LINE 登录...',
     loginFailed: 'LINE 登录失败，请重试',
@@ -684,7 +681,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                   >
                     {i + 1}
                   </span>
-                  <span className="text-[13.5px] text-ink/80 leading-relaxed">{line}</span>
+                  <span className="text-[13px] text-ink/80 leading-relaxed">{line}</span>
                 </li>
               ))}
             </ol>
@@ -696,11 +693,8 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
             >
               {loginPhase === 'logging-in' ? t.loggingIn : t.startOrder}
             </button>
-            <p className="mt-3 text-[11.5px] text-black/45 font-light leading-relaxed text-center">
-              {t.welcomeHowto}
-            </p>
             {loginPhase === 'failed' && (
-              <p className="mt-2 text-[12px] text-red-700 flex items-center justify-center gap-2">
+              <p className="mt-3 text-[12px] text-red-700 flex items-center justify-center gap-2">
                 {t.loginFailed}
                 <button onClick={handleStart} className="underline">{t.retry}</button>
               </p>
