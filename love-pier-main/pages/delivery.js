@@ -5,6 +5,7 @@ import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import OrderFlow from '../components/delivery/OrderFlow'
 import { useChrome } from '../lib/chrome'
 import { getMenuPageData } from '../lib/db/menuPageData'
+import { getShopSettings } from '../lib/settings'
 
 const PAGE_COPY = {
   th: { title: 'เดลิเวอรี่ — Love Pier Beach Cafe', hero: 'เดลิเวอรี่' },
@@ -16,7 +17,7 @@ const PAGE_COPY = {
 // payment → success) — see components/delivery/OrderFlow.js. The menu step
 // reuses components/menu/MenuExperience, the same shared menu layout as
 // /menu, so section/layout edits there apply to both pages.
-export default function Delivery({ dbMenuData, dbPromotions }) {
+export default function Delivery({ dbMenuData, dbPromotions, radiusKm }) {
   const { lang } = useLanguage()
   const t = PAGE_COPY[lang] || PAGE_COPY.en
   const { hidden } = useChrome()
@@ -32,7 +33,12 @@ export default function Delivery({ dbMenuData, dbPromotions }) {
         <meta property="og:type" content="website" />
       </Head>
 
-      <OrderFlow dbMenuData={dbMenuData} dbPromotions={dbPromotions} heroTitle={t.hero} />
+      <OrderFlow
+        dbMenuData={dbMenuData}
+        dbPromotions={dbPromotions}
+        heroTitle={t.hero}
+        radiusKm={radiusKm}
+      />
 
       {!hidden && <Footer tagline={FOOTER_TAGLINES.menu} />}
     </>
@@ -41,5 +47,9 @@ export default function Delivery({ dbMenuData, dbPromotions }) {
 
 export async function getServerSideProps() {
   const { dbMenuData, dbPromotions } = await getMenuPageData()
-  return { props: { dbMenuData, dbPromotions } }
+  // The welcome screen states the delivery radius before the customer commits
+  // to a LINE login, so it has to know it up front — /api/delivery-distance
+  // only reports it after the GPS check.
+  const { radiusKm } = await getShopSettings()
+  return { props: { dbMenuData, dbPromotions, radiusKm: radiusKm ?? 5 } }
 }

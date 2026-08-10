@@ -45,7 +45,13 @@ const COPY = {
     close: 'ปิด',
     next: 'ถัดไป',
     // step 1 — welcome
-    welcomeSubtitle: 'อาหารและเครื่องดื่มริมทะเล สั่งง่าย ส่งตรงถึงคุณ',
+    welcomeSubtitle: 'อาหารและเครื่องดื่มริมทะเล สั่งกลับบ้านหรือให้ไปส่งถึงที่',
+    welcomeHeading: 'สั่งอาหารกลับบ้าน ผ่าน LINE',
+    welcomeLead: 'เลือกเมนูจากร้าน จ่ายผ่าน PromptPay แล้วรอรับอาหารได้เลย',
+    welcomeStep1: 'เลือกเมนูที่ต้องการ แล้วยืนยันออเดอร์ผ่าน LINE',
+    welcomeStep2: (r) => `ร้านจัดส่งเองในรัศมี ${r} กม. จากร้าน`,
+    welcomeStep3: 'อยู่ไกลกว่านั้นก็ยังสั่งได้ เพียงเรียกไรเดอร์มารับอาหารที่ร้านเอง',
+    welcomeHowto: 'กดปุ่มด้านบนเพื่อเข้าสู่ระบบด้วย LINE และแชร์ตำแหน่ง เพื่อให้ระบบตรวจว่าคุณอยู่ในระยะจัดส่งหรือไม่',
     startOrder: 'เริ่มสั่งอาหาร',
     loggingIn: 'กำลังเข้าสู่ระบบ LINE...',
     loginFailed: 'เข้าสู่ระบบ LINE ไม่สำเร็จ กรุณาลองใหม่',
@@ -116,7 +122,13 @@ const COPY = {
     back: 'Back',
     close: 'Close',
     next: 'Next',
-    welcomeSubtitle: 'Beachside food and drinks, delivered to you.',
+    welcomeSubtitle: 'Beachside food and drinks — takeaway or delivered to you.',
+    welcomeHeading: 'Order takeaway through LINE',
+    welcomeLead: 'Pick from the menu, pay with PromptPay, and your order is on its way.',
+    welcomeStep1: 'Choose what you want and confirm the order through LINE',
+    welcomeStep2: (r) => `We deliver ourselves within ${r} km of the shop`,
+    welcomeStep3: 'Further away? You can still order — just send your own rider to collect it',
+    welcomeHowto: 'Tap the button above to sign in with LINE and share your location, so we can check whether you are inside the delivery area.',
     startOrder: 'Start ordering',
     loggingIn: 'Logging in with LINE...',
     loginFailed: 'LINE login failed. Please try again.',
@@ -182,7 +194,13 @@ const COPY = {
     back: '返回',
     close: '关闭',
     next: '下一步',
-    welcomeSubtitle: '海边美食与饮品，直接为您送达。',
+    welcomeSubtitle: '海边美食与饮品 — 可外带，也可为您送达。',
+    welcomeHeading: '通过 LINE 点餐外带',
+    welcomeLead: '选择菜品，使用 PromptPay 付款，稍候即可取餐。',
+    welcomeStep1: '选好菜品，并通过 LINE 确认订单',
+    welcomeStep2: (r) => `门店周边 ${r} 公里内由本店配送`,
+    welcomeStep3: '超出范围仍可下单，只需自行安排骑手到店取餐',
+    welcomeHowto: '点击上方按钮以 LINE 登录并共享位置，我们会为您确认是否在配送范围内。',
     startOrder: '开始点餐',
     loggingIn: '正在使用 LINE 登录...',
     loginFailed: 'LINE 登录失败，请重试',
@@ -307,7 +325,7 @@ function StickyActionBar({ children }) {
   )
 }
 
-export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
+export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusKm = 5 }) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
   const { items, addItem, removeItem, clearCart, totalQty, totalPrice } = useCart()
@@ -643,28 +661,53 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle }) {
   // Step 1 — Welcome
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'welcome') {
+    // The CTA deliberately sits BELOW the hero rather than inside it. Tapping it
+    // starts a LINE login and then asks for GPS, and customers were meeting both
+    // prompts with no idea why — so the radius and what the button does have to
+    // be readable before it is reachable. The hero is also height-capped, so this
+    // copy would not fit inside it.
+    const steps = [t.welcomeStep1, t.welcomeStep2(radiusKm), t.welcomeStep3]
     return (
-      <PageHero
-        title={heroTitle}
-        subtitle={t.welcomeSubtitle}
-        cta={
-          <div className="flex flex-col items-center gap-2">
+      <>
+        <PageHero title={heroTitle} subtitle={t.welcomeSubtitle} />
+        <section className="bg-[#f5f2ee] px-6 py-9">
+          <div className={`${CONTENT_WIDTH} mx-auto`}>
+            <h2 className="font-display text-[24px] text-ink leading-snug">{t.welcomeHeading}</h2>
+            <p className="mt-1.5 text-[13px] text-black/55 font-light leading-relaxed">{t.welcomeLead}</p>
+
+            <ol className="mt-5 space-y-3">
+              {steps.map((line, i) => (
+                <li key={i} className="flex gap-3 items-start">
+                  <span
+                    aria-hidden="true"
+                    className="shrink-0 mt-px w-6 h-6 rounded-full bg-[#4a3520] text-white text-[11px] font-semibold flex items-center justify-center tabular-nums"
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="text-[13.5px] text-ink/80 leading-relaxed">{line}</span>
+                </li>
+              ))}
+            </ol>
+
             <button
               onClick={handleStart}
               disabled={loginPhase === 'logging-in'}
-              className="px-8 py-3.5 rounded-full bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-60"
+              className="mt-7 w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-60"
             >
               {loginPhase === 'logging-in' ? t.loggingIn : t.startOrder}
             </button>
+            <p className="mt-3 text-[11.5px] text-black/45 font-light leading-relaxed text-center">
+              {t.welcomeHowto}
+            </p>
             {loginPhase === 'failed' && (
-              <p className="text-white/90 text-[12px] flex items-center gap-2">
+              <p className="mt-2 text-[12px] text-red-700 flex items-center justify-center gap-2">
                 {t.loginFailed}
                 <button onClick={handleStart} className="underline">{t.retry}</button>
               </p>
             )}
           </div>
-        }
-      />
+        </section>
+      </>
     )
   }
 
