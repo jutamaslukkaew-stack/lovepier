@@ -296,16 +296,19 @@ function StepHeader({ t, step, onBack }) {
     <div ref={ref} className="sticky top-0 z-[60] bg-[#f5f2ee]/95 backdrop-blur-sm border-b border-black/10 px-4 py-3">
       <div className={`${CONTENT_WIDTH} mx-auto flex items-center gap-3`}>
         {onBack ? (
-          <button onClick={onBack} className="text-black/40 hover:text-black text-lg leading-none shrink-0 w-5" aria-label={t.back}>‹</button>
+          <button onClick={onBack} className="text-black/40 hover:text-black text-lg leading-none shrink-0 w-6 h-6 flex items-center justify-center -ml-0.5" aria-label={t.back}>‹</button>
         ) : (
-          <span className="w-5 shrink-0" />
+          <span className="w-6 shrink-0" />
         )}
         <div className="flex-1 flex items-center gap-1.5">
           {STEP_ORDER.map((s, i) => (
             <div key={s} className={`h-1 flex-1 rounded-full transition-colors ${i <= idx ? 'bg-[#4a3520]' : 'bg-black/10'}`} />
           ))}
         </div>
-        <Link href="/" className="text-black/40 hover:text-black text-lg leading-none shrink-0 w-5 text-right" aria-label={t.close}>✕</Link>
+        {/* w-6/h-6 rather than the bare glyph's 20px box: this pair is the only
+            way out of the wizard on every step, and 24px is the minimum
+            reliable touch target. */}
+        <Link href="/" className="text-black/40 hover:text-black text-lg leading-none shrink-0 w-6 h-6 flex items-center justify-center -mr-0.5" aria-label={t.close}>✕</Link>
       </div>
     </div>
   )
