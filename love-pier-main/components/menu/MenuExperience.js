@@ -177,8 +177,11 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
         </div>
       </div>
 
-      {/* Full scrollable menu */}
-      <div className="w-full bg-[#f5f2ee] flore-menu">
+      {/* Full scrollable menu. When the cart button is in play it floats over
+          the bottom-right corner, so the list needs room to scroll clear of it
+          — without this the LAST card's "add to cart" sits underneath it with
+          no scroll left to move it out of the way. */}
+      <div className={`w-full bg-[#f5f2ee] flore-menu ${showAddToCart ? 'pb-28' : ''}`}>
         <div id="menu-section-promotion" className="border-b border-black/10">
           <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
             <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
