@@ -43,7 +43,9 @@ body.menu-open { overflow: hidden; }
 /* Footer big tagline — all pages */
 .footer-tagline {
   width: 100%;
-  text-align: center;
+  /* Left, to share the left edge with the icons/copyright rows below it.
+     Keep in sync with styles/globals.css. */
+  text-align: left;
   font-size: clamp(28px, 7vw, 92px);
 }
 .footer-tagline--long {

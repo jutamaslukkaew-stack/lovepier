@@ -73,7 +73,13 @@ body.menu-open {
 /* Footer big tagline — all pages / languages */
 .footer-tagline {
   width: 100%;
-  text-align: center;
+  /* Left, not centred: every other row in the footer — icons, copyright,
+     brand — starts at the same left edge, so a centred tagline was the one
+     element off the axis. It never fills its container anyway (the clamp is
+     deliberately conservative so no tagline can be clipped by the nowrap +
+     overflow-hidden), and centring made that leftover space read as a
+     mistake rather than as ragged-right. */
+  text-align: left;
   font-size: clamp(28px, 7vw, 92px);
 }
 .footer-tagline--long {
