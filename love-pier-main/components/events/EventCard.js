@@ -29,7 +29,7 @@ export default function EventCard({ href, imageUrl, title, dateLabel, location, 
           <img
             src={imageUrl}
             srcSet={getSrcSet(imageUrl)}
-            sizes="(min-width: 1024px) 25vw, 50vw"
+            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
             alt={title}
             loading="lazy"
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

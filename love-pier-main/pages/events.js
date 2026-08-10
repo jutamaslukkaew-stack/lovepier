@@ -175,7 +175,7 @@ export default function Events({ dbEvents = [] }) {
               {upcomingEvents.length} {LABELS.eventsCount}
             </span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
             {upcomingEvents.map((ev) => (
               <EventCard key={ev.id} href={`/events/${ev.id}`} imageUrl={ev.imageUrl} title={ev.title} dateLabel={ev.dateLabel} location={ev.location} />
             ))}
@@ -192,7 +192,7 @@ export default function Events({ dbEvents = [] }) {
               {pastEvents.length} {LABELS.eventsCount}
             </span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
             {pastEvents.map((ev) => (
               <EventCard key={ev.id} href={`/events/${ev.id}`} imageUrl={ev.imageUrl} title={ev.title} dateLabel={ev.dateLabel} location={ev.location} desaturate />
             ))}
