@@ -668,19 +668,35 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     // copy would not fit inside it.
     const steps = [t.welcomeStep1, t.welcomeStep2(radiusKm), t.welcomeStep3]
     return (
-      <>
-        <PageHero title={heroTitle} subtitle={t.welcomeSubtitle} compact />
-        <section className="bg-[#f5f2ee] px-6 py-7">
-          <div className={`${CONTENT_WIDTH} mx-auto`}>
-            <h2 className="font-display text-[24px] text-ink leading-snug">{t.welcomeHeading}</h2>
-            <p className="mt-1.5 text-[13px] text-black/55 font-light leading-relaxed">{t.welcomeLead}</p>
+      // Fills the screen below the nav on purpose: at natural height the copy
+      // ends partway down and the black footer starts in the same viewport, so
+      // the screen read as a page cut in half rather than as a finished one.
+      // Letting the cream block take the slack puts the footer just below the
+      // fold, where it belongs.
+      <div className="flex flex-col min-h-[calc(100dvh-var(--nav-h,64px))] sm:min-h-0">
+        <div className="shrink-0">
+          <PageHero title={heroTitle} subtitle={t.welcomeSubtitle} compact />
+        </div>
+        <section
+          className="flex-1 bg-[#f5f2ee] px-6 pt-8 flex flex-col"
+          style={{ paddingBottom: 'max(1.75rem, env(safe-area-inset-bottom))' }}
+        >
+          <div className={`${CONTENT_WIDTH} mx-auto w-full flex-1 flex flex-col`}>
+            {/* Outranks the hero title on purpose. The band above is ambience;
+                this line is what the customer came to find out. Thai needs the
+                looser leading for its tone marks. */}
+            <h2 className="font-display font-light text-[clamp(28px,8vw,34px)] text-ink leading-[1.35]">{t.welcomeHeading}</h2>
+            <p className="mt-2 text-[13px] text-black/55 font-light leading-relaxed">{t.welcomeLead}</p>
 
-            <ol className="mt-5 space-y-3">
+            <ol className="mt-6 space-y-3.5">
               {steps.map((line, i) => (
                 <li key={i} className="flex gap-3 items-start">
+                  {/* Outlined, not filled: cocoa is the colour the customer
+                      touches, and three solid discs marching down the margin
+                      were competing with the one thing here that is tappable. */}
                   <span
                     aria-hidden="true"
-                    className="shrink-0 mt-px w-6 h-6 rounded-full bg-[#4a3520] text-white text-[11px] font-semibold flex items-center justify-center tabular-nums"
+                    className="shrink-0 mt-0.5 w-6 h-6 rounded-full border border-[#4a3520]/25 text-[#4a3520] text-[11px] font-semibold flex items-center justify-center tabular-nums"
                   >
                     {i + 1}
                   </span>
@@ -689,22 +705,28 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
               ))}
             </ol>
 
-            <button
-              onClick={handleStart}
-              disabled={loginPhase === 'logging-in'}
-              className="mt-7 w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-60"
-            >
-              {loginPhase === 'logging-in' ? t.loggingIn : t.startOrder}
-            </button>
-            {loginPhase === 'failed' && (
-              <p className="mt-3 text-[12px] text-red-700 flex items-center justify-center gap-2">
-                {t.loginFailed}
-                <button onClick={handleStart} className="underline">{t.retry}</button>
-              </p>
-            )}
+            {/* mt-auto, so whatever height is left over lands between the steps
+                and the button instead of pooling under it — the button sits at
+                the bottom of the screen, in reach of a thumb. pt-7 keeps the
+                gap honest when there is no slack to hand out. */}
+            <div className="mt-auto pt-7">
+              <button
+                onClick={handleStart}
+                disabled={loginPhase === 'logging-in'}
+                className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-60"
+              >
+                {loginPhase === 'logging-in' ? t.loggingIn : t.startOrder}
+              </button>
+              {loginPhase === 'failed' && (
+                <p className="mt-3 text-[12px] text-red-700 flex items-center justify-center gap-2">
+                  {t.loginFailed}
+                  <button onClick={handleStart} className="underline">{t.retry}</button>
+                </p>
+              )}
+            </div>
           </div>
         </section>
-      </>
+      </div>
     )
   }
 
