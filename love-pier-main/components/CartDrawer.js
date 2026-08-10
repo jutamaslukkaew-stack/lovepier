@@ -54,10 +54,10 @@ const COPY = {
     locationDenied: 'ไม่ได้ตำแหน่ง — สั่งต่อได้ ร้านจะเช็คระยะให้เอง',
     toPayment: 'ไปชำระเงิน',
     // payment step
-    payTitle: 'สแกนจ่ายด้วย PromptPay',
+    payTitle: 'สแกนจ่ายด้วย QR ของร้าน',
     payHint: 'สแกน QR ด้วยแอปธนาคาร แล้วกดยืนยันด้านล่าง',
     amount: 'ยอดชำระ',
-    noPromptpay: 'ยังไม่ได้ตั้งค่าพร้อมเพย์ร้าน กรุณาแจ้งร้านทาง LINE',
+    noPromptpay: 'ยังไม่ได้ตั้งค่า QR รับเงินของร้าน กรุณาแจ้งร้านทาง LINE',
     confirm: 'ยืนยันสั่งซื้อ',
     submitting: 'กำลังส่ง...',
     // success step
@@ -97,10 +97,10 @@ const COPY = {
     outOfArea: (r) => `Outside delivery area (over ${r} km) — you can still order, extra fee may apply`,
     locationDenied: 'Location unavailable — you can still order; we\'ll check distance',
     toPayment: 'Go to payment',
-    payTitle: 'Pay with PromptPay',
+    payTitle: "Scan the shop's QR code to pay",
     payHint: 'Scan the QR with your banking app, then confirm below',
     amount: 'Amount',
-    noPromptpay: 'Shop PromptPay not configured — please contact us on LINE',
+    noPromptpay: 'The shop payment QR is not set up yet — please contact us on LINE',
     confirm: 'Confirm order',
     submitting: 'Sending...',
     successTitle: 'Order received!',
@@ -139,10 +139,10 @@ const COPY = {
     outOfArea: (r) => `超出配送范围（超过 ${r} 公里）— 仍可下单，可能加收运费`,
     locationDenied: '无法定位 — 仍可下单，我们会为您确认距离',
     toPayment: '前往付款',
-    payTitle: '使用 PromptPay 付款',
+    payTitle: '扫描本店二维码付款',
     payHint: '用银行 App 扫描二维码，然后在下方确认',
     amount: '金额',
-    noPromptpay: '商店 PromptPay 未设置 — 请通过 LINE 联系我们',
+    noPromptpay: '本店收款二维码尚未设置 — 请通过 LINE 联系我们',
     confirm: '确认订单',
     submitting: '发送中...',
     successTitle: '订单已收到！',
@@ -646,7 +646,7 @@ export default function CartDrawer() {
                   <div className="rounded-2xl border border-black/10 bg-white p-3 shadow-sm">
                     {qrDataUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={qrDataUrl} alt="PromptPay QR" className="w-56 h-56" />
+                      <img src={qrDataUrl} alt={t.payTitle} className="w-56 h-56" />
                     ) : (
                       <div className="w-56 h-56 flex items-center justify-center text-black/30 text-sm">...</div>
                     )}

@@ -60,7 +60,7 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
   ]
   if (address) detail.push(plainRow('ที่อยู่', String(address)))
   if (distanceKm != null) detail.push(plainRow('ระยะส่ง', `${distanceKm} กม.`))
-  detail.push(plainRow('ชำระโดย', 'QR PromptPay'))
+  detail.push(plainRow('ชำระโดย', 'QR ของร้าน'))
 
   const bubble = {
     type: 'bubble',

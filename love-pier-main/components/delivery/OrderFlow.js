@@ -47,7 +47,7 @@ const COPY = {
     // step 1 — welcome
     welcomeSubtitle: 'อาหารและเครื่องดื่มริมทะเล สั่งกลับบ้านหรือให้ไปส่งถึงที่',
     welcomeHeading: 'สั่งอาหารกลับบ้าน ผ่าน LINE',
-    welcomeLead: 'เลือกเมนูจากร้าน จ่ายผ่าน PromptPay แล้วรอรับอาหารได้เลย',
+    welcomeLead: 'เลือกเมนูจากร้าน ชำระด้วยการสแกน QR ของร้าน แล้วรอรับอาหารได้เลย',
     welcomeStep1: 'เลือกเมนูที่ต้องการ แล้วยืนยันออเดอร์ผ่าน LINE',
     welcomeStep2: (r) => `ร้านจัดส่งเองในรัศมี ${r} กม. จากร้าน`,
     welcomeStep3: 'อยู่ไกลกว่านั้นก็ยังสั่งได้ เพียงเรียกไรเดอร์มารับอาหารที่ร้านเอง',
@@ -96,10 +96,10 @@ const COPY = {
     // step 5 — payment
     paymentTitle: 'ยืนยันและชำระเงิน',
     paymentMethod: 'ช่องทางชำระเงิน',
-    promptpayLabel: 'PromptPay QR',
-    payHint: 'สแกน QR ด้วยแอปธนาคาร แล้วติ๊กยืนยันด้านล่าง',
+    promptpayLabel: 'QR โค้ดของร้าน',
+    payHint: 'สแกน QR ของร้านด้วยแอปธนาคาร แล้วติ๊กยืนยันด้านล่าง',
     amount: 'ยอดชำระ',
-    noPromptpay: 'ยังไม่ได้ตั้งค่าพร้อมเพย์ร้าน กรุณาแจ้งร้านทาง LINE',
+    noPromptpay: 'ยังไม่ได้ตั้งค่า QR รับเงินของร้าน กรุณาแจ้งร้านทาง LINE',
     confirmCheckbox: 'ฉันตรวจสอบรายการและยอดเงินถูกต้องแล้ว ยืนยันสั่งซื้อ',
     submit: 'สั่งซื้อและชำระเงิน',
     submitting: 'กำลังส่ง...',
@@ -124,7 +124,7 @@ const COPY = {
     next: 'Next',
     welcomeSubtitle: 'Beachside food and drinks — takeaway or delivered to you.',
     welcomeHeading: 'Order takeaway through LINE',
-    welcomeLead: 'Pick from the menu, pay with PromptPay, and your order is on its way.',
+    welcomeLead: "Pick from the menu, pay by scanning the shop's QR code, and your order is on its way.",
     welcomeStep1: 'Choose what you want and confirm the order through LINE',
     welcomeStep2: (r) => `We deliver ourselves within ${r} km of the shop`,
     welcomeStep3: 'Further away? You can still order — just send your own rider to collect it',
@@ -169,10 +169,10 @@ const COPY = {
     fillAddress: 'Please enter a delivery address',
     paymentTitle: 'Confirm & pay',
     paymentMethod: 'Payment method',
-    promptpayLabel: 'PromptPay QR',
-    payHint: 'Scan the QR with your banking app, then tick confirm below',
+    promptpayLabel: "The shop's QR code",
+    payHint: "Scan the shop's QR with your banking app, then tick confirm below",
     amount: 'Amount',
-    noPromptpay: 'Shop PromptPay not configured — please contact us on LINE',
+    noPromptpay: 'The shop payment QR is not set up yet — please contact us on LINE',
     confirmCheckbox: "I've checked the order and total — confirm purchase",
     submit: 'Place order & pay',
     submitting: 'Sending...',
@@ -196,7 +196,7 @@ const COPY = {
     next: '下一步',
     welcomeSubtitle: '海边美食与饮品 — 可外带，也可为您送达。',
     welcomeHeading: '通过 LINE 点餐外带',
-    welcomeLead: '选择菜品，使用 PromptPay 付款，稍候即可取餐。',
+    welcomeLead: '选择菜品，扫描本店二维码付款，稍候即可取餐。',
     welcomeStep1: '选好菜品，并通过 LINE 确认订单',
     welcomeStep2: (r) => `门店周边 ${r} 公里内由本店配送`,
     welcomeStep3: '超出范围仍可下单，只需自行安排骑手到店取餐',
@@ -241,10 +241,10 @@ const COPY = {
     fillAddress: '请填写配送地址',
     paymentTitle: '确认并付款',
     paymentMethod: '付款方式',
-    promptpayLabel: 'PromptPay 二维码',
+    promptpayLabel: '本店二维码',
     payHint: '用银行 App 扫描二维码，然后在下方勾选确认',
     amount: '金额',
-    noPromptpay: '商店 PromptPay 未设置 — 请通过 LINE 联系我们',
+    noPromptpay: '本店收款二维码尚未设置 — 请通过 LINE 联系我们',
     confirmCheckbox: '我已核对订单和金额，确认下单',
     submit: '下单并付款',
     submitting: '发送中...',
@@ -1011,7 +1011,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                 <div className="rounded-2xl border border-black/10 bg-white p-3 shadow-sm">
                   {qrDataUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={qrDataUrl} alt="PromptPay QR" className="w-56 h-56" />
+                    <img src={qrDataUrl} alt={t.promptpayLabel} className="w-56 h-56" />
                   ) : (
                     <div className="w-56 h-56 flex items-center justify-center text-black/30 text-sm">...</div>
                   )}
