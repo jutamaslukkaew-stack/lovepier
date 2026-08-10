@@ -11,7 +11,13 @@ const HERO_IMAGES = [
   '/uploads/gallery-sunset-boat.webp',
 ]
 
-export default function PageHero({ title, titleHtml, subtitle, cta }) {
+// `compact` is for screens where the hero is not the point: the delivery
+// welcome has a heading, three steps and the start button UNDER it, and at the
+// normal height that button lands at (or past) the fold on a phone — inside the
+// LINE in-app browser, which eats another ~45px of viewport, it is worse. The
+// marketing pages keep the full height, where the image IS the content.
+export default function PageHero({ title, titleHtml, subtitle, cta, compact = false }) {
+  const height = compact ? 'clamp(180px, 42vw, 320px)' : 'clamp(260px, 55vw, 420px)'
   const [idx, setIdx] = useState(0)
   const [prev, setPrev] = useState(null)
 
@@ -26,7 +32,7 @@ export default function PageHero({ title, titleHtml, subtitle, cta }) {
   }, [])
 
   return (
-    <section className="relative overflow-hidden" style={{ height: 'clamp(260px, 55vw, 420px)' }}>
+    <section className="relative overflow-hidden" style={{ height }}>
       {prev !== null && (
         // eslint-disable-next-line @next/next/no-img-element
         <img

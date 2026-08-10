@@ -669,8 +669,8 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     const steps = [t.welcomeStep1, t.welcomeStep2(radiusKm), t.welcomeStep3]
     return (
       <>
-        <PageHero title={heroTitle} subtitle={t.welcomeSubtitle} />
-        <section className="bg-[#f5f2ee] px-6 py-9">
+        <PageHero title={heroTitle} subtitle={t.welcomeSubtitle} compact />
+        <section className="bg-[#f5f2ee] px-6 py-7">
           <div className={`${CONTENT_WIDTH} mx-auto`}>
             <h2 className="font-display text-[24px] text-ink leading-snug">{t.welcomeHeading}</h2>
             <p className="mt-1.5 text-[13px] text-black/55 font-light leading-relaxed">{t.welcomeLead}</p>
