@@ -42,14 +42,23 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
     return map
   }, [menuData])
 
+  // Promotion has no active DB rows, or Signature has no badged items —
+  // either way there's nothing to show under the heading, so both the
+  // section (heading + body) and its tab are dropped below, the same
+  // treatment already given to an empty category tab.
+  const hasPromotions = dbPromotions.length > 0
+  const hasSignatureItems = menuData.some((section) => section.items.some((item) => item.badge))
+
   // A tab whose categories are all inactive has no anchor to scroll to, and
   // scrollTo() no-ops silently — so drop it from the bar rather than leave a dead
-  // button. Promotion and Signature are built from everything and always render.
-  const visibleTabs = primaryTabs.filter(
-    (t) => t.id === 'promotion' || t.id === 'signature' || sectionsByTab[t.id]?.length
-  )
+  // button.
+  const visibleTabs = primaryTabs.filter((t) => {
+    if (t.id === 'promotion') return hasPromotions
+    if (t.id === 'signature') return hasSignatureItems
+    return sectionsByTab[t.id]?.length
+  })
 
-  const [activeAnchor, setActiveAnchor] = useState('signature')
+  const [activeAnchor, setActiveAnchor] = useState(visibleTabs[0]?.id ?? 'signature')
   const [globalLbIndex, setGlobalLbIndex] = useState(-1)
   const tabScrollRef = useRef(null)
   const [tabDotIndex, setTabDotIndex] = useState(0)
@@ -182,31 +191,35 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
           — without this the LAST card's "add to cart" sits underneath it with
           no scroll left to move it out of the way. */}
       <div className={`w-full bg-[#f5f2ee] flore-menu ${showAddToCart ? 'pb-28' : ''}`}>
-        <div id="menu-section-promotion" className="border-b border-black/10">
-          <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
-            <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
-              {primaryTabs.find((t) => t.id === 'promotion')?.label ?? 'Promotion'}
-            </h2>
-            <div className="mt-3 w-12 h-px bg-gold/60" />
+        {hasPromotions && (
+          <div id="menu-section-promotion" className="border-b border-black/10">
+            <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
+              <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
+                {primaryTabs.find((t) => t.id === 'promotion')?.label ?? 'Promotion'}
+              </h2>
+              <div className="mt-3 w-12 h-px bg-gold/60" />
+            </div>
+            <PromotionPanel
+              lang={lang}
+              dbPromotions={dbPromotions}
+              showAddToCart={showAddToCart}
+              onImageClick={setGlobalLbIndex}
+              galleryStartIndex={promoStartIdx}
+            />
           </div>
-          <PromotionPanel
-            lang={lang}
-            dbPromotions={dbPromotions}
-            showAddToCart={showAddToCart}
-            onImageClick={setGlobalLbIndex}
-            galleryStartIndex={promoStartIdx}
-          />
-        </div>
+        )}
 
-        <div id="menu-section-signature" className="border-b border-black/10">
-          <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
-            <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
-              {primaryTabs.find((t) => t.id === 'signature')?.label ?? 'Signature'}
-            </h2>
-            <div className="mt-3 w-12 h-px bg-gold/60" />
+        {hasSignatureItems && (
+          <div id="menu-section-signature" className="border-b border-black/10">
+            <div className="px-6 sm:px-10 lg:px-12 pt-10 pb-2">
+              <h2 className="font-display font-light text-[clamp(36px,5vw,64px)] tracking-[-0.02em] text-ink leading-none">
+                {primaryTabs.find((t) => t.id === 'signature')?.label ?? 'Signature'}
+              </h2>
+              <div className="mt-3 w-12 h-px bg-gold/60" />
+            </div>
+            <SignaturePanel menuData={menuData} lang={lang} globalIndexMap={globalIndexMap} onImageClick={setGlobalLbIndex} showAddToCart={showAddToCart} />
           </div>
-          <SignaturePanel menuData={menuData} lang={lang} globalIndexMap={globalIndexMap} onImageClick={setGlobalLbIndex} showAddToCart={showAddToCart} />
-        </div>
+        )}
 
         {visibleTabs.map(({ id }) => {
           const sections = sectionsByTab[id]

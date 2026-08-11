@@ -16,6 +16,7 @@ const SETTING_KEYS = {
   slipokBranchId: 'slipok_branch_id',
   deliveryBaseFee: 'delivery_base_fee',
   deliveryPerKmRate: 'delivery_per_km_rate',
+  deliveryMinOrder: 'delivery_min_order',
 } as const
 
 export type ShopSettingsForm = {
@@ -28,6 +29,7 @@ export type ShopSettingsForm = {
   slipokBranchId: string
   deliveryBaseFee: string
   deliveryPerKmRate: string
+  deliveryMinOrder: string
 }
 
 export async function getSettings(): Promise<ShopSettingsForm> {
@@ -44,6 +46,7 @@ export async function getSettings(): Promise<ShopSettingsForm> {
     slipokBranchId: m[SETTING_KEYS.slipokBranchId] || '',
     deliveryBaseFee: m[SETTING_KEYS.deliveryBaseFee] || '0',
     deliveryPerKmRate: m[SETTING_KEYS.deliveryPerKmRate] || '0',
+    deliveryMinOrder: m[SETTING_KEYS.deliveryMinOrder] || '0',
   }
 }
 
@@ -66,6 +69,7 @@ export async function saveSettings(data: ShopSettingsForm) {
   await put(SETTING_KEYS.slipokBranchId, (data.slipokBranchId || '').trim())
   await put(SETTING_KEYS.deliveryBaseFee, (data.deliveryBaseFee || '0').trim())
   await put(SETTING_KEYS.deliveryPerKmRate, (data.deliveryPerKmRate || '0').trim())
+  await put(SETTING_KEYS.deliveryMinOrder, (data.deliveryMinOrder || '0').trim())
   revalidatePath('/admin/settings')
   return { ok: true as const }
 }

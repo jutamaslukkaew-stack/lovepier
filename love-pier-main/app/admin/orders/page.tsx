@@ -7,7 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-type OrderItem = { id?: string; name?: string; price?: number; qty?: number }
+type OrderItem = { id?: string; name?: string; price?: number; qty?: number; note?: string }
 
 // Slips live in a private bucket — mint short-lived signed URLs to view them.
 async function signSlipUrls(paths: string[]): Promise<Record<string, string>> {
@@ -71,6 +71,9 @@ export default async function AdminOrdersPage() {
                         <Badge variant={STATUS_VARIANT[o.status] ?? 'outline'}>
                           {STATUS_LABELS[o.status] ?? o.status}
                         </Badge>
+                        <Badge variant="outline">
+                          {o.deliveryMethod === 'pickup' ? 'รับที่ร้าน' : 'จัดส่ง'}
+                        </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {formatDate(o.createdAt)}
@@ -117,13 +120,18 @@ export default async function AdminOrdersPage() {
                   {/* items */}
                   <div className="rounded-lg bg-gray-50 px-3 py-2 text-[13px] space-y-0.5">
                     {items.map((it, i) => (
-                      <div key={i} className="flex justify-between">
-                        <span>
-                          {it.name} × {it.qty}
-                        </span>
-                        <span className="tabular-nums text-muted-foreground">
-                          ฿{Math.round((Number(it.price) || 0) * (Number(it.qty) || 0))}
-                        </span>
+                      <div key={i}>
+                        <div className="flex justify-between">
+                          <span>
+                            {it.name} × {it.qty}
+                          </span>
+                          <span className="tabular-nums text-muted-foreground">
+                            ฿{Math.round((Number(it.price) || 0) * (Number(it.qty) || 0))}
+                          </span>
+                        </div>
+                        {it.note && (
+                          <p className="text-amber-700 text-[12px] leading-snug">— {it.note}</p>
+                        )}
                       </div>
                     ))}
                     {o.deliveryFee > 0 && (

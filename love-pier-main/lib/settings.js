@@ -12,6 +12,10 @@ export const SETTING_KEYS = {
   slipokBranchId: 'slipok_branch_id',
   deliveryBaseFee: 'delivery_base_fee',
   deliveryPerKmRate: 'delivery_per_km_rate',
+  // Minimum food subtotal (before delivery fee) required to have the shop
+  // deliver. Doesn't apply to pickup — a small order is still fine if the
+  // customer collects it themselves.
+  deliveryMinOrder: 'delivery_min_order',
 }
 
 function num(v) {
@@ -44,5 +48,6 @@ export async function getShopSettings() {
     slipokBranchId: m[SETTING_KEYS.slipokBranchId] || process.env.SLIPOK_BRANCH_ID || '',
     deliveryBaseFee: m[SETTING_KEYS.deliveryBaseFee] ? num(m[SETTING_KEYS.deliveryBaseFee]) || 0 : 0,
     deliveryPerKmRate: m[SETTING_KEYS.deliveryPerKmRate] ? num(m[SETTING_KEYS.deliveryPerKmRate]) || 0 : 0,
+    deliveryMinOrder: m[SETTING_KEYS.deliveryMinOrder] ? num(m[SETTING_KEYS.deliveryMinOrder]) || 0 : 0,
   }
 }

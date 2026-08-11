@@ -40,23 +40,31 @@ function plainRow(label, value) {
   }
 }
 
-export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, distanceKm }) {
+export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, distanceKm, deliveryMethod }) {
   const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
 
-  const itemRows = items.map((i) => ({
-    type: 'box',
-    layout: 'horizontal',
-    margin: 'sm',
-    contents: [
-      { type: 'text', text: `${i.name}`, size: 'sm', color: '#555555', flex: 5, wrap: true },
-      { type: 'text', text: `x${i.qty}`, size: 'sm', color: '#aaaaaa', flex: 1, align: 'center' },
-      { type: 'text', text: `฿${money((Number(i.price) || 0) * (Number(i.qty) || 0))}`, size: 'sm', color: '#333333', flex: 3, align: 'end' },
-    ],
-  }))
+  const itemRows = items.flatMap((i) => {
+    const row = {
+      type: 'box',
+      layout: 'horizontal',
+      margin: 'sm',
+      contents: [
+        { type: 'text', text: `${i.name}`, size: 'sm', color: '#555555', flex: 5, wrap: true },
+        { type: 'text', text: `x${i.qty}`, size: 'sm', color: '#aaaaaa', flex: 1, align: 'center' },
+        { type: 'text', text: `฿${money((Number(i.price) || 0) * (Number(i.qty) || 0))}`, size: 'sm', color: '#333333', flex: 3, align: 'end' },
+      ],
+    }
+    if (!i.note) return [row]
+    return [
+      row,
+      { type: 'text', text: `— ${i.note}`, size: 'xxs', color: '#8c8c8c', margin: 'xs', wrap: true },
+    ]
+  })
 
   const detail = [
     checkRow('ชื่อ', String(name || '-')),
     checkRow('เบอร์โทร', String(phone || '-'), phone ? { type: 'uri', label: 'call', uri: `tel:${String(phone).replace(/[^0-9+]/g, '')}` } : undefined),
+    plainRow('รับอาหาร', deliveryMethod === 'pickup' ? 'รับที่ร้าน' : 'ให้ร้านจัดส่ง'),
   ]
   if (address) detail.push(plainRow('ที่อยู่', String(address)))
   if (distanceKm != null) detail.push(plainRow('ระยะส่ง', `${distanceKm} กม.`))

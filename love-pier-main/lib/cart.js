@@ -34,6 +34,13 @@ export function CartProvider({ children }) {
     })
   }, [])
 
+  // One free-text note per cart LINE (applies to the whole quantity of that
+  // item, not per unit) — e.g. "หวานน้อย, นมอัลมอนด์". Set at review time in
+  // the order summary, not when adding, so it never blocks the quick + tap.
+  const updateNote = useCallback((id, note) => {
+    setItems((prev) => prev.map((i) => i.id === id ? { ...i, note } : i))
+  }, [])
+
   const clearCart = useCallback(() => setItems([]), [])
   const openCart = useCallback(() => setIsOpen(true), [])
   const closeCart = useCallback(() => setIsOpen(false), [])
@@ -42,7 +49,7 @@ export function CartProvider({ children }) {
   const totalPrice = items.reduce((sum, i) => sum + (parseFloat(i.price) || 0) * i.qty, 0)
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, totalQty, totalPrice, isOpen, openCart, closeCart }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, updateNote, clearCart, totalQty, totalPrice, isOpen, openCart, closeCart }}>
       {children}
     </CartContext.Provider>
   )

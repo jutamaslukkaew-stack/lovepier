@@ -126,6 +126,21 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
           </div>
         </div>
         <p className="text-xs text-muted-foreground">เว้นว่างทั้งคู่ (หรือ 0) = ไม่คิดค่าจัดส่งเพิ่ม</p>
+
+        <div className="space-y-1.5">
+          <Label>ยอดสั่งอาหารขั้นต่ำสำหรับให้ร้านจัดส่ง (บาท)</Label>
+          <Input
+            value={form.deliveryMinOrder}
+            onChange={(e) => set('deliveryMinOrder', e.target.value)}
+            placeholder="0"
+            inputMode="decimal"
+            className="w-32"
+          />
+          <p className="text-xs text-muted-foreground">
+            นับเฉพาะค่าอาหาร (ไม่รวมค่าจัดส่ง) — ต่ำกว่านี้ลูกค้าจะกดไปหน้าชำระเงินไม่ได้ถ้าเลือกให้ร้านจัดส่ง
+            แต่ยังสั่งแบบรับที่ร้านได้ปกติ เว้นว่าง (หรือ 0) = ไม่มีขั้นต่ำ
+          </p>
+        </div>
       </div>
 
       <div className="border-t pt-5 space-y-4">

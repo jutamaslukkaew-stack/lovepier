@@ -57,14 +57,17 @@ export async function pushNewOrderNotification(order) {
   if (!TOKEN || !TARGET) return { ok: false, skipped: true }
 
   const lines = (order.items || [])
-    .map((i) => `• ${i.name} ×${i.qty}`)
+    .map((i) => `• ${i.name} ×${i.qty}` + (i.note ? ` (${i.note})` : ''))
     .join('\n')
+
+  const methodLine = order.deliveryMethod === 'pickup' ? 'รับที่ร้าน / ลูกค้าจัดการเอง' : 'ให้ร้านจัดส่ง'
 
   const text =
     `ออเดอร์ใหม่ ${order.orderNo}\n` +
     `━━━━━━━━━━━━━━\n` +
     `ชื่อ: ${order.customerName}\n` +
     `เบอร์โทร: ${order.phone}\n` +
+    `รับอาหาร: ${methodLine}\n` +
     (order.address ? `ที่อยู่: ${order.address}\n` : '') +
     (order.note ? `หมายเหตุ: ${order.note}\n` : '') +
     (order.distanceKm != null ? `ระยะจัดส่ง: ${order.distanceKm} กม.\n` : '') +

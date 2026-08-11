@@ -7,11 +7,12 @@ import {
   numeric,
   timestamp,
   index,
+  uniqueIndex,
   serial,
   date,
   jsonb,
 } from 'drizzle-orm/pg-core'
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 
 export const categories = pgTable(
   'categories',
@@ -163,16 +164,26 @@ export type NewEvent = typeof events.$inferInsert
 // ── Delivery ordering ─────────────────────────────────────────────────────────
 
 // Repeat customers, keyed by LINE userId so we can auto-fill name/phone/address.
-export const customers = pgTable('customers', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  lineUserId: text('line_user_id').unique(),
-  lineDisplayName: text('line_display_name'),
-  name: text('name').notNull().default(''),
-  phone: text('phone').notNull().default(''),
-  address: text('address').notNull().default(''),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const customers = pgTable(
+  'customers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    lineUserId: text('line_user_id').unique(),
+    lineDisplayName: text('line_display_name'),
+    name: text('name').notNull().default(''),
+    phone: text('phone').notNull().default(''),
+    address: text('address').notNull().default(''),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    // Phone, not LINE login, is the durable key for "have we seen this
+    // customer before" — every order requires a phone, but LINE login can
+    // fail/be skipped. Partial (excludes '') so legacy blank-phone rows never
+    // collide. Lets /api/customer-lookup and the orders upsert both key on it.
+    phoneIdx: uniqueIndex('customers_phone_unique_idx').on(t.phone).where(sql`${t.phone} <> ''`),
+  })
+)
 
 export type Customer = typeof customers.$inferSelect
 export type NewCustomer = typeof customers.$inferInsert
@@ -187,7 +198,12 @@ export const orders = pgTable(
     phone: text('phone').notNull(),
     address: text('address').notNull().default(''),
     note: text('note').notNull().default(''),
-    // [{ id, name, price, qty }]
+    // 'delivery' (shop delivers, address required, delivery fee may apply) |
+    // 'pickup' (customer or their own rider collects at the shop — also the
+    // forced value outside the delivery radius, where the shop never delivers).
+    deliveryMethod: text('delivery_method').notNull().default('delivery'),
+    // [{ id, name, price, qty, note }] — note is a free-text per-line
+    // customization ("หวานน้อย, นมอัลมอนด์"), optional.
     items: jsonb('items').notNull().default([]),
     // subtotal (items only); totalAmount = itemsSubtotal + deliveryFee
     itemsSubtotal: integer('items_subtotal').notNull().default(0),

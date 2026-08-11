@@ -17,12 +17,14 @@ import {
   X,
   LogOut,
   FileUp,
+  Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/admin', label: 'ภาพรวม', icon: Home, exact: true },
   { href: '/admin/orders', label: 'ออเดอร์', icon: ShoppingBag },
+  { href: '/admin/customers', label: 'ลูกค้า', icon: Users },
   { href: '/admin/menu', label: 'เมนูอาหาร', icon: UtensilsCrossed, exact: true },
   { href: '/admin/menu/import', label: 'นำเข้าเมนู', icon: FileUp },
   { href: '/admin/categories', label: 'หมวดเมนู', icon: FolderOpen },

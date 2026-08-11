@@ -49,13 +49,16 @@ export default function OrderStatus({ order }) {
 
             <div className="border-t border-dashed border-black/15 pt-3 space-y-1.5">
               {items.map((it, i) => (
-                <div key={i} className="flex justify-between text-[14px]">
-                  <span className="text-ink">
-                    {it.name} <span className="text-black/40">×{it.qty}</span>
-                  </span>
-                  <span className="tabular-nums text-black/70">
-                    ฿{Math.round((Number(it.price) || 0) * (Number(it.qty) || 0))}
-                  </span>
+                <div key={i} className="text-[14px]">
+                  <div className="flex justify-between">
+                    <span className="text-ink">
+                      {it.name} <span className="text-black/40">×{it.qty}</span>
+                    </span>
+                    <span className="tabular-nums text-black/70">
+                      ฿{Math.round((Number(it.price) || 0) * (Number(it.qty) || 0))}
+                    </span>
+                  </div>
+                  {it.note && <p className="text-[12px] text-black/45 leading-snug">— {it.note}</p>}
                 </div>
               ))}
             </div>
@@ -63,6 +66,7 @@ export default function OrderStatus({ order }) {
             <div className="border-t border-dashed border-black/15 pt-3 space-y-1 text-[13px] text-black/60">
               <p>ชื่อ : {order.customerName}</p>
               <p>เบอร์โทร : {order.phone}</p>
+              <p>รับอาหาร : {order.deliveryMethod === 'pickup' ? 'รับที่ร้าน' : 'ให้ร้านจัดส่ง'}</p>
               {order.address && <p>ที่อยู่ : {order.address}</p>}
               {order.distanceKm != null && <p>ระยะส่ง : {order.distanceKm} กม.</p>}
             </div>
@@ -97,6 +101,7 @@ export async function getServerSideProps({ params }) {
           customerName: row.customerName,
           phone: row.phone,
           address: row.address,
+          deliveryMethod: row.deliveryMethod,
           distanceKm: row.distanceKm != null ? Number(row.distanceKm) : null,
           items: row.items,
           totalAmount: row.totalAmount,

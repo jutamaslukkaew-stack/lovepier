@@ -37,7 +37,7 @@ function makePaymentRef() {
   return Date.now().toString().slice(-10)
 }
 
-const STEP_ORDER = ['welcome', 'distance', 'menu', 'summary', 'payment', 'success']
+const STEP_ORDER = ['welcome', 'distance', 'method', 'menu', 'summary', 'payment', 'success']
 
 const COPY = {
   th: {
@@ -49,7 +49,9 @@ const COPY = {
     welcomeHeading: 'สั่งอาหารกลับบ้านได้เลย',
     welcomeLead: 'ชำระเงินด้วยการสแกน QR ของร้าน',
     welcomeStep1: 'เลือกเมนูที่ต้องการ แล้วยืนยันออเดอร์',
-    welcomeStep2: (r) => `ทางร้านสามารถจัดส่งให้เองได้ในรัศมี ${r} กม.`,
+    welcomeStep2: (r, min) => min > 0
+      ? `ทางร้านสามารถจัดส่งให้เองได้ในรัศมี ${r} กม. (สั่งขั้นต่ำ ${min} บาท)`
+      : `ทางร้านสามารถจัดส่งให้เองได้ในรัศมี ${r} กม.`,
     welcomeStep3: 'อยู่ไกลกว่านั้นก็ยังสั่งได้ เพียงเรียกไรเดอร์มารับอาหารที่ร้านเอง',
     startOrder: 'เริ่มสั่งอาหาร',
     loggingIn: 'กำลังเข้าสู่ระบบ LINE...',
@@ -75,12 +77,20 @@ const COPY = {
     testModeToggle: 'โหมดทดสอบระยะทาง',
     simulateWithin: 'จำลอง: อยู่ในรัศมี',
     simulateOutside: 'จำลอง: นอกรัศมี',
-    // step 3 — menu
+    // step 3 — delivery method
+    methodTitle: 'รับอาหารอย่างไร',
+    methodDeliveryLabel: 'ให้ร้านจัดส่ง',
+    methodDeliveryDesc: (fee) => `จัดส่งถึงที่ • ค่าจัดส่ง ฿${fee}`,
+    methodPickupLabel: 'รับเองที่ร้าน',
+    methodPickupDesc: 'ไม่มีค่าจัดส่ง — มารับเองหรือเรียกไรเดอร์มารับที่ร้าน',
+    methodOutOfRadiusNote: 'ร้านจัดส่งได้เฉพาะในรัศมีที่กำหนด คุณจึงรับอาหารได้ด้วยวิธีนี้เท่านั้น',
+    // step 4 — menu
     menuHint: 'เลือกเมนู แตะ + เพื่อเพิ่มจำนวน แล้วกดตะกร้าเพื่อไปต่อ',
-    // step 4 — summary
+    // step 5 — summary
     summaryTitle: 'สรุปออเดอร์',
     emptyCart: 'ยังไม่มีรายการในตะกร้า',
     backToMenu: 'กลับไปเลือกเมนู',
+    itemNotePlaceholder: 'หมายเหตุ เช่น หวานน้อย, นมอัลมอนด์',
     itemsSubtotalLabel: 'ค่าอาหาร',
     deliveryFeeLabel: 'ค่าจัดส่ง',
     selfArranged: 'ลูกค้าจัดการเอง',
@@ -90,8 +100,13 @@ const COPY = {
     address: 'ที่อยู่จัดส่ง',
     addressOptionalNote: '(ไม่บังคับ — คุณเรียกแมสเซนเจอร์มารับเองที่ร้าน)',
     note: 'หมายเหตุ (ไม่บังคับ)',
+    phoneFound: 'พบข้อมูลลูกค้าเดิม กรอกชื่อและที่อยู่ให้อัตโนมัติ',
+    orderRecapTitle: 'ตรวจสอบรายการก่อนชำระเงิน',
+    noteLabel: 'หมายเหตุ',
     fillRequired: 'กรุณากรอกชื่อและเบอร์โทร',
     fillAddress: 'กรุณากรอกที่อยู่จัดส่ง',
+    minOrderNotice: (min, remaining) => `ยอดสั่งอาหารขั้นต่ำ ฿${min} สำหรับให้ร้านจัดส่ง — ขาดอีก ฿${remaining}`,
+    minOrderError: (min) => `ยอดสั่งอาหารต้องถึง ฿${min} จึงจะให้ร้านจัดส่งได้ (หรือเปลี่ยนเป็นรับที่ร้าน)`,
     // step 5 — payment
     paymentTitle: 'ยืนยันและชำระเงิน',
     paymentMethod: 'ช่องทางชำระเงิน',
@@ -107,7 +122,7 @@ const COPY = {
     orderNo: 'เลขที่ออเดอร์',
     sentToShop: 'ส่งออเดอร์ให้ร้านทาง LINE แล้ว',
     waitingDelivery: 'ร้านกำลังเตรียมอาหารและจะจัดส่งให้ภายในรัศมีบริการ กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
-    pickupInstruction: 'กรุณาเรียกรถแมสเซนเจอร์ (เช่น Grab, Lalamove) มารับอาหารที่ร้าน Love Pier Beach Cafe เมื่อร้านแจ้งว่าอาหารพร้อม และกรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
+    pickupInstruction: 'กรุณามารับอาหารด้วยตนเอง หรือเรียกไรเดอร์/แมสเซนเจอร์ (เช่น Grab, Lalamove) มารับที่ร้าน Love Pier Beach Cafe เมื่อร้านแจ้งว่าอาหารพร้อม และกรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
     attachSlip: 'แนบสลิปเพื่อยืนยันการชำระเงิน',
     verifyingSlip: 'กำลังตรวจสอบสลิป...',
     slipVerified: 'ยืนยันการชำระเงินแล้ว',
@@ -125,7 +140,9 @@ const COPY = {
     welcomeHeading: 'You can order takeaway',
     welcomeLead: "Pay by scanning the shop's QR code.",
     welcomeStep1: 'Choose what you want and confirm the order',
-    welcomeStep2: (r) => `We can deliver to you ourselves within ${r} km`,
+    welcomeStep2: (r, min) => min > 0
+      ? `We can deliver to you ourselves within ${r} km (minimum order ฿${min})`
+      : `We can deliver to you ourselves within ${r} km`,
     welcomeStep3: 'Further away? You can still order — just send your own rider to collect it',
     startOrder: 'Start ordering',
     loggingIn: 'Logging in with LINE...',
@@ -150,10 +167,17 @@ const COPY = {
     testModeToggle: 'Distance test mode',
     simulateWithin: 'Simulate: within radius',
     simulateOutside: 'Simulate: outside radius',
+    methodTitle: 'How would you like to receive it?',
+    methodDeliveryLabel: 'Shop delivers',
+    methodDeliveryDesc: (fee) => `Delivered to you • Delivery fee ฿${fee}`,
+    methodPickupLabel: 'Pick up yourself',
+    methodPickupDesc: 'No delivery fee — come yourself or send your own rider to the shop',
+    methodOutOfRadiusNote: "We only deliver within our radius, so this is the only way to receive your order.",
     menuHint: 'Pick items, tap + to add, then tap the cart to continue',
     summaryTitle: 'Order summary',
     emptyCart: 'Your cart is empty',
     backToMenu: 'Back to menu',
+    itemNotePlaceholder: 'Note, e.g. less sweet, almond milk',
     itemsSubtotalLabel: 'Food total',
     deliveryFeeLabel: 'Delivery fee',
     selfArranged: 'Arranged by customer',
@@ -163,8 +187,13 @@ const COPY = {
     address: 'Delivery address',
     addressOptionalNote: "(optional — you're arranging your own courier pickup)",
     note: 'Note (optional)',
+    phoneFound: "Found your details from a past order — name and address filled in",
+    orderRecapTitle: 'Review before you pay',
+    noteLabel: 'Note',
     fillRequired: 'Please enter name and phone',
     fillAddress: 'Please enter a delivery address',
+    minOrderNotice: (min, remaining) => `Minimum order for shop delivery is ฿${min} — add ฿${remaining} more`,
+    minOrderError: (min) => `Your order must reach ฿${min} for shop delivery (or switch to pickup)`,
     paymentTitle: 'Confirm & pay',
     paymentMethod: 'Payment method',
     promptpayLabel: "The shop's QR code",
@@ -178,7 +207,7 @@ const COPY = {
     orderNo: 'Order no.',
     sentToShop: 'Order sent to the shop on LINE',
     waitingDelivery: "We're preparing your order and will deliver within our service radius. Please attach your payment slip to confirm.",
-    pickupInstruction: 'Please arrange your own courier (e.g. Grab, Lalamove) to pick up the food from Love Pier Beach Cafe once the shop confirms it is ready — and please attach your payment slip to confirm.',
+    pickupInstruction: 'Please come collect it yourself, or send your own rider/courier (e.g. Grab, Lalamove) to pick up the food from Love Pier Beach Cafe once the shop confirms it is ready — and please attach your payment slip to confirm.',
     attachSlip: 'Attach slip to confirm payment',
     verifyingSlip: 'Verifying slip...',
     slipVerified: 'Payment verified',
@@ -196,7 +225,9 @@ const COPY = {
     welcomeHeading: '现可点餐外带',
     welcomeLead: '扫描本店二维码付款。',
     welcomeStep1: '选好菜品并确认订单',
-    welcomeStep2: (r) => `${r} 公里内可由本店为您配送`,
+    welcomeStep2: (r, min) => min > 0
+      ? `${r} 公里内可由本店为您配送（最低消费 ฿${min}）`
+      : `${r} 公里内可由本店为您配送`,
     welcomeStep3: '超出范围仍可下单，只需自行安排骑手到店取餐',
     startOrder: '开始点餐',
     loggingIn: '正在使用 LINE 登录...',
@@ -221,10 +252,17 @@ const COPY = {
     testModeToggle: '距离测试模式',
     simulateWithin: '模拟：范围内',
     simulateOutside: '模拟：范围外',
+    methodTitle: '您希望如何取餐？',
+    methodDeliveryLabel: '由本店配送',
+    methodDeliveryDesc: (fee) => `送货上门 • 配送费 ฿${fee}`,
+    methodPickupLabel: '自行到店取餐',
+    methodPickupDesc: '无需配送费 — 亲自到店或安排骑手到店取餐',
+    methodOutOfRadiusNote: '本店仅在配送范围内配送，因此您只能以此方式取餐。',
     menuHint: '选择菜品，点击 + 添加，然后点击购物车继续',
     summaryTitle: '订单摘要',
     emptyCart: '购物车是空的',
     backToMenu: '返回菜单',
+    itemNotePlaceholder: '备注，例如少糖、杏仁奶',
     itemsSubtotalLabel: '餐点小计',
     deliveryFeeLabel: '配送费',
     selfArranged: '顾客自行安排',
@@ -234,8 +272,13 @@ const COPY = {
     address: '配送地址',
     addressOptionalNote: '（选填 — 您将自行安排快递到店取餐）',
     note: '备注（选填）',
+    phoneFound: '已找到您上次的资料，姓名和地址已自动填写',
+    orderRecapTitle: '付款前请核对订单',
+    noteLabel: '备注',
     fillRequired: '请填写姓名和电话',
     fillAddress: '请填写配送地址',
+    minOrderNotice: (min, remaining) => `本店配送最低消费 ฿${min} — 还差 ฿${remaining}`,
+    minOrderError: (min) => `订单需满 ฿${min} 才能由本店配送（或改为自行取餐）`,
     paymentTitle: '确认并付款',
     paymentMethod: '付款方式',
     promptpayLabel: '本店二维码',
@@ -249,7 +292,7 @@ const COPY = {
     orderNo: '订单号',
     sentToShop: '订单已通过 LINE 发送给店家',
     waitingDelivery: '我们正在备餐，将在配送范围内为您送达。请附上付款凭证以确认。',
-    pickupInstruction: '请在店家通知餐点备好后，自行安排快递员（如 Grab、Lalamove）到 Love Pier Beach Cafe 取餐 — 并请附上付款凭证以确认。',
+    pickupInstruction: '请在店家通知餐点备好后，亲自到店取餐，或自行安排骑手/快递员（如 Grab、Lalamove）到 Love Pier Beach Cafe 取餐 — 并请附上付款凭证以确认。',
     attachSlip: '上传凭证以确认付款',
     verifyingSlip: '正在核验凭证...',
     slipVerified: '付款已确认',
@@ -296,9 +339,9 @@ function StepHeader({ t, step, onBack }) {
     <div ref={ref} className="sticky top-0 z-[60] bg-[#f5f2ee]/95 backdrop-blur-sm border-b border-black/10 px-4 py-3">
       <div className={`${CONTENT_WIDTH} mx-auto flex items-center gap-3`}>
         {onBack ? (
-          <button onClick={onBack} className="text-black/40 hover:text-black text-lg leading-none shrink-0 w-6 h-6 flex items-center justify-center -ml-0.5" aria-label={t.back}>‹</button>
+          <button onClick={onBack} className="text-[#4a3520] hover:text-[#3a2818] text-3xl leading-none shrink-0 w-8 h-8 flex items-center justify-center -ml-1.5" aria-label={t.back}>‹</button>
         ) : (
-          <span className="w-6 shrink-0" />
+          <span className="w-8 shrink-0" />
         )}
         <div className="flex-1 flex items-center gap-1.5">
           {STEP_ORDER.map((s, i) => (
@@ -325,10 +368,10 @@ function StickyActionBar({ children }) {
   )
 }
 
-export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusKm = 5 }) {
+export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusKm = 5, minDeliveryOrder = 0 }) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
-  const { items, addItem, removeItem, clearCart, totalQty, totalPrice } = useCart()
+  const { items, addItem, removeItem, updateNote, clearCart, totalQty, totalPrice } = useCart()
   const { setHidden: setChromeHidden } = useChrome()
 
   const [step, setStep] = useState('welcome')
@@ -343,6 +386,14 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // effect so this only fires on unmount, not on every step change).
   useEffect(() => () => setChromeHidden(false), [setChromeHidden])
 
+  // Steps swap in place (no real page navigation), so nothing resets scroll
+  // on its own — without this, a step reached after scrolling down on the
+  // last one (summary is tall: cart + phone/name/address/note) renders
+  // already scrolled, burying whatever's new at the top of the next step.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [step])
+
   // step 1 — welcome / login
   const [profile, setProfile] = useState(null)
   const [loginPhase, setLoginPhase] = useState('idle') // idle | logging-in | failed
@@ -355,9 +406,17 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   const [ackOutOfRadius, setAckOutOfRadius] = useState(false)
   const [testModeOpen, setTestModeOpen] = useState(false)
 
+  // step 3 — delivery method: 'delivery' (shop delivers) | 'pickup' (customer
+  // or their own rider collects at the shop). Forced to 'pickup' outside the
+  // radius (the shop never delivers out there); an explicit choice inside it.
+  const [deliveryMethod, setDeliveryMethod] = useState(null)
+
   // step 4 — summary / contact
   const [form, setForm] = useState({ name: '', phone: '', address: '', note: '' })
   const [summaryError, setSummaryError] = useState('')
+  // 'idle' | 'checking' | 'found' | 'notfound' — drives the small note under
+  // the phone field once it looks complete. See the lookup effect below.
+  const [phoneLookup, setPhoneLookup] = useState('idle')
 
   // step 5 — payment
   const [qrDataUrl, setQrDataUrl] = useState('')
@@ -378,8 +437,14 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
 
   const withinRadius = distanceResult?.withinRadius !== false // null/unknown treated as "shop delivers"
   const itemsSubtotal = Math.round(totalPrice)
-  const deliveryFee = withinRadius ? (distanceResult?.deliveryFee || 0) : 0
+  // Only a chosen (or forced) 'delivery' method inside the radius ever costs
+  // anything — 'pickup' is always free, and the shop never delivers outside
+  // its radius regardless of what the fee settings say.
+  const deliveryFee = deliveryMethod === 'delivery' && withinRadius ? (distanceResult?.deliveryFee || 0) : 0
   const amount = itemsSubtotal + deliveryFee
+  // Only gates shop delivery — a small order is still fine for pickup, since
+  // it costs the shop nothing extra to hand it over the counter.
+  const belowMinOrder = deliveryMethod === 'delivery' && minDeliveryOrder > 0 && itemsSubtotal < minDeliveryOrder
 
   // Silently pick up an already-logged-in LINE session (e.g. after a login
   // redirect back to this page) so returning customers aren't asked twice.
@@ -390,6 +455,37 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
       if (p) { setProfile(p); setDeliverySessionProfile(p) }
     })
   }, [])
+
+  // Phone is asked first on the summary form specifically so this can run
+  // before the customer has typed a name/address — once the phone looks
+  // complete, check whether we've seen it before and, if so, fill in their
+  // name/address for them. Only fills fields that are still blank, so it can
+  // never clobber something the customer already typed. Debounced so it
+  // fires once they pause, not on every keystroke.
+  useEffect(() => {
+    const digits = form.phone.replace(/\D/g, '')
+    if (digits.length < 9) { setPhoneLookup('idle'); return }
+    setPhoneLookup('checking')
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/customer-lookup?phone=${encodeURIComponent(form.phone.trim())}`)
+        const data = await res.json()
+        if (data?.customer) {
+          setForm((f) => ({
+            ...f,
+            name: f.name.trim() ? f.name : data.customer.name || f.name,
+            address: f.address.trim() ? f.address : data.customer.address || f.address,
+          }))
+          setPhoneLookup('found')
+        } else {
+          setPhoneLookup('notfound')
+        }
+      } catch {
+        setPhoneLookup('notfound')
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [form.phone])
 
   // ── Step 1: welcome + LINE login ─────────────────────────────────────
   async function handleStart() {
@@ -496,6 +592,20 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
 
   const distanceContinueEnabled = locatePhase === 'found' && (withinRadius || ackOutOfRadius)
 
+  // ── Step 2 → 3: within the radius the customer picks a method; outside it
+  // the shop never delivers, so pickup is the only option and there's
+  // nothing to choose — skip straight past the method screen.
+  function goToMethodOrMenu() {
+    if (withinRadius) {
+      setStep('method')
+    } else {
+      setDeliveryMethod('pickup')
+      setStep('menu')
+    }
+  }
+
+  const methodContinueEnabled = Boolean(deliveryMethod)
+
   // ── Step 3: menu — hand the floating cart button to advance the wizard ──
   function goToSummaryFromMenu() {
     setStep('summary')
@@ -508,8 +618,12 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
       setSummaryError(t.fillRequired)
       return
     }
-    if (withinRadius && !form.address.trim()) {
+    if (deliveryMethod === 'delivery' && !form.address.trim()) {
       setSummaryError(t.fillAddress)
+      return
+    }
+    if (belowMinOrder) {
+      setSummaryError(t.minOrderError(minDeliveryOrder))
       return
     }
     setStep('payment')
@@ -551,9 +665,10 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           note: form.note,
           paymentRef,
           distanceKm: distanceResult?.distanceKm ?? null,
+          deliveryMethod: deliveryMethod || 'pickup',
           lineUserId: profile?.userId || '',
           lineDisplayName: profile?.displayName || '',
-          items: items.map((i) => ({ id: i.id, name: i.name, price: parseFloat(i.price) || 0, qty: i.qty })),
+          items: items.map((i) => ({ id: i.id, name: i.name, price: parseFloat(i.price) || 0, qty: i.qty, note: i.note || '' })),
         }),
       })
       const data = await res.json()
@@ -567,20 +682,22 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         name: form.name,
         phone: form.phone,
         address: form.address,
-        items: items.map((i) => ({ name: i.name, price: parseFloat(i.price) || 0, qty: i.qty })),
+        items: items.map((i) => ({ name: i.name, price: parseFloat(i.price) || 0, qty: i.qty, note: i.note || '' })),
         total: finalTotal,
         deliveryFee: finalDeliveryFee,
         distanceKm: distanceResult?.distanceKm ?? null,
+        deliveryMethod,
       })
       const sent = await sendMessagesToChat([flex])
       setSentToLine(sent)
 
       setCompleted({
-        lines: items.map((i) => `• ${i.name} x${i.qty}`).join('\n'),
+        lines: items.map((i) => `• ${i.name} x${i.qty}` + (i.note ? ` (${i.note})` : '')).join('\n'),
         total: finalTotal,
         deliveryFee: finalDeliveryFee,
         distanceKm: distanceResult?.distanceKm ?? null,
         withinRadius,
+        deliveryMethod,
       })
       setSlipVerify(Boolean(data.slipVerify))
       setOrderNo(data.orderNo)
@@ -649,9 +766,11 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     setSlipStatus('idle')
     setSlipError('')
     setForm({ name: '', phone: '', address: '', note: '' })
+    setPhoneLookup('idle')
     setDistanceResult(null)
     setLocatePhase('idle')
     setAckOutOfRadius(false)
+    setDeliveryMethod(null)
     setQrDataUrl('')
     setPaymentRef('')
     setConfirmPay(false)
@@ -666,7 +785,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     // prompts with no idea why — so the radius and what the button does have to
     // be readable before it is reachable. The hero is also height-capped, so this
     // copy would not fit inside it.
-    const steps = [t.welcomeStep1, t.welcomeStep2(radiusKm), t.welcomeStep3]
+    const steps = [t.welcomeStep1, t.welcomeStep2(radiusKm, minDeliveryOrder), t.welcomeStep3]
     return (
       // Fills the screen below the nav on purpose: at natural height the copy
       // ends partway down and the black footer starts in the same viewport, so
@@ -878,7 +997,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         {locatePhase === 'found' && (
           <StickyActionBar>
             <button
-              onClick={() => setStep('menu')}
+              onClick={goToMethodOrMenu}
               disabled={!distanceContinueEnabled}
               className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -891,12 +1010,89 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // Step 3 — Menu
+  // Step 3 — Delivery method
+  // ═══════════════════════════════════════════════════════════════════
+  // Only reached within the radius (goToMethodOrMenu skips it otherwise) —
+  // an explicit choice between shop-delivery and self pickup, where before
+  // this was decided implicitly by distance alone and pickup wasn't offered
+  // to anyone within range who'd rather skip the delivery fee.
+  if (step === 'method') {
+    const previewFee = distanceResult?.deliveryFee || 0
+    return (
+      <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
+        <StepHeader t={t} step={step} onBack={() => setStep('distance')} />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
+          <div className={`w-full ${CONTENT_WIDTH}`}>
+            <h1 className="font-display text-[22px] text-ink text-center mb-6">{t.methodTitle}</h1>
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => setDeliveryMethod('delivery')}
+                className={`text-left rounded-2xl border px-4 py-3.5 transition-colors ${
+                  deliveryMethod === 'delivery'
+                    ? 'border-[#4a3520] bg-[#4a3520]/[0.04]'
+                    : 'border-black/10 bg-white hover:border-black/20'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${deliveryMethod === 'delivery' ? 'border-[#4a3520]' : 'border-black/20'}`}
+                  >
+                    {deliveryMethod === 'delivery' && <span className="w-2 h-2 rounded-full bg-[#4a3520]" />}
+                  </span>
+                  <span className="flex-1">
+                    <span className="block text-[14px] font-medium text-ink">{t.methodDeliveryLabel}</span>
+                    <span className="block text-[12px] text-black/50 mt-0.5">{t.methodDeliveryDesc(previewFee)}</span>
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDeliveryMethod('pickup')}
+                className={`text-left rounded-2xl border px-4 py-3.5 transition-colors ${
+                  deliveryMethod === 'pickup'
+                    ? 'border-[#4a3520] bg-[#4a3520]/[0.04]'
+                    : 'border-black/10 bg-white hover:border-black/20'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${deliveryMethod === 'pickup' ? 'border-[#4a3520]' : 'border-black/20'}`}
+                  >
+                    {deliveryMethod === 'pickup' && <span className="w-2 h-2 rounded-full bg-[#4a3520]" />}
+                  </span>
+                  <span className="flex-1">
+                    <span className="block text-[14px] font-medium text-ink">{t.methodPickupLabel}</span>
+                    <span className="block text-[12px] text-black/50 mt-0.5">{t.methodPickupDesc}</span>
+                  </span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+        <StickyActionBar>
+          <button
+            onClick={() => setStep('menu')}
+            disabled={!methodContinueEnabled}
+            className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {t.next}
+          </button>
+        </StickyActionBar>
+      </div>
+    )
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Step 4 — Menu
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'menu') {
     return (
       <div className="min-h-[100dvh]">
-        <StepHeader t={t} step={step} onBack={() => setStep('distance')} />
+        <StepHeader t={t} step={step} onBack={() => setStep(withinRadius ? 'method' : 'distance')} />
         <p className="text-center text-[12px] text-black/45 py-2 bg-[#f5f2ee]">{t.menuHint}</p>
         <MenuExperience
           dbMenuData={dbMenuData}
@@ -910,7 +1106,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // Step 4 — Order summary
+  // Step 5 — Order summary
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'summary') {
     return (
@@ -928,21 +1124,31 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
             </div>
           ) : (
             <>
-              <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 flex flex-col gap-3">
+              <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 flex flex-col gap-4">
                 {items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium text-ink leading-snug truncate">{item.name}</p>
-                      <p className="text-[12px] text-black/50 tabular-nums">฿{Math.round(parseFloat(item.price))} × {item.qty}</p>
+                  <div key={item.id} className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-medium text-ink leading-snug truncate">{item.name}</p>
+                        <p className="text-[12px] text-black/50 tabular-nums">฿{Math.round(parseFloat(item.price))} × {item.qty}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button onClick={() => removeItem(item.id)} className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-ink font-semibold text-sm hover:bg-black/10">−</button>
+                        <span className="text-[13px] font-semibold w-4 text-center">{item.qty}</span>
+                        <button onClick={() => addItem(item)} className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-ink font-semibold text-sm hover:bg-black/10">+</button>
+                      </div>
+                      <p className="text-[13px] font-semibold tabular-nums text-ink shrink-0 w-14 text-right">
+                        ฿{Math.round(parseFloat(item.price) * item.qty)}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button onClick={() => removeItem(item.id)} className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-ink font-semibold text-sm hover:bg-black/10">−</button>
-                      <span className="text-[13px] font-semibold w-4 text-center">{item.qty}</span>
-                      <button onClick={() => addItem(item)} className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-ink font-semibold text-sm hover:bg-black/10">+</button>
-                    </div>
-                    <p className="text-[13px] font-semibold tabular-nums text-ink shrink-0 w-14 text-right">
-                      ฿{Math.round(parseFloat(item.price) * item.qty)}
-                    </p>
+                    {/* Applies to the whole line (all `qty` of this item), not
+                        per unit — see lib/cart.js updateNote. */}
+                    <input
+                      value={item.note || ''}
+                      onChange={(e) => updateNote(item.id, e.target.value)}
+                      placeholder={t.itemNotePlaceholder}
+                      className="w-full rounded-lg border border-black/10 bg-[#faf8f5] px-3 py-1.5 text-[12px] text-ink placeholder-black/30 focus:border-[#4a3520] focus:outline-none focus:ring-1 focus:ring-[#4a3520]/30 transition-colors"
+                    />
                   </div>
                 ))}
 
@@ -953,7 +1159,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                   </div>
                   <div className="flex items-center justify-between text-[13px]">
                     <span className="text-black/60">{t.deliveryFeeLabel}</span>
-                    {withinRadius ? (
+                    {deliveryMethod === 'delivery' ? (
                       <span className="tabular-nums text-black/60">฿{deliveryFee}</span>
                     ) : (
                       <span className="text-amber-700 font-medium">{t.selfArranged}</span>
@@ -964,20 +1170,28 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                     <span className="font-display text-[20px] text-ink tabular-nums">฿{amount}</span>
                   </div>
                 </div>
+                {belowMinOrder && (
+                  <p className="text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-1">
+                    {t.minOrderNotice(minDeliveryOrder, minDeliveryOrder - itemsSubtotal)}
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col gap-3">
+                <label className="block">
+                  <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.phone}</span>
+                  <input className={`mt-1 ${inputCls}`} inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                  {phoneLookup === 'found' && (
+                    <p className="mt-1.5 text-[12px] text-[#4a3520] flex items-center gap-1">✓ {t.phoneFound}</p>
+                  )}
+                </label>
                 <label className="block">
                   <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.name}</span>
                   <input className={`mt-1 ${inputCls}`} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 </label>
                 <label className="block">
-                  <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.phone}</span>
-                  <input className={`mt-1 ${inputCls}`} inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-                </label>
-                <label className="block">
                   <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">
-                    {t.address}{!withinRadius && <span className="normal-case tracking-normal text-black/35"> {t.addressOptionalNote}</span>}
+                    {t.address}{deliveryMethod !== 'delivery' && <span className="normal-case tracking-normal text-black/35"> {t.addressOptionalNote}</span>}
                   </span>
                   <textarea rows={2} className={`mt-1 resize-none ${inputCls}`} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                 </label>
@@ -992,7 +1206,11 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         </div>
         {items.length > 0 && (
           <StickyActionBar>
-            <button onClick={goToPayment} className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors flex items-center justify-between px-5">
+            <button
+              onClick={goToPayment}
+              disabled={belowMinOrder}
+              className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors flex items-center justify-between px-5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#4a3520]"
+            >
               <span>{t.next}</span>
               <span className="tabular-nums">฿{amount}</span>
             </button>
@@ -1003,7 +1221,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // Step 5 — Confirm & pay
+  // Step 6 — Confirm & pay
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'payment') {
     const canSubmit = confirmPay && !submitting && (!PROMPTPAY_ID || amount <= 0 || Boolean(qrDataUrl))
@@ -1012,6 +1230,30 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         <StepHeader t={t} step={step} onBack={() => setStep('summary')} />
         <div className={`flex-1 ${CONTENT_WIDTH} w-full mx-auto px-5 py-5 flex flex-col gap-4`}>
           <h1 className="font-display text-[22px] text-ink">{t.paymentTitle}</h1>
+
+          {/* The customer is about to pay real money — before this step, all
+              they've seen since typing their info is a price. This recap is
+              the actual "confirm your order" the checkbox below refers to. */}
+          <div className="rounded-xl bg-white border border-black/10 p-4 flex flex-col gap-2.5">
+            <p className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.orderRecapTitle}</p>
+            <div className="flex flex-col gap-2">
+              {items.map((item) => (
+                <div key={item.id} className="text-[13px]">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-ink">{item.name} × {item.qty}</span>
+                    <span className="tabular-nums text-black/60 shrink-0">฿{Math.round(parseFloat(item.price) * item.qty)}</span>
+                  </div>
+                  {item.note && <p className="text-[12px] text-black/45 mt-0.5">— {item.note}</p>}
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-black/10 pt-2.5 flex flex-col gap-0.5 text-[13px] text-ink/85">
+              <p>{form.name} · {form.phone}</p>
+              <p className="text-black/60">{deliveryMethod === 'delivery' ? t.methodDeliveryLabel : t.methodPickupLabel}</p>
+              {deliveryMethod === 'delivery' && form.address && <p className="text-black/60">{form.address}</p>}
+              {form.note && <p className="text-black/60">{t.noteLabel}: {form.note}</p>}
+            </div>
+          </div>
 
           <div>
             <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.paymentMethod}</span>
@@ -1046,7 +1288,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
               </div>
               <div className="flex items-center justify-between text-[13px]">
                 <span className="text-black/60">{t.deliveryFeeLabel}</span>
-                {withinRadius ? <span className="tabular-nums text-black/60">฿{deliveryFee}</span> : <span className="text-amber-700 font-medium">{t.selfArranged}</span>}
+                {deliveryMethod === 'delivery' ? <span className="tabular-nums text-black/60">฿{deliveryFee}</span> : <span className="text-amber-700 font-medium">{t.selfArranged}</span>}
               </div>
               <div className="flex items-baseline justify-between pt-1.5 mt-1 border-t border-black/10">
                 <span className="text-[11px] tracking-[0.12em] uppercase text-black/50">{t.amount}</span>
@@ -1081,7 +1323,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // Step 6 — Success
+  // Step 7 — Success
   // ═══════════════════════════════════════════════════════════════════
   return (
     <div className="min-h-[100dvh] bg-[#f5f2ee] flex items-start justify-center px-5 py-10">
@@ -1101,8 +1343,8 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           </div>
         )}
 
-        <p className={`w-full text-[13px] leading-[1.9] text-left rounded-xl px-4 py-3.5 ${completed?.withinRadius === false ? 'bg-[#faf3e4] border border-[#c9a96e]/45 text-[#6b5326]' : 'bg-black/[0.03] text-black/60'}`}>
-          {completed?.withinRadius === false ? t.pickupInstruction : t.waitingDelivery}
+        <p className={`w-full text-[13px] leading-[1.9] text-left rounded-xl px-4 py-3.5 ${completed?.deliveryMethod === 'pickup' ? 'bg-[#faf3e4] border border-[#c9a96e]/45 text-[#6b5326]' : 'bg-black/[0.03] text-black/60'}`}>
+          {completed?.deliveryMethod === 'pickup' ? t.pickupInstruction : t.waitingDelivery}
         </p>
 
         {slipStatus === 'ok' ? (

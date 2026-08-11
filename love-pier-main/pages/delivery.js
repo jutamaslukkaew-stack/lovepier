@@ -17,7 +17,7 @@ const PAGE_COPY = {
 // payment → success) — see components/delivery/OrderFlow.js. The menu step
 // reuses components/menu/MenuExperience, the same shared menu layout as
 // /menu, so section/layout edits there apply to both pages.
-export default function Delivery({ dbMenuData, dbPromotions, radiusKm }) {
+export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDeliveryOrder }) {
   const { lang } = useLanguage()
   const t = PAGE_COPY[lang] || PAGE_COPY.en
   const { hidden } = useChrome()
@@ -38,6 +38,7 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm }) {
         dbPromotions={dbPromotions}
         heroTitle={t.hero}
         radiusKm={radiusKm}
+        minDeliveryOrder={minDeliveryOrder}
       />
 
       {!hidden && <Footer tagline={FOOTER_TAGLINES.menu} />}
@@ -50,6 +51,6 @@ export async function getServerSideProps() {
   // The welcome screen states the delivery radius before the customer commits
   // to a LINE login, so it has to know it up front — /api/delivery-distance
   // only reports it after the GPS check.
-  const { radiusKm } = await getShopSettings()
-  return { props: { dbMenuData, dbPromotions, radiusKm: radiusKm ?? 5 } }
+  const { radiusKm, deliveryMinOrder } = await getShopSettings()
+  return { props: { dbMenuData, dbPromotions, radiusKm: radiusKm ?? 5, minDeliveryOrder: deliveryMinOrder ?? 0 } }
 }
