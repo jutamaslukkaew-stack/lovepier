@@ -84,7 +84,7 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label>ยอดสั่งซื้อขั้นต่ำสำหรับจัดส่ง (บาท)</Label>
+        <Label>ยอดสั่งซื้อขั้นต่ำ (บาท)</Label>
         <Input
           value={form.minOrder}
           onChange={(e) => set('minOrder', e.target.value)}
@@ -93,7 +93,7 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
           className="w-32"
         />
         <p className="text-xs text-muted-foreground">
-          ต่ำกว่านี้ลูกค้าจะสั่งได้เฉพาะแบบรับเองที่ร้าน — เว้นว่างหรือใส่ 0 เพื่อไม่กำหนดขั้นต่ำ
+          ต่ำกว่านี้ลูกค้าสั่งซื้อไม่ได้เลย ไม่ว่าจะเลือกจัดส่งหรือรับเองที่ร้าน — เว้นว่างหรือใส่ 0 เพื่อไม่กำหนดขั้นต่ำ
         </p>
       </div>
 

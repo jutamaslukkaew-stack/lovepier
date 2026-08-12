@@ -104,8 +104,7 @@ const COPY = {
     noteLabel: 'หมายเหตุ',
     fillRequired: 'กรุณากรอกชื่อและเบอร์โทร',
     fillAddress: 'กรุณากรอกที่อยู่จัดส่ง',
-    minOrderNotice: (remaining, min) => `สั่งอาหารเพิ่มอีก ฿${remaining} ให้ครบ ฿${min} จึงจะเลือกให้ร้านจัดส่งได้`,
-    switchToPickup: 'เปลี่ยนเป็นรับเองที่ร้านแทน',
+    minOrderNotice: (remaining, min) => `สั่งอาหารเพิ่มอีก ฿${remaining} ให้ครบ ฿${min} จึงจะสั่งซื้อได้`,
     // step 5 — payment
     paymentTitle: 'ยืนยันและชำระเงิน',
     paymentMethod: 'ช่องทางชำระเงิน',
@@ -190,8 +189,7 @@ const COPY = {
     noteLabel: 'Note',
     fillRequired: 'Please enter name and phone',
     fillAddress: 'Please enter a delivery address',
-    minOrderNotice: (remaining, min) => `Add ฿${remaining} more to reach the ฿${min} minimum for delivery`,
-    switchToPickup: 'Switch to pickup instead',
+    minOrderNotice: (remaining, min) => `Add ฿${remaining} more to reach the ฿${min} minimum order`,
     paymentTitle: 'Confirm & pay',
     paymentMethod: 'Payment method',
     promptpayLabel: "The shop's QR code",
@@ -274,8 +272,7 @@ const COPY = {
     noteLabel: '备注',
     fillRequired: '请填写姓名和电话',
     fillAddress: '请填写配送地址',
-    minOrderNotice: (remaining, min) => `还差 ฿${remaining} 才能达到配送最低消费 ฿${min}`,
-    switchToPickup: '改为自取',
+    minOrderNotice: (remaining, min) => `还差 ฿${remaining} 才能达到最低消费 ฿${min}`,
     paymentTitle: '确认并付款',
     paymentMethod: '付款方式',
     promptpayLabel: '本店二维码',
@@ -435,18 +432,21 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
 
   const withinRadius = distanceResult?.withinRadius !== false // null/unknown treated as "shop delivers"
   const itemsSubtotal = Math.round(totalPrice)
-  // The 'method' step (where deliveryMethod is picked) comes BEFORE the menu
-  // step, so the cart total isn't known yet when the customer chooses
-  // delivery — this can only be enforced once they reach the summary, after
-  // adding items. minDeliveryOrder<=0 disables the requirement entirely.
-  const belowMinOrder = deliveryMethod === 'delivery' && minDeliveryOrder > 0 && itemsSubtotal < minDeliveryOrder
-  // Only a chosen (or forced) 'delivery' method inside the radius, once past
-  // the minimum, ever costs anything — 'pickup' is always free, the shop
-  // never delivers outside its radius regardless of what the fee settings
-  // say, and while belowMinOrder the shop isn't actually delivering yet (the
-  // continue button is disabled), so no fee should show until it's real. No
-  // free-delivery threshold above the minimum — delivery always charges the
-  // tiered fee once it's actually chosen.
+  // Applies to the WHOLE order, not just delivery — pickup is blocked below
+  // it too. Tried scoping this to deliveryMethod==='delivery' only (so
+  // pickup stayed exempt, matching the very first version of this feature
+  // back in de74fcf), but the shop explicitly corrected that: 'รับเองที่ร้าน
+  // ก็ต้องอยู่ในเงื่อนไขของสั่งซื้อครบ 300 บาทเช่นเดียวกัน' — pickup must
+  // clear the same ฿300 minimum, not be exempt. Enforced at the summary
+  // step's continue button (see below), the same place regardless of which
+  // method is selected. minDeliveryOrder<=0 disables the requirement
+  // entirely.
+  const belowMinOrder = minDeliveryOrder > 0 && itemsSubtotal < minDeliveryOrder
+  // 'pickup' is always free, the shop never delivers outside its radius
+  // regardless of what the fee settings say, and while belowMinOrder nothing
+  // can be ordered yet (checkout itself is blocked below), so no delivery
+  // fee should show until it's real. No free-delivery threshold above the
+  // minimum — delivery always charges the tiered fee once it's chosen.
   const deliveryFee = deliveryMethod === 'delivery' && withinRadius && !belowMinOrder ? (distanceResult?.deliveryFee || 0) : 0
   const amount = itemsSubtotal + deliveryFee
 
@@ -1081,6 +1081,13 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           <div className={`w-full ${CONTENT_WIDTH}`}>
             <h1 className="font-display text-[22px] text-ink text-center mb-6">{t.methodTitle}</h1>
             <div className="flex flex-col gap-3">
+              {/* Both options stay selectable here regardless of the ฿300
+                  minimum — the cart is often still empty at this point (this
+                  step comes before menu) and the customer needs a way to
+                  reach the menu no matter which method they'll end up
+                  needing. The minimum is enforced once at the summary step's
+                  continue button instead, uniformly for whichever method was
+                  picked — see the belowMinOrder note above. */}
               <button
                 type="button"
                 onClick={() => setDeliveryMethod('delivery')}
@@ -1235,12 +1242,14 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                 </div>
               </div>
 
+              {/* Blocks checkout below the minimum regardless of method —
+                  pickup is not exempt, per the shop's explicit correction.
+                  No method-switch action here (unlike an earlier version of
+                  this notice): switching wouldn't unblock anything, since
+                  neither method is checkout-eligible below the minimum. */}
               {belowMinOrder && (
                 <div className="px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-[13px] text-amber-800 leading-relaxed">
                   <p>{t.minOrderNotice(minDeliveryOrder - itemsSubtotal, minDeliveryOrder)}</p>
-                  <button type="button" onClick={() => setDeliveryMethod('pickup')} className="mt-1.5 font-medium underline underline-offset-2">
-                    {t.switchToPickup}
-                  </button>
                 </div>
               )}
 

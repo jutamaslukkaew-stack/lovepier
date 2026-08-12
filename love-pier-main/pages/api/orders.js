@@ -63,12 +63,13 @@ export default async function handler(req, res) {
   const orderNo = makeOrderNo()
   const s = await getShopSettings()
 
-  // Below the minimum, shop delivery isn't offered at all — the client
-  // already disables the continue button for this, but never trust that
-  // alone. Re-added 2026-08-12 as a plain hard minimum (no free-delivery
-  // incentive attached this time — see lib/settings.js).
-  if (deliveryMethod === 'delivery' && s.minDeliveryOrder > 0 && itemsSubtotal < s.minDeliveryOrder) {
-    return res.status(400).json({ error: `ยอดสั่งซื้อไม่ถึงขั้นต่ำสำหรับจัดส่ง (฿${s.minDeliveryOrder})` })
+  // Applies to the WHOLE order below this amount — pickup is blocked too,
+  // not just delivery (the shop's explicit correction: 'รับเองที่ร้านก็ต้อง
+  // อยู่ในเงื่อนไขของสั่งซื้อครบ 300 บาทเช่นเดียวกัน'). The client already
+  // disables the continue button for this regardless of method, but never
+  // trust that alone.
+  if (s.minDeliveryOrder > 0 && itemsSubtotal < s.minDeliveryOrder) {
+    return res.status(400).json({ error: `ยอดสั่งซื้อไม่ถึงขั้นต่ำ (฿${s.minDeliveryOrder})` })
   }
 
   // Recompute the delivery fee server-side from distance + settings — never
@@ -76,10 +77,9 @@ export default async function handler(req, res) {
   // shop doesn't deliver at all (the customer arranges + pays their own
   // courier), so no shop delivery fee applies regardless of configured rates.
   // Choosing 'pickup' inside the radius is free too — the fee only applies
-  // when the shop is actually doing the delivering, and only once the
-  // minimum-order check above has passed. No free-delivery threshold —
-  // delivery always charges the full tiered distance fee, just gated on the
-  // minimum above (the shop tried a free-at-฿300 incentive and removed it).
+  // when the shop is actually doing the delivering. No free-delivery
+  // threshold — delivery always charges the full tiered distance fee (the
+  // shop tried a free-at-฿300 incentive and removed it).
   const withinRadius = distanceKm == null || distanceKm <= s.radiusKm
   const deliveryFee = withinRadius && deliveryMethod === 'delivery'
     ? calcDeliveryFee(distanceKm, { tiers: s.deliveryFeeTiers })
