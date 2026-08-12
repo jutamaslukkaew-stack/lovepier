@@ -130,7 +130,6 @@ const COPY = {
     slipUploaded: 'แนบสลิปแล้ว รอร้านตรวจสอบ',
     slipRetry: 'แนบสลิปใหม่อีกครั้ง',
     verifyHint: 'ระบบตรวจสลิปอัตโนมัติ (จับสลิปปลอมได้)',
-    sendSlip: 'ส่งสลิปทาง LINE',
     done: 'เสร็จสิ้น — สั่งใหม่',
   },
   en: {
@@ -216,7 +215,6 @@ const COPY = {
     slipUploaded: 'Slip attached — pending review',
     slipRetry: 'Attach a different slip',
     verifyHint: 'Automatic slip check (detects fakes)',
-    sendSlip: 'Send slip via LINE',
     done: 'Done — order again',
   },
   zh: {
@@ -302,7 +300,6 @@ const COPY = {
     slipUploaded: '凭证已上传 — 等待店家核对',
     slipRetry: '重新上传凭证',
     verifyHint: '自动核验凭证（可识别伪造）',
-    sendSlip: '通过 LINE 发送凭证',
     done: '完成 — 再次下单',
   },
 }
@@ -820,14 +817,18 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   }
 
   // Puts the order straight into the OA's own chat inbox as an
-  // incoming-looking message FROM the customer — the same deep-link
-  // mechanism sendSlipViaLine already relies on below, just built for the
-  // order-confirmation moment instead of the slip. Reliable because it
-  // needs no server config, no webhook, no LIFF: the customer just taps
-  // Send in a pre-filled LINE chat compose window. Added because the two
-  // automatic paths (liff.sendMessages via sentToLine, and the server-side
-  // LINE_ORDER_NOTIFY_TO push) are each blocked on something outside this
-  // codebase — see state.json note_2026_08_12_line_oa_group_alert.
+  // incoming-looking message FROM the customer, via LINE's oaMessage deep
+  // link (a chat-compose window, pre-filled, customer just taps Send).
+  // Reliable because it needs no server config, no webhook, no LIFF.
+  // Covers BOTH order confirmation and the slip reminder in one message —
+  // this used to be two separate LINE actions (this one, plus a near-
+  // identical sendSlipViaLine button) until the shop pointed out the
+  // duplication; sendSlipViaLine was removed, its "attach slip" hint
+  // folded into this message's closing line (t.attachSlipReminder) instead.
+  // Added because the two fully-automatic paths (liff.sendMessages via
+  // sentToLine, and the server-side LINE_ORDER_NOTIFY_TO push) are each
+  // blocked on something outside this codebase — see state.json
+  // note_2026_08_12_line_oa_group_alert.
   // Takes explicit values rather than reading completed/orderNo/form from
   // state — it's called automatically right after submitOrder() computes
   // the real order number from the server response, in the SAME tick as
@@ -859,18 +860,6 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     // phones/browsers — that's a platform restriction, not something this
     // code can force past. The manual button is the guaranteed fallback if
     // this doesn't visibly open.
-    window.open(`https://line.me/R/oaMessage/${LINE_OA_ID}/?${msg}`, '_blank')
-  }
-
-  function sendSlipViaLine() {
-    const lines = completed?.lines || ''
-    const total = completed?.total ?? 0
-    const refLine = paymentRef ? `\nRef: ${paymentRef}` : ''
-    const distanceLine = completed?.distanceKm != null ? `\n${completed.distanceKm} กม.` : ''
-    const feeLine = completed?.deliveryFee ? `\n${t.deliveryFeeLabel} ฿${completed.deliveryFee}` : ''
-    const msg = encodeURIComponent(
-      `${t.orderNo} ${orderNo}${refLine}\n${lines}${feeLine}\n\n${t.total} ฿${total}${distanceLine}\n\n(แนบสลิปการโอนในแชทนี้ได้เลยครับ)`
-    )
     window.open(`https://line.me/R/oaMessage/${LINE_OA_ID}/?${msg}`, '_blank')
   }
 
@@ -1531,7 +1520,6 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
             </label>
             <p className="text-[11px] text-black/40 text-center mt-1.5">{slipVerify ? t.verifyHint : ''}</p>
             {slipStatus === 'fail' && slipError && <p className="text-[12px] leading-[1.7] text-red-600 text-center mt-1">{slipError}</p>}
-            <button onClick={sendSlipViaLine} className="w-full mt-2 py-2 text-[12px] text-[#06C755] font-medium hover:underline">{t.sendSlip}</button>
           </div>
         )}
 
