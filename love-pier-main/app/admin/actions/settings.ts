@@ -14,9 +14,13 @@ const SETTING_KEYS = {
   googleApiKey: 'google_maps_api_key',
   slipokApiKey: 'slipok_api_key',
   slipokBranchId: 'slipok_branch_id',
-  deliveryBaseFee: 'delivery_base_fee',
-  deliveryPerKmRate: 'delivery_per_km_rate',
-  deliveryMinOrder: 'delivery_min_order',
+  deliveryFeeTier2km: 'delivery_fee_tier_2km',
+  deliveryFeeTier3km: 'delivery_fee_tier_3km',
+  deliveryFeeTier4km: 'delivery_fee_tier_4km',
+  deliveryFeeTier5km: 'delivery_fee_tier_5km',
+  // Key name kept from when this was a hard minimum-order-to-unlock-delivery
+  // gate — it's now the free-delivery threshold instead (see lib/settings.js).
+  freeDeliveryThreshold: 'delivery_min_order',
 } as const
 
 export type ShopSettingsForm = {
@@ -27,9 +31,11 @@ export type ShopSettingsForm = {
   googleApiKey: string
   slipokApiKey: string
   slipokBranchId: string
-  deliveryBaseFee: string
-  deliveryPerKmRate: string
-  deliveryMinOrder: string
+  deliveryFeeTier2km: string
+  deliveryFeeTier3km: string
+  deliveryFeeTier4km: string
+  deliveryFeeTier5km: string
+  freeDeliveryThreshold: string
 }
 
 export async function getSettings(): Promise<ShopSettingsForm> {
@@ -44,9 +50,11 @@ export async function getSettings(): Promise<ShopSettingsForm> {
     googleApiKey: m[SETTING_KEYS.googleApiKey] || '',
     slipokApiKey: m[SETTING_KEYS.slipokApiKey] || '',
     slipokBranchId: m[SETTING_KEYS.slipokBranchId] || '',
-    deliveryBaseFee: m[SETTING_KEYS.deliveryBaseFee] || '0',
-    deliveryPerKmRate: m[SETTING_KEYS.deliveryPerKmRate] || '0',
-    deliveryMinOrder: m[SETTING_KEYS.deliveryMinOrder] || '0',
+    deliveryFeeTier2km: m[SETTING_KEYS.deliveryFeeTier2km] || '20',
+    deliveryFeeTier3km: m[SETTING_KEYS.deliveryFeeTier3km] || '30',
+    deliveryFeeTier4km: m[SETTING_KEYS.deliveryFeeTier4km] || '40',
+    deliveryFeeTier5km: m[SETTING_KEYS.deliveryFeeTier5km] || '50',
+    freeDeliveryThreshold: m[SETTING_KEYS.freeDeliveryThreshold] || '0',
   }
 }
 
@@ -67,9 +75,11 @@ export async function saveSettings(data: ShopSettingsForm) {
   await put(SETTING_KEYS.googleApiKey, (data.googleApiKey || '').trim())
   await put(SETTING_KEYS.slipokApiKey, (data.slipokApiKey || '').trim())
   await put(SETTING_KEYS.slipokBranchId, (data.slipokBranchId || '').trim())
-  await put(SETTING_KEYS.deliveryBaseFee, (data.deliveryBaseFee || '0').trim())
-  await put(SETTING_KEYS.deliveryPerKmRate, (data.deliveryPerKmRate || '0').trim())
-  await put(SETTING_KEYS.deliveryMinOrder, (data.deliveryMinOrder || '0').trim())
+  await put(SETTING_KEYS.deliveryFeeTier2km, (data.deliveryFeeTier2km || '20').trim())
+  await put(SETTING_KEYS.deliveryFeeTier3km, (data.deliveryFeeTier3km || '30').trim())
+  await put(SETTING_KEYS.deliveryFeeTier4km, (data.deliveryFeeTier4km || '40').trim())
+  await put(SETTING_KEYS.deliveryFeeTier5km, (data.deliveryFeeTier5km || '50').trim())
+  await put(SETTING_KEYS.freeDeliveryThreshold, (data.freeDeliveryThreshold || '0').trim())
   revalidatePath('/admin/settings')
   return { ok: true as const }
 }

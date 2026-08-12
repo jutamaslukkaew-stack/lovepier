@@ -63,21 +63,18 @@ export default async function handler(req, res) {
   const orderNo = makeOrderNo()
   const s = await getShopSettings()
 
-  // Minimum order only gates shop delivery (a small order still costs the
-  // shop nothing extra to hand over the counter for pickup) — re-checked here
-  // because the client-side disabled button is a UX nicety, not the guard.
-  if (deliveryMethod === 'delivery' && s.deliveryMinOrder > 0 && itemsSubtotal < s.deliveryMinOrder) {
-    return res.status(400).json({ error: `ยอดสั่งอาหารต้องถึง ฿${s.deliveryMinOrder} จึงจะให้ร้านจัดส่งได้` })
-  }
   // Recompute the delivery fee server-side from distance + settings — never
   // trust a fee number sent by the client. Outside the delivery radius the
   // shop doesn't deliver at all (the customer arranges + pays their own
   // courier), so no shop delivery fee applies regardless of configured rates.
   // Choosing 'pickup' inside the radius is free too — the fee only applies
-  // when the shop is actually doing the delivering.
+  // when the shop is actually doing the delivering. There is no minimum-order
+  // gate any more — reaching freeDeliveryThreshold makes delivery free, it
+  // never blocks a smaller order from choosing delivery in the first place.
   const withinRadius = distanceKm == null || distanceKm <= s.radiusKm
-  const deliveryFee = withinRadius && deliveryMethod === 'delivery'
-    ? calcDeliveryFee(distanceKm, { baseFee: s.deliveryBaseFee, perKmRate: s.deliveryPerKmRate })
+  const qualifiesForFreeDelivery = s.freeDeliveryThreshold > 0 && itemsSubtotal >= s.freeDeliveryThreshold
+  const deliveryFee = withinRadius && deliveryMethod === 'delivery' && !qualifiesForFreeDelivery
+    ? calcDeliveryFee(distanceKm, { tiers: s.deliveryFeeTiers })
     : 0
   const totalAmount = itemsSubtotal + deliveryFee
 

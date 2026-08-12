@@ -1,5 +1,6 @@
 import { db } from './db'
 import { settings } from './db/schema'
+import { DEFAULT_DELIVERY_FEE_TIERS } from './deliveryFee'
 
 // Keys stored in the `settings` table (edited from /admin/settings).
 export const SETTING_KEYS = {
@@ -10,12 +11,19 @@ export const SETTING_KEYS = {
   googleApiKey: 'google_maps_api_key',
   slipokApiKey: 'slipok_api_key',
   slipokBranchId: 'slipok_branch_id',
-  deliveryBaseFee: 'delivery_base_fee',
-  deliveryPerKmRate: 'delivery_per_km_rate',
-  // Minimum food subtotal (before delivery fee) required to have the shop
-  // deliver. Doesn't apply to pickup — a small order is still fine if the
-  // customer collects it themselves.
-  deliveryMinOrder: 'delivery_min_order',
+  // Flat delivery fee per 1km distance band (replaced the old base+per-km
+  // formula — see lib/deliveryFee.js). Each key holds that band's fee in baht.
+  deliveryFeeTier2km: 'delivery_fee_tier_2km', // 0–2 km
+  deliveryFeeTier3km: 'delivery_fee_tier_3km', // 2–3 km
+  deliveryFeeTier4km: 'delivery_fee_tier_4km', // 3–4 km
+  deliveryFeeTier5km: 'delivery_fee_tier_5km', // 4–5 km
+  // Food subtotal (before delivery fee) at which shop delivery becomes FREE
+  // — an incentive, not a requirement: below this the customer can still
+  // choose delivery, they just pay the tiered fee. Doesn't apply to pickup,
+  // which is always free. Column name kept from when this used to be a hard
+  // minimum-order-to-unlock-delivery gate (pre 2026-08-13); no migration
+  // needed since the value (300) carries over unchanged.
+  freeDeliveryThreshold: 'delivery_min_order',
 }
 
 function num(v) {
@@ -46,8 +54,15 @@ export async function getShopSettings() {
     googleApiKey: m[SETTING_KEYS.googleApiKey] || process.env.GOOGLE_MAPS_API_KEY || '',
     slipokApiKey: m[SETTING_KEYS.slipokApiKey] || process.env.SLIPOK_API_KEY || '',
     slipokBranchId: m[SETTING_KEYS.slipokBranchId] || process.env.SLIPOK_BRANCH_ID || '',
-    deliveryBaseFee: m[SETTING_KEYS.deliveryBaseFee] ? num(m[SETTING_KEYS.deliveryBaseFee]) || 0 : 0,
-    deliveryPerKmRate: m[SETTING_KEYS.deliveryPerKmRate] ? num(m[SETTING_KEYS.deliveryPerKmRate]) || 0 : 0,
-    deliveryMinOrder: m[SETTING_KEYS.deliveryMinOrder] ? num(m[SETTING_KEYS.deliveryMinOrder]) || 0 : 0,
+    deliveryFeeTiers: [
+      { upToKm: 2, fee: m[SETTING_KEYS.deliveryFeeTier2km] ? num(m[SETTING_KEYS.deliveryFeeTier2km]) : NaN },
+      { upToKm: 3, fee: m[SETTING_KEYS.deliveryFeeTier3km] ? num(m[SETTING_KEYS.deliveryFeeTier3km]) : NaN },
+      { upToKm: 4, fee: m[SETTING_KEYS.deliveryFeeTier4km] ? num(m[SETTING_KEYS.deliveryFeeTier4km]) : NaN },
+      { upToKm: 5, fee: m[SETTING_KEYS.deliveryFeeTier5km] ? num(m[SETTING_KEYS.deliveryFeeTier5km]) : NaN },
+    ].map((tier, i) => ({
+      ...tier,
+      fee: Number.isFinite(tier.fee) ? tier.fee : DEFAULT_DELIVERY_FEE_TIERS[i].fee,
+    })),
+    freeDeliveryThreshold: m[SETTING_KEYS.freeDeliveryThreshold] ? num(m[SETTING_KEYS.freeDeliveryThreshold]) || 0 : 0,
   }
 }

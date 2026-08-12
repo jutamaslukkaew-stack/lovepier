@@ -102,43 +102,63 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
         <div>
           <p className="font-medium text-sm">ค่าจัดส่ง</p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            ค่าจัดส่ง = ค่าเริ่มต้น + (ระยะทาง กม. × อัตราต่อกม.) คำนวณอัตโนมัติจากระยะที่เช็คได้
+            ค่าจัดส่งคิดเป็นขั้นตามระยะทาง (ไม่ใช่สูตรค่าเริ่มต้น + อัตราต่อกม.แบบเดิม) — ระยะ 0-2 กม. คิดเท่ากับช่วง 2 กม.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label>ค่าเริ่มต้น (บาท)</Label>
+            <Label>0–2 กม. (บาท)</Label>
             <Input
-              value={form.deliveryBaseFee}
-              onChange={(e) => set('deliveryBaseFee', e.target.value)}
-              placeholder="0"
+              value={form.deliveryFeeTier2km}
+              onChange={(e) => set('deliveryFeeTier2km', e.target.value)}
+              placeholder="20"
               inputMode="decimal"
             />
           </div>
           <div className="space-y-1.5">
-            <Label>อัตราต่อกม. (บาท)</Label>
+            <Label>2–3 กม. (บาท)</Label>
             <Input
-              value={form.deliveryPerKmRate}
-              onChange={(e) => set('deliveryPerKmRate', e.target.value)}
-              placeholder="0"
+              value={form.deliveryFeeTier3km}
+              onChange={(e) => set('deliveryFeeTier3km', e.target.value)}
+              placeholder="30"
+              inputMode="decimal"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>3–4 กม. (บาท)</Label>
+            <Input
+              value={form.deliveryFeeTier4km}
+              onChange={(e) => set('deliveryFeeTier4km', e.target.value)}
+              placeholder="40"
+              inputMode="decimal"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>4–5 กม. (บาท)</Label>
+            <Input
+              value={form.deliveryFeeTier5km}
+              onChange={(e) => set('deliveryFeeTier5km', e.target.value)}
+              placeholder="50"
               inputMode="decimal"
             />
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">เว้นว่างทั้งคู่ (หรือ 0) = ไม่คิดค่าจัดส่งเพิ่ม</p>
+        <p className="text-xs text-muted-foreground">
+          ระยะเกิน 5 กม. อยู่นอกรัศมีจัดส่งอยู่แล้ว (ลูกค้าต้องเรียกไรเดอร์เอง) จึงไม่มีขั้นถัดไป
+        </p>
 
         <div className="space-y-1.5">
-          <Label>ยอดสั่งอาหารขั้นต่ำสำหรับให้ร้านจัดส่ง (บาท)</Label>
+          <Label>ยอดสั่งอาหารที่จัดส่งฟรี (บาท)</Label>
           <Input
-            value={form.deliveryMinOrder}
-            onChange={(e) => set('deliveryMinOrder', e.target.value)}
+            value={form.freeDeliveryThreshold}
+            onChange={(e) => set('freeDeliveryThreshold', e.target.value)}
             placeholder="0"
             inputMode="decimal"
             className="w-32"
           />
           <p className="text-xs text-muted-foreground">
-            นับเฉพาะค่าอาหาร (ไม่รวมค่าจัดส่ง) — ต่ำกว่านี้ลูกค้าจะกดไปหน้าชำระเงินไม่ได้ถ้าเลือกให้ร้านจัดส่ง
-            แต่ยังสั่งแบบรับที่ร้านได้ปกติ เว้นว่าง (หรือ 0) = ไม่มีขั้นต่ำ
+            นับเฉพาะค่าอาหาร (ไม่รวมค่าจัดส่ง) — สั่งครบยอดนี้ในรัศมีจัดส่งฟรี ต่ำกว่านี้ลูกค้ายังเลือกให้ร้านจัดส่งได้ตามปกติ
+            แค่เสียค่าจัดส่งตามระยะทางด้านบน เว้นว่าง (หรือ 0) = ไม่มีโปรจัดส่งฟรี
           </p>
         </div>
       </div>

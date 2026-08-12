@@ -63,10 +63,11 @@ export default async function handler(req, res) {
     }
 
     const distanceKm = Math.round(km * 10) / 10
-    const deliveryFee = calcDeliveryFee(distanceKm, {
-      baseFee: s.deliveryBaseFee,
-      perKmRate: s.deliveryPerKmRate,
-    })
+    // This is a preview only — the cart is still empty at the distance-check
+    // step, so the "free delivery at ฿X" incentive can't be applied yet. The
+    // real fee (accounting for itemsSubtotal) is computed in OrderFlow once
+    // the customer has items, and re-verified server-side in /api/orders.
+    const deliveryFee = calcDeliveryFee(distanceKm, { tiers: s.deliveryFeeTiers })
     return res.status(200).json({
       distanceKm,
       radiusKm: s.radiusKm,
