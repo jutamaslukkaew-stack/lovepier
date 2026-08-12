@@ -336,7 +336,7 @@ function StepHeader({ t, step, onBack }) {
     <div ref={ref} className="sticky top-0 z-[60] bg-[#f5f2ee]/95 backdrop-blur-sm border-b border-black/10 px-4 py-3">
       <div className={`${CONTENT_WIDTH} mx-auto flex items-center gap-3`}>
         {onBack ? (
-          <button onClick={onBack} className="text-[#4a3520] hover:text-[#3a2818] text-3xl leading-none shrink-0 w-8 h-8 flex items-center justify-center -ml-1.5" aria-label={t.back}>‹</button>
+          <button onClick={onBack} className="text-[#4a3520] hover:text-[#3a2818] text-5xl leading-none shrink-0 w-10 h-10 flex items-center justify-center -ml-2" aria-label={t.back}>‹</button>
         ) : (
           <span className="w-8 shrink-0" />
         )}
