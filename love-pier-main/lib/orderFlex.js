@@ -180,7 +180,10 @@ export function buildPaymentConfirmedFlex({ orderNo, total }) {
         },
         {
           type: 'text',
-          text: 'ขอบคุณที่อุดหนุน Love Pier กำลังเตรียมออเดอร์ให้แล้ว',
+          // Explicit line break — Thai has no word-spacing, so LINE's
+          // auto-wrap was splitting mid-word ("ออเด" / "อร์") when this ran
+          // as one long line. \n in a Flex text is honored as a real break.
+          text: 'ขอบคุณที่อุดหนุน Love Pier\nกำลังเตรียมออเดอร์ให้แล้ว',
           size: 'xs',
           color: '#8c8c8c',
           wrap: true,
