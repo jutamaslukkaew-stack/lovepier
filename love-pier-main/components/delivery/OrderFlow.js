@@ -440,6 +440,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   const [slipError, setSlipError] = useState('')
 
   const triedSilentLoginRef = useRef(false)
+  const lineLookupDoneRef = useRef(false)
 
   const withinRadius = distanceResult?.withinRadius !== false // null/unknown treated as "shop delivers"
   const itemsSubtotal = Math.round(totalPrice)
@@ -463,12 +464,43 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     })
   }, [])
 
+  // As soon as we know who the customer is via LINE (either an explicit
+  // login on the welcome step, or the silent-login effect above), look them
+  // up by lineUserId so name/phone/address are ready before they even reach
+  // the summary step — no typing required. This is the "recognize them from
+  // their LINE account" path; the phone-based effect below is the fallback
+  // for a customer whose LINE session has no matching order on file yet (or
+  // who never completed LINE login at all) but who has ordered by phone
+  // before. Only fills fields that are still blank, same rule as the phone
+  // lookup, so it never clobbers something already typed. Guarded by a ref
+  // (not just `profile`) so it fires once per login rather than once per
+  // render — reset in resetFlow() so "order again" re-fills for the next order.
+  useEffect(() => {
+    const uid = profile?.userId
+    if (!uid || lineLookupDoneRef.current) return
+    lineLookupDoneRef.current = true
+    fetch(`/api/customer?lineUserId=${encodeURIComponent(uid)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data?.customer) return
+        setForm((f) => ({
+          ...f,
+          name: f.name.trim() ? f.name : data.customer.name || f.name,
+          phone: f.phone.trim() ? f.phone : data.customer.phone || f.phone,
+          address: f.address.trim() ? f.address : data.customer.address || f.address,
+        }))
+        setPhoneLookup('found')
+      })
+      .catch(() => {})
+  }, [profile])
+
   // Phone is asked first on the summary form specifically so this can run
   // before the customer has typed a name/address — once the phone looks
   // complete, check whether we've seen it before and, if so, fill in their
   // name/address for them. Only fills fields that are still blank, so it can
   // never clobber something the customer already typed. Debounced so it
-  // fires once they pause, not on every keystroke.
+  // fires once they pause, not on every keystroke. Also the fallback for
+  // customers the lineUserId lookup above didn't already fill in.
   useEffect(() => {
     const digits = form.phone.replace(/\D/g, '')
     if (digits.length < 9) { setPhoneLookup('idle'); return }
@@ -770,6 +802,10 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     setSlipError('')
     setForm({ name: '', phone: '', address: '', note: '' })
     setPhoneLookup('idle')
+    // Re-arm the LINE lookup so "order again" re-fills the fresh blank form —
+    // profile itself doesn't change on reset, so without this the ref guard
+    // would skip it (it already fired once for this login).
+    lineLookupDoneRef.current = false
     setDistanceResult(null)
     setLocatePhase('idle')
     setAckOutOfRadius(false)
