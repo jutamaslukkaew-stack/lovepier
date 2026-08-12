@@ -11,6 +11,7 @@ const SETTING_KEYS = {
   shopLat: 'shop_lat',
   shopLng: 'shop_lng',
   radiusKm: 'delivery_radius_km',
+  minOrder: 'delivery_min_order',
   googleApiKey: 'google_maps_api_key',
   slipokApiKey: 'slipok_api_key',
   slipokBranchId: 'slipok_branch_id',
@@ -25,6 +26,7 @@ export type ShopSettingsForm = {
   shopLat: string
   shopLng: string
   radiusKm: string
+  minOrder: string
   googleApiKey: string
   slipokApiKey: string
   slipokBranchId: string
@@ -43,6 +45,7 @@ export async function getSettings(): Promise<ShopSettingsForm> {
     shopLat: m[SETTING_KEYS.shopLat] || '',
     shopLng: m[SETTING_KEYS.shopLng] || '',
     radiusKm: m[SETTING_KEYS.radiusKm] || '5',
+    minOrder: m[SETTING_KEYS.minOrder] || '300',
     googleApiKey: m[SETTING_KEYS.googleApiKey] || '',
     slipokApiKey: m[SETTING_KEYS.slipokApiKey] || '',
     slipokBranchId: m[SETTING_KEYS.slipokBranchId] || '',
@@ -67,6 +70,7 @@ export async function saveSettings(data: ShopSettingsForm) {
   await put(SETTING_KEYS.shopLat, (data.shopLat || '').trim())
   await put(SETTING_KEYS.shopLng, (data.shopLng || '').trim())
   await put(SETTING_KEYS.radiusKm, (data.radiusKm || '5').trim())
+  await put(SETTING_KEYS.minOrder, (data.minOrder || '0').trim())
   await put(SETTING_KEYS.googleApiKey, (data.googleApiKey || '').trim())
   await put(SETTING_KEYS.slipokApiKey, (data.slipokApiKey || '').trim())
   await put(SETTING_KEYS.slipokBranchId, (data.slipokBranchId || '').trim())

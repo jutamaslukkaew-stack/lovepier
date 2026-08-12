@@ -83,6 +83,20 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
         />
       </div>
 
+      <div className="space-y-1.5">
+        <Label>ยอดสั่งซื้อขั้นต่ำสำหรับจัดส่ง (บาท)</Label>
+        <Input
+          value={form.minOrder}
+          onChange={(e) => set('minOrder', e.target.value)}
+          placeholder="300"
+          inputMode="decimal"
+          className="w-32"
+        />
+        <p className="text-xs text-muted-foreground">
+          ต่ำกว่านี้ลูกค้าจะสั่งได้เฉพาะแบบรับเองที่ร้าน — เว้นว่างหรือใส่ 0 เพื่อไม่กำหนดขั้นต่ำ
+        </p>
+      </div>
+
       {form.distanceMethod === 'google' && (
         <div className="space-y-1.5">
           <Label>Google Maps API Key</Label>
@@ -144,7 +158,7 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          ระยะเกิน 5 กม. อยู่นอกรัศมีจัดส่งอยู่แล้ว (ลูกค้าต้องเรียกไรเดอร์เอง) จึงไม่มีขั้นถัดไป — เลือกให้ร้านจัดส่งได้เสมอ ไม่มียอดขั้นต่ำ
+          ระยะเกิน 5 กม. อยู่นอกรัศมีจัดส่งอยู่แล้ว (ลูกค้าต้องเรียกไรเดอร์เอง) จึงไม่มีขั้นถัดไป — ยอดขั้นต่ำสำหรับจัดส่งตั้งแยกไว้ด้านบน
         </p>
       </div>
 

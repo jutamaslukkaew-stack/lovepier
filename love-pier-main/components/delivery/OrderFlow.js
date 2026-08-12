@@ -48,6 +48,7 @@ const COPY = {
     welcomeSubtitle: 'อาหารและเครื่องดื่มริมทะเล',
     welcomeHeading: 'สั่งอาหารกลับบ้านได้เลย',
     welcomeLead: 'ชำระเงินด้วยการสแกน QR ของร้าน',
+    welcomeSpecialNote: (r) => `พิเศษสำหรับลูกค้า สั่งอาหารและเครื่องดื่มครบ 300 บาท ทางร้านมีบริการจัดส่งถึงมือ เมื่ออยู่ในรัศมี ${r} กม.`,
     welcomeStep1: 'เลือกเมนูที่ต้องการ แล้วยืนยันออเดอร์',
     welcomeStep2: (r) => `ทางร้านสามารถจัดส่งให้เองได้ในรัศมี ${r} กม.`,
     welcomeStep3: 'อยู่ไกลกว่านั้นก็ยังสั่งได้ เพียงเรียก Grab, LINE MAN หรือแมสเซนเจอร์เจ้าอื่นมารับอาหารที่ร้านเอง',
@@ -103,6 +104,8 @@ const COPY = {
     noteLabel: 'หมายเหตุ',
     fillRequired: 'กรุณากรอกชื่อและเบอร์โทร',
     fillAddress: 'กรุณากรอกที่อยู่จัดส่ง',
+    minOrderNotice: (remaining, min) => `สั่งอาหารเพิ่มอีก ฿${remaining} ให้ครบ ฿${min} จึงจะเลือกให้ร้านจัดส่งได้`,
+    switchToPickup: 'เปลี่ยนเป็นรับเองที่ร้านแทน',
     // step 5 — payment
     paymentTitle: 'ยืนยันและชำระเงิน',
     paymentMethod: 'ช่องทางชำระเงิน',
@@ -135,6 +138,7 @@ const COPY = {
     welcomeSubtitle: 'Beachside food and drinks.',
     welcomeHeading: 'You can order takeaway',
     welcomeLead: "Pay by scanning the shop's QR code.",
+    welcomeSpecialNote: (r) => `A special perk for our customers — spend ฿300 or more on food and drinks and we'll deliver straight to you within ${r} km.`,
     welcomeStep1: 'Choose what you want and confirm the order',
     welcomeStep2: (r) => `We can deliver to you ourselves within ${r} km`,
     welcomeStep3: 'Further away? You can still order — just send Grab, LINE MAN, or another courier to collect it from the shop',
@@ -186,6 +190,8 @@ const COPY = {
     noteLabel: 'Note',
     fillRequired: 'Please enter name and phone',
     fillAddress: 'Please enter a delivery address',
+    minOrderNotice: (remaining, min) => `Add ฿${remaining} more to reach the ฿${min} minimum for delivery`,
+    switchToPickup: 'Switch to pickup instead',
     paymentTitle: 'Confirm & pay',
     paymentMethod: 'Payment method',
     promptpayLabel: "The shop's QR code",
@@ -216,6 +222,7 @@ const COPY = {
     welcomeSubtitle: '海边美食与饮品。',
     welcomeHeading: '现可点餐外带',
     welcomeLead: '扫描本店二维码付款。',
+    welcomeSpecialNote: (r) => `尊享服务 — 餐饮消费满 300 泰铢，${r} 公里内本店专人配送到手。`,
     welcomeStep1: '选好菜品并确认订单',
     welcomeStep2: (r) => `${r} 公里内可由本店为您配送`,
     welcomeStep3: '超出范围仍可下单，只需自行安排 Grab、LINE MAN 或其他快递员到店取餐',
@@ -267,6 +274,8 @@ const COPY = {
     noteLabel: '备注',
     fillRequired: '请填写姓名和电话',
     fillAddress: '请填写配送地址',
+    minOrderNotice: (remaining, min) => `还差 ฿${remaining} 才能达到配送最低消费 ฿${min}`,
+    switchToPickup: '改为自取',
     paymentTitle: '确认并付款',
     paymentMethod: '付款方式',
     promptpayLabel: '本店二维码',
@@ -356,7 +365,7 @@ function StickyActionBar({ children }) {
   )
 }
 
-export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusKm = 5 }) {
+export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusKm = 5, minDeliveryOrder = 300 }) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
   const { items, addItem, removeItem, updateNote, clearCart, totalQty, totalPrice } = useCart()
@@ -426,11 +435,19 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
 
   const withinRadius = distanceResult?.withinRadius !== false // null/unknown treated as "shop delivers"
   const itemsSubtotal = Math.round(totalPrice)
-  // Only a chosen (or forced) 'delivery' method inside the radius ever costs
-  // anything — 'pickup' is always free, and the shop never delivers outside
-  // its radius regardless of what the fee settings say. No minimum order and
-  // no free-delivery threshold — delivery always charges the tiered fee.
-  const deliveryFee = deliveryMethod === 'delivery' && withinRadius ? (distanceResult?.deliveryFee || 0) : 0
+  // The 'method' step (where deliveryMethod is picked) comes BEFORE the menu
+  // step, so the cart total isn't known yet when the customer chooses
+  // delivery — this can only be enforced once they reach the summary, after
+  // adding items. minDeliveryOrder<=0 disables the requirement entirely.
+  const belowMinOrder = deliveryMethod === 'delivery' && minDeliveryOrder > 0 && itemsSubtotal < minDeliveryOrder
+  // Only a chosen (or forced) 'delivery' method inside the radius, once past
+  // the minimum, ever costs anything — 'pickup' is always free, the shop
+  // never delivers outside its radius regardless of what the fee settings
+  // say, and while belowMinOrder the shop isn't actually delivering yet (the
+  // continue button is disabled), so no fee should show until it's real. No
+  // free-delivery threshold above the minimum — delivery always charges the
+  // tiered fee once it's actually chosen.
+  const deliveryFee = deliveryMethod === 'delivery' && withinRadius && !belowMinOrder ? (distanceResult?.deliveryFee || 0) : 0
   const amount = itemsSubtotal + deliveryFee
 
   // Silently pick up an already-logged-in LINE session (e.g. after a login
@@ -642,6 +659,9 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // ── Step 4 → 5: build the PromptPay QR for the current total ────────────
   async function goToPayment() {
     setSummaryError('')
+    // Belt-and-suspenders — the continue button is already disabled while
+    // belowMinOrder, this just stops a stray call from slipping through.
+    if (belowMinOrder) return
     if (!form.name.trim() || !form.phone.trim()) {
       setSummaryError(t.fillRequired)
       return
@@ -834,6 +854,14 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                 looser leading for its tone marks. */}
             <h2 className="font-display font-light text-[clamp(28px,8vw,34px)] text-ink leading-[1.35]">{t.welcomeHeading}</h2>
             <p className="mt-2 text-[13px] text-black/55 font-light leading-relaxed">{t.welcomeLead}</p>
+
+            {/* Same warm cocoa-tinted note style as the success step's
+                waitingDelivery box — reused here rather than introducing a
+                new banner treatment for what is still an informational note,
+                not a warning (those stay amber, e.g. the out-of-radius box). */}
+            <p className="mt-4 rounded-xl bg-[#efe9e1] border border-[#4a3520]/15 px-4 py-3 text-[13px] leading-relaxed text-[#4a3520]">
+              {t.welcomeSpecialNote(radiusKm)}
+            </p>
 
             <ol className="mt-6 space-y-3.5">
               {steps.map((line, i) => (
@@ -1188,7 +1216,14 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                   <div className="flex items-center justify-between text-[13px]">
                     <span className="text-black/60">{t.deliveryFeeLabel}</span>
                     {deliveryMethod === 'delivery' ? (
-                      <span className="tabular-nums text-black/60">฿{deliveryFee}</span>
+                      belowMinOrder ? (
+                        // Not yet real — the continue button below is
+                        // disabled until the order clears the minimum, so no
+                        // fee number is shown to avoid implying ฿0 (free).
+                        <span className="tabular-nums text-black/35">—</span>
+                      ) : (
+                        <span className="tabular-nums text-black/60">฿{deliveryFee}</span>
+                      )
                     ) : (
                       <span className="text-amber-700 font-medium">{t.selfArranged}</span>
                     )}
@@ -1199,6 +1234,15 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                   </div>
                 </div>
               </div>
+
+              {belowMinOrder && (
+                <div className="px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-[13px] text-amber-800 leading-relaxed">
+                  <p>{t.minOrderNotice(minDeliveryOrder - itemsSubtotal, minDeliveryOrder)}</p>
+                  <button type="button" onClick={() => setDeliveryMethod('pickup')} className="mt-1.5 font-medium underline underline-offset-2">
+                    {t.switchToPickup}
+                  </button>
+                </div>
+              )}
 
               <div className="flex flex-col gap-3">
                 <label className="block">
@@ -1231,7 +1275,8 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           <StickyActionBar>
             <button
               onClick={goToPayment}
-              className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors flex items-center justify-between px-5"
+              disabled={belowMinOrder}
+              className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-between px-5"
             >
               <span>{t.next}</span>
               <span className="tabular-nums">฿{amount}</span>

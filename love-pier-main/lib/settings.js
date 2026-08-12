@@ -8,6 +8,11 @@ export const SETTING_KEYS = {
   shopLat: 'shop_lat',
   shopLng: 'shop_lng',
   radiusKm: 'delivery_radius_km',
+  // Minimum cart subtotal (baht) required to choose shop delivery — 0 (or
+  // unset) disables the requirement. Re-added 2026-08-12 after being fully
+  // removed the same day; this time it's a plain hard minimum, not bundled
+  // with a free-delivery incentive (see note_2026_08_12_fee_tiers_and_line_notify).
+  minOrder: 'delivery_min_order',
   googleApiKey: 'google_maps_api_key',
   slipokApiKey: 'slipok_api_key',
   slipokBranchId: 'slipok_branch_id',
@@ -44,6 +49,7 @@ export async function getShopSettings() {
     radiusKm: m[SETTING_KEYS.radiusKm]
       ? num(m[SETTING_KEYS.radiusKm])
       : num(process.env.DELIVERY_RADIUS_KM) || 5,
+    minDeliveryOrder: m[SETTING_KEYS.minOrder] ? num(m[SETTING_KEYS.minOrder]) : 300,
     googleApiKey: m[SETTING_KEYS.googleApiKey] || process.env.GOOGLE_MAPS_API_KEY || '',
     slipokApiKey: m[SETTING_KEYS.slipokApiKey] || process.env.SLIPOK_API_KEY || '',
     slipokBranchId: m[SETTING_KEYS.slipokBranchId] || process.env.SLIPOK_BRANCH_ID || '',
