@@ -85,10 +85,20 @@ export async function sendMessagesToChat(messages) {
   if (!LIFF_ID) return false
   try {
     const liff = await initLiff()
-    if (!liff.isApiAvailable || !liff.isApiAvailable('sendMessages')) return false
+    if (!liff.isApiAvailable || !liff.isApiAvailable('sendMessages')) {
+      // TEMP DEBUG — remove after diagnosing the missing-order-notification issue.
+      if (typeof window !== 'undefined') {
+        window.alert('DEBUG sendMessages unavailable. isInClient=' + liff.isInClient() + ' os=' + (liff.getOS ? liff.getOS() : '?'))
+      }
+      return false
+    }
     await liff.sendMessages(messages)
     return true
-  } catch {
+  } catch (err) {
+    // TEMP DEBUG — remove after diagnosing the missing-order-notification issue.
+    if (typeof window !== 'undefined') {
+      window.alert('DEBUG sendMessages error: ' + (err && err.message ? err.message : String(err)))
+    }
     return false
   }
 }
