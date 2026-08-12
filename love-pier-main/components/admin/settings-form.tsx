@@ -144,23 +144,8 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          ระยะเกิน 5 กม. อยู่นอกรัศมีจัดส่งอยู่แล้ว (ลูกค้าต้องเรียกไรเดอร์เอง) จึงไม่มีขั้นถัดไป
+          ระยะเกิน 5 กม. อยู่นอกรัศมีจัดส่งอยู่แล้ว (ลูกค้าต้องเรียกไรเดอร์เอง) จึงไม่มีขั้นถัดไป — เลือกให้ร้านจัดส่งได้เสมอ ไม่มียอดขั้นต่ำ
         </p>
-
-        <div className="space-y-1.5">
-          <Label>ยอดสั่งอาหารที่จัดส่งฟรี (บาท)</Label>
-          <Input
-            value={form.freeDeliveryThreshold}
-            onChange={(e) => set('freeDeliveryThreshold', e.target.value)}
-            placeholder="0"
-            inputMode="decimal"
-            className="w-32"
-          />
-          <p className="text-xs text-muted-foreground">
-            นับเฉพาะค่าอาหาร (ไม่รวมค่าจัดส่ง) — สั่งครบยอดนี้ในรัศมีจัดส่งฟรี ต่ำกว่านี้ลูกค้ายังเลือกให้ร้านจัดส่งได้ตามปกติ
-            แค่เสียค่าจัดส่งตามระยะทางด้านบน เว้นว่าง (หรือ 0) = ไม่มีโปรจัดส่งฟรี
-          </p>
-        </div>
       </div>
 
       <div className="border-t pt-5 space-y-4">

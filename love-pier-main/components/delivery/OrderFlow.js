@@ -49,9 +49,7 @@ const COPY = {
     welcomeHeading: 'สั่งอาหารกลับบ้านได้เลย',
     welcomeLead: 'ชำระเงินด้วยการสแกน QR ของร้าน',
     welcomeStep1: 'เลือกเมนูที่ต้องการ แล้วยืนยันออเดอร์',
-    welcomeStep2: (r, threshold) => threshold > 0
-      ? `ทางร้านสามารถจัดส่งให้เองได้ในรัศมี ${r} กม. (สั่งครบ ${threshold} บาท จัดส่งฟรี)`
-      : `ทางร้านสามารถจัดส่งให้เองได้ในรัศมี ${r} กม.`,
+    welcomeStep2: (r) => `ทางร้านสามารถจัดส่งให้เองได้ในรัศมี ${r} กม.`,
     welcomeStep3: 'อยู่ไกลกว่านั้นก็ยังสั่งได้ เพียงเรียก Grab, LINE MAN หรือแมสเซนเจอร์เจ้าอื่นมารับอาหารที่ร้านเอง',
     startOrder: 'เริ่มสั่งอาหาร',
     loggingIn: 'กำลังเข้าสู่ระบบ LINE...',
@@ -80,9 +78,7 @@ const COPY = {
     // step 3 — delivery method
     methodTitle: 'รับอาหารอย่างไร',
     methodDeliveryLabel: 'ให้ร้านจัดส่ง',
-    methodDeliveryDesc: (fee, threshold) => threshold > 0
-      ? `จัดส่งถึงที่ • ค่าจัดส่ง ฿${fee} (ฟรีเมื่อสั่งครบ ฿${threshold})`
-      : `จัดส่งถึงที่ • ค่าจัดส่ง ฿${fee}`,
+    methodDeliveryDesc: (fee) => `จัดส่งถึงที่ • ค่าจัดส่ง ฿${fee}`,
     methodPickupLabel: 'รับเองที่ร้าน',
     methodPickupDesc: 'ไม่มีค่าจัดส่ง — มารับเองหรือเรียก Grab, LINE MAN มารับที่ร้าน',
     methodOutOfRadiusNote: 'ร้านจัดส่งได้เฉพาะในรัศมีที่กำหนด คุณจึงรับอาหารได้ด้วยวิธีนี้เท่านั้น',
@@ -107,8 +103,6 @@ const COPY = {
     noteLabel: 'หมายเหตุ',
     fillRequired: 'กรุณากรอกชื่อและเบอร์โทร',
     fillAddress: 'กรุณากรอกที่อยู่จัดส่ง',
-    freeDeliveryHint: (threshold, remaining) => `สั่งเพิ่มอีก ฿${remaining} รับสิทธิ์จัดส่งฟรี (ครบ ฿${threshold})`,
-    freeDeliveryUnlocked: '🎉 คุณได้รับสิทธิ์จัดส่งฟรีแล้ว!',
     // step 5 — payment
     paymentTitle: 'ยืนยันและชำระเงิน',
     paymentMethod: 'ช่องทางชำระเงิน',
@@ -142,9 +136,7 @@ const COPY = {
     welcomeHeading: 'You can order takeaway',
     welcomeLead: "Pay by scanning the shop's QR code.",
     welcomeStep1: 'Choose what you want and confirm the order',
-    welcomeStep2: (r, threshold) => threshold > 0
-      ? `We can deliver to you ourselves within ${r} km (free delivery on orders over ฿${threshold})`
-      : `We can deliver to you ourselves within ${r} km`,
+    welcomeStep2: (r) => `We can deliver to you ourselves within ${r} km`,
     welcomeStep3: 'Further away? You can still order — just send Grab, LINE MAN, or another courier to collect it from the shop',
     startOrder: 'Start ordering',
     loggingIn: 'Logging in with LINE...',
@@ -171,9 +163,7 @@ const COPY = {
     simulateOutside: 'Simulate: outside radius',
     methodTitle: 'How would you like to receive it?',
     methodDeliveryLabel: 'Shop delivers',
-    methodDeliveryDesc: (fee, threshold) => threshold > 0
-      ? `Delivered to you • Delivery fee ฿${fee} (free on orders over ฿${threshold})`
-      : `Delivered to you • Delivery fee ฿${fee}`,
+    methodDeliveryDesc: (fee) => `Delivered to you • Delivery fee ฿${fee}`,
     methodPickupLabel: 'Pick up yourself',
     methodPickupDesc: 'No delivery fee — come yourself or send Grab/LINE MAN to the shop',
     methodOutOfRadiusNote: "We only deliver within our radius, so this is the only way to receive your order.",
@@ -196,8 +186,6 @@ const COPY = {
     noteLabel: 'Note',
     fillRequired: 'Please enter name and phone',
     fillAddress: 'Please enter a delivery address',
-    freeDeliveryHint: (threshold, remaining) => `Add ฿${remaining} more for free delivery (orders over ฿${threshold})`,
-    freeDeliveryUnlocked: '🎉 Free delivery unlocked!',
     paymentTitle: 'Confirm & pay',
     paymentMethod: 'Payment method',
     promptpayLabel: "The shop's QR code",
@@ -229,9 +217,7 @@ const COPY = {
     welcomeHeading: '现可点餐外带',
     welcomeLead: '扫描本店二维码付款。',
     welcomeStep1: '选好菜品并确认订单',
-    welcomeStep2: (r, threshold) => threshold > 0
-      ? `${r} 公里内可由本店为您配送（订单满 ฿${threshold} 免配送费）`
-      : `${r} 公里内可由本店为您配送`,
+    welcomeStep2: (r) => `${r} 公里内可由本店为您配送`,
     welcomeStep3: '超出范围仍可下单，只需自行安排 Grab、LINE MAN 或其他快递员到店取餐',
     startOrder: '开始点餐',
     loggingIn: '正在使用 LINE 登录...',
@@ -258,9 +244,7 @@ const COPY = {
     simulateOutside: '模拟：范围外',
     methodTitle: '您希望如何取餐？',
     methodDeliveryLabel: '由本店配送',
-    methodDeliveryDesc: (fee, threshold) => threshold > 0
-      ? `送货上门 • 配送费 ฿${fee}（订单满 ฿${threshold} 免配送费）`
-      : `送货上门 • 配送费 ฿${fee}`,
+    methodDeliveryDesc: (fee) => `送货上门 • 配送费 ฿${fee}`,
     methodPickupLabel: '自行到店取餐',
     methodPickupDesc: '无需配送费 — 亲自到店或安排 Grab/LINE MAN 到店取餐',
     methodOutOfRadiusNote: '本店仅在配送范围内配送，因此您只能以此方式取餐。',
@@ -283,8 +267,6 @@ const COPY = {
     noteLabel: '备注',
     fillRequired: '请填写姓名和电话',
     fillAddress: '请填写配送地址',
-    freeDeliveryHint: (threshold, remaining) => `还差 ฿${remaining} 即可享受免配送费（订单满 ฿${threshold}）`,
-    freeDeliveryUnlocked: '🎉 已获得免配送费优惠！',
     paymentTitle: '确认并付款',
     paymentMethod: '付款方式',
     promptpayLabel: '本店二维码',
@@ -374,7 +356,7 @@ function StickyActionBar({ children }) {
   )
 }
 
-export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusKm = 5, freeDeliveryThreshold = 0 }) {
+export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusKm = 5 }) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
   const { items, addItem, removeItem, updateNote, clearCart, totalQty, totalPrice } = useCart()
@@ -444,14 +426,11 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
 
   const withinRadius = distanceResult?.withinRadius !== false // null/unknown treated as "shop delivers"
   const itemsSubtotal = Math.round(totalPrice)
-  // Reaching freeDeliveryThreshold makes shop delivery FREE — an incentive,
-  // not a gate: a smaller order can still choose delivery, it just pays the
-  // tiered distance fee instead. 'pickup' is always free regardless, and the
-  // shop never delivers outside its radius regardless of what's configured.
-  const qualifiesForFreeDelivery = freeDeliveryThreshold > 0 && itemsSubtotal >= freeDeliveryThreshold
-  const deliveryFee = deliveryMethod === 'delivery' && withinRadius && !qualifiesForFreeDelivery
-    ? (distanceResult?.deliveryFee || 0)
-    : 0
+  // Only a chosen (or forced) 'delivery' method inside the radius ever costs
+  // anything — 'pickup' is always free, and the shop never delivers outside
+  // its radius regardless of what the fee settings say. No minimum order and
+  // no free-delivery threshold — delivery always charges the tiered fee.
+  const deliveryFee = deliveryMethod === 'delivery' && withinRadius ? (distanceResult?.deliveryFee || 0) : 0
   const amount = itemsSubtotal + deliveryFee
 
   // Silently pick up an already-logged-in LINE session (e.g. after a login
@@ -824,7 +803,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     // prompts with no idea why — so the radius and what the button does have to
     // be readable before it is reachable. The hero is also height-capped, so this
     // copy would not fit inside it.
-    const steps = [t.welcomeStep1, t.welcomeStep2(radiusKm, freeDeliveryThreshold), t.welcomeStep3]
+    const steps = [t.welcomeStep1, t.welcomeStep2(radiusKm), t.welcomeStep3]
     return (
       // Fills the screen below the nav on purpose: at natural height the copy
       // ends partway down and the black footer starts in the same viewport, so
@@ -1082,7 +1061,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                   </span>
                   <span className="flex-1">
                     <span className="block text-[14px] font-medium text-ink">{t.methodDeliveryLabel}</span>
-                    <span className="block text-[12px] text-black/50 mt-0.5">{t.methodDeliveryDesc(previewFee, freeDeliveryThreshold)}</span>
+                    <span className="block text-[12px] text-black/50 mt-0.5">{t.methodDeliveryDesc(previewFee)}</span>
                   </span>
                 </div>
               </button>
@@ -1199,11 +1178,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                   <div className="flex items-center justify-between text-[13px]">
                     <span className="text-black/60">{t.deliveryFeeLabel}</span>
                     {deliveryMethod === 'delivery' ? (
-                      qualifiesForFreeDelivery ? (
-                        <span className="tabular-nums text-emerald-700 font-medium">฿0</span>
-                      ) : (
-                        <span className="tabular-nums text-black/60">฿{deliveryFee}</span>
-                      )
+                      <span className="tabular-nums text-black/60">฿{deliveryFee}</span>
                     ) : (
                       <span className="text-amber-700 font-medium">{t.selfArranged}</span>
                     )}
@@ -1213,20 +1188,6 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                     <span className="font-display text-[20px] text-ink tabular-nums">฿{amount}</span>
                   </div>
                 </div>
-                {/* Nudge, not a block — delivery is always selectable; this
-                    just tells the customer how close they are to free delivery,
-                    or confirms they already unlocked it. */}
-                {deliveryMethod === 'delivery' && freeDeliveryThreshold > 0 && (
-                  qualifiesForFreeDelivery ? (
-                    <p className="text-[12px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 mt-1">
-                      {t.freeDeliveryUnlocked}
-                    </p>
-                  ) : (
-                    <p className="text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-1">
-                      {t.freeDeliveryHint(freeDeliveryThreshold, freeDeliveryThreshold - itemsSubtotal)}
-                    </p>
-                  )
-                )}
               </div>
 
               <div className="flex flex-col gap-3">
@@ -1340,9 +1301,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
               <div className="flex items-center justify-between text-[13px]">
                 <span className="text-black/60">{t.deliveryFeeLabel}</span>
                 {deliveryMethod === 'delivery' ? (
-                  qualifiesForFreeDelivery
-                    ? <span className="tabular-nums text-emerald-700 font-medium">฿0</span>
-                    : <span className="tabular-nums text-black/60">฿{deliveryFee}</span>
+                  <span className="tabular-nums text-black/60">฿{deliveryFee}</span>
                 ) : (
                   <span className="text-amber-700 font-medium">{t.selfArranged}</span>
                 )}

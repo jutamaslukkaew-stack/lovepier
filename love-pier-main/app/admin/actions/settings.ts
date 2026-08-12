@@ -18,9 +18,6 @@ const SETTING_KEYS = {
   deliveryFeeTier3km: 'delivery_fee_tier_3km',
   deliveryFeeTier4km: 'delivery_fee_tier_4km',
   deliveryFeeTier5km: 'delivery_fee_tier_5km',
-  // Key name kept from when this was a hard minimum-order-to-unlock-delivery
-  // gate — it's now the free-delivery threshold instead (see lib/settings.js).
-  freeDeliveryThreshold: 'delivery_min_order',
 } as const
 
 export type ShopSettingsForm = {
@@ -35,7 +32,6 @@ export type ShopSettingsForm = {
   deliveryFeeTier3km: string
   deliveryFeeTier4km: string
   deliveryFeeTier5km: string
-  freeDeliveryThreshold: string
 }
 
 export async function getSettings(): Promise<ShopSettingsForm> {
@@ -54,7 +50,6 @@ export async function getSettings(): Promise<ShopSettingsForm> {
     deliveryFeeTier3km: m[SETTING_KEYS.deliveryFeeTier3km] || '30',
     deliveryFeeTier4km: m[SETTING_KEYS.deliveryFeeTier4km] || '40',
     deliveryFeeTier5km: m[SETTING_KEYS.deliveryFeeTier5km] || '50',
-    freeDeliveryThreshold: m[SETTING_KEYS.freeDeliveryThreshold] || '0',
   }
 }
 
@@ -79,7 +74,6 @@ export async function saveSettings(data: ShopSettingsForm) {
   await put(SETTING_KEYS.deliveryFeeTier3km, (data.deliveryFeeTier3km || '30').trim())
   await put(SETTING_KEYS.deliveryFeeTier4km, (data.deliveryFeeTier4km || '40').trim())
   await put(SETTING_KEYS.deliveryFeeTier5km, (data.deliveryFeeTier5km || '50').trim())
-  await put(SETTING_KEYS.freeDeliveryThreshold, (data.freeDeliveryThreshold || '0').trim())
   revalidatePath('/admin/settings')
   return { ok: true as const }
 }

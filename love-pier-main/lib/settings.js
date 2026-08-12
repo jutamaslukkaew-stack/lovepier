@@ -17,13 +17,6 @@ export const SETTING_KEYS = {
   deliveryFeeTier3km: 'delivery_fee_tier_3km', // 2–3 km
   deliveryFeeTier4km: 'delivery_fee_tier_4km', // 3–4 km
   deliveryFeeTier5km: 'delivery_fee_tier_5km', // 4–5 km
-  // Food subtotal (before delivery fee) at which shop delivery becomes FREE
-  // — an incentive, not a requirement: below this the customer can still
-  // choose delivery, they just pay the tiered fee. Doesn't apply to pickup,
-  // which is always free. Column name kept from when this used to be a hard
-  // minimum-order-to-unlock-delivery gate (pre 2026-08-13); no migration
-  // needed since the value (300) carries over unchanged.
-  freeDeliveryThreshold: 'delivery_min_order',
 }
 
 function num(v) {
@@ -63,6 +56,5 @@ export async function getShopSettings() {
       ...tier,
       fee: Number.isFinite(tier.fee) ? tier.fee : DEFAULT_DELIVERY_FEE_TIERS[i].fee,
     })),
-    freeDeliveryThreshold: m[SETTING_KEYS.freeDeliveryThreshold] ? num(m[SETTING_KEYS.freeDeliveryThreshold]) || 0 : 0,
   }
 }

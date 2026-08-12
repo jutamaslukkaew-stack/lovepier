@@ -68,12 +68,12 @@ export default async function handler(req, res) {
   // shop doesn't deliver at all (the customer arranges + pays their own
   // courier), so no shop delivery fee applies regardless of configured rates.
   // Choosing 'pickup' inside the radius is free too — the fee only applies
-  // when the shop is actually doing the delivering. There is no minimum-order
-  // gate any more — reaching freeDeliveryThreshold makes delivery free, it
-  // never blocks a smaller order from choosing delivery in the first place.
+  // when the shop is actually doing the delivering. No minimum order and no
+  // free-delivery threshold — delivery is always selectable and always
+  // charges the tiered distance fee (the shop tried a free-at-฿300 incentive
+  // and asked to remove it).
   const withinRadius = distanceKm == null || distanceKm <= s.radiusKm
-  const qualifiesForFreeDelivery = s.freeDeliveryThreshold > 0 && itemsSubtotal >= s.freeDeliveryThreshold
-  const deliveryFee = withinRadius && deliveryMethod === 'delivery' && !qualifiesForFreeDelivery
+  const deliveryFee = withinRadius && deliveryMethod === 'delivery'
     ? calcDeliveryFee(distanceKm, { tiers: s.deliveryFeeTiers })
     : 0
   const totalAmount = itemsSubtotal + deliveryFee
