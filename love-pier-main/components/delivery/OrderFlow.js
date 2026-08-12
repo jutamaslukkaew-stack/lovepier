@@ -121,6 +121,7 @@ const COPY = {
     sentToShop: 'ส่งออเดอร์ให้ร้านทาง LINE แล้ว',
     newOrderHeading: 'ออเดอร์ใหม่',
     confirmOrderViaLine: 'ยืนยันออเดอร์ทาง LINE',
+    attachSlipReminder: 'กรุณาแนบสลิปการโอนในแชทนี้เพื่อยืนยันการชำระเงินด้วยนะครับ',
     waitingDelivery: 'ร้านกำลังเตรียมอาหารและจะจัดส่งให้ภายในรัศมีบริการ กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
     pickupInstruction: 'กรุณามารับอาหารด้วยตนเอง หรือเรียก Grab, LINE MAN หรือแมสเซนเจอร์เจ้าอื่น มารับที่ร้าน Love Pier Beach Cafe เมื่อร้านแจ้งว่าอาหารพร้อม และกรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
     attachSlip: 'แนบสลิปเพื่อยืนยันการชำระเงิน',
@@ -206,6 +207,7 @@ const COPY = {
     sentToShop: 'Order sent to the shop on LINE',
     newOrderHeading: 'New order',
     confirmOrderViaLine: 'Confirm order via LINE',
+    attachSlipReminder: 'Please attach your payment slip in this chat to confirm payment.',
     waitingDelivery: "We're preparing your order and will deliver within our service radius. Please attach your payment slip to confirm.",
     pickupInstruction: 'Please come collect it yourself, or send Grab, LINE MAN, or another rider/courier to pick up the food from Love Pier Beach Cafe once the shop confirms it is ready — and please attach your payment slip to confirm.',
     attachSlip: 'Attach slip to confirm payment',
@@ -291,6 +293,7 @@ const COPY = {
     sentToShop: '订单已通过 LINE 发送给店家',
     newOrderHeading: '新订单',
     confirmOrderViaLine: '通过 LINE 确认订单',
+    attachSlipReminder: '请在此聊天中附上付款凭证以确认付款。',
     waitingDelivery: '我们正在备餐，将在配送范围内为您送达。请附上付款凭证以确认。',
     pickupInstruction: '请在店家通知餐点备好后，亲自到店取餐，或自行安排 Grab、LINE MAN 或其他骑手/快递员到 Love Pier Beach Cafe 取餐 — 并请附上付款凭证以确认。',
     attachSlip: '上传凭证以确认付款',
@@ -849,7 +852,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     const addressLine = d.deliveryMethod === 'delivery' && d.address ? `\n${t.address}: ${d.address}` : ''
     const feeLine = d.deliveryFee ? `\n${t.deliveryFeeLabel} ฿${d.deliveryFee}` : ''
     const msg = encodeURIComponent(
-      `${t.newOrderHeading} ${d.orderNo}\n${t.name}: ${d.name}\n${t.phone}: ${d.phone}\n${methodLine}${addressLine}\n————————\n${d.lines}${feeLine}\n\n${t.total} ฿${d.total}`
+      `${t.newOrderHeading} ${d.orderNo}\n${t.name}: ${d.name}\n${t.phone}: ${d.phone}\n${methodLine}${addressLine}\n————————\n${d.lines}${feeLine}\n\n${t.total} ฿${d.total}\n\n${t.attachSlipReminder}`
     )
     // Best-effort: opening a new tab/window this far from the original tap
     // (after an `await fetch`) can get silently popup-blocked on some
