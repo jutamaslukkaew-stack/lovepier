@@ -466,16 +466,6 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     })
   }, [])
 
-  // TEMP DEBUG — remove after retrieving the shop's userId for
-  // LINE_ORDER_NOTIFY_TO. Only fires with ?showUserId=1 in the URL, so it
-  // can never show up for a real customer's normal visit.
-  useEffect(() => {
-    if (!profile?.userId || typeof window === 'undefined') return
-    if (new URLSearchParams(window.location.search).get('showUserId') === '1') {
-      window.alert('Your LINE userId: ' + profile.userId)
-    }
-  }, [profile])
-
   // As soon as we know who the customer is via LINE (either an explicit
   // login on the welcome step, or the silent-login effect above), look them
   // up by lineUserId so name/phone/address are ready before they even reach
