@@ -20,6 +20,10 @@ export function isLineNotifyConfigured() {
  */
 export async function pushToUser(userId, messages) {
   if (!TOKEN || !userId || !Array.isArray(messages) || messages.length === 0) {
+    // Was previously silent — indistinguishable in the logs from a genuine
+    // send, which cost real debugging time tracing a "notification didn't
+    // arrive" report back to a missing env var. Log which precondition failed.
+    console.warn('LINE push to user skipped:', { hasToken: Boolean(TOKEN), hasUserId: Boolean(userId), messageCount: messages?.length ?? 0 })
     return { ok: false, skipped: true }
   }
   try {
@@ -35,6 +39,7 @@ export async function pushToUser(userId, messages) {
       console.error('LINE push to user failed:', res.status, await res.text())
       return { ok: false }
     }
+    console.log('LINE push to user ok:', userId.slice(0, 6) + '…')
     return { ok: true }
   } catch (err) {
     console.error('LINE push to user error:', err)
@@ -50,7 +55,13 @@ export async function pushToUser(userId, messages) {
  * @param {object} flexMessage  a single LINE Flex message object (e.g. from buildOrderFlex)
  */
 export async function pushOrderCardToStaff(flexMessage) {
-  if (!TOKEN || !TARGET || !flexMessage) return { ok: false, skipped: true }
+  if (!TOKEN || !TARGET || !flexMessage) {
+    // Same reasoning as pushToUser's skip log — this is the exact call the
+    // shop's staff-alert card depends on, and a silent skip here previously
+    // looked identical to a real send in the logs.
+    console.warn('LINE push to staff skipped:', { hasToken: Boolean(TOKEN), hasTarget: Boolean(TARGET), hasMessage: Boolean(flexMessage) })
+    return { ok: false, skipped: true }
+  }
   try {
     const res = await fetch('https://api.line.me/v2/bot/message/push', {
       method: 'POST',
@@ -67,6 +78,7 @@ export async function pushOrderCardToStaff(flexMessage) {
       console.error('LINE push to staff failed:', res.status, await res.text())
       return { ok: false }
     }
+    console.log('LINE push to staff ok:', TARGET.slice(0, 6) + '…')
     return { ok: true }
   } catch (err) {
     console.error('LINE push to staff error:', err)
