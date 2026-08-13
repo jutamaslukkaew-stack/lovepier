@@ -43,40 +43,14 @@ export async function pushToUser(userId, messages) {
 }
 
 /**
- * @param {object} order
- * @param {string} order.orderNo
- * @param {string} order.customerName
- * @param {string} order.phone
- * @param {string} order.address
- * @param {string} [order.note]
- * @param {Array<{name:string, qty:number}>} order.items
- * @param {number} order.totalAmount
- * @param {string} [order.paymentRef]
+ * Push the shop's own order-confirmation Flex card — the SAME card design
+ * the customer gets from pushToUser() — to staff's LINE (LINE_ORDER_NOTIFY_TO:
+ * a personal userId or a group chat id), instead of a plain-text summary.
+ * Best-effort, mirrors pushToUser's guard clauses.
+ * @param {object} flexMessage  a single LINE Flex message object (e.g. from buildOrderFlex)
  */
-export async function pushNewOrderNotification(order) {
-  if (!TOKEN || !TARGET) return { ok: false, skipped: true }
-
-  const lines = (order.items || [])
-    .map((i) => `• ${i.name} ×${i.qty}` + (i.note ? ` (${i.note})` : ''))
-    .join('\n')
-
-  const methodLine = order.deliveryMethod === 'pickup' ? 'รับที่ร้าน / ลูกค้าจัดการเอง' : 'ให้ร้านจัดส่ง'
-
-  const text =
-    `ออเดอร์ใหม่ ${order.orderNo}\n` +
-    `━━━━━━━━━━━━━━\n` +
-    `ชื่อ: ${order.customerName}\n` +
-    `เบอร์โทร: ${order.phone}\n` +
-    `รับอาหาร: ${methodLine}\n` +
-    (order.address ? `ที่อยู่: ${order.address}\n` : '') +
-    (order.note ? `หมายเหตุ: ${order.note}\n` : '') +
-    (order.distanceKm != null ? `ระยะจัดส่ง: ${order.distanceKm} กม.\n` : '') +
-    `━━━━━━━━━━━━━━\n` +
-    `${lines}\n` +
-    (order.deliveryFee ? `ค่าจัดส่ง ฿${order.deliveryFee}\n` : '') +
-    `รวม ฿${order.totalAmount}` +
-    (order.paymentRef ? `\nRef: ${order.paymentRef}` : '')
-
+export async function pushOrderCardToStaff(flexMessage) {
+  if (!TOKEN || !TARGET || !flexMessage) return { ok: false, skipped: true }
   try {
     const res = await fetch('https://api.line.me/v2/bot/message/push', {
       method: 'POST',
@@ -86,16 +60,16 @@ export async function pushNewOrderNotification(order) {
       },
       body: JSON.stringify({
         to: TARGET,
-        messages: [{ type: 'text', text }],
+        messages: [flexMessage],
       }),
     })
     if (!res.ok) {
-      console.error('LINE push failed:', res.status, await res.text())
+      console.error('LINE push to staff failed:', res.status, await res.text())
       return { ok: false }
     }
     return { ok: true }
   } catch (err) {
-    console.error('LINE push error:', err)
+    console.error('LINE push to staff error:', err)
     return { ok: false }
   }
 }

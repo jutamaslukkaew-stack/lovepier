@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { orders, customers } from '../../lib/db/schema'
-import { pushNewOrderNotification, pushToUser } from '../../lib/lineMessaging'
+import { pushOrderCardToStaff, pushToUser } from '../../lib/lineMessaging'
 import { buildOrderFlex } from '../../lib/orderFlex'
 import { getShopSettings } from '../../lib/settings'
 import { calcDeliveryFee } from '../../lib/deliveryFee'
@@ -138,26 +138,20 @@ export default async function handler(req, res) {
       console.error('Customer upsert failed (non-fatal):', err)
     }
 
-    // Alert the shop staff on LINE. Best-effort — don't fail the order if it errors.
-    await pushNewOrderNotification({
-      orderNo,
-      customerName: name,
-      phone,
-      address,
-      note,
-      items,
-      totalAmount,
-      deliveryFee,
-      paymentRef,
-      distanceKm,
-      deliveryMethod,
-    })
+    // Same Flex card, sent to two destinations: the customer's own chat,
+    // and the shop's own staff LINE (LINE_ORDER_NOTIFY_TO). Both best-effort
+    // — a push failure never fails the order itself.
+    const flex = buildOrderFlex({ orderNo, name, phone, address, items, total: totalAmount, deliveryFee, distanceKm, deliveryMethod })
 
-    // Send the order card "from the shop" to the customer (Messaging API push).
-    // Complements the customer-side liff.sendMessages(); best-effort, skips
-    // when no messaging token or no LINE userId.
+    // Alert staff with the branded card (not a plain-text summary) the
+    // moment the order is created — doesn't depend on the customer tapping
+    // anything on their end, unlike the client-side LINE-deep-link reminder.
+    await pushOrderCardToStaff(flex)
+
+    // Send the order card "from the shop" to the customer too (Messaging
+    // API push). Complements the customer-side liff.sendMessages(); skips
+    // when there's no messaging token or no LINE userId for this order.
     if (lineUserId) {
-      const flex = buildOrderFlex({ orderNo, name, phone, address, items, total: totalAmount, deliveryFee, distanceKm, deliveryMethod })
       await pushToUser(lineUserId, [flex])
     }
 

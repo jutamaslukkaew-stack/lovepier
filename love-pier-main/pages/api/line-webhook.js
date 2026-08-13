@@ -1,10 +1,19 @@
-// LINE Messaging API webhook.
+// LINE Messaging API webhook. Two jobs:
 //
-// Its only job is to answer the question "what is this chat's id?", because
-// LINE_ORDER_NOTIFY_TO (lib/lineMessaging.js) needs one and LINE exposes a
-// GROUP's id through no console UI whatsoever — the only way to learn it is
-// to receive an event from inside that group. So the bot announces it: once
-// when it's added to the group, and again any time someone types "id".
+// (1) ANSWER "what is this chat's id?", because LINE_ORDER_NOTIFY_TO
+//     (lib/lineMessaging.js) needs one and LINE exposes a GROUP's id through
+//     no console UI whatsoever — the only way to learn it is to receive an
+//     event from inside that group. So the bot announces it: once when it's
+//     added to the group, and again any time someone types "id".
+//
+// (2) ACCEPT A PAYMENT SLIP SENT AS AN IMAGE IN THE 1:1 CHAT. The order
+//     confirmation tells customers to attach their slip in this chat, and
+//     they do — but until this handler existed the app never saw those
+//     images, so the order sat 'pending' forever and no confirmation card
+//     ever came back; a human had to type a holding reply by hand. Now the
+//     image is pulled from LINE, run through the SAME verification path as
+//     the website's upload field (lib/slipVerification.js), and answered
+//     with a real Flex card.
 //
 // Setup (shop side, in LINE Developers Console > the Messaging API channel):
 //   1. Webhook URL = https://www.lovepier.cafe/api/line-webhook, Use webhook ON
@@ -18,6 +27,11 @@
 // does not involve this webhook at all.
 
 import crypto from 'crypto'
+import { and, desc, eq } from 'drizzle-orm'
+import { db } from '../../lib/db'
+import { orders } from '../../lib/db/schema'
+import { processSlipForOrder } from '../../lib/slipVerification'
+import { buildPaymentConfirmedFlex, buildSlipReceivedFlex } from '../../lib/orderFlex'
 
 const TOKEN = process.env.LINE_MESSAGING_TOKEN || ''
 const SECRET = process.env.LINE_MESSAGING_CHANNEL_SECRET || ''
@@ -48,8 +62,8 @@ function signatureValid(raw, header) {
   return a.length === b.length && crypto.timingSafeEqual(a, b)
 }
 
-async function reply(replyToken, text) {
-  if (!TOKEN || !replyToken) return
+async function replyMessages(replyToken, messages) {
+  if (!TOKEN || !replyToken || !messages?.length) return
   try {
     const res = await fetch('https://api.line.me/v2/bot/message/reply', {
       method: 'POST',
@@ -57,12 +71,92 @@ async function reply(replyToken, text) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${TOKEN}`,
       },
-      body: JSON.stringify({ replyToken, messages: [{ type: 'text', text }] }),
+      body: JSON.stringify({ replyToken, messages }),
     })
     if (!res.ok) console.error('LINE reply failed:', res.status, await res.text())
   } catch (err) {
     console.error('LINE reply error:', err)
   }
+}
+
+function reply(replyToken, text) {
+  return replyMessages(replyToken, [{ type: 'text', text }])
+}
+
+// LINE keeps message media on a separate host and only hands it over to the
+// channel that received it. Returns a data URL, the shape lib/slipok.js and
+// lib/slipVerification.js already expect.
+async function fetchMessageImage(messageId) {
+  if (!TOKEN || !messageId) return null
+  try {
+    const res = await fetch(`https://api-data.line.me/v2/bot/message/${messageId}/content`, {
+      headers: { Authorization: `Bearer ${TOKEN}` },
+    })
+    if (!res.ok) {
+      console.error('LINE content fetch failed:', res.status, await res.text())
+      return null
+    }
+    const buf = Buffer.from(await res.arrayBuffer())
+    // A phone photo of a slip is well under this; the cap only stops a huge
+    // upload from being read into a serverless function's memory.
+    if (!buf.length || buf.length > 10 * 1024 * 1024) return null
+    const mime = (res.headers.get('content-type') || 'image/jpeg').split(';')[0]
+    return `data:${mime};base64,${buf.toString('base64')}`
+  } catch (err) {
+    console.error('LINE content fetch error:', err)
+    return null
+  }
+}
+
+/**
+ * A slip image arrived in a 1:1 chat. Match it to that customer's order and
+ * answer with a card. Never throws — the handler must still return 200.
+ */
+async function handleSlipImage(event, userId) {
+  // Only orders actually awaiting payment are candidates, newest first. If the
+  // customer has none, this image isn't a slip we asked for (an ordinary photo,
+  // a question about a dish), so we stay silent and let staff reply as people.
+  let order
+  try {
+    ;[order] = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.lineUserId, userId), eq(orders.status, 'pending')))
+      .orderBy(desc(orders.createdAt))
+      .limit(1)
+  } catch (err) {
+    console.error('slip order lookup failed:', err)
+    return
+  }
+  if (!order) return
+
+  const imageBase64 = await fetchMessageImage(event.message?.id)
+  if (!imageBase64) {
+    // The image itself couldn't be retrieved, so nothing was checked and
+    // nothing was stored — say so rather than implying the slip is in hand.
+    await reply(event.replyToken, 'ขออภัยค่ะ ระบบเปิดรูปสลิปไม่ได้\nรบกวนส่งใหม่อีกครั้งนะคะ')
+    return
+  }
+
+  const result = await processSlipForOrder(order, imageBase64)
+
+  // Unlike the website route there's no duplicate-notification worry here:
+  // this is a reply to something the customer just did, so confirming an
+  // already-paid order again is the reassuring answer, not noise.
+  const card =
+    result.verified
+      ? buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount })
+      : buildSlipReceivedFlex({
+          orderNo: order.orderNo,
+          total: order.totalAmount,
+          // result.error is customer-safe wording ("ยอดในสลิปไม่ตรงกับออเดอร์",
+          // "สลิปนี้ถูกใช้ไปแล้ว"); absent when SlipOK simply isn't configured,
+          // in which case the card's generic "staff will confirm" line stands
+          // on its own.
+          reason: result.error,
+        })
+
+  await replyMessages(event.replyToken, [card])
 }
 
 // A group id starts with C, a multi-person room with R, a 1:1 user with U.
@@ -111,6 +205,17 @@ export default async function handler(req, res) {
         event.replyToken,
         `ID ของ${kind}นี้คือ\n${id}\n\nส่ง ID นี้ให้ผู้ดูแลระบบ เพื่อตั้งค่าแจ้งเตือนออเดอร์ใหม่`
       )
+      continue
+    }
+
+    // A slip is only meaningful from an individual customer — images posted in
+    // the staff group are not payments and must never touch an order.
+    if (
+      event.type === 'message' &&
+      event.message?.type === 'image' &&
+      event.source?.type === 'user'
+    ) {
+      await handleSlipImage(event, event.source.userId)
     }
   }
 

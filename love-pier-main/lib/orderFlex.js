@@ -210,3 +210,80 @@ export function buildPaymentConfirmedFlex({ orderNo, total }) {
 
   return { type: 'flex', altText: `ชำระเงินสำเร็จ ${orderNo} — ฿${money(total)}`, contents: bubble }
 }
+
+/**
+ * Shown when a slip arrived but could NOT be auto-confirmed — a wrong amount,
+ * an unreadable QR, SlipOK being unconfigured, or a slip already used. The
+ * customer is told staff will check by hand, so the chat never dead-ends on
+ * silence (which is what used to happen: the slip landed in the chat, the app
+ * never saw it, and a human had to type a holding reply).
+ *
+ * Deliberately NOT styled as an error — from the customer's side they have
+ * paid and done their part; the shop simply hasn't confirmed yet.
+ */
+export function buildSlipReceivedFlex({ orderNo, total, reason }) {
+  const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
+
+  const bubble = {
+    type: 'bubble',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      backgroundColor: '#3a2818',
+      paddingAll: '18px',
+      contents: [
+        { type: 'text', text: 'ได้รับสลิปแล้ว', color: '#ffffff', weight: 'bold', size: 'xl' },
+        { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm' },
+      ],
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: 'เลขที่ออเดอร์', size: 'xs', color: '#aaaaaa', align: 'center' },
+        { type: 'text', text: String(orderNo), weight: 'bold', size: 'xl', align: 'center', color: '#4a3520' },
+        { type: 'separator', margin: 'lg' },
+        {
+          type: 'box',
+          layout: 'horizontal',
+          margin: 'lg',
+          contents: [
+            { type: 'text', text: 'ยอดที่ต้องชำระ', weight: 'bold', size: 'md', color: '#333333' },
+            { type: 'text', text: `฿${money(total)}`, weight: 'bold', size: 'lg', color: '#4a3520', align: 'end' },
+          ],
+        },
+        ...(reason
+          ? [{ type: 'text', text: String(reason), size: 'xs', color: '#b06d2b', wrap: true, margin: 'md', align: 'center' }]
+          : []),
+        {
+          // Same explicit-newline treatment as the confirmed card — Thai gives
+          // LINE's auto-wrap no word boundaries to break on.
+          type: 'text',
+          text: 'ทางร้านกำลังตรวจสอบการชำระเงิน\nและจะยืนยันให้อีกครั้งนะคะ',
+          size: 'xs',
+          color: '#8c8c8c',
+          wrap: true,
+          margin: 'md',
+          align: 'center',
+        },
+      ],
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        {
+          type: 'button',
+          style: 'primary',
+          color: '#3a2818',
+          height: 'sm',
+          action: { type: 'uri', label: 'ตรวจสอบออเดอร์', uri: orderUrl },
+        },
+      ],
+    },
+  }
+
+  return { type: 'flex', altText: `ได้รับสลิปแล้ว ${orderNo} — ฿${money(total)}`, contents: bubble }
+}
