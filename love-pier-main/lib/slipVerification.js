@@ -62,6 +62,45 @@ async function storeSlip(orderNo, imageBase64) {
 }
 
 /**
+ * Turn SlipOK's raw failure text into something a customer can act on.
+ *
+ * SlipOK answers the integrator, not the payer: "รูปภาพไม่มี QR Code" is
+ * accurate but leaves someone who photographed their slip badly with no idea
+ * what to do next. Every branch here ends in an instruction.
+ *
+ * Explicit \n are load-bearing — Thai has no inter-word spaces, so LINE's Flex
+ * auto-wrap will otherwise break these mid-word (see lib/orderFlex.js).
+ *
+ * The raw text is never discarded, only demoted to `rawError` for the server
+ * log, so a genuinely new SlipOK failure is still diagnosable.
+ */
+function customerSlipMessage(raw, { duplicate, unavailable } = {}) {
+  const text = String(raw || '')
+
+  // Our own checker is down or misconfigured. Nothing about the customer's
+  // image is wrong, so telling them to resend it would be false advice.
+  if (unavailable) {
+    return 'ตรวจสอบสลิปอัตโนมัติไม่สำเร็จ\nทางร้านจะตรวจสอบให้เองนะคะ'
+  }
+  if (duplicate) {
+    return 'สลิปนี้เคยใช้ยืนยันการชำระเงินแล้ว\nหากยังไม่ได้รับการยืนยัน รบกวนแจ้งทางร้านได้เลยนะคะ'
+  }
+  // Covers "รูปภาพไม่มี QR Code" and any wording about an unreadable QR — by
+  // far the most common failure, and almost always a cropped screenshot or a
+  // photo that cut the QR off.
+  if (/qr/i.test(text)) {
+    return 'อ่าน QR ในสลิปไม่ได้\nรบกวนส่งภาพสลิปเต็มใบจากแอปธนาคาร\nให้เห็น QR ชัดเจนอีกครั้งนะคะ'
+  }
+  // SlipOK could not treat the image as a slip at all.
+  if (/ไม่ใช่สลิป|ไม่พบ|อ่าน.*ไม่|ผิดรูปแบบ/.test(text)) {
+    return 'อ่านข้อมูลในสลิปไม่ได้\nรบกวนส่งภาพสลิปจากแอปธนาคารโดยตรง\n(ไม่ใช่ภาพหน้าจอแชท) นะคะ'
+  }
+  // Anything else, including SlipOK being unreachable: say nothing specific
+  // rather than surfacing a machine message, since staff will look anyway.
+  return 'ตรวจสอบสลิปอัตโนมัติไม่สำเร็จ\nทางร้านจะตรวจสอบให้เองนะคะ'
+}
+
+/**
  * Store a slip against an order and, when SlipOK is configured, verify it with
  * the bank and mark the order paid. Never throws.
  *
@@ -98,22 +137,36 @@ export async function processSlipForOrder(order, imageBase64) {
     { imageBase64, amount: order.totalAmount }
   )
 
+  // SlipOK itself failed to answer (network, bad key, malformed response).
   if (!result.ok) {
-    return { verified: false, stored, error: result.reason || 'ตรวจสอบไม่สำเร็จ' }
+    console.warn('slip check unavailable:', order.orderNo, result.reason)
+    return {
+      verified: false,
+      stored,
+      error: customerSlipMessage(result.reason, { unavailable: true }),
+      rawError: result.reason || null,
+    }
   }
   if (!result.verified) {
+    console.warn('slip rejected:', order.orderNo, result.reason, result.duplicate ? '(duplicate)' : '')
     return {
       verified: false,
       stored,
       duplicate: result.duplicate || false,
-      error: result.duplicate ? 'สลิปนี้ถูกใช้ไปแล้ว' : result.reason || 'สลิปไม่ถูกต้อง',
+      error: customerSlipMessage(result.reason, { duplicate: result.duplicate }),
+      rawError: result.reason || null,
     }
   }
   if (result.amount != null && Math.round(result.amount) !== order.totalAmount) {
+    // Keep both numbers — this is the one failure the customer can check and
+    // resolve themselves, so being specific is more useful than being gentle.
+    const paid = Math.round(result.amount)
+    console.warn('slip amount mismatch:', order.orderNo, paid, 'vs', order.totalAmount)
     return {
       verified: false,
       stored,
-      error: `ยอดในสลิป (฿${Math.round(result.amount)}) ไม่ตรงกับออเดอร์ (฿${order.totalAmount})`,
+      error: `ยอดในสลิป ฿${paid} ไม่ตรงกับออเดอร์ ฿${order.totalAmount}\nรบกวนตรวจสอบยอดโอนอีกครั้ง\nหรือแจ้งทางร้านได้เลยนะคะ`,
+      rawError: `amount mismatch: slip ${paid} vs order ${order.totalAmount}`,
     }
   }
 
@@ -125,8 +178,14 @@ export async function processSlipForOrder(order, imageBase64) {
   } catch (err) {
     // slip_ref carries a unique constraint, so a losing race here means this
     // exact slip was already banked against another order.
-    console.error('mark paid failed:', err)
-    return { verified: false, stored, duplicate: true, error: 'สลิปนี้ถูกใช้ไปแล้ว' }
+    console.error('mark paid failed:', order.orderNo, err)
+    return {
+      verified: false,
+      stored,
+      duplicate: true,
+      error: customerSlipMessage(null, { duplicate: true }),
+      rawError: 'mark-paid failed (slip_ref already banked)',
+    }
   }
 
   return { verified: true, stored, amount: order.totalAmount }

@@ -1509,7 +1509,10 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
               <input type="file" accept="image/*" className="hidden" onChange={handleSlipFile} disabled={slipStatus === 'verifying'} />
             </label>
             <p className="text-[11px] text-black/40 text-center mt-1.5">{slipVerify ? t.verifyHint : ''}</p>
-            {slipStatus === 'fail' && slipError && <p className="text-[12px] leading-[1.7] text-red-600 text-center mt-1">{slipError}</p>}
+            {/* whitespace-pre-line so the \n in a slip error (added for LINE's
+                Flex auto-wrap, which breaks Thai mid-word without them) also
+                reads as real line breaks here instead of collapsing. */}
+            {slipStatus === 'fail' && slipError && <p className="text-[12px] leading-[1.7] text-red-600 text-center mt-1 whitespace-pre-line">{slipError}</p>}
           </div>
         )}
 
