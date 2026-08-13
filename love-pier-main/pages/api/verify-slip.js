@@ -3,7 +3,7 @@ import { db } from '../../lib/db'
 import { orders } from '../../lib/db/schema'
 import { processSlipForOrder } from '../../lib/slipVerification'
 import { buildPaymentConfirmedFlex } from '../../lib/orderFlex'
-import { pushToUser } from '../../lib/lineMessaging'
+import { pushToUser, pushOrderCardToStaff } from '../../lib/lineMessaging'
 
 // Allow a slip image (base64) in the request body.
 export const config = { api: { bodyParser: { sizeLimit: '8mb' } } }
@@ -29,11 +29,17 @@ export default async function handler(req, res) {
   const result = await processSlipForOrder(order, imageBase64)
 
   // Best-effort — a push failure shouldn't affect the verified response.
-  // Skipped when the order was already paid, so a re-upload doesn't send the
-  // customer a second confirmation card for the same payment.
-  if (result.verified && !result.alreadyPaid && order.lineUserId) {
+  // Skipped when the order was already paid, so a re-upload doesn't send a
+  // second confirmation card (to the customer OR to staff) for the same
+  // payment. The staff push doesn't need order.lineUserId — it always goes
+  // to LINE_ORDER_NOTIFY_TO regardless of whether the customer has a LINE
+  // session, same as the order-received card in pages/api/orders.js.
+  if (result.verified && !result.alreadyPaid) {
     const flex = buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount })
-    await pushToUser(order.lineUserId, [flex])
+    await pushOrderCardToStaff(flex)
+    if (order.lineUserId) {
+      await pushToUser(order.lineUserId, [flex])
+    }
   }
 
   return res.status(200).json({ ok: true, ...result })

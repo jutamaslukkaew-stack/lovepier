@@ -27,7 +27,6 @@ const PROMPTPAY_TYPE = process.env.NEXT_PUBLIC_PROMPTPAY_TYPE || ''
 const PROMPTPAY_REF = process.env.NEXT_PUBLIC_PROMPTPAY_REF || ''
 const PROMPTPAY_REF2 = process.env.NEXT_PUBLIC_PROMPTPAY_REF2 || ''
 const PROMPTPAY_TERMINAL_LABEL = process.env.NEXT_PUBLIC_PROMPTPAY_TERMINAL_LABEL || ''
-const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@lovepier.cafe'
 
 // Our own per-order reference, for display/reconciliation only (shown in the
 // LINE message, stored on the order) — NOT embedded in the QR. The QR's own
@@ -119,9 +118,6 @@ const COPY = {
     successTitle: 'สั่งซื้อสำเร็จ!',
     orderNo: 'เลขที่ออเดอร์',
     sentToShop: 'ส่งออเดอร์ให้ร้านทาง LINE แล้ว',
-    newOrderHeading: 'ออเดอร์ใหม่',
-    confirmOrderViaLine: 'ยืนยันออเดอร์ทาง LINE',
-    attachSlipReminder: 'กรุณาแนบสลิปการโอนในแชทนี้เพื่อยืนยันการชำระเงินด้วยนะครับ',
     waitingDelivery: 'ร้านกำลังเตรียมอาหารและจะจัดส่งให้ภายในรัศมีบริการ กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
     pickupInstruction: 'กรุณามารับอาหารด้วยตนเอง หรือเรียก Grab, LINE MAN หรือแมสเซนเจอร์เจ้าอื่น มารับที่ร้าน Love Pier Beach Cafe เมื่อร้านแจ้งว่าอาหารพร้อม และกรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
     attachSlip: 'แนบสลิปเพื่อยืนยันการชำระเงิน',
@@ -204,9 +200,6 @@ const COPY = {
     successTitle: 'Order placed!',
     orderNo: 'Order no.',
     sentToShop: 'Order sent to the shop on LINE',
-    newOrderHeading: 'New order',
-    confirmOrderViaLine: 'Confirm order via LINE',
-    attachSlipReminder: 'Please attach your payment slip in this chat to confirm payment.',
     waitingDelivery: "We're preparing your order and will deliver within our service radius. Please attach your payment slip to confirm.",
     pickupInstruction: 'Please come collect it yourself, or send Grab, LINE MAN, or another rider/courier to pick up the food from Love Pier Beach Cafe once the shop confirms it is ready — and please attach your payment slip to confirm.',
     attachSlip: 'Attach slip to confirm payment',
@@ -289,9 +282,6 @@ const COPY = {
     successTitle: '下单成功！',
     orderNo: '订单号',
     sentToShop: '订单已通过 LINE 发送给店家',
-    newOrderHeading: '新订单',
-    confirmOrderViaLine: '通过 LINE 确认订单',
-    attachSlipReminder: '请在此聊天中附上付款凭证以确认付款。',
     waitingDelivery: '我们正在备餐，将在配送范围内为您送达。请附上付款凭证以确认。',
     pickupInstruction: '请在店家通知餐点备好后，亲自到店取餐，或自行安排 Grab、LINE MAN 或其他骑手/快递员到 Love Pier Beach Cafe 取餐 — 并请附上付款凭证以确认。',
     attachSlip: '上传凭证以确认付款',
@@ -716,27 +706,6 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
 
       const finalDeliveryFee = data.deliveryFee || 0
       const finalTotal = data.totalAmount ?? amount
-      const orderLines = items.map((i) => `• ${i.name} x${i.qty}` + (i.note ? ` (${i.note})` : '')).join('\n')
-
-      // Open the pre-filled LINE confirmation the moment the order is real,
-      // rather than waiting for the customer to notice a button on the next
-      // screen — the shop asked for the order to reach LINE 'right away'
-      // once it succeeds. Fires before the liff.sendMessages attempt below
-      // so nothing delays it further. Best-effort: still needs the
-      // customer's own tap to actually Send (a LINE platform restriction,
-      // not something this code can bypass), and opening a tab this far
-      // from the original click can get popup-blocked on some phones — the
-      // manual button on the success screen (unchanged) is the fallback.
-      sendOrderToLine({
-        orderNo: data.orderNo,
-        name: form.name,
-        phone: form.phone,
-        deliveryMethod,
-        address: form.address,
-        lines: orderLines,
-        deliveryFee: finalDeliveryFee,
-        total: finalTotal,
-      })
 
       const flex = buildOrderFlex({
         orderNo: data.orderNo,
@@ -753,7 +722,6 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
       setSentToLine(sent)
 
       setCompleted({
-        lines: orderLines,
         total: finalTotal,
         deliveryFee: finalDeliveryFee,
         distanceKm: distanceResult?.distanceKm ?? null,
@@ -804,53 +772,6 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
       setSlipError('อ่านไฟล์รูปไม่ได้')
     }
     reader.readAsDataURL(file)
-  }
-
-  // Puts the order straight into the OA's own chat inbox as an
-  // incoming-looking message FROM the customer, via LINE's oaMessage deep
-  // link (a chat-compose window, pre-filled, customer just taps Send).
-  // Reliable because it needs no server config, no webhook, no LIFF.
-  // Covers BOTH order confirmation and the slip reminder in one message —
-  // this used to be two separate LINE actions (this one, plus a near-
-  // identical sendSlipViaLine button) until the shop pointed out the
-  // duplication; sendSlipViaLine was removed, its "attach slip" hint
-  // folded into this message's closing line (t.attachSlipReminder) instead.
-  // Added because the two fully-automatic paths (liff.sendMessages via
-  // sentToLine, and the server-side LINE_ORDER_NOTIFY_TO push) are each
-  // blocked on something outside this codebase — see state.json
-  // note_2026_08_12_line_oa_group_alert.
-  // Takes explicit values rather than reading completed/orderNo/form from
-  // state — it's called automatically right after submitOrder() computes
-  // the real order number from the server response, in the SAME tick as
-  // the setState calls that would populate those, and React state updates
-  // don't apply until the next render. Reading state here would silently
-  // send a message built from the OLD (pre-order) values. The manual button
-  // below calls it with no argument, falling back to state — safe there
-  // because by the time a customer can click it, the success screen has
-  // already re-rendered with the new state committed.
-  function sendOrderToLine(data) {
-    const d = data || {
-      orderNo,
-      name: form.name,
-      phone: form.phone,
-      deliveryMethod: completed?.deliveryMethod,
-      address: form.address,
-      lines: completed?.lines || '',
-      deliveryFee: completed?.deliveryFee,
-      total: completed?.total ?? 0,
-    }
-    const methodLine = d.deliveryMethod === 'pickup' ? t.methodPickupLabel : t.methodDeliveryLabel
-    const addressLine = d.deliveryMethod === 'delivery' && d.address ? `\n${t.address}: ${d.address}` : ''
-    const feeLine = d.deliveryFee ? `\n${t.deliveryFeeLabel} ฿${d.deliveryFee}` : ''
-    const msg = encodeURIComponent(
-      `${t.newOrderHeading} ${d.orderNo}\n${t.name}: ${d.name}\n${t.phone}: ${d.phone}\n${methodLine}${addressLine}\n————————\n${d.lines}${feeLine}\n\n${t.total} ฿${d.total}\n\n${t.attachSlipReminder}`
-    )
-    // Best-effort: opening a new tab/window this far from the original tap
-    // (after an `await fetch`) can get silently popup-blocked on some
-    // phones/browsers — that's a platform restriction, not something this
-    // code can force past. The manual button is the guaranteed fallback if
-    // this doesn't visibly open.
-    window.open(`https://line.me/R/oaMessage/${LINE_OA_ID}/?${msg}`, '_blank')
   }
 
   function resetFlow() {
@@ -1468,21 +1389,6 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
             <p className="text-[15px] font-semibold text-ink tabular-nums mt-0.5">{t.total} ฿{completed.total}</p>
           )}
         </div>
-
-        {/* Fallback for the auto-open in submitOrder() (popup-blocked, or
-            the tab got closed before the customer tapped Send) — re-opens
-            the same pre-filled compose window from state. Wrapped in an
-            arrow function so the click SyntheticEvent isn't passed through
-            as sendOrderToLine's `data` argument (a real bug caught in
-            testing: `onClick={sendOrderToLine}` made `data` the event
-            object, which is truthy, so the state fallback never ran and
-            every field came out `undefined`). */}
-        <button
-          onClick={() => sendOrderToLine()}
-          className="w-full py-3 rounded-xl border border-[#06C755] text-[#06C755] font-semibold text-[13px] hover:bg-[#06C755]/5 transition"
-        >
-          {t.confirmOrderViaLine}
-        </button>
 
         {sentToLine && (
           <div className="rounded-xl bg-[#efe9e1] border border-[#4a3520]/15 px-4 py-3 text-[13px] leading-[1.75] text-[#4a3520]">

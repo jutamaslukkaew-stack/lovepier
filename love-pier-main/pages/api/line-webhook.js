@@ -32,6 +32,7 @@ import { db } from '../../lib/db'
 import { orders } from '../../lib/db/schema'
 import { processSlipForOrder } from '../../lib/slipVerification'
 import { buildPaymentConfirmedFlex, buildSlipReceivedFlex } from '../../lib/orderFlex'
+import { pushOrderCardToStaff } from '../../lib/lineMessaging'
 
 const TOKEN = process.env.LINE_MESSAGING_TOKEN || ''
 const SECRET = process.env.LINE_MESSAGING_CHANNEL_SECRET || ''
@@ -155,6 +156,13 @@ async function handleSlipImage(event, userId) {
           // on its own.
           reason: result.error,
         })
+
+  // Same staff card as the website upload path (pages/api/verify-slip.js) —
+  // gated on !alreadyPaid there too, so a customer re-sending a slip for an
+  // order that already cleared doesn't re-alert staff for nothing.
+  if (result.verified && !result.alreadyPaid) {
+    await pushOrderCardToStaff(card)
+  }
 
   await replyMessages(event.replyToken, [card])
 }
