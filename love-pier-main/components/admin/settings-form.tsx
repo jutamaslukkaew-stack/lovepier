@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +14,41 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { saveSettings, type ShopSettingsForm } from '@/app/admin/actions/settings'
+
+// Password-style input with a show/hide toggle. Plain type="password" fields
+// can't be copied out on iOS Safari (no context-menu Copy, no dev tools), so
+// admins had no way to read back a key they'd already saved — this toggle is
+// the fix.
+function RevealInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+}) {
+  const [visible, setVisible] = useState(false)
+  return (
+    <div className="relative">
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        type={visible ? 'text' : 'password'}
+        className="pr-9"
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground hover:text-foreground"
+        aria-label={visible ? 'ซ่อนรหัส' : 'แสดงรหัส'}
+      >
+        {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+      </button>
+    </div>
+  )
+}
 
 export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
   const [form, setForm] = useState<ShopSettingsForm>(initial)
@@ -100,11 +136,10 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
       {form.distanceMethod === 'google' && (
         <div className="space-y-1.5">
           <Label>Google Maps API Key</Label>
-          <Input
+          <RevealInput
             value={form.googleApiKey}
-            onChange={(e) => set('googleApiKey', e.target.value)}
+            onChange={(v) => set('googleApiKey', v)}
             placeholder="AIza..."
-            type="password"
           />
           <p className="text-xs text-muted-foreground">
             Google Cloud Console → เปิด Routes API + billing → Credentials → Create API Key
@@ -172,11 +207,10 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
         </div>
         <div className="space-y-1.5">
           <Label>SlipOK API Key</Label>
-          <Input
+          <RevealInput
             value={form.slipokApiKey}
-            onChange={(e) => set('slipokApiKey', e.target.value)}
+            onChange={(v) => set('slipokApiKey', v)}
             placeholder="SLIPOK..."
-            type="password"
           />
         </div>
         <div className="space-y-1.5">
