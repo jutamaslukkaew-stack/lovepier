@@ -8,6 +8,7 @@ const COPY = {
     language: 'Language',
     navItems: [
       { href: '/',            label: 'Home' },
+      { href: '/#rewards',    label: 'Rewards' },
       { href: '/menu',        label: 'Menu' },
       { href: '/gallery',     label: 'Gallery' },
       { href: '/reservation', label: 'Reservation' },
@@ -26,6 +27,7 @@ const COPY = {
     language: 'ภาษา',
     navItems: [
       { href: '/',            label: 'หน้าหลัก' },
+      { href: '/#rewards',    label: 'สะสมแต้ม' },
       { href: '/menu',        label: 'เมนู' },
       { href: '/gallery',     label: 'แกลเลอรี' },
       { href: '/reservation', label: 'จองโต๊ะ' },
@@ -44,6 +46,7 @@ const COPY = {
     language: '语言',
     navItems: [
       { href: '/',            label: '首页' },
+      { href: '/#rewards',    label: '积分奖励' },
       { href: '/menu',        label: '菜单' },
       { href: '/gallery',     label: '图库' },
       { href: '/reservation', label: '预订' },

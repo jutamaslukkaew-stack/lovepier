@@ -78,6 +78,18 @@ const COPY = {
     eventsMore: 'ดูอีเวนต์ทั้งหมด',
     eventsEmpty: 'ยังไม่มีอีเวนต์ที่กำลังจะมาถึง',
     eventsEmptySub: 'อีเวนต์รอบใหม่จะขึ้นที่นี่ทันทีที่ประกาศ — ระหว่างนี้ดูอีเวนต์ที่ผ่านมาได้',
+    rewardsEyebrow: 'LOVE PIER REWARDS',
+    rewardsTitle: 'อิ่มอร่อยทุกครั้ง ได้แต้มกลับไปทุกมื้อ',
+    rewardsIntro: 'เพิ่มเพื่อน LINE Official ของร้านก่อนสั่งซื้อ เพื่อเริ่มสะสมคะแนนและรับส่วนลดเพิ่มจากโปรโมชันอื่นได้',
+    rewardsSpend: 'ทุกยอดใช้จ่าย',
+    rewardsPoints: 'รับทันที',
+    rewardsValue: 'ใช้ลดได้',
+    rewardsSpendValue: '100 บาท',
+    rewardsPointsValue: '5 คะแนน',
+    rewardsValueValue: '5 บาท',
+    rewardsNote: '1 คะแนน = ส่วนลด 1 บาท · คะแนนใช้เป็นส่วนลด On Top ในออเดอร์ถัดไปได้',
+    rewardsCta: 'เพิ่ม LINE ร้าน · รับแต้ม',
+    rewardsCtaNote: 'เพิ่มเพื่อนแล้วเข้าสู่ระบบ LINE ตอนสั่งซื้อ เพื่อให้คะแนนเข้าบัญชีของคุณ',
   },
   en: {
     title: 'Love Pier Beach Cafe — Home',
@@ -119,6 +131,18 @@ const COPY = {
     eventsMore: 'View all events',
     eventsEmpty: 'No upcoming events yet',
     eventsEmptySub: 'The next one appears here as soon as it is announced — meanwhile, browse past events.',
+    rewardsEyebrow: 'LOVE PIER REWARDS',
+    rewardsTitle: 'Every visit tastes better with rewards',
+    rewardsIntro: 'Add our LINE Official account before ordering to collect points and stack your reward with other promotions.',
+    rewardsSpend: 'Every spend',
+    rewardsPoints: 'Earn',
+    rewardsValue: 'Redeem for',
+    rewardsSpendValue: '฿100',
+    rewardsPointsValue: '5 points',
+    rewardsValueValue: '฿5 off',
+    rewardsNote: '1 point = ฿1 discount · Redeem as an on-top discount on your next order',
+    rewardsCta: 'Add LINE · Get points',
+    rewardsCtaNote: 'Add us, then sign in with LINE when ordering so points reach your account.',
   },
   zh: {
     title: 'Love Pier Beach Cafe — 首页',
@@ -160,6 +184,18 @@ const COPY = {
     eventsMore: '查看全部活动',
     eventsEmpty: '暂无即将到来的活动',
     eventsEmptySub: '新活动一经公布就会显示在这里 — 期间可查看过往活动。',
+    rewardsEyebrow: 'LOVE PIER REWARDS',
+    rewardsTitle: '每次消费，都有积分回馈',
+    rewardsIntro: '下单前添加本店 LINE 官方账号，即可累积积分，并与其他优惠叠加使用。',
+    rewardsSpend: '每消费',
+    rewardsPoints: '立即获得',
+    rewardsValue: '可抵扣',
+    rewardsSpendValue: '฿100',
+    rewardsPointsValue: '5 积分',
+    rewardsValueValue: '฿5',
+    rewardsNote: '1 积分 = ฿1 优惠 · 下次订单可作为额外折扣使用',
+    rewardsCta: '添加 LINE · 领取积分',
+    rewardsCtaNote: '添加好友后，下单时使用 LINE 登录，积分将自动存入您的账户。',
   },
 }
 
@@ -233,6 +269,64 @@ function MenuCta({ lang }) {
       </span>
       <span aria-hidden="true" className="text-base transition-transform duration-200 group-hover:translate-x-1">→</span>
     </Link>
+  )
+}
+
+function RewardsSection({ t }) {
+  const rewards = [
+    { label: t.rewardsSpend, value: t.rewardsSpendValue },
+    { label: t.rewardsPoints, value: t.rewardsPointsValue },
+    { label: t.rewardsValue, value: t.rewardsValueValue },
+  ]
+
+  return (
+    <ScrollStackPanel tone="white">
+      <section id="rewards" className="relative scroll-mt-32 overflow-hidden border-t border-black/10 bg-[#f5f1eb] px-4 py-14 sm:px-8 sm:py-20 lg:px-14 lg:py-24 reveal">
+        <div aria-hidden="true" className="absolute -right-24 -top-24 h-72 w-72 rounded-full border border-[#b18a54]/20" />
+        <div aria-hidden="true" className="absolute -right-10 -top-10 h-44 w-44 rounded-full border border-[#b18a54]/25" />
+        <div className="relative mx-auto max-w-6xl">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)] lg:items-center lg:gap-16">
+            <div>
+              <p className="mb-4 text-[10px] font-semibold tracking-[0.32em] text-gold-deep">{t.rewardsEyebrow}</p>
+              <h2 className="max-w-3xl font-display text-[clamp(34px,5vw,66px)] font-light leading-[1.05] tracking-[-0.02em] text-ink">{t.rewardsTitle}</h2>
+              <p className="mt-5 max-w-2xl text-[14px] font-light leading-[1.9] text-[#555] sm:text-[15px]">{t.rewardsIntro}</p>
+
+              <div className="mt-9 grid grid-cols-3 overflow-hidden rounded-2xl border border-black/10 bg-white/70">
+                {rewards.map((item, index) => (
+                  <div key={item.label} className={`px-3 py-5 sm:px-6 sm:py-7 ${index ? 'border-l border-black/10' : ''}`}>
+                    <span className="block text-[9px] uppercase tracking-[0.16em] text-muted-strong sm:text-[10px]">{item.label}</span>
+                    <strong className="mt-2 block font-display text-[clamp(19px,3.2vw,34px)] font-normal leading-none text-gold-deep">{item.value}</strong>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-[11px] leading-relaxed text-muted-strong sm:text-[12px]">{t.rewardsNote}</p>
+            </div>
+
+            <div className="rounded-[28px] border border-black/10 bg-[#fffdf8] p-6 shadow-[0_24px_70px_rgba(74,53,32,0.08)] sm:p-8">
+              <div className="flex items-center gap-4 border-b border-black/10 pb-6">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#06C755] text-white shadow-[0_8px_24px_rgba(6,199,85,0.2)]">
+                  <svg aria-hidden="true" className="h-8 w-8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.5 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6 1.5-1.7 2.6-3.4 2.6-4.9 0-4.4-4.5-8-10-8z" /></svg>
+                </span>
+                <div>
+                  <span className="block text-[10px] tracking-[0.2em] text-muted-strong">LINE OFFICIAL</span>
+                  <strong className="mt-1 block text-[17px] font-medium text-ink">@lovepier.cafe</strong>
+                </div>
+              </div>
+              <p className="py-6 text-[13px] font-light leading-[1.8] text-[#555]">{t.rewardsCtaNote}</p>
+              <a
+                href="https://lin.ee/5A0tfSQ"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-[#06C755] px-6 text-[13px] font-semibold tracking-[0.04em] text-white transition-all hover:-translate-y-0.5 hover:bg-[#05b94e] hover:shadow-[0_10px_30px_rgba(6,199,85,0.24)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#06C755]"
+              >
+                {t.rewardsCta}
+                <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </ScrollStackPanel>
   )
 }
 
@@ -484,6 +578,9 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
         </div>
 
       </ScrollStackPanel>
+
+      {/* ── 2. LOVE PIER REWARDS ───────────────────────────────────────── */}
+      <RewardsSection t={t} />
 
       {/* ── 3. GALLERY STRIP ────────────────────────────────────────────── */}
       <ScrollStackPanel tone="white">
