@@ -446,9 +446,12 @@ function StickyActionBar({ children }) {
 function GreetingChoiceCard({ t, name, address, onUseSaved, onEditSaved, onUseNew }) {
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <p className="font-display font-light text-[clamp(26px,7vw,32px)] text-ink leading-[1.3]">{t.contactGreeting(name)}</p>
-        <p className="mt-1.5 text-[13px] text-black/55 font-light leading-relaxed">{t.contactGreetingSub}</p>
+      <div className="relative overflow-hidden rounded-2xl border border-[#4a3520]/15 bg-white/55 px-5 py-6 text-center shadow-[0_8px_28px_rgba(74,53,32,0.06)]">
+        <span aria-hidden="true" className="mx-auto mb-4 block h-px w-12 bg-[#b89567]" />
+        <p className="font-display font-light text-[clamp(28px,7.5vw,34px)] text-ink leading-[1.3]">{t.contactGreeting(name)}</p>
+        <p className="mx-auto mt-2 max-w-[30rem] text-[13px] text-black/55 font-light leading-relaxed">{t.contactGreetingSub}</p>
+        <span aria-hidden="true" className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full border border-[#b89567]/10" />
+        <span aria-hidden="true" className="pointer-events-none absolute -bottom-12 -left-10 h-28 w-28 rounded-full border border-[#b89567]/10" />
       </div>
       <div className="rounded-xl bg-white border border-black/10 px-4 py-3.5">
         <span className="text-[11px] tracking-[0.1em] uppercase text-black/40">{t.savedAddressLabel}</span>
