@@ -126,9 +126,8 @@ const COPY = {
     contactGreetingSub: 'เลือกใช้ที่อยู่ล่าสุด หรือเปลี่ยนที่อยู่สำหรับออเดอร์นี้ได้เลยค่ะ',
     savedAddressLabel: 'ที่อยู่จากออเดอร์ล่าสุด',
     savedAddressNote: 'ประวัติที่อยู่ในออเดอร์ก่อนหน้าจะยังคงถูกเก็บไว้',
-    useSavedAddress: 'ใช้ที่อยู่ล่าสุด',
-    editSavedAddress: 'แก้ไขที่อยู่ล่าสุด',
-    useNewAddress: 'กรอกที่อยู่ใหม่',
+    useSavedAddress: 'ใช้ที่อยู่เดิม',
+    useNewAddress: 'ใช้ที่อยู่ใหม่',
     addressSaveNote: 'เมื่อยืนยันออเดอร์ ที่อยู่นี้จะถูกบันทึกเป็นที่อยู่ล่าสุดของคุณ',
     contactFormTitle: 'ข้อมูลติดต่อและที่อยู่จัดส่ง',
     contactChecking: 'กำลังตรวจสอบข้อมูล...',
@@ -233,7 +232,6 @@ const COPY = {
     savedAddressLabel: 'Latest order address',
     savedAddressNote: 'Addresses on previous orders remain in your order history.',
     useSavedAddress: 'Use latest address',
-    editSavedAddress: 'Edit latest address',
     useNewAddress: 'Enter a new address',
     addressSaveNote: 'After you confirm the order, this becomes your latest saved address.',
     contactFormTitle: 'Contact & delivery address',
@@ -337,7 +335,6 @@ const COPY = {
     savedAddressLabel: '最近订单地址',
     savedAddressNote: '以前订单中的地址仍会保留。',
     useSavedAddress: '使用最近地址',
-    editSavedAddress: '编辑最近地址',
     useNewAddress: '输入新地址',
     addressSaveNote: '确认订单后，此地址将保存为您的最近地址。',
     contactFormTitle: '联系方式和配送地址',
@@ -443,7 +440,7 @@ function StickyActionBar({ children }) {
 // anything; occasionally (a slow lookup) at the top of the `contact` step
 // instead, if they already tapped through before it resolved. Same card
 // either way — see the two call sites in OrderFlow below.
-function GreetingChoiceCard({ t, name, address, onUseSaved, onEditSaved, onUseNew }) {
+function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
   return (
     <div className="flex flex-col gap-5">
       <div className="relative overflow-hidden rounded-2xl border border-[#4a3520]/15 bg-white/55 px-5 py-6 text-center shadow-[0_8px_28px_rgba(74,53,32,0.06)]">
@@ -464,12 +461,6 @@ function GreetingChoiceCard({ t, name, address, onUseSaved, onEditSaved, onUseNe
           className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors"
         >
           {t.useSavedAddress}
-        </button>
-        <button
-          onClick={onEditSaved}
-          className="w-full py-3.5 rounded-xl border border-[#4a3520]/20 bg-white text-ink font-semibold text-[14px] hover:bg-black/[0.03] transition-colors"
-        >
-          {t.editSavedAddress}
         </button>
         <button
           onClick={onUseNew}
@@ -715,7 +706,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     // importantly, "no profile yet" must NOT resolve to the plain form while
     // still on Welcome, or a silent LINE login still in flight would get
     // permanently locked out by the time it actually resolves.
-    if (customerRecognized && cachedDistanceKm != null) {
+    if (customerRecognized && form.address.trim()) {
       setContactMode('popup')
       return
     }
@@ -735,12 +726,16 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     } else {
       setContactMode('form')
     }
-  }, [step, profile, lineLookupStatus, customerRecognized, cachedDistanceKm, editingInfo, contactMode])
+  }, [step, profile, lineLookupStatus, customerRecognized, cachedDistanceKm, editingInfo, contactMode, form.address])
 
   // "ใช้ที่อยู่เดิม" — reuse the address + distance already on file. Called
   // from either Welcome or `contact` (see the effect above); either way it
   // jumps straight past both of those into Method/Menu.
   async function useSavedAddress() {
+    if (cachedDistanceKm == null) {
+      setStep('distance')
+      return
+    }
     await fetchDistanceFromCache(cachedDistanceKm)
     goToMethodOrMenu()
   }
@@ -751,14 +746,6 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // `contact` step to show the form) or from `contact` already (a no-op).
   function useNewAddress() {
     setForm((f) => ({ ...f, address: '' }))
-    setContactMode('form')
-    setStep('contact')
-  }
-
-  // Edit starts with the latest address prefilled. Confirming the order
-  // replaces only customers.address; every historical order keeps the exact
-  // address it was originally submitted with.
-  function editSavedAddress() {
     setContactMode('form')
     setStep('contact')
   }
@@ -1129,7 +1116,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
             style={{ paddingBottom: 'max(1.75rem, env(safe-area-inset-bottom))' }}
           >
             <div className={`${CONTENT_WIDTH} mx-auto w-full`}>
-              <GreetingChoiceCard t={t} name={profile?.displayName || form.name} address={form.address} onUseSaved={useSavedAddress} onEditSaved={editSavedAddress} onUseNew={useNewAddress} />
+              <GreetingChoiceCard t={t} name={profile?.displayName || form.name} address={form.address} onUseSaved={useSavedAddress} onUseNew={useNewAddress} />
             </div>
           </section>
         </div>
@@ -1249,7 +1236,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
               // customer had already tapped through Welcome. The common
               // case shows this same card directly on Welcome instead; see
               // GreetingChoiceCard's own comment.
-              <GreetingChoiceCard t={t} name={form.name} address={form.address} onUseSaved={useSavedAddress} onEditSaved={editSavedAddress} onUseNew={useNewAddress} />
+              <GreetingChoiceCard t={t} name={form.name} address={form.address} onUseSaved={useSavedAddress} onUseNew={useNewAddress} />
             ) : contactMode === 'form' ? (
               <div className="flex flex-col gap-4">
                 <h1 className="font-display text-[22px] text-ink text-center">{t.contactFormTitle}</h1>
