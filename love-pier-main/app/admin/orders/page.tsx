@@ -7,7 +7,15 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-type OrderItem = { id?: string; name?: string; price?: number; qty?: number; note?: string }
+type OrderItem = {
+  id?: string
+  name?: string
+  price?: number
+  qty?: number
+  note?: string
+  sweetness?: string
+  coffeeBean?: string
+}
 
 // Slips live in a private bucket — mint short-lived signed URLs to view them.
 async function signSlipUrls(paths: string[]): Promise<Record<string, string>> {
@@ -129,21 +137,38 @@ export default async function AdminOrdersPage() {
                             ฿{Math.round((Number(it.price) || 0) * (Number(it.qty) || 0))}
                           </span>
                         </div>
+                        {(it.sweetness || it.coffeeBean) && (
+                          <p className="text-muted-foreground text-[12px] leading-snug">
+                            {[it.sweetness, it.coffeeBean].filter(Boolean).join(' · ')}
+                          </p>
+                        )}
                         {it.note && (
                           <p className="text-amber-700 text-[12px] leading-snug">— {it.note}</p>
                         )}
                       </div>
                     ))}
+                    {/* Only the first of discount/fee/total that actually
+                        renders gets the divider — everything below it is
+                        visually grouped with no line between. */}
+                    {o.discountAmount > 0 && (
+                      <div className="flex justify-between border-t border-gray-200 pt-1 mt-1 text-emerald-700">
+                        <span>ส่วนลดสมาชิก</span>
+                        <span className="tabular-nums">-฿{o.discountAmount}</span>
+                      </div>
+                    )}
                     {o.deliveryFee > 0 && (
-                      <div className="flex justify-between border-t border-gray-200 pt-1 mt-1 text-muted-foreground">
+                      <div className={`flex justify-between text-muted-foreground ${o.discountAmount > 0 ? '' : 'border-t border-gray-200 pt-1 mt-1'}`}>
                         <span>ค่าจัดส่ง</span>
                         <span className="tabular-nums">฿{o.deliveryFee}</span>
                       </div>
                     )}
-                    <div className={`flex justify-between font-semibold ${o.deliveryFee > 0 ? '' : 'border-t border-gray-200 pt-1 mt-1'}`}>
+                    <div className={`flex justify-between font-semibold ${o.discountAmount > 0 || o.deliveryFee > 0 ? '' : 'border-t border-gray-200 pt-1 mt-1'}`}>
                       <span>รวม</span>
                       <span className="tabular-nums">฿{o.totalAmount}</span>
                     </div>
+                    {o.pointsEarned > 0 && (
+                      <p className="text-right text-[12px] text-[#b06d2b]">+{o.pointsEarned} แต้มสะสม</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>

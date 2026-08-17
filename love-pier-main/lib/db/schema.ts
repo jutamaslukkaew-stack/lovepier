@@ -173,6 +173,11 @@ export const customers = pgTable(
     name: text('name').notNull().default(''),
     phone: text('phone').notNull().default(''),
     address: text('address').notNull().default(''),
+    // Running loyalty-points balance — credited by lib/points.js#awardPoints
+    // once a payment is confirmed (see lib/slipVerification.js), never
+    // written directly. Source of truth for the actual award is the
+    // pointTransactions ledger below; this is a denormalized fast-read cache.
+    pointsBalance: integer('points_balance').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -202,11 +207,20 @@ export const orders = pgTable(
     // 'pickup' (customer or their own rider collects at the shop — also the
     // forced value outside the delivery radius, where the shop never delivers).
     deliveryMethod: text('delivery_method').notNull().default('delivery'),
-    // [{ id, name, price, qty, note }] — note is a free-text per-line
-    // customization ("หวานน้อย, นมอัลมอนด์"), optional.
+    // [{ id, name, price, qty, note, sweetness, coffeeBean }] — note is a
+    // free-text per-line customization; sweetness/coffeeBean are the
+    // structured picks from the same global option set on every line (see
+    // lib/cart.js), both optional.
     items: jsonb('items').notNull().default([]),
-    // subtotal (items only); totalAmount = itemsSubtotal + deliveryFee
+    // subtotal (items only); totalAmount = itemsSubtotal - discountAmount + deliveryFee
     itemsSubtotal: integer('items_subtotal').notNull().default(0),
+    // 10%-off-itemsSubtotal member discount, only for orders with a LINE ID
+    // attached — see lib/points.js#calcOrderDiscountAndPoints. 0 otherwise.
+    discountAmount: integer('discount_amount').notNull().default(0),
+    // Computed once here (deterministic from itemsSubtotal/discountAmount),
+    // "banked" into customers.pointsBalance + pointTransactions only once
+    // payment is confirmed — see lib/slipVerification.js.
+    pointsEarned: integer('points_earned').notNull().default(0),
     deliveryFee: integer('delivery_fee').notNull().default(0),
     totalAmount: integer('total_amount').notNull(),
     // pending → paid → preparing → done → cancelled
@@ -228,6 +242,26 @@ export const orders = pgTable(
 
 export type Order = typeof orders.$inferSelect
 export type NewOrder = typeof orders.$inferInsert
+
+// Loyalty-points ledger — one row per order that actually earned points.
+// orderId is UNIQUE: that's the idempotency guard against awardPoints()
+// (lib/points.js) ever double-crediting the same order, e.g. a slip getting
+// re-verified. customerId is nullable because the customers upsert in
+// pages/api/orders.js is itself best-effort and can fail independently.
+export const pointTransactions = pgTable('point_transactions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orderId: uuid('order_id')
+    .notNull()
+    .unique()
+    .references(() => orders.id, { onDelete: 'cascade' }),
+  customerId: uuid('customer_id').references(() => customers.id, { onDelete: 'set null' }),
+  phone: text('phone').notNull().default(''),
+  points: integer('points').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export type PointTransaction = typeof pointTransactions.$inferSelect
+export type NewPointTransaction = typeof pointTransactions.$inferInsert
 
 // Audit log — one row per bulk menu-import run (see /admin/menu/import).
 // `report` keeps the full diff so a past import can be traced.

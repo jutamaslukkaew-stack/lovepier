@@ -22,6 +22,7 @@ import { orders } from './db/schema'
 import { getShopSettings } from './settings'
 import { verifySlip } from './slipok'
 import { createAdminClient } from './supabase/admin'
+import { awardPoints } from './pointsAward'
 
 const SLIP_BUCKET = 'slips'
 
@@ -122,7 +123,7 @@ export async function processSlipForOrder(order, imageBase64) {
   const stored = Boolean(slipPath)
 
   if (order.status === 'paid') {
-    return { verified: true, stored, alreadyPaid: true }
+    return { verified: true, stored, alreadyPaid: true, pointsEarned: order.pointsEarned || 0 }
   }
 
   const s = await getShopSettings()
@@ -188,5 +189,25 @@ export async function processSlipForOrder(order, imageBase64) {
     }
   }
 
-  return { verified: true, stored, amount: order.totalAmount }
+  // Bank the points that were already computed at order-creation time
+  // (pages/api/orders.js). Best-effort and non-blocking, same principle as
+  // the customer upsert in that file: a points failure must never affect
+  // whether this payment is considered verified — the customer has paid
+  // either way. Idempotent via point_transactions.order_id's unique
+  // constraint (see lib/points.js), so this is safe even if a slip somehow
+  // gets verified twice.
+  if (order.pointsEarned > 0) {
+    try {
+      await awardPoints({
+        orderId: order.id,
+        lineUserId: order.lineUserId,
+        phone: order.phone,
+        points: order.pointsEarned,
+      })
+    } catch (err) {
+      console.error('award points failed (non-fatal):', order.orderNo, err)
+    }
+  }
+
+  return { verified: true, stored, amount: order.totalAmount, pointsEarned: order.pointsEarned || 0 }
 }

@@ -19,6 +19,9 @@ const SETTING_KEYS = {
   deliveryFeeTier3km: 'delivery_fee_tier_3km',
   deliveryFeeTier4km: 'delivery_fee_tier_4km',
   deliveryFeeTier5km: 'delivery_fee_tier_5km',
+  pointsPerBaht: 'loyalty_points_per_baht',
+  memberDiscountPercent: 'member_discount_percent',
+  menuOptionsEnabled: 'menu_customization_enabled',
 } as const
 
 export type ShopSettingsForm = {
@@ -34,6 +37,9 @@ export type ShopSettingsForm = {
   deliveryFeeTier3km: string
   deliveryFeeTier4km: string
   deliveryFeeTier5km: string
+  pointsPerBaht: string
+  memberDiscountPercent: string
+  menuOptionsEnabled: boolean
 }
 
 export async function getSettings(): Promise<ShopSettingsForm> {
@@ -53,6 +59,9 @@ export async function getSettings(): Promise<ShopSettingsForm> {
     deliveryFeeTier3km: m[SETTING_KEYS.deliveryFeeTier3km] || '30',
     deliveryFeeTier4km: m[SETTING_KEYS.deliveryFeeTier4km] || '40',
     deliveryFeeTier5km: m[SETTING_KEYS.deliveryFeeTier5km] || '50',
+    pointsPerBaht: m[SETTING_KEYS.pointsPerBaht] || '25',
+    memberDiscountPercent: m[SETTING_KEYS.memberDiscountPercent] || '10',
+    menuOptionsEnabled: m[SETTING_KEYS.menuOptionsEnabled] === 'true',
   }
 }
 
@@ -78,6 +87,9 @@ export async function saveSettings(data: ShopSettingsForm) {
   await put(SETTING_KEYS.deliveryFeeTier3km, (data.deliveryFeeTier3km || '30').trim())
   await put(SETTING_KEYS.deliveryFeeTier4km, (data.deliveryFeeTier4km || '40').trim())
   await put(SETTING_KEYS.deliveryFeeTier5km, (data.deliveryFeeTier5km || '50').trim())
+  await put(SETTING_KEYS.pointsPerBaht, (data.pointsPerBaht || '25').trim())
+  await put(SETTING_KEYS.memberDiscountPercent, (data.memberDiscountPercent || '10').trim())
+  await put(SETTING_KEYS.menuOptionsEnabled, String(Boolean(data.menuOptionsEnabled)))
   revalidatePath('/admin/settings')
   return { ok: true as const }
 }
