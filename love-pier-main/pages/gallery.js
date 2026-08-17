@@ -226,8 +226,9 @@ export default function Gallery() {
 
       <div className="sticky top-[var(--nav-h,64px)] z-50 w-full bg-[#f5f2ee] border-b border-black/10">
         <div className="relative">
-          <div ref={tabScrollRef} className="flex justify-center overflow-x-auto gap-2 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {filters.map(({ label, cat }) => (
+          <div ref={tabScrollRef} className="overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="mx-auto flex min-w-max w-max gap-2 lg:min-w-0 lg:w-fit">
+              {filters.map(({ label, cat }) => (
               <button
                 key={label}
                 type="button"
@@ -240,7 +241,8 @@ export default function Gallery() {
               >
                 {label}
               </button>
-            ))}
+              ))}
+            </div>
           </div>
           <div className="lg:hidden pointer-events-none absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-l from-[#f5f2ee] to-transparent" />
         </div>

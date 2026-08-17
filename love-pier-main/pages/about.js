@@ -29,6 +29,15 @@ export default function About() {
         quoteMiddle:'ไม่ใช่แค่คาเฟ่ แต่คือ',
         quoteHighlight:'คาเฟ่ติดทะเลที่สวยที่สุดในบางแสน',
         values:'สิ่งที่เราให้ความสำคัญ',
+        standardsEyebrow:'OUR STANDARDS',
+        standardsTitle:'มาตรฐานที่เราใส่ใจในทุกวัน',
+        standardsIntro:'เพราะมื้อที่ดีไม่ได้มีแค่รสชาติ เราจึงดูแลทุกขั้นตอนตั้งแต่วัตถุดิบ ครัว พื้นที่ร้าน ไปจนถึงการบริการ',
+        standardsItems:[
+          { title:'วัตถุดิบสดใหม่', text:'คัดเลือกวัตถุดิบอย่างใส่ใจ ตรวจสอบคุณภาพก่อนนำมาปรุง และจัดเก็บอย่างเหมาะสม' },
+          { title:'สะอาดทุกขั้นตอน', text:'ดูแลความสะอาดของครัว อุปกรณ์ โต๊ะอาหาร และพื้นที่ส่วนกลางอย่างสม่ำเสมอ' },
+          { title:'ปรุงสดอย่างตั้งใจ', text:'เตรียมอาหารตามมาตรฐานของร้าน ควบคุมรสชาติและคุณภาพให้สม่ำเสมอในทุกจาน' },
+          { title:'บริการและพื้นที่ปลอดภัย', text:'ทีมงานพร้อมดูแลด้วยความสุภาพ รับฟังความต้องการพิเศษ และตรวจพื้นที่ให้พร้อมต้อนรับอยู่เสมอ' },
+        ],
         contactTitle:'ติดต่อเรา',
         addressLabel:'ที่อยู่',
         addressValue:'800 108 แสนสุข อำเภอเมือง จังหวัดชลบุรี 20130',
@@ -62,6 +71,15 @@ export default function About() {
           quoteMiddle:'不只是咖啡馆，更是',
           quoteHighlight:'邦盛最美的海边咖啡馆',
           values:'我们的坚持',
+          standardsEyebrow:'OUR STANDARDS',
+          standardsTitle:'我们每天坚持的标准',
+          standardsIntro:'一顿好餐不只有味道。我们从食材、厨房、店内环境到服务，认真照顾每一个环节。',
+          standardsItems:[
+            { title:'新鲜食材', text:'用心挑选食材，烹调前检查品质，并采用合适的方式储存。' },
+            { title:'全程洁净', text:'定期清洁厨房、器具、餐桌与公共区域。' },
+            { title:'用心现做', text:'依照本店标准制作餐点，让每一份的味道与品质保持稳定。' },
+            { title:'安心服务与空间', text:'团队礼貌服务、倾听特别需求，并持续检查空间，为每位客人做好准备。' },
+          ],
           contactTitle:'联系我们',
           addressLabel:'地址',
           addressValue:'800 108 Saensuk, Mueang Chonburi, Chonburi 20130',
@@ -94,6 +112,15 @@ export default function About() {
           quoteMiddle:'is not just a cafe, but',
           quoteHighlight:'the most beautiful seaside cafe in Bangsaen',
           values:'What we care about',
+          standardsEyebrow:'OUR STANDARDS',
+          standardsTitle:'The standards we care for every day',
+          standardsIntro:'A good meal is more than taste. We look after every detail, from ingredients and the kitchen to our space and service.',
+          standardsItems:[
+            { title:'Fresh ingredients', text:'Ingredients are selected with care, checked before preparation, and stored appropriately.' },
+            { title:'Clean at every step', text:'Our kitchen, equipment, tables, and shared spaces are cleaned consistently.' },
+            { title:'Prepared with care', text:'Food is prepared to our house standards for consistent taste and quality in every serving.' },
+            { title:'Thoughtful, safe service', text:'Our team listens to special requests and keeps the space ready and welcoming for every guest.' },
+          ],
           contactTitle:'Contact Us',
           addressLabel:'Address',
           addressValue:'800 108 Saensuk, Mueang Chonburi, Chonburi 20130',
@@ -129,6 +156,32 @@ export default function About() {
           <p className="mt-10 pt-8 border-t border-black/10 font-display text-[17px] sm:text-lg font-light italic text-ink/75 tracking-[0.01em]">
             {t.storyTagline}
           </p>
+        </div>
+      </section>
+
+      {/* Everyday store standards — factual operating commitments, not certification claims. */}
+      <section className="border-b border-black/10 bg-[#f5f3ef] px-4 py-16 reveal sm:px-6 sm:py-20 lg:px-10 lg:py-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+            <div>
+              <p className="mb-3 text-[10px] font-semibold tracking-[0.32em] text-gold-deep">{t.standardsEyebrow}</p>
+              <h2 className="font-display text-[clamp(34px,4.5vw,58px)] font-light leading-[1.05] tracking-[-0.02em] text-ink">{t.standardsTitle}</h2>
+            </div>
+            <p className="max-w-2xl self-end text-[14px] font-light leading-[1.9] text-[#666] sm:text-[15px]">{t.standardsIntro}</p>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:mt-14 lg:grid-cols-4">
+            {t.standardsItems.map((item, index) => (
+              <article key={item.title} className="group rounded-2xl border border-black/10 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#b18a54]/35 hover:shadow-[0_14px_36px_rgba(74,53,32,0.07)] sm:p-7">
+                <div className="mb-8 flex items-center justify-between">
+                  <span className="text-[10px] font-semibold tracking-[0.2em] text-gold-deep">0{index + 1}</span>
+                  <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#b18a54]/25 text-sm text-gold-deep">{['◇', '✦', '◎', '⌁'][index]}</span>
+                </div>
+                <h3 className="font-display text-[23px] font-normal leading-tight text-ink">{item.title}</h3>
+                <p className="mt-3 text-[13px] font-light leading-[1.75] text-[#666]">{item.text}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 

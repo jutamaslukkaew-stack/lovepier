@@ -344,24 +344,23 @@ export default function Activities() {
       <PageHero titleHtml={t.hero} subtitle={t.subtitle} />
 
       {/* Shortcut anchor bar */}
-      <div className="sticky top-[var(--nav-h,64px)] z-40 w-full bg-[#f5f3ef] border-b border-black/10">
+      <div className="sticky top-[var(--nav-h,64px)] z-50 w-full bg-[#f5f2ee] border-b border-black/10">
         <div className="relative">
-          <div ref={scrollRef} className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex gap-2 min-w-max lg:min-w-0 lg:justify-center px-4 pt-3 pb-2 pr-10">
+          <div ref={scrollRef} className="overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="mx-auto flex min-w-max w-max gap-2 lg:min-w-0 lg:w-fit">
               {t.categories.map((cat) => (
-                <a
-                  key={cat.id}
-                  href={`#activity-${cat.id}`}
-                  onClick={() => setActiveCat(cat.id)}
-                  className={`px-4 py-1.5 rounded-full text-[10px] tracking-[0.12em] uppercase font-semibold whitespace-nowrap transition-all cursor-pointer no-underline ${activeCat === cat.id ? 'bg-[#4a3520] text-white' : 'bg-[#4a3520]/[0.07] text-[#4a3520]/70 hover:bg-[#4a3520]/15 hover:text-[#4a3520]'}`}
-                >
-                  {cat.title}
-                </a>
+              <a
+                key={cat.id}
+                href={`#activity-${cat.id}`}
+                onClick={() => setActiveCat(cat.id)}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-all cursor-pointer no-underline border ${activeCat === cat.id ? 'bg-[#4a3520] text-white border-[#4a3520]' : 'bg-[#4a3520]/[0.07] text-[#4a3520]/70 border-transparent hover:bg-[#4a3520]/15 hover:text-[#4a3520]'}`}
+              >
+                {cat.title}
+              </a>
               ))}
             </div>
           </div>
-          {/* fade hint */}
-          <div className="lg:hidden pointer-events-none absolute top-0 right-0 bottom-6 w-10 bg-gradient-to-l from-[#f5f3ef] to-transparent" />
+          <div className="lg:hidden pointer-events-none absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-l from-[#f5f2ee] to-transparent" />
         </div>
         {/* scroll dots */}
         <div className="flex justify-center gap-1.5 pb-2">

@@ -18,7 +18,9 @@ export default async function handler(req, res) {
   const time = pickString(req.body?.time)
   const guests = pickString(req.body?.guests)
 
-  if (!name || !phone || !email || !date || !time || !guests) {
+  // Phone is the confirmation channel; email is intentionally optional so the
+  // customer can finish a reservation without another redundant field.
+  if (!name || !phone || !date || !time || !guests) {
     return res.status(400).json({ error: 'Missing required fields' })
   }
 

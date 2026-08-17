@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useState, useEffect } from 'react'
 import Footer from '../components/Footer'
 import PageHero from '../components/PageHero'
+import RewardsSection from '../components/RewardsSection'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useCart } from '../lib/cart'
 import { useLanguage } from '../lib/language'
@@ -328,6 +329,8 @@ export default function Promotion({ dbPromotions = [] }) {
       </Head>
 
       <PageHero title={t.hero.replace('\n', ' ')} />
+
+      <RewardsSection />
 
       <section className="px-4 pt-8 pb-14 border-b border-black/10 reveal sm:px-6 sm:pt-10 sm:pb-14 lg:px-10 lg:pt-12 lg:pb-20">
         <div className="flex justify-between items-end mb-7 gap-8 flex-wrap">
