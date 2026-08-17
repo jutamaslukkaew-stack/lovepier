@@ -61,6 +61,7 @@ const COPY = {
     welcomeStep1: 'เลือกเมนูที่ต้องการ แล้วยืนยันออเดอร์',
     welcomeStep2: (r) => `ทางร้านสามารถจัดส่งให้เองได้ในรัศมี ${r} กม.`,
     welcomeStep3: 'อยู่ไกลกว่านั้นก็ยังสั่งได้ เพียงเรียก Grab, LINE MAN หรือแมสเซนเจอร์เจ้าอื่นมารับอาหารที่ร้านเอง',
+    lineConnected: (name) => `เชื่อมต่อกับ LINE ของคุณ${name}แล้ว`,
     startOrder: 'เริ่มสั่งอาหาร',
     loggingIn: 'กำลังเข้าสู่ระบบ LINE...',
     loginFailed: 'เข้าสู่ระบบ LINE ไม่สำเร็จ กรุณาลองใหม่',
@@ -163,6 +164,7 @@ const COPY = {
     welcomeStep1: 'Choose what you want and confirm the order',
     welcomeStep2: (r) => `We can deliver to you ourselves within ${r} km`,
     welcomeStep3: 'Further away? You can still order — just send Grab, LINE MAN, or another courier to collect it from the shop',
+    lineConnected: (name) => `Connected to ${name}'s LINE account`,
     startOrder: 'Start ordering',
     loggingIn: 'Logging in with LINE...',
     loginFailed: 'LINE login failed. Please try again.',
@@ -258,6 +260,7 @@ const COPY = {
     welcomeStep1: '选好菜品并确认订单',
     welcomeStep2: (r) => `${r} 公里内可由本店为您配送`,
     welcomeStep3: '超出范围仍可下单，只需自行安排 Grab、LINE MAN 或其他快递员到店取餐',
+    lineConnected: (name) => `已连接 ${name} 的 LINE 帐号`,
     startOrder: '开始点餐',
     loggingIn: '正在使用 LINE 登录...',
     loginFailed: 'LINE 登录失败，请重试',
@@ -1075,7 +1078,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
             style={{ paddingBottom: 'max(1.75rem, env(safe-area-inset-bottom))' }}
           >
             <div className={`${CONTENT_WIDTH} mx-auto w-full`}>
-              <GreetingChoiceCard t={t} name={form.name} address={form.address} onUseSaved={useSavedAddress} onUseNew={useNewAddress} />
+              <GreetingChoiceCard t={t} name={profile?.displayName || form.name} address={form.address} onUseSaved={useSavedAddress} onUseNew={useNewAddress} />
             </div>
           </section>
         </div>
@@ -1103,6 +1106,28 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           style={{ paddingBottom: 'max(1.75rem, env(safe-area-inset-bottom))' }}
         >
           <div className={`${CONTENT_WIDTH} mx-auto w-full flex-1 flex flex-col`}>
+            {profile?.displayName && (
+              <div className="mb-5 flex items-center gap-3 rounded-xl border border-[#4a3520]/15 bg-white/55 px-3.5 py-3">
+                {profile.pictureUrl ? (
+                  // LINE supplies this URL as part of the signed-in profile.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profile.pictureUrl}
+                    alt=""
+                    className="h-9 w-9 shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <span aria-hidden="true" className="h-9 w-9 shrink-0 rounded-full bg-[#06c755] text-white flex items-center justify-center text-[11px] font-bold">
+                    LINE
+                  </span>
+                )}
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium tracking-[0.08em] uppercase text-[#06a847]">LINE</p>
+                  <p className="truncate text-[13px] text-ink">{t.lineConnected(profile.displayName)}</p>
+                </div>
+                <span aria-hidden="true" className="ml-auto text-[#06a847] text-[16px]">✓</span>
+              </div>
+            )}
             {/* Outranks the hero title on purpose. The band above is ambience;
                 this line is what the customer came to find out. Thai needs the
                 looser leading for its tone marks. */}
