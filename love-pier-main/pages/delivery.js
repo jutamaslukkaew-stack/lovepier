@@ -61,8 +61,8 @@ export async function getServerSideProps() {
       dbPromotions,
       radiusKm: radiusKm ?? 5,
       minDeliveryOrder: minDeliveryOrder ?? 300,
-      pointsPerBaht: pointsPerBaht ?? 25,
-      memberDiscountPercent: memberDiscountPercent ?? 10,
+      pointsPerBaht: pointsPerBaht ?? 20,
+      memberDiscountPercent: 0,
       menuOptionsEnabled: menuOptionsEnabled ?? false,
     },
   }

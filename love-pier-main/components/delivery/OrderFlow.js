@@ -109,6 +109,10 @@ const COPY = {
     total: 'รวมทั้งหมด',
     pointsPreview: (n) => `จะได้รับ ${n} แต้มสะสม`,
     pointsEarnedBanner: (n) => `+${n} แต้มสะสม`,
+    pointsRule: 'ทุก ฿100 รับ 5 คะแนน • 1 คะแนน = ส่วนลด ฿1',
+    pointsBalance: (n) => `มี ${n} คะแนน`,
+    usePoints: (n) => `ใช้ ${n} คะแนน ลดเพิ่ม ฿${n}`,
+    pointsDiscountLabel: 'ส่วนลดจากคะแนน',
     name: 'ชื่อผู้รับ',
     phone: 'เบอร์โทร',
     address: 'ที่อยู่จัดส่ง',
@@ -208,6 +212,10 @@ const COPY = {
     total: 'Total',
     pointsPreview: (n) => `You'll earn ${n} points`,
     pointsEarnedBanner: (n) => `+${n} points earned`,
+    pointsRule: 'Earn 5 points per ฿100 • 1 point = ฿1 off',
+    pointsBalance: (n) => `${n} points available`,
+    usePoints: (n) => `Use ${n} points for ฿${n} off`,
+    pointsDiscountLabel: 'Points discount',
     name: 'Recipient name',
     phone: 'Phone',
     address: 'Delivery address',
@@ -304,6 +312,10 @@ const COPY = {
     total: '总计',
     pointsPreview: (n) => `将获得 ${n} 积分`,
     pointsEarnedBanner: (n) => `+${n} 积分`,
+    pointsRule: '每 ฿100 获得 5 积分 • 1 积分抵 ฿1',
+    pointsBalance: (n) => `可用 ${n} 积分`,
+    usePoints: (n) => `使用 ${n} 积分抵扣 ฿${n}`,
+    pointsDiscountLabel: '积分抵扣',
     name: '收件人姓名',
     phone: '电话',
     address: '配送地址',
@@ -448,7 +460,7 @@ function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
   )
 }
 
-export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusKm = 5, minDeliveryOrder = 300, pointsPerBaht = 25, memberDiscountPercent = 10, menuOptionsEnabled = false }) {
+export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusKm = 5, minDeliveryOrder = 300, pointsPerBaht = 20, menuOptionsEnabled = false }) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
   const { items, addItem, removeItem, updateNote, updateSweetness, updateCoffeeBean, clearCart, totalQty, totalPrice } = useCart()
@@ -503,6 +515,8 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // silently-prefilled pass-through. `editingInfo` is the customer's own
   // escape hatch back to the plain form, e.g. their address changed.
   const [customerRecognized, setCustomerRecognized] = useState(false)
+  const [pointsBalance, setPointsBalance] = useState(0)
+  const [usePoints, setUsePoints] = useState(false)
   const [editingInfo, setEditingInfo] = useState(false)
   // Distance (km) from the customer's most recent order, from the LINE ID
   // lookup below — lets "ใช้ที่อยู่เดิม" skip the GPS prompt entirely by
@@ -565,12 +579,14 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // source of truth, so a stale/tampered preview can never affect what's
   // actually charged.
   const hasLineId = Boolean(profile?.userId)
-  const { discountAmount, pointsEarned: pointsPreview } = calcOrderDiscountAndPoints(itemsSubtotal, {
+  const maxPointsUsable = Math.min(pointsBalance, Math.max(0, itemsSubtotal - 1))
+  const requestedPoints = usePoints ? maxPointsUsable : 0
+  const { discountAmount, pointsRedeemed, pointsEarned: pointsPreview } = calcOrderDiscountAndPoints(itemsSubtotal, {
     hasLineId,
-    discountPercent: memberDiscountPercent,
     pointsPerBaht,
+    pointsRedeemed: requestedPoints,
   })
-  const amount = itemsSubtotal - discountAmount + deliveryFee
+  const amount = itemsSubtotal - discountAmount - pointsRedeemed + deliveryFee
 
   // Silently pick up an already-logged-in LINE session (e.g. after a login
   // redirect back to this page) so returning customers aren't asked twice.
@@ -614,6 +630,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         }))
         setPhoneLookup('found')
         setCustomerRecognized(true)
+        setPointsBalance(Math.max(0, Number(data.customer.pointsBalance) || 0))
         if (Number.isFinite(data.customer.lastOrderDistanceKm)) {
           setCachedDistanceKm(data.customer.lastOrderDistanceKm)
         }
@@ -934,6 +951,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           deliveryMethod: deliveryMethod || 'pickup',
           lineUserId: profile?.userId || '',
           lineDisplayName: profile?.displayName || '',
+          pointsToRedeem: requestedPoints,
           items: items.map((i) => ({
             id: i.id,
             name: i.name,
@@ -968,6 +986,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         total: finalTotal,
         deliveryFee: finalDeliveryFee,
         discountAmount: finalDiscount,
+        pointsRedeemed: data.pointsRedeemed || 0,
         distanceKm: distanceResult?.distanceKm ?? null,
         deliveryMethod,
       })
@@ -1040,6 +1059,8 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     setForm({ name: '', phone: '', address: '', note: '' })
     setPhoneLookup('idle')
     setCustomerRecognized(false)
+    setPointsBalance(0)
+    setUsePoints(false)
     setEditingInfo(false)
     setCachedDistanceKm(null)
     setLineLookupStatus('idle')
@@ -1601,6 +1622,29 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                       <span className="tabular-nums">-฿{discountAmount}</span>
                     </div>
                   )}
+                  {hasLineId && pointsBalance > 0 && (
+                    <div className="my-2 rounded-xl border border-[#b06d2b]/20 bg-[#fff8ef] p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[13px] font-medium text-[#8b5423]">{t.pointsBalance(pointsBalance)}</p>
+                          <p className="mt-0.5 text-[11px] leading-relaxed text-[#8b5423]/70">{t.pointsRule}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setUsePoints((v) => !v)}
+                          className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors ${usePoints ? 'bg-[#b06d2b] text-white' : 'border border-[#b06d2b]/30 text-[#8b5423]'}`}
+                        >
+                          {usePoints ? '✓' : '+'} {t.usePoints(maxPointsUsable)}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {pointsRedeemed > 0 && (
+                    <div className="flex items-center justify-between text-[13px] text-emerald-700">
+                      <span>{t.pointsDiscountLabel}</span>
+                      <span className="tabular-nums">-฿{pointsRedeemed}</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-[13px]">
                     <span className="text-black/60">{t.deliveryFeeLabel}</span>
                     {deliveryMethod === 'delivery' ? (
@@ -1621,7 +1665,10 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                     <span className="font-display text-[20px] text-ink tabular-nums">฿{amount}</span>
                   </div>
                   {hasLineId && pointsPreview > 0 && !belowMinOrder && (
-                    <p className="text-[12px] text-[#b06d2b] text-right">{t.pointsPreview(pointsPreview)}</p>
+                    <div className="text-right">
+                      <p className="text-[12px] text-[#b06d2b]">{t.pointsPreview(pointsPreview)}</p>
+                      <p className="text-[10px] text-[#b06d2b]/65">{t.pointsRule}</p>
+                    </div>
                   )}
                 </div>
               </div>

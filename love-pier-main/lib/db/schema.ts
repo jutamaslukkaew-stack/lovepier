@@ -221,6 +221,8 @@ export const orders = pgTable(
     // "banked" into customers.pointsBalance + pointTransactions only once
     // payment is confirmed — see lib/slipVerification.js.
     pointsEarned: integer('points_earned').notNull().default(0),
+    // Saved points spent on this order. 1 point = ฿1 off food only.
+    pointsRedeemed: integer('points_redeemed').notNull().default(0),
     deliveryFee: integer('delivery_fee').notNull().default(0),
     totalAmount: integer('total_amount').notNull(),
     // pending → paid → preparing → done → cancelled
@@ -252,11 +254,11 @@ export const pointTransactions = pgTable('point_transactions', {
   id: uuid('id').primaryKey().defaultRandom(),
   orderId: uuid('order_id')
     .notNull()
-    .unique()
     .references(() => orders.id, { onDelete: 'cascade' }),
   customerId: uuid('customer_id').references(() => customers.id, { onDelete: 'set null' }),
   phone: text('phone').notNull().default(''),
   points: integer('points').notNull(),
+  type: text('type').notNull().default('earn'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

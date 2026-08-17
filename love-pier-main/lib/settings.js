@@ -24,7 +24,7 @@ export const SETTING_KEYS = {
   deliveryFeeTier5km: 'delivery_fee_tier_5km', // 4–5 km
   // Loyalty points earned per baht of (post-discount) item subtotal — see
   // lib/points.js#calcOrderDiscountAndPoints. 0 disables points entirely.
-  pointsPerBaht: 'loyalty_points_per_baht',
+  pointsPerBaht: 'loyalty_baht_per_point_v2',
   // % off itemsSubtotal for orders with a LINE ID attached (LIFF login
   // completed) — never applies to delivery fee. 0 disables the discount.
   memberDiscountPercent: 'member_discount_percent',
@@ -73,8 +73,8 @@ export async function getShopSettings() {
       ...tier,
       fee: Number.isFinite(tier.fee) ? tier.fee : DEFAULT_DELIVERY_FEE_TIERS[i].fee,
     })),
-    pointsPerBaht: m[SETTING_KEYS.pointsPerBaht] ? num(m[SETTING_KEYS.pointsPerBaht]) : 25,
-    memberDiscountPercent: m[SETTING_KEYS.memberDiscountPercent] ? num(m[SETTING_KEYS.memberDiscountPercent]) : 10,
+    pointsPerBaht: m[SETTING_KEYS.pointsPerBaht] ? num(m[SETTING_KEYS.pointsPerBaht]) : 20,
+    memberDiscountPercent: 0,
     menuOptionsEnabled: m[SETTING_KEYS.menuOptionsEnabled] === 'true',
   }
 }

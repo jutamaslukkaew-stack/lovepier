@@ -156,13 +156,19 @@ export default async function AdminOrdersPage() {
                         <span className="tabular-nums">-฿{o.discountAmount}</span>
                       </div>
                     )}
+                    {o.pointsRedeemed > 0 && (
+                      <div className={`flex justify-between text-emerald-700 ${o.discountAmount > 0 ? '' : 'border-t border-gray-200 pt-1 mt-1'}`}>
+                        <span>ส่วนลดจากคะแนน</span>
+                        <span className="tabular-nums">-฿{o.pointsRedeemed}</span>
+                      </div>
+                    )}
                     {o.deliveryFee > 0 && (
-                      <div className={`flex justify-between text-muted-foreground ${o.discountAmount > 0 ? '' : 'border-t border-gray-200 pt-1 mt-1'}`}>
+                      <div className={`flex justify-between text-muted-foreground ${o.discountAmount > 0 || o.pointsRedeemed > 0 ? '' : 'border-t border-gray-200 pt-1 mt-1'}`}>
                         <span>ค่าจัดส่ง</span>
                         <span className="tabular-nums">฿{o.deliveryFee}</span>
                       </div>
                     )}
-                    <div className={`flex justify-between font-semibold ${o.discountAmount > 0 || o.deliveryFee > 0 ? '' : 'border-t border-gray-200 pt-1 mt-1'}`}>
+                    <div className={`flex justify-between font-semibold ${o.discountAmount > 0 || o.pointsRedeemed > 0 || o.deliveryFee > 0 ? '' : 'border-t border-gray-200 pt-1 mt-1'}`}>
                       <span>รวม</span>
                       <span className="tabular-nums">฿{o.totalAmount}</span>
                     </div>

@@ -40,7 +40,7 @@ function plainRow(label, value) {
   }
 }
 
-export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, discountAmount, distanceKm, deliveryMethod }) {
+export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod }) {
   const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
 
   const itemRows = items.flatMap((i) => {
@@ -105,6 +105,9 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
         // member discount (only when there is one)
         ...(discountAmount
           ? [plainRow('ส่วนลดสมาชิก', `-฿${money(discountAmount)}`)]
+          : []),
+        ...(pointsRedeemed
+          ? [plainRow('ส่วนลดจากคะแนน', `-฿${money(pointsRedeemed)}`)]
           : []),
 
         // delivery fee (only when there is one)

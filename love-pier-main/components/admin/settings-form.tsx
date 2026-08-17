@@ -135,30 +135,16 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label>ส่วนลดสมาชิก LINE (%)</Label>
-        <Input
-          value={form.memberDiscountPercent}
-          onChange={(e) => set('memberDiscountPercent', e.target.value)}
-          placeholder="10"
-          inputMode="decimal"
-          className="w-32"
-        />
-        <p className="text-xs text-muted-foreground">
-          ส่วนลดจากยอดค่าอาหาร (ไม่รวมค่าจัดส่ง) เฉพาะออเดอร์ที่ลูกค้า login LINE สำเร็จ — ใส่ 0 เพื่อปิดส่วนลด
-        </p>
-      </div>
-
-      <div className="space-y-1.5">
         <Label>อัตราสะสมแต้ม (บาทต่อ 1 แต้ม)</Label>
         <Input
           value={form.pointsPerBaht}
           onChange={(e) => set('pointsPerBaht', e.target.value)}
-          placeholder="25"
+          placeholder="20"
           inputMode="decimal"
           className="w-32"
         />
         <p className="text-xs text-muted-foreground">
-          ลูกค้าได้ 1 แต้มทุกๆ ยอดนี้บาท (คิดจากยอดหลังหักส่วนลด) — ใส่ 0 เพื่อปิดการสะสมแต้ม
+          ค่าแนะนำ 20 บาท = 1 แต้ม (ครบ 100 บาทได้ 5 แต้ม) และ 1 แต้มใช้ลดออเดอร์ถัดไปได้ 1 บาท
         </p>
       </div>
 

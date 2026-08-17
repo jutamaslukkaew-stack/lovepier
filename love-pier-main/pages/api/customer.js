@@ -41,6 +41,7 @@ export default async function handler(req, res) {
         name: c.name,
         phone: c.phone,
         address: c.address,
+        pointsBalance: c.pointsBalance || 0,
         lastOrderDistanceKm: lastOrder ? Number(lastOrder.distanceKm) : null,
       },
     })

@@ -1,6 +1,6 @@
-import { sql } from 'drizzle-orm'
+import { and, eq, gte, sql } from 'drizzle-orm'
 import { db } from '../../lib/db'
-import { orders, customers } from '../../lib/db/schema'
+import { orders, customers, pointTransactions } from '../../lib/db/schema'
 import { pushOrderCardToStaff, pushToUser } from '../../lib/lineMessaging'
 import { buildOrderFlex } from '../../lib/orderFlex'
 import { getShopSettings } from '../../lib/settings'
@@ -98,32 +98,73 @@ export default async function handler(req, res) {
   // the delivery fee is never discounted (see lib/points.js). pointsEarned
   // is fixed here at order time and only actually credited once payment is
   // confirmed — see lib/slipVerification.js.
-  const { discountAmount, pointsEarned } = calcOrderDiscountAndPoints(itemsSubtotal, {
+  const requestedPoints = Math.max(0, Math.floor(Number(req.body?.pointsToRedeem) || 0))
+  let pointsBalance = 0
+  if (lineUserId && requestedPoints > 0) {
+    const [customer] = await db
+      .select({ pointsBalance: customers.pointsBalance })
+      .from(customers)
+      .where(eq(customers.lineUserId, lineUserId))
+      .limit(1)
+    pointsBalance = Math.max(0, customer?.pointsBalance || 0)
+  }
+  const pointsRequestedAndAvailable = Math.min(requestedPoints, pointsBalance, Math.max(0, itemsSubtotal - 1))
+  const { discountAmount, pointsRedeemed, pointsEarned } = calcOrderDiscountAndPoints(itemsSubtotal, {
     hasLineId: Boolean(lineUserId),
-    discountPercent: s.memberDiscountPercent,
     pointsPerBaht: s.pointsPerBaht,
+    pointsRedeemed: pointsRequestedAndAvailable,
   })
-  const totalAmount = itemsSubtotal - discountAmount + deliveryFee
+  const totalAmount = itemsSubtotal - discountAmount - pointsRedeemed + deliveryFee
 
   try {
-    await db.insert(orders).values({
-      orderNo,
-      lineUserId: lineUserId || null,
-      customerName: name,
-      phone,
-      address,
-      note,
-      deliveryMethod,
-      items,
-      itemsSubtotal,
-      discountAmount,
-      pointsEarned,
-      deliveryFee,
-      totalAmount,
-      status: 'pending',
-      paymentMethod: 'promptpay',
-      paymentRef: paymentRef || null,
-      distanceKm: distanceKm != null ? String(distanceKm) : null,
+    await db.transaction(async (tx) => {
+      let customerId = null
+      if (pointsRedeemed > 0) {
+        const [updated] = await tx
+          .update(customers)
+          .set({
+            pointsBalance: sql`${customers.pointsBalance} - ${pointsRedeemed}`,
+            updatedAt: sql`now()`,
+          })
+          .where(and(
+            eq(customers.lineUserId, lineUserId),
+            gte(customers.pointsBalance, pointsRedeemed)
+          ))
+          .returning({ id: customers.id })
+        if (!updated) throw new Error('POINTS_BALANCE_CHANGED')
+        customerId = updated.id
+      }
+
+      const [created] = await tx.insert(orders).values({
+        orderNo,
+        lineUserId: lineUserId || null,
+        customerName: name,
+        phone,
+        address,
+        note,
+        deliveryMethod,
+        items,
+        itemsSubtotal,
+        discountAmount,
+        pointsEarned,
+        pointsRedeemed,
+        deliveryFee,
+        totalAmount,
+        status: 'pending',
+        paymentMethod: 'promptpay',
+        paymentRef: paymentRef || null,
+        distanceKm: distanceKm != null ? String(distanceKm) : null,
+      }).returning({ id: orders.id })
+
+      if (pointsRedeemed > 0) {
+        await tx.insert(pointTransactions).values({
+          orderId: created.id,
+          customerId,
+          phone,
+          points: -pointsRedeemed,
+          type: 'redeem',
+        })
+      }
     })
 
     // Remember this customer for next time (auto-fill on their next order via
@@ -171,7 +212,7 @@ export default async function handler(req, res) {
     // Same Flex card, sent to two destinations: the customer's own chat,
     // and the shop's own staff LINE (LINE_ORDER_NOTIFY_TO). Both best-effort
     // — a push failure never fails the order itself.
-    const flex = buildOrderFlex({ orderNo, name, phone, address, items, total: totalAmount, deliveryFee, discountAmount, distanceKm, deliveryMethod })
+    const flex = buildOrderFlex({ orderNo, name, phone, address, items, total: totalAmount, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod })
 
     // Alert staff with the branded card (not a plain-text summary) the
     // moment the order is created — doesn't depend on the customer tapping
@@ -187,8 +228,11 @@ export default async function handler(req, res) {
 
     const slipVerify = Boolean(s.slipokApiKey && s.slipokBranchId)
 
-    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsEarned, deliveryFee, slipVerify })
+    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify })
   } catch (err) {
+    if (err?.message === 'POINTS_BALANCE_CHANGED') {
+      return res.status(409).json({ error: 'ยอดคะแนนมีการเปลี่ยนแปลง กรุณาลองใหม่อีกครั้ง' })
+    }
     console.error('Create order failed:', err)
     return res.status(500).json({ error: 'บันทึกออเดอร์ไม่สำเร็จ' })
   }

@@ -6,19 +6,22 @@
 // (drizzle/postgres) — that import breaks the client bundle (postgres needs
 // Node builtins like `fs`/`perf_hooks` that don't exist in the browser).
 //
-// Business rule (2026-08-17 journey review): 10% off itemsSubtotal for
-// orders with a LINE ID attached (LIFF login completed) — never applies to
-// the delivery fee. 1 point per ฿25 of the post-discount item subtotal.
-// Both rates are runtime settings (/admin/settings), these are just the
-// fallback defaults — see lib/settings.js.
+// Business rule (2026-08-17): no instant member discount. Members earn
+// 1 point per ฿20 actually spent on food (5 points per ฿100), and each saved
+// point can be redeemed for ฿1 off a later order. Delivery fees never earn
+// points and cannot be paid with points.
 export function calcOrderDiscountAndPoints(
   itemsSubtotal,
-  { hasLineId = false, discountPercent = 10, pointsPerBaht = 25 } = {}
+  { hasLineId = false, pointsPerBaht = 20, pointsRedeemed = 0 } = {}
 ) {
   const subtotal = Number(itemsSubtotal) || 0
-  const discountAmount =
-    hasLineId && discountPercent > 0 ? Math.round(subtotal * (discountPercent / 100)) : 0
-  const netSubtotal = Math.max(0, subtotal - discountAmount)
-  const pointsEarned = pointsPerBaht > 0 ? Math.floor(netSubtotal / pointsPerBaht) : 0
-  return { discountAmount, pointsEarned }
+  // Keep at least ฿1 payable so the existing PromptPay/slip verification
+  // flow still has a real transaction to confirm.
+  const redemptionCeiling = Math.max(0, subtotal - 1)
+  const redeemed = hasLineId
+    ? Math.min(Math.max(0, Math.floor(Number(pointsRedeemed) || 0)), redemptionCeiling)
+    : 0
+  const netSubtotal = Math.max(0, subtotal - redeemed)
+  const pointsEarned = hasLineId && pointsPerBaht > 0 ? Math.floor(netSubtotal / pointsPerBaht) : 0
+  return { discountAmount: 0, pointsRedeemed: redeemed, pointsEarned }
 }

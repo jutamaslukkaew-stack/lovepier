@@ -36,6 +36,7 @@ export async function awardPoints({ orderId, lineUserId, phone, points }) {
       customerId: customer?.id || null,
       phone: phone || '',
       points,
+      type: 'earn',
     })
   } catch (err) {
     // orderId is unique — a losing race here means this order already
@@ -44,7 +45,7 @@ export async function awardPoints({ orderId, lineUserId, phone, points }) {
     // (with the constraint name) under `.cause`, not in `.message` — a
     // string match on `.message` alone never catches this (verified while
     // testing: it threw instead of no-op'ing until this was fixed).
-    if (err?.cause?.code === '23505' && err?.cause?.constraint_name === 'point_transactions_order_id_key') {
+    if (err?.cause?.code === '23505') {
       return
     }
     throw err
