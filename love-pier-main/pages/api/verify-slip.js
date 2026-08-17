@@ -35,7 +35,7 @@ export default async function handler(req, res) {
   // to LINE_ORDER_NOTIFY_TO regardless of whether the customer has a LINE
   // session, same as the order-received card in pages/api/orders.js.
   if (result.verified && !result.alreadyPaid) {
-    const flex = buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount })
+    const flex = buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount, pointsEarned: order.pointsEarned })
     await pushOrderCardToStaff(flex)
     if (order.lineUserId) {
       await pushToUser(order.lineUserId, [flex])

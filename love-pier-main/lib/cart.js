@@ -41,6 +41,19 @@ export function CartProvider({ children }) {
     setItems((prev) => prev.map((i) => i.id === id ? { ...i, note } : i))
   }, [])
 
+  // Structured per-line options — same global option set on every item
+  // (sweetness / coffee bean), same "set at review time" rule and per-line
+  // (not per-unit) scope as updateNote above. Undefined until the customer
+  // picks something; the Summary UI shows the first option as selected by
+  // default without writing it here (see OrderFlow.js).
+  const updateSweetness = useCallback((id, sweetness) => {
+    setItems((prev) => prev.map((i) => i.id === id ? { ...i, sweetness } : i))
+  }, [])
+
+  const updateCoffeeBean = useCallback((id, coffeeBean) => {
+    setItems((prev) => prev.map((i) => i.id === id ? { ...i, coffeeBean } : i))
+  }, [])
+
   const clearCart = useCallback(() => setItems([]), [])
   const openCart = useCallback(() => setIsOpen(true), [])
   const closeCart = useCallback(() => setIsOpen(false), [])
@@ -49,7 +62,7 @@ export function CartProvider({ children }) {
   const totalPrice = items.reduce((sum, i) => sum + (parseFloat(i.price) || 0) * i.qty, 0)
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateNote, clearCart, totalQty, totalPrice, isOpen, openCart, closeCart }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, updateNote, updateSweetness, updateCoffeeBean, clearCart, totalQty, totalPrice, isOpen, openCart, closeCart }}>
       {children}
     </CartContext.Provider>
   )

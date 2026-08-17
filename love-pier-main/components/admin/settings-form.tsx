@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -54,7 +55,7 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
   const [form, setForm] = useState<ShopSettingsForm>(initial)
   const [pending, startTransition] = useTransition()
 
-  function set<K extends keyof ShopSettingsForm>(k: K, v: string) {
+  function set<K extends keyof ShopSettingsForm>(k: K, v: ShopSettingsForm[K]) {
     setForm((f) => ({ ...f, [k]: v }))
   }
 
@@ -131,6 +132,44 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
         <p className="text-xs text-muted-foreground">
           ต่ำกว่านี้ลูกค้าสั่งซื้อไม่ได้เลย ไม่ว่าจะเลือกจัดส่งหรือรับเองที่ร้าน — เว้นว่างหรือใส่ 0 เพื่อไม่กำหนดขั้นต่ำ
         </p>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>ส่วนลดสมาชิก LINE (%)</Label>
+        <Input
+          value={form.memberDiscountPercent}
+          onChange={(e) => set('memberDiscountPercent', e.target.value)}
+          placeholder="10"
+          inputMode="decimal"
+          className="w-32"
+        />
+        <p className="text-xs text-muted-foreground">
+          ส่วนลดจากยอดค่าอาหาร (ไม่รวมค่าจัดส่ง) เฉพาะออเดอร์ที่ลูกค้า login LINE สำเร็จ — ใส่ 0 เพื่อปิดส่วนลด
+        </p>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>อัตราสะสมแต้ม (บาทต่อ 1 แต้ม)</Label>
+        <Input
+          value={form.pointsPerBaht}
+          onChange={(e) => set('pointsPerBaht', e.target.value)}
+          placeholder="25"
+          inputMode="decimal"
+          className="w-32"
+        />
+        <p className="text-xs text-muted-foreground">
+          ลูกค้าได้ 1 แต้มทุกๆ ยอดนี้บาท (คิดจากยอดหลังหักส่วนลด) — ใส่ 0 เพื่อปิดการสะสมแต้ม
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 rounded-lg border px-3.5 py-3">
+        <div className="space-y-0.5">
+          <Label>ตัวเลือกความหวาน/สายพันธุ์กาแฟต่อรายการ</Label>
+          <p className="text-xs text-muted-foreground">
+            แสดงให้ลูกค้าเลือกความหวานและสายพันธุ์กาแฟต่อรายการในตะกร้าตอนสรุปออเดอร์
+          </p>
+        </div>
+        <Switch checked={form.menuOptionsEnabled} onCheckedChange={(v) => set('menuOptionsEnabled', v)} />
       </div>
 
       {form.distanceMethod === 'google' && (

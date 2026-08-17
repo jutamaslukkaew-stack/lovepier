@@ -40,7 +40,7 @@ function plainRow(label, value) {
   }
 }
 
-export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, distanceKm, deliveryMethod }) {
+export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, discountAmount, distanceKm, deliveryMethod }) {
   const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
 
   const itemRows = items.flatMap((i) => {
@@ -54,11 +54,14 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
         { type: 'text', text: `฿${money((Number(i.price) || 0) * (Number(i.qty) || 0))}`, size: 'sm', color: '#333333', flex: 3, align: 'end' },
       ],
     }
-    if (!i.note) return [row]
-    return [
-      row,
-      { type: 'text', text: `— ${i.note}`, size: 'xxs', color: '#8c8c8c', margin: 'xs', wrap: true },
-    ]
+    // Structured options (see lib/menuOptions.js) — shown as a sub-line
+    // alongside the free-text note, same xxs/gray treatment.
+    const optionBits = [i.sweetness, i.coffeeBean].filter(Boolean).join(' · ')
+    const subLines = [
+      optionBits ? { type: 'text', text: optionBits, size: 'xxs', color: '#8c8c8c', margin: 'xs', wrap: true } : null,
+      i.note ? { type: 'text', text: `— ${i.note}`, size: 'xxs', color: '#8c8c8c', margin: 'xs', wrap: true } : null,
+    ].filter(Boolean)
+    return [row, ...subLines]
   })
 
   const detail = [
@@ -98,6 +101,11 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
         // customer details
         { type: 'box', layout: 'vertical', margin: 'sm', contents: detail },
         { type: 'separator', margin: 'lg' },
+
+        // member discount (only when there is one)
+        ...(discountAmount
+          ? [plainRow('ส่วนลดสมาชิก', `-฿${money(discountAmount)}`)]
+          : []),
 
         // delivery fee (only when there is one)
         ...(deliveryFee
@@ -146,7 +154,7 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
 // Sent right after SlipOK auto-verifies a payment (pages/api/verify-slip.js),
 // so the customer sees a Love Pier-branded confirmation alongside SlipOK's own
 // reply card in the LINE chat.
-export function buildPaymentConfirmedFlex({ orderNo, total }) {
+export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned }) {
   const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
 
   const bubble = {
@@ -178,6 +186,17 @@ export function buildPaymentConfirmedFlex({ orderNo, total }) {
             { type: 'text', text: `฿${money(total)}`, weight: 'bold', size: 'lg', color: '#4a3520', align: 'end' },
           ],
         },
+        ...(pointsEarned
+          ? [{
+              type: 'text',
+              text: `+${money(pointsEarned)} แต้มสะสม`,
+              size: 'sm',
+              weight: 'bold',
+              color: '#b06d2b',
+              align: 'center',
+              margin: 'md',
+            }]
+          : []),
         {
           type: 'text',
           // Explicit line break — Thai has no word-spacing, so LINE's

@@ -5,6 +5,8 @@ import { pushOrderCardToStaff, pushToUser } from '../../lib/lineMessaging'
 import { buildOrderFlex } from '../../lib/orderFlex'
 import { getShopSettings } from '../../lib/settings'
 import { calcDeliveryFee } from '../../lib/deliveryFee'
+import { calcOrderDiscountAndPoints } from '../../lib/points'
+import { SWEETNESS_OPTIONS, COFFEE_BEAN_OPTIONS } from '../../lib/menuOptions'
 
 function pickString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -55,6 +57,12 @@ export default async function handler(req, res) {
     price: Number(i?.price) || 0,
     qty: Math.max(1, parseInt(i?.qty, 10) || 1),
     note: pickString(i?.note),
+    // Structured options — default to the first choice server-side too, same
+    // as the client shows selected by default (lib/menuOptions.js), so an
+    // old client build or a line that never touched these still lands on a
+    // sane value rather than an empty string.
+    sweetness: SWEETNESS_OPTIONS.includes(i?.sweetness) ? i.sweetness : SWEETNESS_OPTIONS[0],
+    coffeeBean: COFFEE_BEAN_OPTIONS.includes(i?.coffeeBean) ? i.coffeeBean : COFFEE_BEAN_OPTIONS[0],
   }))
   const itemsSubtotal = Math.round(
     items.reduce((sum, i) => sum + i.price * i.qty, 0)
@@ -84,7 +92,18 @@ export default async function handler(req, res) {
   const deliveryFee = withinRadius && deliveryMethod === 'delivery'
     ? calcDeliveryFee(distanceKm, { tiers: s.deliveryFeeTiers })
     : 0
-  const totalAmount = itemsSubtotal + deliveryFee
+
+  // Member discount + loyalty points — only for orders with a LINE ID
+  // attached (LIFF login completed), and only on the food/drink subtotal;
+  // the delivery fee is never discounted (see lib/points.js). pointsEarned
+  // is fixed here at order time and only actually credited once payment is
+  // confirmed — see lib/slipVerification.js.
+  const { discountAmount, pointsEarned } = calcOrderDiscountAndPoints(itemsSubtotal, {
+    hasLineId: Boolean(lineUserId),
+    discountPercent: s.memberDiscountPercent,
+    pointsPerBaht: s.pointsPerBaht,
+  })
+  const totalAmount = itemsSubtotal - discountAmount + deliveryFee
 
   try {
     await db.insert(orders).values({
@@ -97,6 +116,8 @@ export default async function handler(req, res) {
       deliveryMethod,
       items,
       itemsSubtotal,
+      discountAmount,
+      pointsEarned,
       deliveryFee,
       totalAmount,
       status: 'pending',
@@ -123,6 +144,15 @@ export default async function handler(req, res) {
         })
         .onConflictDoUpdate({
           target: customers.phone,
+          // customers_phone_unique_idx (0005) is a PARTIAL index (WHERE
+          // phone <> ''), so Postgres can't infer it as the ON CONFLICT
+          // arbiter from `target` alone — this must repeat the same WHERE or
+          // every upsert errors at the planning stage (silently swallowed by
+          // the catch below) and no customer row is ever written. Found
+          // 2026-08-17 while verifying loyalty-points crediting: confirmed
+          // via server logs that this had been failing for every phone
+          // number since 0005 shipped.
+          targetWhere: sql`${customers.phone} <> ''`,
           // COALESCE so an order placed without a LINE session (LIFF
           // failed/skipped) never blanks out a lineUserId this phone already
           // had on file from an earlier order.
@@ -141,7 +171,7 @@ export default async function handler(req, res) {
     // Same Flex card, sent to two destinations: the customer's own chat,
     // and the shop's own staff LINE (LINE_ORDER_NOTIFY_TO). Both best-effort
     // — a push failure never fails the order itself.
-    const flex = buildOrderFlex({ orderNo, name, phone, address, items, total: totalAmount, deliveryFee, distanceKm, deliveryMethod })
+    const flex = buildOrderFlex({ orderNo, name, phone, address, items, total: totalAmount, deliveryFee, discountAmount, distanceKm, deliveryMethod })
 
     // Alert staff with the branded card (not a plain-text summary) the
     // moment the order is created — doesn't depend on the customer tapping
@@ -157,7 +187,7 @@ export default async function handler(req, res) {
 
     const slipVerify = Boolean(s.slipokApiKey && s.slipokBranchId)
 
-    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, deliveryFee, slipVerify })
+    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsEarned, deliveryFee, slipVerify })
   } catch (err) {
     console.error('Create order failed:', err)
     return res.status(500).json({ error: 'บันทึกออเดอร์ไม่สำเร็จ' })

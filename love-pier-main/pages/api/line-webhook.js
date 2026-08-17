@@ -146,7 +146,7 @@ async function handleSlipImage(event, userId) {
   // already-paid order again is the reassuring answer, not noise.
   const card =
     result.verified
-      ? buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount })
+      ? buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount, pointsEarned: order.pointsEarned })
       : buildSlipReceivedFlex({
           orderNo: order.orderNo,
           total: order.totalAmount,

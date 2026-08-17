@@ -17,7 +17,7 @@ const PAGE_COPY = {
 // payment → success) — see components/delivery/OrderFlow.js. The menu step
 // reuses components/menu/MenuExperience, the same shared menu layout as
 // /menu, so section/layout edits there apply to both pages.
-export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDeliveryOrder }) {
+export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDeliveryOrder, pointsPerBaht, memberDiscountPercent, menuOptionsEnabled }) {
   const { lang } = useLanguage()
   const t = PAGE_COPY[lang] || PAGE_COPY.en
   const { hidden } = useChrome()
@@ -39,6 +39,9 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
         heroTitle={t.hero}
         radiusKm={radiusKm}
         minDeliveryOrder={minDeliveryOrder}
+        pointsPerBaht={pointsPerBaht}
+        memberDiscountPercent={memberDiscountPercent}
+        menuOptionsEnabled={menuOptionsEnabled}
       />
 
       {!hidden && <Footer tagline={FOOTER_TAGLINES.menu} />}
@@ -51,6 +54,16 @@ export async function getServerSideProps() {
   // The welcome screen states the delivery radius before the customer commits
   // to a LINE login, so it has to know it up front — /api/delivery-distance
   // only reports it after the GPS check.
-  const { radiusKm, minDeliveryOrder } = await getShopSettings()
-  return { props: { dbMenuData, dbPromotions, radiusKm: radiusKm ?? 5, minDeliveryOrder: minDeliveryOrder ?? 300 } }
+  const { radiusKm, minDeliveryOrder, pointsPerBaht, memberDiscountPercent, menuOptionsEnabled } = await getShopSettings()
+  return {
+    props: {
+      dbMenuData,
+      dbPromotions,
+      radiusKm: radiusKm ?? 5,
+      minDeliveryOrder: minDeliveryOrder ?? 300,
+      pointsPerBaht: pointsPerBaht ?? 25,
+      memberDiscountPercent: memberDiscountPercent ?? 10,
+      menuOptionsEnabled: menuOptionsEnabled ?? false,
+    },
+  }
 }

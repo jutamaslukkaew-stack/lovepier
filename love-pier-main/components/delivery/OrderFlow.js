@@ -1,9 +1,17 @@
-// Guided 6-step order flow for /delivery: welcome → distance check → menu →
-// order summary → confirm & pay → success. Replaces the old DeliveryGate
-// (auto-gate + separate CartDrawer sheet) with a single linear wizard so the
-// out-of-radius warning and the payment confirmation both require an
-// explicit, un-skippable acknowledgement instead of a bottom-sheet a
-// customer could dismiss without reading.
+// Guided order flow for /delivery: welcome → contact/address → distance
+// check → method → menu → order summary → confirm & pay → success. Replaces
+// the old DeliveryGate (auto-gate + separate CartDrawer sheet) with a single
+// linear wizard so the out-of-radius warning and the payment confirmation
+// both require an explicit, un-skippable acknowledgement instead of a
+// bottom-sheet a customer could dismiss without reading.
+//
+// The `contact` step resolves who's ordering and where to before the GPS
+// prompt: a recognized returning customer (LINE ID lookup, see the useEffect
+// below) is asked once whether to reuse their last address — which also
+// reuses their last order's distance, skipping the GPS request entirely —
+// or start fresh with a new one. Everyone else fills in phone/name/address
+// directly. By the time the flow reaches Summary this is already resolved,
+// so Summary only recaps it (with an edit link back to `contact`).
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
@@ -15,6 +23,8 @@ import { isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessage
 import { setDeliverySessionProfile, setDeliverySessionDistance } from '../../lib/deliverySession'
 import { buildPaymentPayload } from '../../lib/promptpay'
 import { buildOrderFlex } from '../../lib/orderFlex'
+import { calcOrderDiscountAndPoints } from '../../lib/points'
+import { SWEETNESS_OPTIONS, COFFEE_BEAN_OPTIONS } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
 import MenuExperience from '../menu/MenuExperience'
 
@@ -36,7 +46,7 @@ function makePaymentRef() {
   return Date.now().toString().slice(-10)
 }
 
-const STEP_ORDER = ['welcome', 'distance', 'method', 'menu', 'summary', 'payment', 'success']
+const STEP_ORDER = ['welcome', 'contact', 'distance', 'method', 'menu', 'summary', 'payment', 'success']
 
 const COPY = {
   th: {
@@ -47,7 +57,7 @@ const COPY = {
     welcomeSubtitle: 'อาหารและเครื่องดื่มริมทะเล',
     welcomeHeading: 'สั่งอาหารกลับบ้านได้เลย',
     welcomeLead: 'ชำระเงินด้วยการสแกน QR ของร้าน',
-    welcomeSpecialNote: (r) => `พิเศษสำหรับลูกค้า สั่งอาหารและเครื่องดื่มครบ 300 บาท ทางร้านมีบริการจัดส่งตามที่ตั้ง เมื่ออยู่ในรัศมี ${r} กม.`,
+    welcomeSpecialNote: (r) => `จัดส่งถึงมือ ในรัศมี ${r} กม. จากร้านนะคะ`,
     welcomeStep1: 'เลือกเมนูที่ต้องการ แล้วยืนยันออเดอร์',
     welcomeStep2: (r) => `ทางร้านสามารถจัดส่งให้เองได้ในรัศมี ${r} กม.`,
     welcomeStep3: 'อยู่ไกลกว่านั้นก็ยังสั่งได้ เพียงเรียก Grab, LINE MAN หรือแมสเซนเจอร์เจ้าอื่นมารับอาหารที่ร้านเอง',
@@ -89,16 +99,30 @@ const COPY = {
     emptyCart: 'ยังไม่มีรายการในตะกร้า',
     backToMenu: 'กลับไปเลือกเมนู',
     itemNotePlaceholder: 'หมายเหตุ เช่น หวานน้อย, นมอัลมอนด์',
+    sweetnessLabel: 'ความหวาน',
+    coffeeBeanLabel: 'สายพันธุ์กาแฟ',
     itemsSubtotalLabel: 'ค่าอาหาร',
+    discountLabel: 'ส่วนลดสมาชิก',
     deliveryFeeLabel: 'ค่าจัดส่ง',
     selfArranged: 'ลูกค้าจัดการเอง',
     total: 'รวมทั้งหมด',
+    pointsPreview: (n) => `จะได้รับ ${n} แต้มสะสม`,
+    pointsEarnedBanner: (n) => `+${n} แต้มสะสม`,
     name: 'ชื่อผู้รับ',
     phone: 'เบอร์โทร',
     address: 'ที่อยู่จัดส่ง',
     addressOptionalNote: '(ไม่บังคับ — คุณเรียก Grab/LINE MAN มารับเองที่ร้าน)',
     note: 'หมายเหตุ (ไม่บังคับ)',
     phoneFound: 'พบข้อมูลลูกค้าเดิม กรอกชื่อและที่อยู่ให้อัตโนมัติ',
+    confirmInfoTitle: 'ข้อมูลของคุณ',
+    editInfo: 'แก้ไขข้อมูล',
+    // step 1b — contact / address
+    contactGreeting: (name) => `สวัสดีค่ะ คุณ${name}`,
+    contactGreetingSub: 'จัดส่งที่เดิมเลยไหมคะ หรืออยากเปลี่ยนที่อยู่ใหม่?',
+    useSavedAddress: 'ใช้ที่อยู่เดิม',
+    useNewAddress: 'ใช้ที่อยู่ใหม่',
+    contactFormTitle: 'ข้อมูลติดต่อและที่อยู่จัดส่ง',
+    contactChecking: 'กำลังตรวจสอบข้อมูล...',
     orderRecapTitle: 'ตรวจสอบรายการก่อนชำระเงิน',
     noteLabel: 'หมายเหตุ',
     fillRequired: 'กรุณากรอกชื่อและเบอร์โทร',
@@ -135,7 +159,7 @@ const COPY = {
     welcomeSubtitle: 'Beachside food and drinks.',
     welcomeHeading: 'You can order takeaway',
     welcomeLead: "Pay by scanning the shop's QR code.",
-    welcomeSpecialNote: (r) => `A special perk for our customers — spend ฿300 or more on food and drinks and we'll deliver straight to you within ${r} km.`,
+    welcomeSpecialNote: (r) => `We'll bring it straight to you, anywhere within ${r} km of the cafe.`,
     welcomeStep1: 'Choose what you want and confirm the order',
     welcomeStep2: (r) => `We can deliver to you ourselves within ${r} km`,
     welcomeStep3: 'Further away? You can still order — just send Grab, LINE MAN, or another courier to collect it from the shop',
@@ -173,16 +197,29 @@ const COPY = {
     emptyCart: 'Your cart is empty',
     backToMenu: 'Back to menu',
     itemNotePlaceholder: 'Note, e.g. less sweet, almond milk',
+    sweetnessLabel: 'Sweetness',
+    coffeeBeanLabel: 'Coffee bean',
     itemsSubtotalLabel: 'Food total',
+    discountLabel: 'Member discount',
     deliveryFeeLabel: 'Delivery fee',
     selfArranged: 'Arranged by customer',
     total: 'Total',
+    pointsPreview: (n) => `You'll earn ${n} points`,
+    pointsEarnedBanner: (n) => `+${n} points earned`,
     name: 'Recipient name',
     phone: 'Phone',
     address: 'Delivery address',
     addressOptionalNote: "(optional — you'll arrange your own Grab/LINE MAN pickup)",
     note: 'Note (optional)',
     phoneFound: "Found your details from a past order — name and address filled in",
+    confirmInfoTitle: 'Your details',
+    editInfo: 'Edit',
+    contactGreeting: (name) => `Hi, ${name}`,
+    contactGreetingSub: 'Deliver to your usual spot, or somewhere new today?',
+    useSavedAddress: 'Use saved address',
+    useNewAddress: 'Use a new address',
+    contactFormTitle: 'Contact & delivery address',
+    contactChecking: 'Checking your details...',
     orderRecapTitle: 'Review before you pay',
     noteLabel: 'Note',
     fillRequired: 'Please enter name and phone',
@@ -217,7 +254,7 @@ const COPY = {
     welcomeSubtitle: '海边美食与饮品。',
     welcomeHeading: '现可点餐外带',
     welcomeLead: '扫描本店二维码付款。',
-    welcomeSpecialNote: (r) => `尊享服务 — 餐饮消费满 300 泰铢，${r} 公里内本店专人配送到手。`,
+    welcomeSpecialNote: (r) => `本店 ${r} 公里内均可为您配送到家。`,
     welcomeStep1: '选好菜品并确认订单',
     welcomeStep2: (r) => `${r} 公里内可由本店为您配送`,
     welcomeStep3: '超出范围仍可下单，只需自行安排 Grab、LINE MAN 或其他快递员到店取餐',
@@ -255,16 +292,29 @@ const COPY = {
     emptyCart: '购物车是空的',
     backToMenu: '返回菜单',
     itemNotePlaceholder: '备注，例如少糖、杏仁奶',
+    sweetnessLabel: '甜度',
+    coffeeBeanLabel: '咖啡豆种',
     itemsSubtotalLabel: '餐点小计',
+    discountLabel: '会员折扣',
     deliveryFeeLabel: '配送费',
     selfArranged: '顾客自行安排',
     total: '总计',
+    pointsPreview: (n) => `将获得 ${n} 积分`,
+    pointsEarnedBanner: (n) => `+${n} 积分`,
     name: '收件人姓名',
     phone: '电话',
     address: '配送地址',
     addressOptionalNote: '（选填 — 您将自行安排 Grab/LINE MAN 到店取餐）',
     note: '备注（选填）',
     phoneFound: '已找到您上次的资料，姓名和地址已自动填写',
+    confirmInfoTitle: '您的信息',
+    editInfo: '编辑',
+    contactGreeting: (name) => `您好，${name}`,
+    contactGreetingSub: '还是配送到老地方，还是想换个新地址呢？',
+    useSavedAddress: '使用原地址',
+    useNewAddress: '使用新地址',
+    contactFormTitle: '联系方式和配送地址',
+    contactChecking: '正在核对您的资料...',
     orderRecapTitle: '付款前请核对订单',
     noteLabel: '备注',
     fillRequired: '请填写姓名和电话',
@@ -358,10 +408,47 @@ function StickyActionBar({ children }) {
   )
 }
 
-export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusKm = 5, minDeliveryOrder = 300 }) {
+// The recognize-a-returning-customer moment — the one place in this flow
+// that gets to feel personal rather than procedural (see DESIGN.md: light
+// display serif carries the warmth, not an emoji standing in for it). Shown
+// from two different places depending on timing: usually right on Welcome,
+// the instant the LINE lookup resolves before the customer has tapped
+// anything; occasionally (a slow lookup) at the top of the `contact` step
+// instead, if they already tapped through before it resolved. Same card
+// either way — see the two call sites in OrderFlow below.
+function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
+  return (
+    <div className="flex flex-col gap-5">
+      <div>
+        <p className="font-display font-light text-[clamp(26px,7vw,32px)] text-ink leading-[1.3]">{t.contactGreeting(name)}</p>
+        <p className="mt-1.5 text-[13px] text-black/55 font-light leading-relaxed">{t.contactGreetingSub}</p>
+      </div>
+      <div className="rounded-xl bg-white border border-black/10 px-4 py-3.5">
+        <span className="text-[11px] tracking-[0.1em] uppercase text-black/40">{t.address}</span>
+        <p className="mt-1 text-[13px] text-ink whitespace-pre-line">{address}</p>
+      </div>
+      <div className="flex flex-col gap-2.5">
+        <button
+          onClick={onUseSaved}
+          className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors"
+        >
+          {t.useSavedAddress}
+        </button>
+        <button
+          onClick={onUseNew}
+          className="w-full py-3.5 rounded-xl bg-black/[0.06] text-ink font-semibold text-[14px] hover:bg-black/10 transition-colors"
+        >
+          {t.useNewAddress}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusKm = 5, minDeliveryOrder = 300, pointsPerBaht = 25, memberDiscountPercent = 10, menuOptionsEnabled = false }) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
-  const { items, addItem, removeItem, updateNote, clearCart, totalQty, totalPrice } = useCart()
+  const { items, addItem, removeItem, updateNote, updateSweetness, updateCoffeeBean, clearCart, totalQty, totalPrice } = useCart()
   const { setHidden: setChromeHidden } = useChrome()
 
   const [step, setStep] = useState('welcome')
@@ -401,12 +488,37 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // radius (the shop never delivers out there); an explicit choice inside it.
   const [deliveryMethod, setDeliveryMethod] = useState(null)
 
-  // step 4 — summary / contact
+  // step 1b — contact / address (resolved up front now; summary just recaps it)
   const [form, setForm] = useState({ name: '', phone: '', address: '', note: '' })
   const [summaryError, setSummaryError] = useState('')
   // 'idle' | 'checking' | 'found' | 'notfound' — drives the small note under
   // the phone field once it looks complete. See the lookup effect below.
   const [phoneLookup, setPhoneLookup] = useState('idle')
+  // Flips true the moment either lookup below (LINE ID or phone) finds a
+  // matching customer row — swaps the contact step's form for either the
+  // "reuse last address?" popup (LINE ID, with a cached distance) or a
+  // silently-prefilled pass-through. `editingInfo` is the customer's own
+  // escape hatch back to the plain form, e.g. their address changed.
+  const [customerRecognized, setCustomerRecognized] = useState(false)
+  const [editingInfo, setEditingInfo] = useState(false)
+  // Distance (km) from the customer's most recent order, from the LINE ID
+  // lookup below — lets "ใช้ที่อยู่เดิม" skip the GPS prompt entirely by
+  // replaying this through /api/delivery-distance's bypass mode instead of
+  // asking the browser for a fresh position. Null until the lookup resolves
+  // (or if they have no past order with a recorded distance).
+  const [cachedDistanceKm, setCachedDistanceKm] = useState(null)
+  // 'idle' | 'checking' | 'done' — whether the LINE-ID recognition lookup has
+  // resolved yet, so the contact step can show a brief non-blocking loading
+  // state instead of flashing the wrong branch. See the timeout fallback in
+  // the lookup effect: a slow/failed lookup must never hang the step.
+  const [lineLookupStatus, setLineLookupStatus] = useState('idle')
+  // null while recognition is still being decided (contact step shows a
+  // brief loading state) | 'popup' (recognized + a cached distance to reuse)
+  // | 'form' (new customer, or recognized with nothing to bypass, or the
+  // customer's own "ที่อยู่ใหม่"/"แก้ไข" choice). Set once by the effect
+  // below rather than derived live in render, so it doesn't get yanked out
+  // from under the customer mid-typing.
+  const [contactMode, setContactMode] = useState(null)
 
   // step 5 — payment
   const [qrDataUrl, setQrDataUrl] = useState('')
@@ -444,7 +556,18 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // fee should show until it's real. No free-delivery threshold above the
   // minimum — delivery always charges the tiered fee once it's chosen.
   const deliveryFee = deliveryMethod === 'delivery' && withinRadius && !belowMinOrder ? (distanceResult?.deliveryFee || 0) : 0
-  const amount = itemsSubtotal + deliveryFee
+  // Member discount + points preview — only for a LINE-attached session, only
+  // on itemsSubtotal (never the delivery fee). Purely a client-side preview;
+  // /api/orders recomputes both from the same lib/points.js function as the
+  // source of truth, so a stale/tampered preview can never affect what's
+  // actually charged.
+  const hasLineId = Boolean(profile?.userId)
+  const { discountAmount, pointsEarned: pointsPreview } = calcOrderDiscountAndPoints(itemsSubtotal, {
+    hasLineId,
+    discountPercent: memberDiscountPercent,
+    pointsPerBaht,
+  })
+  const amount = itemsSubtotal - discountAmount + deliveryFee
 
   // Silently pick up an already-logged-in LINE session (e.g. after a login
   // redirect back to this page) so returning customers aren't asked twice.
@@ -471,6 +594,11 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     const uid = profile?.userId
     if (!uid || lineLookupDoneRef.current) return
     lineLookupDoneRef.current = true
+    setLineLookupStatus('checking')
+    // Non-blocking per the original spec: if the lookup hasn't answered
+    // within a few seconds, stop waiting and let the contact step fall back
+    // to the plain form — a slow/erroring API must never hang the flow.
+    const timeout = setTimeout(() => setLineLookupStatus((s) => (s === 'checking' ? 'done' : s)), 3000)
     fetch(`/api/customer?lineUserId=${encodeURIComponent(uid)}`)
       .then((res) => res.json())
       .then((data) => {
@@ -482,8 +610,16 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           address: f.address.trim() ? f.address : data.customer.address || f.address,
         }))
         setPhoneLookup('found')
+        setCustomerRecognized(true)
+        if (Number.isFinite(data.customer.lastOrderDistanceKm)) {
+          setCachedDistanceKm(data.customer.lastOrderDistanceKm)
+        }
       })
       .catch(() => {})
+      .finally(() => {
+        clearTimeout(timeout)
+        setLineLookupStatus('done')
+      })
   }, [profile])
 
   // Phone is asked first on the summary form specifically so this can run
@@ -508,6 +644,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
             address: f.address.trim() ? f.address : data.customer.address || f.address,
           }))
           setPhoneLookup('found')
+          setCustomerRecognized(true)
         } else {
           setPhoneLookup('notfound')
         }
@@ -517,6 +654,73 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     }, 500)
     return () => clearTimeout(timer)
   }, [form.phone])
+
+  // ── Step 1b: contact / address — decide what to show, once, when
+  // recognition resolves (not derived live in render, so typing into the
+  // plain form afterward can't yank it back to the popup). Runs from BOTH
+  // `welcome` and `contact`: the common case is the greeting resolving
+  // fast enough to show right on Welcome, skipping the "เริ่มสั่งอาหาร" tap
+  // entirely for a customer we already know where to deliver to — that tap
+  // exists to explain what's about to happen to someone we don't recognize,
+  // not to gate a returning customer we could greet immediately. ──────────
+  useEffect(() => {
+    if (editingInfo || contactMode) return
+    if (step !== 'welcome' && step !== 'contact') return
+
+    // The one resolution allowed from Welcome itself: recognized, with an
+    // address to offer. Everything else below needs the customer to have
+    // actually tapped in first (see the `step !== 'contact'` guard) — most
+    // importantly, "no profile yet" must NOT resolve to the plain form while
+    // still on Welcome, or a silent LINE login still in flight would get
+    // permanently locked out by the time it actually resolves.
+    if (customerRecognized && cachedDistanceKm != null) {
+      setContactMode('popup')
+      return
+    }
+    if (step !== 'contact') return
+
+    if (!profile) {
+      // No LINE session to check (LIFF unconfigured, or login skipped) —
+      // nothing to look up, straight to the plain form.
+      setContactMode('form')
+      return
+    }
+    if (lineLookupStatus !== 'done') return // still checking (or hasn't started)
+    if (customerRecognized) {
+      // Recognized, but no past order with a recorded distance to bypass
+      // with — nothing to ask, pass straight through with what's on file.
+      setStep('distance')
+    } else {
+      setContactMode('form')
+    }
+  }, [step, profile, lineLookupStatus, customerRecognized, cachedDistanceKm, editingInfo, contactMode])
+
+  // "ใช้ที่อยู่เดิม" — reuse the address + distance already on file. Called
+  // from either Welcome or `contact` (see the effect above); either way it
+  // jumps straight past both of those into Method/Menu.
+  async function useSavedAddress() {
+    await fetchDistanceFromCache(cachedDistanceKm)
+    goToMethodOrMenu()
+  }
+
+  // "ใช้ที่อยู่ใหม่" — same identity (name/phone kept), fresh address to be
+  // typed and, next step, a fresh GPS reading. Explicit setStep so this
+  // works whether it was called from Welcome (still needs to move into the
+  // `contact` step to show the form) or from `contact` already (a no-op).
+  function useNewAddress() {
+    setForm((f) => ({ ...f, address: '' }))
+    setContactMode('form')
+    setStep('contact')
+  }
+
+  function goToDistanceFromContact() {
+    setSummaryError('')
+    if (!form.name.trim() || !form.phone.trim()) {
+      setSummaryError(t.fillRequired)
+      return
+    }
+    setStep('distance')
+  }
 
   // ── Step 1: welcome + LINE login ─────────────────────────────────────
   async function handleStart() {
@@ -528,7 +732,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           setProfile(p)
           setDeliverySessionProfile(p)
           setLoginPhase('idle')
-          setStep('distance')
+          setStep('contact')
         }
         // else: liff.login() redirected the page away — nothing else to do.
       } catch {
@@ -536,7 +740,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
       }
       return
     }
-    setStep('distance')
+    setStep('contact')
   }
 
   // ── Step 2: GPS + distance ────────────────────────────────────────────
@@ -546,6 +750,35 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lat, lng }),
+      })
+      const data = await res.json()
+      setDistanceResult(data)
+      if (data.distanceKm != null) {
+        setDeliverySessionDistance({
+          distanceKm: data.distanceKm,
+          deliveryFee: data.deliveryFee || 0,
+          withinRadius: data.withinRadius,
+          radiusKm: data.radiusKm,
+        })
+      }
+    } catch {
+      setDistanceResult(null)
+    } finally {
+      setLocatePhase('found')
+    }
+  }
+
+  // "ใช้ที่อยู่เดิม" at the contact step — replays the customer's last-order
+  // distance through the same endpoint's bypass mode instead of asking the
+  // browser for a fresh GPS position, so the radius/fee logic stays in one
+  // place (server-side, same as the live-GPS path) without re-prompting.
+  async function fetchDistanceFromCache(distanceKm) {
+    setLocatePhase('calculating')
+    try {
+      const res = await fetch('/api/delivery-distance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ distanceKm }),
       })
       const data = await res.json()
       setDistanceResult(data)
@@ -698,13 +931,22 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           deliveryMethod: deliveryMethod || 'pickup',
           lineUserId: profile?.userId || '',
           lineDisplayName: profile?.displayName || '',
-          items: items.map((i) => ({ id: i.id, name: i.name, price: parseFloat(i.price) || 0, qty: i.qty, note: i.note || '' })),
+          items: items.map((i) => ({
+            id: i.id,
+            name: i.name,
+            price: parseFloat(i.price) || 0,
+            qty: i.qty,
+            note: i.note || '',
+            sweetness: i.sweetness || SWEETNESS_OPTIONS[0],
+            coffeeBean: i.coffeeBean || COFFEE_BEAN_OPTIONS[0],
+          })),
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'error')
 
       const finalDeliveryFee = data.deliveryFee || 0
+      const finalDiscount = data.discountAmount || 0
       const finalTotal = data.totalAmount ?? amount
 
       const flex = buildOrderFlex({
@@ -712,9 +954,17 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         name: form.name,
         phone: form.phone,
         address: form.address,
-        items: items.map((i) => ({ name: i.name, price: parseFloat(i.price) || 0, qty: i.qty, note: i.note || '' })),
+        items: items.map((i) => ({
+          name: i.name,
+          price: parseFloat(i.price) || 0,
+          qty: i.qty,
+          note: i.note || '',
+          sweetness: i.sweetness || SWEETNESS_OPTIONS[0],
+          coffeeBean: i.coffeeBean || COFFEE_BEAN_OPTIONS[0],
+        })),
         total: finalTotal,
         deliveryFee: finalDeliveryFee,
+        discountAmount: finalDiscount,
         distanceKm: distanceResult?.distanceKm ?? null,
         deliveryMethod,
       })
@@ -724,6 +974,8 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
       setCompleted({
         total: finalTotal,
         deliveryFee: finalDeliveryFee,
+        discountAmount: finalDiscount,
+        pointsEarned: data.pointsEarned || 0,
         distanceKm: distanceResult?.distanceKm ?? null,
         withinRadius,
         deliveryMethod,
@@ -784,6 +1036,11 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     setSlipError('')
     setForm({ name: '', phone: '', address: '', note: '' })
     setPhoneLookup('idle')
+    setCustomerRecognized(false)
+    setEditingInfo(false)
+    setCachedDistanceKm(null)
+    setLineLookupStatus('idle')
+    setContactMode(null)
     // Re-arm the LINE lookup so "order again" re-fills the fresh blank form —
     // profile itself doesn't change on reset, so without this the ref guard
     // would skip it (it already fired once for this login).
@@ -801,6 +1058,30 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // Step 1 — Welcome
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'welcome') {
+    // A customer we already recognize (LINE ID + a distance on file from a
+    // past order) skips the tap-to-start CTA below entirely — the "start
+    // ordering" ritual exists to explain what's about to happen (LINE
+    // login, then GPS) to someone we don't know yet, not to gate a
+    // returning customer we could already greet by name. See the
+    // useEffect above for exactly when this resolves.
+    if (contactMode === 'popup') {
+      return (
+        <div className="flex flex-col min-h-[calc(100dvh-var(--nav-h,64px))] sm:min-h-0">
+          <div className="shrink-0">
+            <PageHero title={heroTitle} subtitle={t.welcomeSubtitle} compact />
+          </div>
+          <section
+            className="flex-1 bg-[#f5f2ee] px-6 pt-8 pb-8 flex flex-col justify-center"
+            style={{ paddingBottom: 'max(1.75rem, env(safe-area-inset-bottom))' }}
+          >
+            <div className={`${CONTENT_WIDTH} mx-auto w-full`}>
+              <GreetingChoiceCard t={t} name={form.name} address={form.address} onUseSaved={useSavedAddress} onUseNew={useNewAddress} />
+            </div>
+          </section>
+        </div>
+      )
+    }
+
     // The CTA deliberately sits BELOW the hero rather than inside it. Tapping it
     // starts a LINE login and then asks for GPS, and customers were meeting both
     // prompts with no idea why — so the radius and what the button does have to
@@ -879,6 +1160,58 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  // Step 1b — Contact / address
+  // ═══════════════════════════════════════════════════════════════════
+  if (step === 'contact') {
+    return (
+      <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
+        <StepHeader t={t} step={step} onBack={() => setStep('welcome')} />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
+          <div className={`w-full ${CONTENT_WIDTH}`}>
+            {contactMode === 'popup' ? (
+              // Rare timing case only — the LINE lookup resolved after the
+              // customer had already tapped through Welcome. The common
+              // case shows this same card directly on Welcome instead; see
+              // GreetingChoiceCard's own comment.
+              <GreetingChoiceCard t={t} name={form.name} address={form.address} onUseSaved={useSavedAddress} onUseNew={useNewAddress} />
+            ) : contactMode === 'form' ? (
+              <div className="flex flex-col gap-4">
+                <h1 className="font-display text-[22px] text-ink text-center">{t.contactFormTitle}</h1>
+                <label className="block">
+                  <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.phone}</span>
+                  <input className={`mt-1 ${inputCls}`} inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                  {phoneLookup === 'found' && (
+                    <p className="mt-1.5 text-[12px] text-[#4a3520] flex items-center gap-1">✓ {t.phoneFound}</p>
+                  )}
+                </label>
+                <label className="block">
+                  <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.name}</span>
+                  <input className={`mt-1 ${inputCls}`} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                </label>
+                <label className="block">
+                  <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.address}</span>
+                  <textarea rows={2} className={`mt-1 resize-none ${inputCls}`} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+                </label>
+                {summaryError && <p className="text-[12px] text-red-600">{summaryError}</p>}
+                <button
+                  onClick={goToDistanceFromContact}
+                  className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors"
+                >
+                  {t.next}
+                </button>
+              </div>
+            ) : (
+              // Recognition lookup still in flight (brief, non-blocking —
+              // see the timeout fallback in the useEffect above).
+              <p className="text-center text-[13px] text-black/45">{t.contactChecking}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   // Step 2 — Distance check
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'distance') {
@@ -893,7 +1226,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
 
     return (
       <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
-        <StepHeader t={t} step={step} onBack={() => setStep('welcome')} />
+        <StepHeader t={t} step={step} onBack={() => setStep('contact')} />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
           <div className={`w-full ${CONTENT_WIDTH}`}>
             {locatePhase !== 'found' && (
@@ -1177,6 +1510,50 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                         ฿{Math.round(parseFloat(item.price) * item.qty)}
                       </p>
                     </div>
+                    {/* Structured options — same global set on every line
+                        (lib/menuOptions.js), applies to the whole qty, same
+                        as the note below. First option shown selected until
+                        the customer actually picks something (item.sweetness
+                        / item.coffeeBean stay undefined until then). Gated
+                        behind /admin/settings — off by default (2026-08-17,
+                        shop wants it hidden for now; the toggle is there to
+                        turn it back on later with no code change). */}
+                    {menuOptionsEnabled && (
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] tracking-[0.08em] uppercase text-black/40 w-full">{t.sweetnessLabel}</span>
+                          {SWEETNESS_OPTIONS.map((opt) => {
+                            const selected = (item.sweetness || SWEETNESS_OPTIONS[0]) === opt
+                            return (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => updateSweetness(item.id, opt)}
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${selected ? 'bg-[#4a3520] text-white' : 'bg-black/[0.06] text-ink hover:bg-black/10'}`}
+                              >
+                                {opt}
+                              </button>
+                            )
+                          })}
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] tracking-[0.08em] uppercase text-black/40 w-full">{t.coffeeBeanLabel}</span>
+                          {COFFEE_BEAN_OPTIONS.map((opt) => {
+                            const selected = (item.coffeeBean || COFFEE_BEAN_OPTIONS[0]) === opt
+                            return (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => updateCoffeeBean(item.id, opt)}
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${selected ? 'bg-[#4a3520] text-white' : 'bg-black/[0.06] text-ink hover:bg-black/10'}`}
+                              >
+                                {opt}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                     {/* Applies to the whole line (all `qty` of this item), not
                         per unit — see lib/cart.js updateNote. */}
                     <input
@@ -1193,6 +1570,12 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                     <span>{t.itemsSubtotalLabel}</span>
                     <span className="tabular-nums">฿{itemsSubtotal}</span>
                   </div>
+                  {discountAmount > 0 && (
+                    <div className="flex items-center justify-between text-[13px] text-emerald-700">
+                      <span>{t.discountLabel}</span>
+                      <span className="tabular-nums">-฿{discountAmount}</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-[13px]">
                     <span className="text-black/60">{t.deliveryFeeLabel}</span>
                     {deliveryMethod === 'delivery' ? (
@@ -1212,6 +1595,9 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                     <span className="text-[13px] font-semibold text-ink">{t.total}</span>
                     <span className="font-display text-[20px] text-ink tabular-nums">฿{amount}</span>
                   </div>
+                  {hasLineId && pointsPreview > 0 && !belowMinOrder && (
+                    <p className="text-[12px] text-[#b06d2b] text-right">{t.pointsPreview(pointsPreview)}</p>
+                  )}
                 </div>
               </div>
 
@@ -1227,23 +1613,31 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
               )}
 
               <div className="flex flex-col gap-3">
-                <label className="block">
-                  <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.phone}</span>
-                  <input className={`mt-1 ${inputCls}`} inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-                  {phoneLookup === 'found' && (
-                    <p className="mt-1.5 text-[12px] text-[#4a3520] flex items-center gap-1">✓ {t.phoneFound}</p>
-                  )}
-                </label>
-                <label className="block">
-                  <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.name}</span>
-                  <input className={`mt-1 ${inputCls}`} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                </label>
-                <label className="block">
-                  <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">
-                    {t.address}{deliveryMethod !== 'delivery' && <span className="normal-case tracking-normal text-black/35"> {t.addressOptionalNote}</span>}
-                  </span>
-                  <textarea rows={2} className={`mt-1 resize-none ${inputCls}`} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-                </label>
+                {/* Contact/address is already resolved by the earlier
+                    `contact` step (right after login) — this is a read-only
+                    recap, not another form. "แก้ไข" jumps back there with
+                    the plain form open, e.g. their address changed. */}
+                <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.confirmInfoTitle}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingInfo(true)
+                        setContactMode('form')
+                        setStep('contact')
+                      }}
+                      className="text-[12px] font-medium text-[#4a3520] underline underline-offset-2"
+                    >
+                      {t.editInfo}
+                    </button>
+                  </div>
+                  <div className="flex flex-col gap-1 text-[13px] text-ink">
+                    <p className="font-medium">{form.name}</p>
+                    <p className="text-black/60 tabular-nums">{form.phone}</p>
+                    {form.address.trim() && <p className="text-black/60 whitespace-pre-line">{form.address}</p>}
+                  </div>
+                </div>
                 <label className="block">
                   <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.note}</span>
                   <input className={`mt-1 ${inputCls}`} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
@@ -1401,8 +1795,17 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         </p>
 
         {slipStatus === 'ok' ? (
-          <div className="w-full text-center rounded-xl bg-[#3a2818] text-white px-4 py-3 text-[14px] font-semibold leading-[1.6]">
-            {t.slipVerified}
+          <div className="w-full flex flex-col gap-2">
+            <div className="w-full text-center rounded-xl bg-[#3a2818] text-white px-4 py-3 text-[14px] font-semibold leading-[1.6]">
+              {t.slipVerified}
+            </div>
+            {/* Same number shown as the Summary preview — fixed once at order
+                creation (pages/api/orders.js), just "banked" now that payment
+                is actually confirmed. Only shown here, not before, so
+                "earned" means the payment really went through. */}
+            {completed?.pointsEarned > 0 && (
+              <p className="text-center text-[13px] font-semibold text-[#b06d2b]">{t.pointsEarnedBanner(completed.pointsEarned)}</p>
+            )}
           </div>
         ) : slipStatus === 'stored' ? (
           <div className="w-full text-center rounded-xl bg-[#3a2818] text-white px-4 py-3 text-[14px] font-semibold leading-[1.6]">

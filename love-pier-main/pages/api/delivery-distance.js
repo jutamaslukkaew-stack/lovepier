@@ -36,13 +36,31 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  const s = await getShopSettings()
+
+  // Bypass mode: the `contact` step's "ใช้ที่อยู่เดิม" replays a distance
+  // already on file (the customer's last order, see /api/customer.js)
+  // instead of asking the browser for a fresh GPS position. Recomputes
+  // radius/fee from current settings rather than trusting a cached fee, so a
+  // settings change since their last order is still honored.
+  const bypassKm = Number(req.body?.distanceKm)
+  if (req.body?.lat === undefined && Number.isFinite(bypassKm)) {
+    const deliveryFee = calcDeliveryFee(bypassKm, { tiers: s.deliveryFeeTiers })
+    return res.status(200).json({
+      distanceKm: bypassKm,
+      radiusKm: s.radiusKm,
+      withinRadius: bypassKm <= s.radiusKm,
+      method: 'cached',
+      configured: true,
+      deliveryFee,
+    })
+  }
+
   const lat = Number(req.body?.lat)
   const lng = Number(req.body?.lng)
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return res.status(400).json({ error: 'พิกัดไม่ถูกต้อง' })
   }
-
-  const s = await getShopSettings()
 
   // Shop location not set → can't measure. Degrade gracefully ("warn but allow").
   if (!Number.isFinite(s.shopLat) || !Number.isFinite(s.shopLng)) {

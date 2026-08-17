@@ -22,6 +22,17 @@ export const SETTING_KEYS = {
   deliveryFeeTier3km: 'delivery_fee_tier_3km', // 2–3 km
   deliveryFeeTier4km: 'delivery_fee_tier_4km', // 3–4 km
   deliveryFeeTier5km: 'delivery_fee_tier_5km', // 4–5 km
+  // Loyalty points earned per baht of (post-discount) item subtotal — see
+  // lib/points.js#calcOrderDiscountAndPoints. 0 disables points entirely.
+  pointsPerBaht: 'loyalty_points_per_baht',
+  // % off itemsSubtotal for orders with a LINE ID attached (LIFF login
+  // completed) — never applies to delivery fee. 0 disables the discount.
+  memberDiscountPercent: 'member_discount_percent',
+  // Whether the Summary step shows the sweetness/coffee-bean pickers per
+  // cart item (lib/menuOptions.js). Off by default — added 2026-08-17 so
+  // the shop can turn it on later without a code change; unset/anything
+  // other than the literal string 'true' reads as off.
+  menuOptionsEnabled: 'menu_customization_enabled',
 }
 
 function num(v) {
@@ -62,5 +73,8 @@ export async function getShopSettings() {
       ...tier,
       fee: Number.isFinite(tier.fee) ? tier.fee : DEFAULT_DELIVERY_FEE_TIERS[i].fee,
     })),
+    pointsPerBaht: m[SETTING_KEYS.pointsPerBaht] ? num(m[SETTING_KEYS.pointsPerBaht]) : 25,
+    memberDiscountPercent: m[SETTING_KEYS.memberDiscountPercent] ? num(m[SETTING_KEYS.memberDiscountPercent]) : 10,
+    menuOptionsEnabled: m[SETTING_KEYS.menuOptionsEnabled] === 'true',
   }
 }
