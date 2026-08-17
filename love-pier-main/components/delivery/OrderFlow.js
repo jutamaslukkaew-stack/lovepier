@@ -1410,8 +1410,8 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         <StepHeader t={t} step={step} onBack={() => setStep('distance')} />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
           <div className={`w-full ${CONTENT_WIDTH}`}>
-            <h1 className="font-display text-[22px] text-ink text-center mb-6">{t.methodTitle}</h1>
-            <div className="flex flex-col gap-3">
+            <h1 className="font-display text-[28px] text-ink text-center mb-8">{t.methodTitle}</h1>
+            <div className="flex flex-col gap-4">
               {/* Both options stay selectable here regardless of the ฿300
                   minimum — the cart is often still empty at this point (this
                   step comes before menu) and the customer needs a way to
@@ -1422,22 +1422,22 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
               <button
                 type="button"
                 onClick={() => setDeliveryMethod('delivery')}
-                className={`text-left rounded-2xl border px-4 py-3.5 transition-colors ${
+                className={`text-left rounded-2xl border px-5 py-5 transition-colors ${
                   deliveryMethod === 'delivery'
                     ? 'border-[#4a3520] bg-[#4a3520]/[0.04]'
                     : 'border-black/10 bg-white hover:border-black/20'
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <span
                     aria-hidden="true"
-                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${deliveryMethod === 'delivery' ? 'border-[#4a3520]' : 'border-black/20'}`}
+                    className={`w-6 h-6 rounded-full border-[3px] flex items-center justify-center shrink-0 ${deliveryMethod === 'delivery' ? 'border-[#4a3520]' : 'border-black/20'}`}
                   >
-                    {deliveryMethod === 'delivery' && <span className="w-2 h-2 rounded-full bg-[#4a3520]" />}
+                    {deliveryMethod === 'delivery' && <span className="w-3 h-3 rounded-full bg-[#4a3520]" />}
                   </span>
                   <span className="flex-1">
-                    <span className="block text-[14px] font-medium text-ink">{t.methodDeliveryLabel}</span>
-                    <span className="block text-[12px] text-black/50 mt-0.5">{t.methodDeliveryDesc(previewFee)}</span>
+                    <span className="block text-[18px] font-medium text-ink leading-snug">{t.methodDeliveryLabel}</span>
+                    <span className="block text-[15px] leading-relaxed text-black/50 mt-1">{t.methodDeliveryDesc(previewFee)}</span>
                   </span>
                 </div>
               </button>
@@ -1445,22 +1445,22 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
               <button
                 type="button"
                 onClick={() => setDeliveryMethod('pickup')}
-                className={`text-left rounded-2xl border px-4 py-3.5 transition-colors ${
+                className={`text-left rounded-2xl border px-5 py-5 transition-colors ${
                   deliveryMethod === 'pickup'
                     ? 'border-[#4a3520] bg-[#4a3520]/[0.04]'
                     : 'border-black/10 bg-white hover:border-black/20'
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <span
                     aria-hidden="true"
-                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${deliveryMethod === 'pickup' ? 'border-[#4a3520]' : 'border-black/20'}`}
+                    className={`w-6 h-6 rounded-full border-[3px] flex items-center justify-center shrink-0 ${deliveryMethod === 'pickup' ? 'border-[#4a3520]' : 'border-black/20'}`}
                   >
-                    {deliveryMethod === 'pickup' && <span className="w-2 h-2 rounded-full bg-[#4a3520]" />}
+                    {deliveryMethod === 'pickup' && <span className="w-3 h-3 rounded-full bg-[#4a3520]" />}
                   </span>
                   <span className="flex-1">
-                    <span className="block text-[14px] font-medium text-ink">{t.methodPickupLabel}</span>
-                    <span className="block text-[12px] text-black/50 mt-0.5">{t.methodPickupDesc}</span>
+                    <span className="block text-[18px] font-medium text-ink leading-snug">{t.methodPickupLabel}</span>
+                    <span className="block text-[15px] leading-relaxed text-black/50 mt-1">{t.methodPickupDesc}</span>
                   </span>
                 </div>
               </button>
