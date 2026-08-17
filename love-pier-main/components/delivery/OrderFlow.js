@@ -123,9 +123,13 @@ const COPY = {
     editInfo: 'แก้ไขข้อมูล',
     // step 1b — contact / address
     contactGreeting: (name) => `สวัสดีค่ะ คุณ${name}`,
-    contactGreetingSub: 'จัดส่งที่เดิมเลยไหมคะ หรืออยากเปลี่ยนที่อยู่ใหม่?',
-    useSavedAddress: 'ใช้ที่อยู่เดิม',
-    useNewAddress: 'ใช้ที่อยู่ใหม่',
+    contactGreetingSub: 'เลือกใช้ที่อยู่ล่าสุด หรือเปลี่ยนที่อยู่สำหรับออเดอร์นี้ได้เลยค่ะ',
+    savedAddressLabel: 'ที่อยู่จากออเดอร์ล่าสุด',
+    savedAddressNote: 'ประวัติที่อยู่ในออเดอร์ก่อนหน้าจะยังคงถูกเก็บไว้',
+    useSavedAddress: 'ใช้ที่อยู่ล่าสุด',
+    editSavedAddress: 'แก้ไขที่อยู่ล่าสุด',
+    useNewAddress: 'กรอกที่อยู่ใหม่',
+    addressSaveNote: 'เมื่อยืนยันออเดอร์ ที่อยู่นี้จะถูกบันทึกเป็นที่อยู่ล่าสุดของคุณ',
     contactFormTitle: 'ข้อมูลติดต่อและที่อยู่จัดส่ง',
     contactChecking: 'กำลังตรวจสอบข้อมูล...',
     orderRecapTitle: 'ตรวจสอบรายการก่อนชำระเงิน',
@@ -225,9 +229,13 @@ const COPY = {
     confirmInfoTitle: 'Your details',
     editInfo: 'Edit',
     contactGreeting: (name) => `Hi, ${name}`,
-    contactGreetingSub: 'Deliver to your usual spot, or somewhere new today?',
-    useSavedAddress: 'Use saved address',
-    useNewAddress: 'Use a new address',
+    contactGreetingSub: 'Use your latest address, or change it for this order.',
+    savedAddressLabel: 'Latest order address',
+    savedAddressNote: 'Addresses on previous orders remain in your order history.',
+    useSavedAddress: 'Use latest address',
+    editSavedAddress: 'Edit latest address',
+    useNewAddress: 'Enter a new address',
+    addressSaveNote: 'After you confirm the order, this becomes your latest saved address.',
     contactFormTitle: 'Contact & delivery address',
     contactChecking: 'Checking your details...',
     orderRecapTitle: 'Review before you pay',
@@ -325,9 +333,13 @@ const COPY = {
     confirmInfoTitle: '您的信息',
     editInfo: '编辑',
     contactGreeting: (name) => `您好，${name}`,
-    contactGreetingSub: '还是配送到老地方，还是想换个新地址呢？',
-    useSavedAddress: '使用原地址',
-    useNewAddress: '使用新地址',
+    contactGreetingSub: '使用最近地址，或为本次订单更改地址。',
+    savedAddressLabel: '最近订单地址',
+    savedAddressNote: '以前订单中的地址仍会保留。',
+    useSavedAddress: '使用最近地址',
+    editSavedAddress: '编辑最近地址',
+    useNewAddress: '输入新地址',
+    addressSaveNote: '确认订单后，此地址将保存为您的最近地址。',
     contactFormTitle: '联系方式和配送地址',
     contactChecking: '正在核对您的资料...',
     orderRecapTitle: '付款前请核对订单',
@@ -431,7 +443,7 @@ function StickyActionBar({ children }) {
 // anything; occasionally (a slow lookup) at the top of the `contact` step
 // instead, if they already tapped through before it resolved. Same card
 // either way — see the two call sites in OrderFlow below.
-function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
+function GreetingChoiceCard({ t, name, address, onUseSaved, onEditSaved, onUseNew }) {
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -439,8 +451,9 @@ function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
         <p className="mt-1.5 text-[13px] text-black/55 font-light leading-relaxed">{t.contactGreetingSub}</p>
       </div>
       <div className="rounded-xl bg-white border border-black/10 px-4 py-3.5">
-        <span className="text-[11px] tracking-[0.1em] uppercase text-black/40">{t.address}</span>
+        <span className="text-[11px] tracking-[0.1em] uppercase text-black/40">{t.savedAddressLabel}</span>
         <p className="mt-1 text-[13px] text-ink whitespace-pre-line">{address}</p>
+        <p className="mt-2 text-[11px] leading-relaxed text-black/40">{t.savedAddressNote}</p>
       </div>
       <div className="flex flex-col gap-2.5">
         <button
@@ -448,6 +461,12 @@ function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
           className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors"
         >
           {t.useSavedAddress}
+        </button>
+        <button
+          onClick={onEditSaved}
+          className="w-full py-3.5 rounded-xl border border-[#4a3520]/20 bg-white text-ink font-semibold text-[14px] hover:bg-black/[0.03] transition-colors"
+        >
+          {t.editSavedAddress}
         </button>
         <button
           onClick={onUseNew}
@@ -729,6 +748,14 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // `contact` step to show the form) or from `contact` already (a no-op).
   function useNewAddress() {
     setForm((f) => ({ ...f, address: '' }))
+    setContactMode('form')
+    setStep('contact')
+  }
+
+  // Edit starts with the latest address prefilled. Confirming the order
+  // replaces only customers.address; every historical order keeps the exact
+  // address it was originally submitted with.
+  function editSavedAddress() {
     setContactMode('form')
     setStep('contact')
   }
@@ -1099,7 +1126,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
             style={{ paddingBottom: 'max(1.75rem, env(safe-area-inset-bottom))' }}
           >
             <div className={`${CONTENT_WIDTH} mx-auto w-full`}>
-              <GreetingChoiceCard t={t} name={profile?.displayName || form.name} address={form.address} onUseSaved={useSavedAddress} onUseNew={useNewAddress} />
+              <GreetingChoiceCard t={t} name={profile?.displayName || form.name} address={form.address} onUseSaved={useSavedAddress} onEditSaved={editSavedAddress} onUseNew={useNewAddress} />
             </div>
           </section>
         </div>
@@ -1219,10 +1246,11 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
               // customer had already tapped through Welcome. The common
               // case shows this same card directly on Welcome instead; see
               // GreetingChoiceCard's own comment.
-              <GreetingChoiceCard t={t} name={form.name} address={form.address} onUseSaved={useSavedAddress} onUseNew={useNewAddress} />
+              <GreetingChoiceCard t={t} name={form.name} address={form.address} onUseSaved={useSavedAddress} onEditSaved={editSavedAddress} onUseNew={useNewAddress} />
             ) : contactMode === 'form' ? (
               <div className="flex flex-col gap-4">
                 <h1 className="font-display text-[22px] text-ink text-center">{t.contactFormTitle}</h1>
+                <p className="-mt-2 text-center text-[12px] leading-relaxed text-black/45">{t.addressSaveNote}</p>
                 <label className="block">
                   <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.phone}</span>
                   <input className={`mt-1 ${inputCls}`} inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
