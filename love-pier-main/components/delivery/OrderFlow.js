@@ -128,6 +128,7 @@ const COPY = {
     savedAddressNote: 'ประวัติที่อยู่ในออเดอร์ก่อนหน้าจะยังคงถูกเก็บไว้',
     useSavedAddress: 'ใช้ที่อยู่เดิม',
     useNewAddress: 'ใช้ที่อยู่ใหม่',
+    newAddressDesc: 'กรอกที่อยู่จัดส่งใหม่ในขั้นตอนถัดไป',
     addressSaveNote: 'เมื่อยืนยันออเดอร์ ที่อยู่นี้จะถูกบันทึกเป็นที่อยู่ล่าสุดของคุณ',
     contactFormTitle: 'ข้อมูลติดต่อและที่อยู่จัดส่ง',
     contactChecking: 'กำลังตรวจสอบข้อมูล...',
@@ -233,6 +234,7 @@ const COPY = {
     savedAddressNote: 'Addresses on previous orders remain in your order history.',
     useSavedAddress: 'Use latest address',
     useNewAddress: 'Enter a new address',
+    newAddressDesc: 'Enter a different delivery address on the next step.',
     addressSaveNote: 'After you confirm the order, this becomes your latest saved address.',
     contactFormTitle: 'Contact & delivery address',
     contactChecking: 'Checking your details...',
@@ -336,6 +338,7 @@ const COPY = {
     savedAddressNote: '以前订单中的地址仍会保留。',
     useSavedAddress: '使用最近地址',
     useNewAddress: '输入新地址',
+    newAddressDesc: '在下一步输入新的配送地址。',
     addressSaveNote: '确认订单后，此地址将保存为您的最近地址。',
     contactFormTitle: '联系方式和配送地址',
     contactChecking: '正在核对您的资料...',
@@ -441,6 +444,13 @@ function StickyActionBar({ children }) {
 // instead, if they already tapped through before it resolved. Same card
 // either way — see the two call sites in OrderFlow below.
 function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
+  const [choice, setChoice] = useState(null)
+
+  function confirmChoice() {
+    if (choice === 'saved') onUseSaved()
+    if (choice === 'new') onUseNew()
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <div className="relative overflow-hidden rounded-2xl border border-[#4a3520]/15 bg-white/55 px-5 py-6 text-center shadow-[0_8px_28px_rgba(74,53,32,0.06)]">
@@ -450,23 +460,46 @@ function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
         <span aria-hidden="true" className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full border border-[#b89567]/10" />
         <span aria-hidden="true" className="pointer-events-none absolute -bottom-12 -left-10 h-28 w-28 rounded-full border border-[#b89567]/10" />
       </div>
-      <div className="rounded-xl bg-white border border-black/10 px-4 py-3.5">
-        <span className="text-[11px] tracking-[0.1em] uppercase text-black/40">{t.savedAddressLabel}</span>
-        <p className="mt-1 text-[13px] text-ink whitespace-pre-line">{address}</p>
-        <p className="mt-2 text-[11px] leading-relaxed text-black/40">{t.savedAddressNote}</p>
-      </div>
       <div className="flex flex-col gap-2.5">
         <button
-          onClick={onUseSaved}
-          className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors"
+          type="button"
+          onClick={() => setChoice('saved')}
+          className={`w-full rounded-xl border px-4 py-4 text-left transition-colors ${choice === 'saved' ? 'border-[#4a3520] bg-[#4a3520]/[0.05]' : 'border-black/10 bg-white'}`}
         >
-          {t.useSavedAddress}
+          <span className="flex items-start gap-3">
+            <span aria-hidden="true" className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center ${choice === 'saved' ? 'border-[#4a3520]' : 'border-black/20'}`}>
+              {choice === 'saved' && <span className="h-2.5 w-2.5 rounded-full bg-[#4a3520]" />}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[15px] font-semibold text-ink">{t.useSavedAddress}</span>
+              <span className="mt-1 block text-[11px] tracking-[0.08em] uppercase text-black/40">{t.savedAddressLabel}</span>
+              <span className="mt-1 block text-[13px] leading-relaxed text-ink whitespace-pre-line">{address}</span>
+              <span className="mt-2 block text-[11px] leading-relaxed text-black/40">{t.savedAddressNote}</span>
+            </span>
+          </span>
         </button>
         <button
-          onClick={onUseNew}
-          className="w-full py-3.5 rounded-xl bg-black/[0.06] text-ink font-semibold text-[14px] hover:bg-black/10 transition-colors"
+          type="button"
+          onClick={() => setChoice('new')}
+          className={`w-full rounded-xl border px-4 py-4 text-left transition-colors ${choice === 'new' ? 'border-[#4a3520] bg-[#4a3520]/[0.05]' : 'border-black/10 bg-white'}`}
         >
-          {t.useNewAddress}
+          <span className="flex items-start gap-3">
+            <span aria-hidden="true" className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center ${choice === 'new' ? 'border-[#4a3520]' : 'border-black/20'}`}>
+              {choice === 'new' && <span className="h-2.5 w-2.5 rounded-full bg-[#4a3520]" />}
+            </span>
+            <span>
+              <span className="block text-[15px] font-semibold text-ink">{t.useNewAddress}</span>
+              <span className="mt-1 block text-[12px] leading-relaxed text-black/45">{t.newAddressDesc}</span>
+            </span>
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={confirmChoice}
+          disabled={!choice}
+          className="mt-2 w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-35"
+        >
+          {t.next}
         </button>
       </div>
     </div>
