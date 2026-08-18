@@ -25,7 +25,10 @@ import { buildPaymentPayload } from '../../lib/promptpay'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
 import { SWEETNESS_OPTIONS, COFFEE_BEAN_OPTIONS } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
+import OrderJourney from './OrderJourney'
+import DeliveryTruckIcon from './DeliveryTruckIcon'
 import MenuExperience from '../menu/MenuExperience'
+import { CheckCircle2, Sparkles, Receipt, User, StickyNote } from 'lucide-react'
 
 // Leaflet touches `window` at import time — must never be pulled into the
 // server bundle, hence ssr:false.
@@ -159,6 +162,10 @@ const COPY = {
     slipRetry: 'แนบสลิปใหม่อีกครั้ง',
     verifyHint: 'ระบบตรวจสลิปอัตโนมัติ (จับสลิปปลอมได้)',
     done: 'เสร็จสิ้น — สั่งใหม่',
+    journeyPaid: 'ชำระเงิน',
+    journeyPrep: 'ร้านกำลังเตรียม',
+    journeyDeliver: 'กำลังจัดส่ง',
+    journeyPickup: 'พร้อมให้รับ',
   },
   en: {
     back: 'Back',
@@ -263,6 +270,10 @@ const COPY = {
     slipRetry: 'Attach a different slip',
     verifyHint: 'Automatic slip check (detects fakes)',
     done: 'Done — order again',
+    journeyPaid: 'Paid',
+    journeyPrep: 'Shop is preparing',
+    journeyDeliver: 'Out for delivery',
+    journeyPickup: 'Ready for pickup',
   },
   zh: {
     back: '返回',
@@ -367,6 +378,10 @@ const COPY = {
     slipRetry: '重新上传凭证',
     verifyHint: '自动核验凭证（可识别伪造）',
     done: '完成 — 再次下单',
+    journeyPaid: '已付款',
+    journeyPrep: '店家备餐中',
+    journeyDeliver: '配送中',
+    journeyPickup: '可以取餐',
   },
 }
 
@@ -435,13 +450,15 @@ function StickyActionBar({ children }) {
 }
 
 // The recognize-a-returning-customer moment — the one place in this flow
-// that gets to feel personal rather than procedural (see DESIGN.md: light
-// display serif carries the warmth, not an emoji standing in for it). Shown
-// from two different places depending on timing: usually right on Welcome,
-// the instant the LINE lookup resolves before the customer has tapped
-// anything; occasionally (a slow lookup) at the top of the `contact` step
-// instead, if they already tapped through before it resolved. Same card
-// either way — see the two call sites in OrderFlow below.
+// that gets to feel personal rather than procedural. A small "savoring the
+// food" badge (gentle happy wobble — see keyframes in styles/globals.css)
+// sits above the name to read as warm/friendly at a glance, alongside the
+// light display serif. Shown from two different places depending on
+// timing: usually right on Welcome, the instant the LINE lookup resolves
+// before the customer has tapped anything; occasionally (a slow lookup) at
+// the top of the `contact` step instead, if they already tapped through
+// before it resolved. Same card either way — see the two call sites in
+// OrderFlow below.
 function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
   const [choice, setChoice] = useState(null)
 
@@ -453,7 +470,13 @@ function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
   return (
     <div className="flex flex-col gap-5">
       <div className="relative overflow-hidden rounded-2xl border border-[#4a3520]/15 bg-white/55 px-5 py-6 text-center shadow-[0_8px_28px_rgba(74,53,32,0.06)]">
-        <span aria-hidden="true" className="mx-auto mb-4 block h-px w-12 bg-[#b89567]" />
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f6ecd9] border border-[#b89567]/25">
+          <span
+            aria-hidden="true"
+            className="block text-[24px] leading-none"
+            style={{ animation: 'greetingYum 2.6s ease-in-out infinite' }}
+          >😋</span>
+        </div>
         <p className="font-display font-light text-[clamp(28px,7.5vw,34px)] text-ink leading-[1.3]">{t.contactGreeting(name)}</p>
         <p className="mx-auto mt-2 max-w-[30rem] text-[13px] text-black/55 font-light leading-relaxed">{t.contactGreetingSub}</p>
         <span aria-hidden="true" className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full border border-[#b89567]/10" />
@@ -1461,7 +1484,10 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         <StepHeader t={t} step={step} onBack={() => setStep('distance')} />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
           <div className={`w-full ${CONTENT_WIDTH}`}>
-            <h1 className="font-display text-[28px] text-ink text-center mb-8">{t.methodTitle}</h1>
+            <h1 className="font-display text-[28px] text-ink text-center mb-8 flex items-center justify-center gap-2.5">
+              <DeliveryTruckIcon size={32} className="shrink-0" />
+              {t.methodTitle}
+            </h1>
             <div className="flex flex-col gap-4">
               {/* Both options stay selectable here regardless of the ฿300
                   minimum — the cart is often still empty at this point (this
@@ -1558,7 +1584,10 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
       <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
         <StepHeader t={t} step={step} onBack={() => setStep('menu')} />
         <div className={`flex-1 ${CONTENT_WIDTH} w-full mx-auto px-5 py-5 flex flex-col gap-4`}>
-          <h1 className="font-display text-[22px] text-ink">{t.summaryTitle}</h1>
+          <h1 className="font-display text-[22px] text-ink flex items-center gap-2">
+            <Receipt size={20} strokeWidth={1.75} className="text-[#8c682c] shrink-0" />
+            {t.summaryTitle}
+          </h1>
 
           {items.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-10">
@@ -1721,7 +1750,10 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                     the plain form open, e.g. their address changed. */}
                 <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.confirmInfoTitle}</span>
+                    <span className="flex items-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/45">
+                      <User size={13} strokeWidth={2} className="text-[#8c682c]" />
+                      {t.confirmInfoTitle}
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -1741,7 +1773,10 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                   </div>
                 </div>
                 <label className="block">
-                  <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.note}</span>
+                  <span className="flex items-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/45">
+                    <StickyNote size={13} strokeWidth={2} className="text-[#8c682c]" />
+                    {t.note}
+                  </span>
                   <input className={`mt-1 ${inputCls}`} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
                 </label>
                 {summaryError && <p className="text-[12px] text-red-600">{summaryError}</p>}
@@ -1877,6 +1912,24 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   return (
     <div className="min-h-[100dvh] bg-[#f5f2ee] flex items-start justify-center px-5 py-10">
       <div className={`w-full ${CONTENT_WIDTH} flex flex-col items-center text-center gap-4`}>
+        <div className="relative flex items-center justify-center w-16 h-16 mb-1">
+          <Sparkles
+            size={16}
+            className="absolute -top-1 -left-2 text-[#c9a96e]"
+            style={{ animation: 'orderSparkle 2.2s ease-in-out infinite' }}
+          />
+          <Sparkles
+            size={12}
+            className="absolute -bottom-0.5 -right-2 text-[#c9a96e]"
+            style={{ animation: 'orderSparkle 2.2s ease-in-out 0.5s infinite' }}
+          />
+          <div
+            className="w-16 h-16 rounded-full bg-[#3a2818] flex items-center justify-center"
+            style={{ animation: 'orderBadgePop 0.6s cubic-bezier(.34,1.56,.64,1) both' }}
+          >
+            <CheckCircle2 size={32} strokeWidth={2} className="text-white" />
+          </div>
+        </div>
         <h1 className="font-display text-[24px] text-ink">{t.successTitle}</h1>
         <div>
           <span className="text-[11px] tracking-[0.12em] uppercase text-black/45">{t.orderNo}</span>
@@ -1897,7 +1950,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         </p>
 
         {slipStatus === 'ok' ? (
-          <div className="w-full flex flex-col gap-2">
+          <div className="w-full flex flex-col gap-3">
             <div className="w-full text-center rounded-xl bg-[#3a2818] text-white px-4 py-3 text-[14px] font-semibold leading-[1.6]">
               {t.slipVerified}
             </div>
@@ -1908,6 +1961,9 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
             {completed?.pointsEarned > 0 && (
               <p className="text-center text-[13px] font-semibold text-[#b06d2b]">{t.pointsEarnedBanner(completed.pointsEarned)}</p>
             )}
+            <div className="w-full rounded-xl bg-white/60 border border-black/[0.06] px-2 py-3">
+              <OrderJourney method={completed?.deliveryMethod} t={t} />
+            </div>
           </div>
         ) : slipStatus === 'stored' ? (
           <div className="w-full text-center rounded-xl bg-[#3a2818] text-white px-4 py-3 text-[14px] font-semibold leading-[1.6]">
