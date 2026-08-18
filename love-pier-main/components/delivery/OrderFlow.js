@@ -159,6 +159,8 @@ const COPY = {
     attachSlip: 'แนบสลิปเพื่อยืนยันการชำระเงิน',
     verifyingSlip: 'กำลังตรวจสอบสลิป...',
     slipVerified: 'ยืนยันการชำระเงินแล้ว',
+    shopReceivedTitle: 'ร้านได้รับออเดอร์แล้ว',
+    shopReceivedWait: 'กรุณารอสักครู่',
     slipUploaded: 'แนบสลิปแล้ว รอร้านตรวจสอบ',
     slipRetry: 'แนบสลิปใหม่อีกครั้ง',
     verifyHint: 'ระบบตรวจสลิปอัตโนมัติ (จับสลิปปลอมได้)',
@@ -269,6 +271,8 @@ const COPY = {
     attachSlip: 'Attach slip to confirm payment',
     verifyingSlip: 'Verifying slip...',
     slipVerified: 'Payment verified',
+    shopReceivedTitle: 'The shop has received your order',
+    shopReceivedWait: 'Please wait a moment',
     slipUploaded: 'Slip attached — pending review',
     slipRetry: 'Attach a different slip',
     verifyHint: 'Automatic slip check (detects fakes)',
@@ -379,6 +383,8 @@ const COPY = {
     attachSlip: '上传凭证以确认付款',
     verifyingSlip: '正在核验凭证...',
     slipVerified: '付款已确认',
+    shopReceivedTitle: '店家已收到您的订单',
+    shopReceivedWait: '请稍候',
     slipUploaded: '凭证已上传 — 等待店家核对',
     slipRetry: '重新上传凭证',
     verifyHint: '自动核验凭证（可识别伪造）',
@@ -1940,25 +1946,40 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   return (
     <div className="min-h-[100dvh] bg-[#f5f2ee] flex items-start justify-center px-5 py-10">
       <div className={`w-full ${CONTENT_WIDTH} flex flex-col items-center text-center gap-4`}>
-        <div className="relative flex items-center justify-center w-16 h-16 mb-1">
-          <Sparkles
-            size={16}
-            className="absolute -top-1 -left-2 text-[#c9a96e]"
-            style={{ animation: 'orderSparkle 2.2s ease-in-out infinite' }}
-          />
-          <Sparkles
-            size={12}
-            className="absolute -bottom-0.5 -right-2 text-[#c9a96e]"
-            style={{ animation: 'orderSparkle 2.2s ease-in-out 0.5s infinite' }}
-          />
-          <div
-            className="w-16 h-16 rounded-full bg-[#3a2818] flex items-center justify-center"
-            style={{ animation: 'orderBadgePop 0.6s cubic-bezier(.34,1.56,.64,1) both' }}
-          >
-            <CheckCircle2 size={32} strokeWidth={2} className="text-white" />
+        {slipStatus === 'ok' ? (
+          <div className="w-full rounded-2xl bg-[#3a2818] px-5 py-7 text-white shadow-[0_12px_32px_rgba(58,40,24,0.2)]">
+            <div
+              className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white"
+              style={{ animation: 'orderBadgePop 0.6s cubic-bezier(.34,1.56,.64,1) both' }}
+            >
+              <CheckCircle2 size={46} strokeWidth={2.2} className="text-[#3a2818]" />
+            </div>
+            <h1 className="mt-5 font-display text-[28px] leading-tight">{t.shopReceivedTitle}</h1>
+            <p className="mt-2 text-[16px] font-light text-white/75">{t.shopReceivedWait}</p>
           </div>
-        </div>
-        <h1 className="font-display text-[24px] text-ink">{t.successTitle}</h1>
+        ) : (
+          <>
+            <div className="relative flex items-center justify-center w-16 h-16 mb-1">
+              <Sparkles
+                size={16}
+                className="absolute -top-1 -left-2 text-[#c9a96e]"
+                style={{ animation: 'orderSparkle 2.2s ease-in-out infinite' }}
+              />
+              <Sparkles
+                size={12}
+                className="absolute -bottom-0.5 -right-2 text-[#c9a96e]"
+                style={{ animation: 'orderSparkle 2.2s ease-in-out 0.5s infinite' }}
+              />
+              <div
+                className="w-16 h-16 rounded-full bg-[#3a2818] flex items-center justify-center"
+                style={{ animation: 'orderBadgePop 0.6s cubic-bezier(.34,1.56,.64,1) both' }}
+              >
+                <CheckCircle2 size={32} strokeWidth={2} className="text-white" />
+              </div>
+            </div>
+            <h1 className="font-display text-[24px] text-ink">{t.successTitle}</h1>
+          </>
+        )}
         <div>
           <span className="text-[11px] tracking-[0.12em] uppercase text-black/45">{t.orderNo}</span>
           <p className="font-display text-[24px] text-ink tracking-wide">{orderNo}</p>
