@@ -74,6 +74,7 @@ export async function loginAndGetProfile() {
     userId: profile.userId,
     displayName: profile.displayName,
     pictureUrl: profile.pictureUrl || '',
+    accessToken: liff.getAccessToken() || '',
   }
   logProfileToSheet(p)
   return p
@@ -105,6 +106,7 @@ export async function getProfileIfLoggedIn() {
       userId: profile.userId,
       displayName: profile.displayName,
       pictureUrl: profile.pictureUrl || '',
+      accessToken: liff.getAccessToken() || '',
     }
     logProfileToSheet(p)
     return p

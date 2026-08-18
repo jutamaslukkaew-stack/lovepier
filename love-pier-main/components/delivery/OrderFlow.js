@@ -19,10 +19,9 @@ import PageHero from '../PageHero'
 import { useLanguage } from '../../lib/language'
 import { useCart } from '../../lib/cart'
 import { useChrome } from '../../lib/chrome'
-import { isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessagesToChat } from '../../lib/liff'
+import { isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn } from '../../lib/liff'
 import { setDeliverySessionProfile, setDeliverySessionDistance } from '../../lib/deliverySession'
 import { buildPaymentPayload } from '../../lib/promptpay'
-import { buildOrderFlex } from '../../lib/orderFlex'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
 import { SWEETNESS_OPTIONS, COFFEE_BEAN_OPTIONS } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
@@ -664,7 +663,9 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     // within a few seconds, stop waiting and let the contact step fall back
     // to the plain form — a slow/erroring API must never hang the flow.
     const timeout = setTimeout(() => setLineLookupStatus((s) => (s === 'checking' ? 'done' : s)), 3000)
-    fetch(`/api/customer?lineUserId=${encodeURIComponent(uid)}`)
+    fetch('/api/customer', {
+      headers: { Authorization: `Bearer ${profile.accessToken || ''}` },
+    })
       .then((res) => res.json())
       .then((data) => {
         if (!data?.customer) return
@@ -999,8 +1000,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           paymentRef,
           distanceKm: distanceResult?.distanceKm ?? null,
           deliveryMethod: deliveryMethod || 'pickup',
-          lineUserId: profile?.userId || '',
-          lineDisplayName: profile?.displayName || '',
+          lineAccessToken: profile?.accessToken || '',
           pointsToRedeem: requestedPoints,
           items: items.map((i) => ({
             id: i.id,
@@ -1020,28 +1020,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
       const finalDiscount = data.discountAmount || 0
       const finalTotal = data.totalAmount ?? amount
 
-      const flex = buildOrderFlex({
-        orderNo: data.orderNo,
-        name: form.name,
-        phone: form.phone,
-        address: form.address,
-        items: items.map((i) => ({
-          name: i.name,
-          price: parseFloat(i.price) || 0,
-          qty: i.qty,
-          note: i.note || '',
-          sweetness: i.sweetness || SWEETNESS_OPTIONS[0],
-          coffeeBean: i.coffeeBean || COFFEE_BEAN_OPTIONS[0],
-        })),
-        total: finalTotal,
-        deliveryFee: finalDeliveryFee,
-        discountAmount: finalDiscount,
-        pointsRedeemed: data.pointsRedeemed || 0,
-        distanceKm: distanceResult?.distanceKm ?? null,
-        deliveryMethod,
-      })
-      const sent = await sendMessagesToChat([flex])
-      setSentToLine(sent)
+      setSentToLine(Boolean(data.sentToLine))
 
       setCompleted({
         total: finalTotal,

@@ -1,6 +1,7 @@
 import { and, desc, eq, isNotNull } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { customers, orders } from '../../lib/db/schema'
+import { verifyLineAccessToken } from '../../lib/lineIdentity'
 
 // GET /api/customer?lineUserId=xxx
 //   → { customer: { name, phone, address, lastOrderDistanceKm } | null }
@@ -15,9 +16,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const lineUserId =
-    typeof req.query.lineUserId === 'string' ? req.query.lineUserId.trim() : ''
-  if (!lineUserId) return res.status(200).json({ customer: null })
+  const authorization = typeof req.headers.authorization === 'string' ? req.headers.authorization : ''
+  const accessToken = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : ''
+  const verifiedLine = await verifyLineAccessToken(accessToken)
+  if (!verifiedLine) return res.status(401).json({ customer: null, error: 'Invalid LINE session' })
+  const lineUserId = verifiedLine.userId
 
   try {
     const rows = await db

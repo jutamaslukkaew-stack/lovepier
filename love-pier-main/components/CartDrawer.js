@@ -2,12 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useCart } from '../lib/cart'
 import { useLanguage } from '../lib/language'
 import { buildPaymentPayload } from '../lib/promptpay'
-import { buildOrderFlex } from '../lib/orderFlex'
 import {
   isLiffConfigured,
   loginAndGetProfile,
   getProfileIfLoggedIn,
-  sendMessagesToChat,
 } from '../lib/liff'
 import { getDeliverySession } from '../lib/deliverySession'
 
@@ -246,7 +244,9 @@ export default function CartDrawer() {
     // Fill name from LINE, then look up saved phone/address by userId.
     setForm((f) => ({ ...f, name: f.name || p.displayName }))
     try {
-      const res = await fetch(`/api/customer?lineUserId=${encodeURIComponent(p.userId)}`)
+      const res = await fetch('/api/customer', {
+        headers: { Authorization: `Bearer ${p.accessToken || ''}` },
+      })
       const data = await res.json()
       if (!cancelled && data?.customer) {
         setForm((f) => ({
@@ -368,8 +368,7 @@ export default function CartDrawer() {
           note: form.note,
           paymentRef,
           distanceKm,
-          lineUserId: profile?.userId || '',
-          lineDisplayName: profile?.displayName || '',
+          lineAccessToken: profile?.accessToken || '',
           items: items.map((i) => ({ id: i.id, name: i.name, price: parseFloat(i.price) || 0, qty: i.qty })),
         }),
       })
@@ -380,20 +379,10 @@ export default function CartDrawer() {
       const finalDeliveryFee = data.deliveryFee || 0
       const finalTotal = data.totalAmount ?? amount
 
-      // Auto-post the order card (Flex message) into the LINE chat — no button
-      // press needed. Only works inside LINE; returns false in a plain browser.
-      const flex = buildOrderFlex({
-        orderNo: data.orderNo,
-        name: form.name,
-        phone: form.phone,
-        address: form.address,
-        items: items.map((i) => ({ name: i.name, price: parseFloat(i.price) || 0, qty: i.qty })),
-        total: finalTotal,
-        deliveryFee: finalDeliveryFee,
-        distanceKm,
-      })
-      const sent = await sendMessagesToChat([flex])
-      setSentToLine(sent)
+      // The server verified the LIFF token and pushed to that exact user.
+      // Do not also use liff.sendMessages(): it targets the chat context the
+      // LIFF app was opened from, which may be a group or someone else's chat.
+      setSentToLine(Boolean(data.sentToLine))
 
       // Snapshot for the success screen / slip message before the cart clears.
       setCompleted({

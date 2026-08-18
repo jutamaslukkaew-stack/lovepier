@@ -55,7 +55,9 @@ export default function RewardsSection() {
     setProfile(lineProfile)
     setAccountStatus('loading')
     try {
-      const res = await fetch(`/api/customer?lineUserId=${encodeURIComponent(lineProfile.userId)}`)
+      const res = await fetch('/api/customer', {
+        headers: { Authorization: `Bearer ${lineProfile.accessToken || ''}` },
+      })
       const data = await res.json()
       setPointsBalance(Math.max(0, Number(data.customer?.pointsBalance) || 0))
       setAccountStatus('ready')

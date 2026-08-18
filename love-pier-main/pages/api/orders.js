@@ -7,6 +7,7 @@ import { getShopSettings } from '../../lib/settings'
 import { calcDeliveryFee } from '../../lib/deliveryFee'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
 import { SWEETNESS_OPTIONS, COFFEE_BEAN_OPTIONS } from '../../lib/menuOptions'
+import { verifyLineAccessToken } from '../../lib/lineIdentity'
 
 function pickString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -33,7 +34,7 @@ export default async function handler(req, res) {
   const address = pickString(req.body?.address)
   const note = pickString(req.body?.note)
   const paymentRef = pickString(req.body?.paymentRef)
-  const lineUserId = pickString(req.body?.lineUserId)
+  const lineAccessToken = pickString(req.body?.lineAccessToken)
   const distanceRaw = Number(req.body?.distanceKm)
   const distanceKm = Number.isFinite(distanceRaw) ? distanceRaw : null
   // Anything other than the literal 'delivery' is treated as pickup — a
@@ -47,6 +48,33 @@ export default async function handler(req, res) {
   }
   if (rawItems.length === 0) {
     return res.status(400).json({ error: 'ไม่มีรายการสั่งซื้อ' })
+  }
+
+  // Identity must come from LINE, never from lineUserId/displayName request
+  // fields. An invalid token is rejected; no token means a guest order.
+  const verifiedLine = lineAccessToken
+    ? await verifyLineAccessToken(lineAccessToken)
+    : null
+  if (lineAccessToken && !verifiedLine) {
+    return res.status(401).json({ error: 'เซสชัน LINE หมดอายุ กรุณาเปิดหน้าสั่งซื้อจาก LINE ใหม่อีกครั้ง' })
+  }
+  const lineUserId = verifiedLine?.userId || ''
+  const lineDisplayName = verifiedLine?.displayName || ''
+
+  // A phone already owned by another verified LINE account cannot be
+  // silently re-linked. This was the path that allowed customer details and
+  // notification identity to drift apart.
+  if (lineUserId) {
+    const [phoneOwner] = await db
+      .select({ lineUserId: customers.lineUserId })
+      .from(customers)
+      .where(eq(customers.phone, phone))
+      .limit(1)
+    if (phoneOwner?.lineUserId && phoneOwner.lineUserId !== lineUserId) {
+      return res.status(409).json({
+        error: 'เบอร์โทรนี้ผูกกับบัญชี LINE อื่นอยู่ กรุณาใช้เบอร์ของบัญชีนี้หรือติดต่อร้านเพื่อแก้ไขข้อมูล',
+      })
+    }
   }
 
   // Trust prices from the server-provided cart shape but recompute the total
@@ -178,7 +206,7 @@ export default async function handler(req, res) {
         .insert(customers)
         .values({
           lineUserId: lineUserId || null,
-          lineDisplayName: pickString(req.body?.lineDisplayName),
+          lineDisplayName,
           name,
           phone,
           address,
@@ -200,8 +228,8 @@ export default async function handler(req, res) {
           set: {
             name,
             address,
-            lineUserId: sql`coalesce(excluded.line_user_id, ${customers.lineUserId})`,
-            lineDisplayName: sql`coalesce(excluded.line_display_name, ${customers.lineDisplayName})`,
+            lineUserId: sql`coalesce(${customers.lineUserId}, excluded.line_user_id)`,
+            lineDisplayName: sql`coalesce(${customers.lineDisplayName}, excluded.line_display_name)`,
             updatedAt: sql`now()`,
           },
         })
@@ -222,13 +250,13 @@ export default async function handler(req, res) {
     // Send the order card "from the shop" to the customer too (Messaging
     // API push). Complements the customer-side liff.sendMessages(); skips
     // when there's no messaging token or no LINE userId for this order.
-    if (lineUserId) {
-      await pushToUser(lineUserId, [flex])
-    }
+    const customerPush = lineUserId
+      ? await pushToUser(lineUserId, [flex])
+      : { ok: false, skipped: true }
 
     const slipVerify = Boolean(s.slipokApiKey && s.slipokBranchId)
 
-    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify })
+    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify, sentToLine: Boolean(customerPush.ok) })
   } catch (err) {
     if (err?.message === 'POINTS_BALANCE_CHANGED') {
       return res.status(409).json({ error: 'ยอดคะแนนมีการเปลี่ยนแปลง กรุณาลองใหม่อีกครั้ง' })
