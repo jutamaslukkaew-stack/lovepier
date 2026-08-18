@@ -63,7 +63,8 @@ const COPY = {
     welcomeStep2: (r) => `ทางร้านสามารถจัดส่งให้เองได้ในรัศมี ${r} กม.`,
     welcomeStep3: 'อยู่ไกลกว่านั้นก็ยังสั่งได้ เพียงเรียก Grab, LINE MAN หรือแมสเซนเจอร์เจ้าอื่นมารับอาหารที่ร้านเอง',
     lineConnected: (name) => `เชื่อมต่อกับ LINE ของคุณ${name}แล้ว`,
-    startOrder: 'เริ่มสั่งอาหาร',
+    startOrder: 'เข้าสู่ระบบ LINE เพื่อเริ่มสั่งอาหาร',
+    continueOrder: 'เริ่มสั่งอาหาร',
     loggingIn: 'กำลังเข้าสู่ระบบ LINE...',
     loginFailed: 'เข้าสู่ระบบ LINE ไม่สำเร็จ กรุณาลองใหม่',
     retry: 'ลองอีกครั้ง',
@@ -182,7 +183,8 @@ const COPY = {
     welcomeStep2: (r) => `We can deliver to you ourselves within ${r} km`,
     welcomeStep3: 'Further away? You can still order — just send Grab, LINE MAN, or another courier to collect it from the shop',
     lineConnected: (name) => `Connected to ${name}'s LINE account`,
-    startOrder: 'Start ordering',
+    startOrder: 'Log in with LINE to start ordering',
+    continueOrder: 'Start ordering',
     loggingIn: 'Logging in with LINE...',
     loginFailed: 'LINE login failed. Please try again.',
     retry: 'Retry',
@@ -294,7 +296,8 @@ const COPY = {
     welcomeStep2: (r) => `${r} 公里内可由本店为您配送`,
     welcomeStep3: '超出范围仍可下单，只需自行安排 Grab、LINE MAN 或其他快递员到店取餐',
     lineConnected: (name) => `已连接 ${name} 的 LINE 帐号`,
-    startOrder: '开始点餐',
+    startOrder: '使用 LINE 登录并开始点餐',
+    continueOrder: '开始点餐',
     loggingIn: '正在使用 LINE 登录...',
     loginFailed: 'LINE 登录失败，请重试',
     retry: '重试',
@@ -465,11 +468,9 @@ function StickyActionBar({ children }) {
 // smiling-face sticker makes the returning-customer greeting feel friendly.
 // sits above the name to read as warm/friendly at a glance, alongside the
 // light display serif. Shown from two different places depending on
-// timing: usually right on Welcome, the instant the LINE lookup resolves
-// before the customer has tapped anything; occasionally (a slow lookup) at
-// the top of the `contact` step instead, if they already tapped through
-// before it resolved. Same card either way — see the two call sites in
-// OrderFlow below.
+// timing: returning customers can see it as soon as their LINE lookup and
+// saved address resolve; new customers see the same personalized greeting
+// above the contact form after LINE login.
 function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
   const [choice, setChoice] = useState(null)
 
@@ -831,7 +832,11 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
 
   // ── Step 1: welcome + LINE login ─────────────────────────────────────
   async function handleStart() {
-    if (isLiffConfigured() && !profile) {
+    if (!profile) {
+      if (!isLiffConfigured()) {
+        setLoginPhase('failed')
+        return
+      }
       setLoginPhase('logging-in')
       try {
         const p = await loginAndGetProfile()
@@ -1192,28 +1197,6 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           style={{ paddingBottom: 'max(1.75rem, env(safe-area-inset-bottom))' }}
         >
           <div className={`${CONTENT_WIDTH} mx-auto w-full flex-1 flex flex-col`}>
-            {profile?.displayName && (
-              <div className="mb-5 flex items-center gap-3 rounded-xl border border-[#4a3520]/15 bg-white/55 px-3.5 py-3">
-                {profile.pictureUrl ? (
-                  // LINE supplies this URL as part of the signed-in profile.
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={profile.pictureUrl}
-                    alt=""
-                    className="h-9 w-9 shrink-0 rounded-full object-cover"
-                  />
-                ) : (
-                  <span aria-hidden="true" className="h-9 w-9 shrink-0 rounded-full bg-[#06c755] text-white flex items-center justify-center text-[11px] font-bold">
-                    LINE
-                  </span>
-                )}
-                <div className="min-w-0">
-                  <p className="text-[11px] font-medium tracking-[0.08em] uppercase text-[#06a847]">LINE</p>
-                  <p className="truncate text-[13px] text-ink">{t.lineConnected(profile.displayName)}</p>
-                </div>
-                <span aria-hidden="true" className="ml-auto text-[#06a847] text-[16px]">✓</span>
-              </div>
-            )}
             {/* Outranks the hero title on purpose. The band above is ambience;
                 this line is what the customer came to find out. Thai needs the
                 looser leading for its tone marks. */}
@@ -1255,7 +1238,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                 disabled={loginPhase === 'logging-in'}
                 className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-60"
               >
-                {loginPhase === 'logging-in' ? t.loggingIn : t.startOrder}
+                {loginPhase === 'logging-in' ? t.loggingIn : profile ? t.continueOrder : t.startOrder}
               </button>
               {loginPhase === 'failed' && (
                 <p className="mt-3 text-[12px] text-red-700 flex items-center justify-center gap-2">
@@ -1280,13 +1263,27 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
           <div className={`w-full ${CONTENT_WIDTH}`}>
             {contactMode === 'popup' ? (
-              // Rare timing case only — the LINE lookup resolved after the
-              // customer had already tapped through Welcome. The common
-              // case shows this same card directly on Welcome instead; see
-              // GreetingChoiceCard's own comment.
+              // Returning customer: greet by LINE name and offer the saved
+              // address. New customers receive a personalized greeting above
+              // the form below instead.
               <GreetingChoiceCard t={t} name={form.name} address={form.address} onUseSaved={useSavedAddress} onUseNew={useNewAddress} />
             ) : contactMode === 'form' ? (
               <div className="flex flex-col gap-4">
+                <div className="relative mb-1 overflow-hidden rounded-2xl border border-[#4a3520]/15 bg-white/60 px-5 py-5 text-center shadow-[0_8px_28px_rgba(74,53,32,0.06)]">
+                  <div className="mx-auto mb-2.5 flex h-12 w-12 items-center justify-center rounded-full border border-[#b89567]/25 bg-[#f6ecd9]">
+                    <img
+                      src="/uploads/icons8-savouring-delicious-food-face.gif"
+                      alt=""
+                      aria-hidden="true"
+                      className="h-9 w-9 object-contain"
+                    />
+                  </div>
+                  <p className="font-display text-[clamp(25px,7vw,31px)] font-light leading-[1.3] text-ink">
+                    {t.contactGreeting(profile?.displayName || form.name)}
+                  </p>
+                  <p className="mt-1.5 text-[12px] text-[#06a847]">✓ {t.lineConnected(profile?.displayName || form.name)}</p>
+                  <span aria-hidden="true" className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full border border-[#b89567]/10" />
+                </div>
                 <h1 className="font-display text-[22px] text-ink text-center">{t.contactFormTitle}</h1>
                 <p className="-mt-2 text-center text-[12px] leading-relaxed text-black/45">{t.addressSaveNote}</p>
                 <label className="block">

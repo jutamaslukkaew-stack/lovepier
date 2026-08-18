@@ -51,12 +51,17 @@ export default async function handler(req, res) {
   }
 
   // Identity must come from LINE, never from lineUserId/displayName request
-  // fields. An invalid token is rejected; no token means a guest order.
+  // fields. Every delivery order belongs to a verified LINE account so the
+  // shop can notify the right customer and loyalty points cannot drift.
   const verifiedLine = lineAccessToken
     ? await verifyLineAccessToken(lineAccessToken)
     : null
-  if (lineAccessToken && !verifiedLine) {
-    return res.status(401).json({ error: 'เซสชัน LINE หมดอายุ กรุณาเปิดหน้าสั่งซื้อจาก LINE ใหม่อีกครั้ง' })
+  if (!verifiedLine) {
+    return res.status(401).json({
+      error: lineAccessToken
+        ? 'เซสชัน LINE หมดอายุ กรุณาเข้าสู่ระบบ LINE ใหม่อีกครั้ง'
+        : 'กรุณาเข้าสู่ระบบ LINE ก่อนสั่งซื้อ',
+    })
   }
   const lineUserId = verifiedLine?.userId || ''
   const lineDisplayName = verifiedLine?.displayName || ''
