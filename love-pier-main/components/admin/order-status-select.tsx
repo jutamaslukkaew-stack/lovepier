@@ -1,6 +1,7 @@
 'use client'
 
 import { useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
   Select,
@@ -14,6 +15,7 @@ import { ORDER_STATUSES, STATUS_LABELS } from '@/app/admin/orders/status'
 
 export function OrderStatusSelect({ id, status }: { id: string; status: string }) {
   const [pending, startTransition] = useTransition()
+  const router = useRouter()
 
   function updateStatus(next: string) {
     startTransition(async () => {
@@ -27,11 +29,14 @@ export function OrderStatusSelect({ id, status }: { id: string; status: string }
       } else {
         toast.warning(`อัปเดตสถานะแล้ว แต่ส่ง LINE ไม่สำเร็จ`)
       }
+      if (res.ok && !res.unchanged) router.refresh()
     })
   }
 
-  const quickAction = status === 'paid'
-    ? { next: 'preparing', label: 'ยืนยันรับออเดอร์ · แจ้ง LINE' }
+  const quickAction = status === 'pending'
+    ? { next: 'paid', label: 'ยืนยันชำระเงิน · แจ้ง LINE' }
+    : status === 'paid'
+    ? { next: 'preparing', label: 'รับออเดอร์ · แจ้ง LINE' }
     : status === 'preparing'
       ? { next: 'done', label: 'ออเดอร์พร้อม · แจ้ง LINE' }
       : null

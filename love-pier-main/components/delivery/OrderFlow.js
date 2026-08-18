@@ -167,6 +167,12 @@ const COPY = {
     paymentNotified: 'แจ้งร้านเรียบร้อยแล้ว',
     shopReceivedTitle: 'ร้านได้รับออเดอร์แล้ว',
     shopReceivedWait: 'กรุณารอสักครู่',
+    orderSentTitle: 'ส่งออเดอร์ให้ร้านแล้ว',
+    orderSentWait: 'กำลังรอร้านยืนยันรับออเดอร์',
+    orderPaidTitle: 'ยืนยันการชำระเงินแล้ว',
+    orderPaidWait: 'กำลังรอร้านกดรับออเดอร์',
+    orderReadyTitle: 'ออเดอร์พร้อมแล้ว',
+    orderReadyWait: 'กรุณาตรวจสอบข้อความจากร้านทาง LINE',
     slipUploaded: 'แนบสลิปแล้ว รอร้านตรวจสอบ',
     slipRetry: 'แนบสลิปใหม่อีกครั้ง',
     verifyHint: 'ระบบตรวจสลิปอัตโนมัติ (จับสลิปปลอมได้)',
@@ -283,6 +289,12 @@ const COPY = {
     paymentNotified: 'Shop notified',
     shopReceivedTitle: 'The shop has received your order',
     shopReceivedWait: 'Please wait a moment',
+    orderSentTitle: 'Order sent to the shop',
+    orderSentWait: 'Waiting for the shop to accept your order',
+    orderPaidTitle: 'Payment confirmed',
+    orderPaidWait: 'Waiting for the shop to accept your order',
+    orderReadyTitle: 'Your order is ready',
+    orderReadyWait: 'Please check the message from the shop on LINE',
     slipUploaded: 'Slip attached — pending review',
     slipRetry: 'Attach a different slip',
     verifyHint: 'Automatic slip check (detects fakes)',
@@ -399,6 +411,12 @@ const COPY = {
     paymentNotified: '已通知店家',
     shopReceivedTitle: '店家已收到您的订单',
     shopReceivedWait: '请稍候',
+    orderSentTitle: '订单已发送给店家',
+    orderSentWait: '等待店家确认接单',
+    orderPaidTitle: '付款已确认',
+    orderPaidWait: '等待店家确认接单',
+    orderReadyTitle: '订单已准备好',
+    orderReadyWait: '请查看店家通过 LINE 发送的消息',
     slipUploaded: '凭证已上传 — 等待店家核对',
     slipRetry: '重新上传凭证',
     verifyHint: '自动核验凭证（可识别伪造）',
@@ -2042,6 +2060,21 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // ═══════════════════════════════════════════════════════════════════
   // Step 7 — Success
   // ═══════════════════════════════════════════════════════════════════
+  const successStatus = completed?.status || 'pending'
+  const successHeading = successStatus === 'done'
+    ? t.orderReadyTitle
+    : successStatus === 'preparing'
+      ? t.shopReceivedTitle
+      : successStatus === 'paid'
+        ? t.orderPaidTitle
+        : t.orderSentTitle
+  const successSubheading = successStatus === 'done'
+    ? t.orderReadyWait
+    : successStatus === 'preparing'
+      ? t.shopReceivedWait
+      : successStatus === 'paid'
+        ? t.orderPaidWait
+        : t.orderSentWait
   return (
     <div className="min-h-[100dvh] bg-[#f5f2ee] flex items-start justify-center px-5 py-10">
       <div className={`w-full ${CONTENT_WIDTH} flex flex-col items-center text-center gap-4`}>
@@ -2052,8 +2085,8 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           >
             <CheckCircle2 size={46} strokeWidth={2.2} className="text-[#3a2818]" />
           </div>
-          <h1 className="mt-5 font-display text-[28px] leading-tight">{t.shopReceivedTitle}</h1>
-          <p className="mt-2 text-[16px] font-light text-white/75">{t.shopReceivedWait}</p>
+          <h1 className="mt-5 font-display text-[28px] leading-tight">{successHeading}</h1>
+          <p className="mt-2 text-[16px] font-light text-white/75">{successSubheading}</p>
         </div>
         <div>
           <span className="text-[11px] tracking-[0.12em] uppercase text-black/45">{t.orderNo}</span>
