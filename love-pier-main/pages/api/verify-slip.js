@@ -37,7 +37,9 @@ export default async function handler(req, res) {
   if (result.verified && !result.alreadyPaid) {
     const flex = buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount, pointsEarned: order.pointsEarned })
     const targetIsCustomer = isStaffNotifyTarget(order.lineUserId)
-    if (!targetIsCustomer) await pushOrderCardToStaff(flex)
+    // Always alert the configured shop destination from the server. If it is
+    // also the customer's test account, skip only the duplicate customer push.
+    await pushOrderCardToStaff(flex)
     if (order.lineUserId && !targetIsCustomer) {
       await pushToUser(order.lineUserId, [flex])
     }

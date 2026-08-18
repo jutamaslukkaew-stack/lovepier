@@ -253,7 +253,12 @@ export default async function handler(req, res) {
     // moment the order is created — doesn't depend on the customer tapping
     // anything on their end, unlike the client-side LINE-deep-link reminder.
     const targetIsCustomer = isStaffNotifyTarget(lineUserId)
-    if (!targetIsCustomer) await pushOrderCardToStaff(flex)
+    // Staff alert is the reliable server-side path and must always run. The
+    // LIFF client message is only an optional convenience and is unavailable
+    // from some LINE entry points. When staff and customer are the same test
+    // account, send this staff copy once and skip only the second customer
+    // copy below.
+    const staffPush = await pushOrderCardToStaff(flex)
 
     // Send the order card "from the shop" to the customer too (Messaging
     // API push). Complements the customer-side liff.sendMessages(); skips
@@ -261,7 +266,7 @@ export default async function handler(req, res) {
     const customerPush = lineUserId && !targetIsCustomer
       ? await pushToUser(lineUserId, [flex])
       : targetIsCustomer
-        ? { ok: false, inboundLiffRequired: true }
+        ? { ok: Boolean(staffPush.ok), duplicateTargetSkipped: true }
       : { ok: false, skipped: true }
 
     const slipVerify = Boolean(s.slipokApiKey && s.slipokBranchId)
