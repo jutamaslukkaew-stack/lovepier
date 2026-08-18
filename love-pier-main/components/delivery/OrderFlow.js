@@ -39,6 +39,7 @@ const PROMPTPAY_TYPE = process.env.NEXT_PUBLIC_PROMPTPAY_TYPE || ''
 const PROMPTPAY_REF = process.env.NEXT_PUBLIC_PROMPTPAY_REF || ''
 const PROMPTPAY_REF2 = process.env.NEXT_PUBLIC_PROMPTPAY_REF2 || ''
 const PROMPTPAY_TERMINAL_LABEL = process.env.NEXT_PUBLIC_PROMPTPAY_TERMINAL_LABEL || ''
+const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@lovepier.cafe'
 
 // Our own per-order reference, for display/reconciliation only (shown in the
 // LINE message, stored on the order) — NOT embedded in the QR. The QR's own
@@ -161,6 +162,9 @@ const COPY = {
     attachSlip: 'ยืนยันชำระเงิน · แนบสลิป',
     verifyingSlip: 'กำลังตรวจสอบสลิป...',
     slipVerified: 'ยืนยันการชำระเงินแล้ว',
+    notifyPayment: 'แจ้งร้านว่าชำระเงินแล้ว',
+    notifyingPayment: 'กำลังแจ้งร้าน...',
+    paymentNotified: 'แจ้งร้านเรียบร้อยแล้ว',
     shopReceivedTitle: 'ร้านได้รับออเดอร์แล้ว',
     shopReceivedWait: 'กรุณารอสักครู่',
     slipUploaded: 'แนบสลิปแล้ว รอร้านตรวจสอบ',
@@ -274,6 +278,9 @@ const COPY = {
     attachSlip: 'Attach slip to confirm payment',
     verifyingSlip: 'Verifying slip...',
     slipVerified: 'Payment verified',
+    notifyPayment: 'Notify shop of payment',
+    notifyingPayment: 'Notifying shop...',
+    paymentNotified: 'Shop notified',
     shopReceivedTitle: 'The shop has received your order',
     shopReceivedWait: 'Please wait a moment',
     slipUploaded: 'Slip attached — pending review',
@@ -387,6 +394,9 @@ const COPY = {
     attachSlip: '上传凭证以确认付款',
     verifyingSlip: '正在核验凭证...',
     slipVerified: '付款已确认',
+    notifyPayment: '通知店家已付款',
+    notifyingPayment: '正在通知店家...',
+    paymentNotified: '已通知店家',
     shopReceivedTitle: '店家已收到您的订单',
     shopReceivedWait: '请稍候',
     slipUploaded: '凭证已上传 — 等待店家核对',
@@ -630,6 +640,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   const [sentToLine, setSentToLine] = useState(false)
   const [slipVerify, setSlipVerify] = useState(false)
   const [slipStatus, setSlipStatus] = useState('idle')
+  const [paymentNotifyStatus, setPaymentNotifyStatus] = useState('idle')
 
   const [slipError, setSlipError] = useState('')
 
@@ -1155,6 +1166,30 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     reader.readAsDataURL(file)
   }
 
+  async function notifyShopOfPayment() {
+    if (!orderNo || paymentNotifyStatus === 'sending') return
+    setPaymentNotifyStatus('sending')
+    const flex = buildPaymentConfirmedFlex({
+      orderNo,
+      total: completed?.total || 0,
+      pointsEarned: completed?.pointsEarned || 0,
+    })
+    const sent = await sendMessagesToChat([flex])
+    if (sent) {
+      setPaymentNotifyStatus('sent')
+      return
+    }
+
+    // Some LINE entry points allow login but not liff.sendMessages(). In that
+    // case open the OA conversation with a ready-to-send plain-text fallback
+    // instead of leaving a button that appears to do nothing.
+    const message = encodeURIComponent(
+      `แจ้งชำระเงินแล้ว\nเลขที่ออเดอร์ ${orderNo}\nยอดชำระ ฿${completed?.total || 0}`
+    )
+    window.location.href = `https://line.me/R/oaMessage/${LINE_OA_ID}/?${message}`
+    setPaymentNotifyStatus('sent')
+  }
+
   // Keep the success screen in sync with the order status changed by staff.
   // The LINE token proves this browser owns the order; no customer details are
   // exposed to someone who merely guesses an order number.
@@ -1193,6 +1228,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     setSentToLine(false)
     setSlipVerify(false)
     setSlipStatus('idle')
+    setPaymentNotifyStatus('idle')
     setSlipError('')
     setForm({ name: '', phone: '', address: '', note: '' })
     setPhoneLookup('idle')
@@ -2039,9 +2075,18 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
 
         {slipStatus === 'ok' ? (
           <div className="w-full flex flex-col gap-3">
-            <div className="w-full text-center rounded-xl bg-[#3a2818] text-white px-4 py-3 text-[14px] font-semibold leading-[1.6]">
-              {t.slipVerified}
-            </div>
+            <button
+              type="button"
+              onClick={notifyShopOfPayment}
+              disabled={paymentNotifyStatus === 'sending' || paymentNotifyStatus === 'sent'}
+              className="w-full text-center rounded-xl bg-[#3a2818] text-white px-4 py-3 text-[14px] font-semibold leading-[1.6] disabled:opacity-70"
+            >
+              {paymentNotifyStatus === 'sending'
+                ? t.notifyingPayment
+                : paymentNotifyStatus === 'sent'
+                  ? t.paymentNotified
+                  : t.notifyPayment}
+            </button>
             {/* Same number shown as the Summary preview — fixed once at order
                 creation (pages/api/orders.js), just "banked" now that payment
                 is actually confirmed. Only shown here, not before, so
