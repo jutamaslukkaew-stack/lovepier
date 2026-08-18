@@ -482,14 +482,12 @@ function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
   return (
     <div className="flex flex-col gap-5">
       <div className="relative overflow-hidden rounded-2xl border border-[#4a3520]/15 bg-white/55 px-5 py-6 text-center shadow-[0_8px_28px_rgba(74,53,32,0.06)]">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f6ecd9] border border-[#b89567]/25">
-          <img
-            src="/uploads/icons8-savouring-delicious-food-face.gif"
-            alt=""
-            aria-hidden="true"
-            className="block h-9 w-9 object-contain"
-          />
-        </div>
+        <img
+          src="/uploads/icons8-savouring-delicious-food-face.gif"
+          alt=""
+          aria-hidden="true"
+          className="mx-auto mb-3 block h-12 w-12 object-contain"
+        />
         <p className="font-display font-light text-[clamp(28px,7.5vw,34px)] text-ink leading-[1.3]">{t.contactGreeting(name)}</p>
         <p className="mx-auto mt-2 max-w-[30rem] text-[13px] text-black/55 font-light leading-relaxed">{t.contactGreetingSub}</p>
         <span aria-hidden="true" className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full border border-[#b89567]/10" />
@@ -1271,14 +1269,12 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
             ) : contactMode === 'form' ? (
               <div className="flex flex-col gap-4">
                 <div className="relative mb-1 overflow-hidden rounded-2xl border border-[#4a3520]/15 bg-white/60 px-5 py-5 text-center shadow-[0_8px_28px_rgba(74,53,32,0.06)]">
-                  <div className="mx-auto mb-2.5 flex h-12 w-12 items-center justify-center rounded-full border border-[#b89567]/25 bg-[#f6ecd9]">
-                    <img
-                      src="/uploads/icons8-savouring-delicious-food-face.gif"
-                      alt=""
-                      aria-hidden="true"
-                      className="h-9 w-9 object-contain"
-                    />
-                  </div>
+                  <img
+                    src="/uploads/icons8-savouring-delicious-food-face.gif"
+                    alt=""
+                    aria-hidden="true"
+                    className="mx-auto mb-2.5 h-12 w-12 object-contain"
+                  />
                   <p className="font-display text-[clamp(25px,7vw,31px)] font-light leading-[1.3] text-ink">
                     {t.contactGreeting(profile?.displayName || form.name)}
                   </p>

@@ -309,3 +309,73 @@ export function buildSlipReceivedFlex({ orderNo, total, reason }) {
 
   return { type: 'flex', altText: `ได้รับสลิปแล้ว ${orderNo} — ฿${money(total)}`, contents: bubble }
 }
+
+// Sent when staff changes an order status in /admin/orders. This closes the
+// operational loop: changing the dropdown is not merely an internal database
+// update; the customer immediately receives the same status in their LINE chat.
+export function buildOrderStatusFlex({ orderNo, status, deliveryMethod }) {
+  const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
+  const pickup = deliveryMethod === 'pickup'
+  const copy = {
+    paid: {
+      title: 'ยืนยันการชำระเงินแล้ว',
+      detail: 'ร้านได้รับยอดชำระของคุณเรียบร้อยแล้ว',
+    },
+    preparing: {
+      title: 'ร้านกำลังเตรียมออเดอร์',
+      detail: 'กำลังจัดเตรียมอาหารของคุณ กรุณารอสักครู่นะคะ',
+    },
+    done: {
+      title: pickup ? 'ออเดอร์พร้อมให้รับแล้ว' : 'ออเดอร์พร้อมจัดส่งแล้ว',
+      detail: pickup
+        ? 'สามารถมารับอาหารที่ Love Pier Beach Cafe ได้เลยค่ะ'
+        : 'ทางร้านกำลังดำเนินการจัดส่งออเดอร์ให้คุณค่ะ',
+    },
+    cancelled: {
+      title: 'ออเดอร์ถูกยกเลิก',
+      detail: 'หากมีข้อสงสัย กรุณาติดต่อร้านผ่าน LINE ได้เลยค่ะ',
+    },
+  }[status]
+
+  if (!copy) return null
+
+  return {
+    type: 'flex',
+    altText: `${copy.title} ${orderNo}`,
+    contents: {
+      type: 'bubble',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: status === 'cancelled' ? '#7a3030' : '#3a2818',
+        paddingAll: '18px',
+        contents: [
+          { type: 'text', text: copy.title, color: '#ffffff', weight: 'bold', size: 'xl', wrap: true },
+          { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm' },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+          { type: 'text', text: 'เลขที่ออเดอร์', size: 'xs', color: '#aaaaaa', align: 'center' },
+          { type: 'text', text: String(orderNo), weight: 'bold', size: 'xl', align: 'center', color: '#4a3520' },
+          { type: 'separator', margin: 'md' },
+          { type: 'text', text: copy.detail, size: 'sm', color: '#555555', wrap: true, align: 'center', margin: 'md' },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [{
+          type: 'button',
+          style: 'primary',
+          color: '#3a2818',
+          height: 'sm',
+          action: { type: 'uri', label: 'ตรวจสอบออเดอร์', uri: orderUrl },
+        }],
+      },
+    },
+  }
+}
