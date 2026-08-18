@@ -3,7 +3,7 @@ import { db } from '../../lib/db'
 import { orders } from '../../lib/db/schema'
 import { processSlipForOrder } from '../../lib/slipVerification'
 import { buildPaymentConfirmedFlex } from '../../lib/orderFlex'
-import { pushToUser, pushOrderCardToStaff } from '../../lib/lineMessaging'
+import { isStaffNotifyTarget, pushToUser, pushOrderCardToStaff } from '../../lib/lineMessaging'
 
 // Allow a slip image (base64) in the request body.
 export const config = { api: { bodyParser: { sizeLimit: '8mb' } } }
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
   if (result.verified && !result.alreadyPaid) {
     const flex = buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount, pointsEarned: order.pointsEarned })
     await pushOrderCardToStaff(flex)
-    if (order.lineUserId) {
+    if (order.lineUserId && !isStaffNotifyTarget(order.lineUserId)) {
       await pushToUser(order.lineUserId, [flex])
     }
   }

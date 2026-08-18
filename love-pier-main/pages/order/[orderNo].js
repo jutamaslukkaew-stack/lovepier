@@ -28,6 +28,7 @@ export default function OrderStatus({ order }) {
       <Head>
         <title>ออเดอร์ {order.orderNo} — Love Pier Beach Cafe</title>
         <meta name="robots" content="noindex" />
+        <meta httpEquiv="refresh" content="10" />
       </Head>
       <div className="min-h-screen bg-[#f5f3ef] py-8 px-4">
         <div className="mx-auto max-w-md bg-white rounded-2xl shadow-sm overflow-hidden">

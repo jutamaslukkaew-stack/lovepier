@@ -12,6 +12,14 @@ export function isLineNotifyConfigured() {
   return Boolean(TOKEN && TARGET)
 }
 
+// A common setup mistake is putting the customer's personal user id in the
+// staff destination. In that case sending both the staff copy and customer
+// copy produces two identical cards in the same chat. Callers use this guard
+// to send only once while the environment is being corrected to a C... group.
+export function isStaffNotifyTarget(userId) {
+  return Boolean(userId && TARGET && userId === TARGET)
+}
+
 /**
  * Push any LINE messages from the OA to a specific user (Messaging API).
  * Used to send the order card "from the shop" to the customer. Best-effort.

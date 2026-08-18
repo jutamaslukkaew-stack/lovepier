@@ -5,18 +5,21 @@
 // real-time backend status; keyframes live in styles/globals.css.
 import { CheckCircle2, ChefHat, Bike, ShoppingBag } from 'lucide-react'
 
-export default function OrderJourney({ method, t }) {
+export default function OrderJourney({ method, status = 'paid', t }) {
   const isPickup = method === 'pickup'
   const ThirdIcon = isPickup ? ShoppingBag : Bike
   const thirdLabel = isPickup ? t.journeyPickup : t.journeyDeliver
+  const paidState = status === 'paid' ? 'active' : 'done'
+  const prepState = status === 'preparing' ? 'active' : status === 'done' ? 'done' : 'upcoming'
+  const finalState = status === 'done' ? 'active' : 'upcoming'
 
   return (
     <div className="w-full flex items-start justify-center gap-0 py-1">
-      <JourneyStep icon={CheckCircle2} label={t.journeyPaid} state="done" />
-      <Connector active />
-      <JourneyStep icon={ChefHat} label={t.journeyPrep} state="active" />
-      <Connector />
-      <JourneyStep icon={ThirdIcon} label={thirdLabel} state="upcoming" />
+      <JourneyStep icon={CheckCircle2} label={t.journeyPaid} state={paidState} />
+      <Connector active={status === 'preparing' || status === 'done'} />
+      <JourneyStep icon={ChefHat} label={t.journeyPrep} state={prepState} />
+      <Connector active={status === 'done'} />
+      <JourneyStep icon={ThirdIcon} label={thirdLabel} state={finalState} />
     </div>
   )
 }

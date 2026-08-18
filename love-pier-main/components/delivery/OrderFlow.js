@@ -157,7 +157,7 @@ const COPY = {
     processingMessage: 'กรุณารอสักครู่',
     waitingDelivery: 'ร้านกำลังเตรียมอาหารและจะจัดส่งให้ภายในรัศมีบริการ กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
     pickupInstruction: 'กรุณามารับอาหารด้วยตนเอง หรือเรียก Grab, LINE MAN หรือแมสเซนเจอร์เจ้าอื่น มารับที่ร้าน Love Pier Beach Cafe เมื่อร้านแจ้งว่าอาหารพร้อม และกรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
-    attachSlip: 'แนบสลิปเพื่อยืนยันการชำระเงิน',
+    attachSlip: 'ยืนยันชำระเงิน · แนบสลิป',
     verifyingSlip: 'กำลังตรวจสอบสลิป...',
     slipVerified: 'ยืนยันการชำระเงินแล้ว',
     shopReceivedTitle: 'ร้านได้รับออเดอร์แล้ว',
@@ -1070,6 +1070,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         distanceKm: distanceResult?.distanceKm ?? null,
         withinRadius,
         deliveryMethod,
+        status: 'pending',
       })
       setSlipVerify(Boolean(data.slipVerify))
       setOrderNo(data.orderNo)
@@ -1099,6 +1100,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         const data = await res.json()
         if (data.ok && data.verified) {
           setSlipStatus('ok')
+          setCompleted((current) => current ? { ...current, status: 'paid' } : current)
         } else if (data.ok && data.stored && !data.error) {
           setSlipStatus('stored')
         } else {
@@ -1116,6 +1118,37 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     }
     reader.readAsDataURL(file)
   }
+
+  // Keep the success screen in sync with the order status changed by staff.
+  // The LINE token proves this browser owns the order; no customer details are
+  // exposed to someone who merely guesses an order number.
+  useEffect(() => {
+    if (step !== 'success' || !orderNo || !profile?.accessToken) return undefined
+
+    let stopped = false
+    const refreshStatus = async () => {
+      try {
+        const res = await fetch(`/api/order-status?orderNo=${encodeURIComponent(orderNo)}`, {
+          headers: { Authorization: `Bearer ${profile.accessToken}` },
+          cache: 'no-store',
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (stopped || !data?.status) return
+        setCompleted((current) => current ? { ...current, status: data.status } : current)
+        if (['paid', 'preparing', 'done'].includes(data.status)) setSlipStatus('ok')
+      } catch {
+        // A temporary network failure must not disturb the success screen.
+      }
+    }
+
+    refreshStatus()
+    const timer = window.setInterval(refreshStatus, 5000)
+    return () => {
+      stopped = true
+      window.clearInterval(timer)
+    }
+  }, [step, orderNo, profile?.accessToken])
 
   function resetFlow() {
     setStep('welcome')
@@ -1981,7 +2014,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
               <p className="text-center text-[13px] font-semibold text-[#b06d2b]">{t.pointsEarnedBanner(completed.pointsEarned)}</p>
             )}
             <div className="w-full rounded-xl bg-white/60 border border-black/[0.06] px-2 py-3">
-              <OrderJourney method={completed?.deliveryMethod} t={t} />
+              <OrderJourney method={completed?.deliveryMethod} status={completed?.status} t={t} />
             </div>
           </div>
         ) : slipStatus === 'stored' ? (

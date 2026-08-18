@@ -1,7 +1,7 @@
 import { and, eq, gte, sql } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { orders, customers, pointTransactions } from '../../lib/db/schema'
-import { pushOrderCardToStaff, pushToUser } from '../../lib/lineMessaging'
+import { isStaffNotifyTarget, pushOrderCardToStaff, pushToUser } from '../../lib/lineMessaging'
 import { buildOrderFlex } from '../../lib/orderFlex'
 import { getShopSettings } from '../../lib/settings'
 import { calcDeliveryFee } from '../../lib/deliveryFee'
@@ -257,8 +257,10 @@ export default async function handler(req, res) {
     // Send the order card "from the shop" to the customer too (Messaging
     // API push). Complements the customer-side liff.sendMessages(); skips
     // when there's no messaging token or no LINE userId for this order.
-    const customerPush = lineUserId
+    const customerPush = lineUserId && !isStaffNotifyTarget(lineUserId)
       ? await pushToUser(lineUserId, [flex])
+      : lineUserId
+        ? { ok: true, duplicateTargetSkipped: true }
       : { ok: false, skipped: true }
 
     const slipVerify = Boolean(s.slipokApiKey && s.slipokBranchId)
