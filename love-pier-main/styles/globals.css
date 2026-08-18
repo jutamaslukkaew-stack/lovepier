@@ -36,6 +36,47 @@ body {
   100% { transform: translateY(0) scale(1); }
 }
 
+/* Order success screen (components/delivery/OrderJourney.js) — badge pops
+   in, sparkles twinkle beside it, the active journey step's icon bobs, and
+   a dot travels the connector toward the next step to read as "on its way". */
+@keyframes orderBadgePop {
+  0% { transform: scale(0.4); opacity: 0; }
+  55% { transform: scale(1.12); opacity: 1; }
+  75% { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+@keyframes orderSparkle {
+  0%, 100% { transform: scale(0.6) rotate(0deg); opacity: 0.25; }
+  50% { transform: scale(1.15) rotate(15deg); opacity: 1; }
+}
+@keyframes orderStepBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes orderStepRing {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@keyframes orderTravelDot {
+  0% { left: 2%; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { left: 92%; opacity: 0; }
+}
+
+/* Returning-customer greeting card (components/delivery/OrderFlow.js,
+   GreetingChoiceCard) — the 😋 badge gives a couple of small happy
+   wobbles (tiny rotate + scale, not a hand gesture) then rests until the
+   next loop so it doesn't nag. */
+@keyframes greetingYum {
+  0%, 40%, 100% { transform: rotate(0deg) scale(1); }
+  6% { transform: rotate(-8deg) scale(1.05); }
+  13% { transform: rotate(7deg) scale(1.05); }
+  20% { transform: rotate(-5deg) scale(1.03); }
+  27% { transform: rotate(4deg) scale(1.02); }
+  33% { transform: rotate(0deg) scale(1); }
+}
+
 html { scroll-behavior: smooth; background-color: var(--color-bg); }
 
 body.menu-open {
