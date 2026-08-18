@@ -26,7 +26,6 @@ import { calcOrderDiscountAndPoints } from '../../lib/points'
 import { SWEETNESS_OPTIONS, COFFEE_BEAN_OPTIONS } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
 import OrderJourney from './OrderJourney'
-import DeliveryTruckIcon from './DeliveryTruckIcon'
 import MenuExperience from '../menu/MenuExperience'
 import { CheckCircle2, Sparkles, Receipt, User, StickyNote } from 'lucide-react'
 
@@ -153,6 +152,8 @@ const COPY = {
     successTitle: 'สั่งซื้อสำเร็จ!',
     orderNo: 'เลขที่ออเดอร์',
     sentToShop: 'ส่งออเดอร์ให้ร้านทาง LINE แล้ว',
+    processingTitle: 'ร้านกำลังรับออเดอร์ของคุณ',
+    processingMessage: 'กรุณารอสักครู่',
     waitingDelivery: 'ร้านกำลังเตรียมอาหารและจะจัดส่งให้ภายในรัศมีบริการ กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
     pickupInstruction: 'กรุณามารับอาหารด้วยตนเอง หรือเรียก Grab, LINE MAN หรือแมสเซนเจอร์เจ้าอื่น มารับที่ร้าน Love Pier Beach Cafe เมื่อร้านแจ้งว่าอาหารพร้อม และกรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
     attachSlip: 'แนบสลิปเพื่อยืนยันการชำระเงิน',
@@ -261,6 +262,8 @@ const COPY = {
     successTitle: 'Order placed!',
     orderNo: 'Order no.',
     sentToShop: 'Order sent to the shop on LINE',
+    processingTitle: 'Processing your order',
+    processingMessage: "We're sending your order to the shop. Please keep this page open and don't submit again.",
     waitingDelivery: "We're preparing your order and will deliver within our service radius. Please attach your payment slip to confirm.",
     pickupInstruction: 'Please come collect it yourself, or send Grab, LINE MAN, or another rider/courier to pick up the food from Love Pier Beach Cafe once the shop confirms it is ready — and please attach your payment slip to confirm.',
     attachSlip: 'Attach slip to confirm payment',
@@ -369,6 +372,8 @@ const COPY = {
     successTitle: '下单成功！',
     orderNo: '订单号',
     sentToShop: '订单已通过 LINE 发送给店家',
+    processingTitle: '正在处理，请稍候',
+    processingMessage: '系统正在将订单发送给店家，请勿关闭页面或重复提交。',
     waitingDelivery: '我们正在备餐，将在配送范围内为您送达。请附上付款凭证以确认。',
     pickupInstruction: '请在店家通知餐点备好后，亲自到店取餐，或自行安排 Grab、LINE MAN 或其他骑手/快递员到 Love Pier Beach Cafe 取餐 — 并请附上付款凭证以确认。',
     attachSlip: '上传凭证以确认付款',
@@ -450,8 +455,8 @@ function StickyActionBar({ children }) {
 }
 
 // The recognize-a-returning-customer moment — the one place in this flow
-// that gets to feel personal rather than procedural. A small "savoring the
-// food" badge (gentle happy wobble — see keyframes in styles/globals.css)
+// that gets to feel personal rather than procedural. A small animated
+// smiling-face sticker makes the returning-customer greeting feel friendly.
 // sits above the name to read as warm/friendly at a glance, alongside the
 // light display serif. Shown from two different places depending on
 // timing: usually right on Welcome, the instant the LINE lookup resolves
@@ -471,11 +476,12 @@ function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
     <div className="flex flex-col gap-5">
       <div className="relative overflow-hidden rounded-2xl border border-[#4a3520]/15 bg-white/55 px-5 py-6 text-center shadow-[0_8px_28px_rgba(74,53,32,0.06)]">
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f6ecd9] border border-[#b89567]/25">
-          <span
+          <img
+            src="/uploads/icons8-savouring-delicious-food-face.gif"
+            alt=""
             aria-hidden="true"
-            className="block text-[24px] leading-none"
-            style={{ animation: 'greetingYum 2.6s ease-in-out infinite' }}
-          >😋</span>
+            className="block h-9 w-9 object-contain"
+          />
         </div>
         <p className="font-display font-light text-[clamp(28px,7.5vw,34px)] text-ink leading-[1.3]">{t.contactGreeting(name)}</p>
         <p className="mx-auto mt-2 max-w-[30rem] text-[13px] text-black/55 font-light leading-relaxed">{t.contactGreetingSub}</p>
@@ -618,6 +624,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   const [sentToLine, setSentToLine] = useState(false)
   const [slipVerify, setSlipVerify] = useState(false)
   const [slipStatus, setSlipStatus] = useState('idle')
+
   const [slipError, setSlipError] = useState('')
 
   const triedSilentLoginRef = useRef(false)
@@ -1484,10 +1491,15 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         <StepHeader t={t} step={step} onBack={() => setStep('distance')} />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
           <div className={`w-full ${CONTENT_WIDTH}`}>
-            <h1 className="font-display text-[28px] text-ink text-center mb-8 flex items-center justify-center gap-2.5">
-              <DeliveryTruckIcon size={32} className="shrink-0" />
-              {t.methodTitle}
-            </h1>
+            <div className="mb-8 text-center">
+              <img
+                src="/uploads/icons8-truck-96.gif"
+                alt=""
+                aria-hidden="true"
+                className="mx-auto mb-3 h-16 w-16 object-contain sm:h-[72px] sm:w-[72px]"
+              />
+              <h1 className="font-display text-[28px] text-ink leading-tight">{t.methodTitle}</h1>
+            </div>
             <div className="flex flex-col gap-4">
               {/* Both options stay selectable here regardless of the ฿300
                   minimum — the cart is often still empty at this point (this
@@ -1807,6 +1819,22 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     const canSubmit = confirmPay && !submitting && (!PROMPTPAY_ID || amount <= 0 || Boolean(qrDataUrl))
     return (
       <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
+        {submitting && (
+          <div className="fixed inset-0 z-[250] flex items-center justify-center bg-[#f5f2ee]/95 px-6 backdrop-blur-sm" role="status" aria-live="assertive" aria-busy="true">
+            <div className="w-full max-w-[340px] rounded-[28px] border border-[#c9a96e]/30 bg-[#fffdf8] px-7 py-9 text-center shadow-[0_24px_80px_rgba(74,53,32,0.16)]">
+              {/* Animated processing artwork supplied by the shop. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/uploads/icons8-delivery-time-96.gif" alt="" className="mx-auto h-24 w-24 object-contain" />
+              <h2 className="mt-5 font-display text-[25px] font-normal leading-tight text-[#3a2818]">{t.processingTitle}</h2>
+              <p className="mt-3 text-[13px] font-light leading-[1.8] text-[#6d655d]">{t.processingMessage}</p>
+              <div className="mt-6 flex justify-center gap-2" aria-hidden="true">
+                {[0, 1, 2].map((dot) => (
+                  <span key={dot} className="h-2 w-2 rounded-full bg-[#b18a54]" style={{ animation: `orderSparkle 1.4s ease-in-out ${dot * 0.2}s infinite` }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         <StepHeader t={t} step={step} onBack={() => setStep('summary')} />
         <div className={`flex-1 ${CONTENT_WIDTH} w-full mx-auto px-5 py-5 flex flex-col gap-4`}>
           <h1 className="font-display text-[22px] text-ink">{t.paymentTitle}</h1>
