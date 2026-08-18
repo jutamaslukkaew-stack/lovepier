@@ -232,7 +232,9 @@ export default async function handler(req, res) {
           // had on file from an earlier order.
           set: {
             name,
-            address,
+            // A pickup order can have no address. Never let that blank erase
+            // the customer's last usable delivery address.
+            address: sql`coalesce(nullif(excluded.address, ''), ${customers.address})`,
             lineUserId: sql`coalesce(${customers.lineUserId}, excluded.line_user_id)`,
             lineDisplayName: sql`coalesce(${customers.lineDisplayName}, excluded.line_display_name)`,
             updatedAt: sql`now()`,

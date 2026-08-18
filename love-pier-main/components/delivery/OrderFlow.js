@@ -791,9 +791,10 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     }
     if (lineLookupStatus !== 'done') return // still checking (or hasn't started)
     if (customerRecognized) {
-      // Recognized, but no past order with a recorded distance to bypass
-      // with — nothing to ask, pass straight through with what's on file.
-      setStep('distance')
+      // We know the LINE identity but have no usable saved address. Still
+      // greet the customer and ask for a new address; skipping straight to
+      // GPS made the app look as if it had forgotten their LINE account.
+      setContactMode('form')
     } else {
       setContactMode('form')
     }

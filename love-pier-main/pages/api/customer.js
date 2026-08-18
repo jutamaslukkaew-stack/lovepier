@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull } from 'drizzle-orm'
+import { and, desc, eq, isNotNull, ne } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { customers, orders } from '../../lib/db/schema'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
@@ -39,11 +39,22 @@ export default async function handler(req, res) {
       .orderBy(desc(orders.createdAt))
       .limit(1)
 
+    // Pickup orders may legitimately have no delivery address. Older builds
+    // wrote that blank value back to customers, erasing a previously saved
+    // address. Recover from the newest order that still has a real address so
+    // returning LINE customers can be offered "use saved / use new" again.
+    const [lastAddressOrder] = await db
+      .select({ address: orders.address })
+      .from(orders)
+      .where(and(eq(orders.lineUserId, lineUserId), ne(orders.address, '')))
+      .orderBy(desc(orders.createdAt))
+      .limit(1)
+
     return res.status(200).json({
       customer: {
         name: c.name,
         phone: c.phone,
-        address: c.address,
+        address: c.address || lastAddressOrder?.address || '',
         pointsBalance: c.pointsBalance || 0,
         lastOrderDistanceKm: lastOrder ? Number(lastOrder.distanceKm) : null,
       },
