@@ -19,10 +19,11 @@ import PageHero from '../PageHero'
 import { useLanguage } from '../../lib/language'
 import { useCart } from '../../lib/cart'
 import { useChrome } from '../../lib/chrome'
-import { isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn } from '../../lib/liff'
+import { isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessagesToChat } from '../../lib/liff'
 import { setDeliverySessionProfile, setDeliverySessionDistance } from '../../lib/deliverySession'
 import { buildPaymentPayload } from '../../lib/promptpay'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
+import { buildOrderFlex, buildPaymentConfirmedFlex } from '../../lib/orderFlex'
 import { SWEETNESS_OPTIONS, COFFEE_BEAN_OPTIONS } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
 import OrderJourney from './OrderJourney'
@@ -1060,7 +1061,32 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
       const finalDiscount = data.discountAmount || 0
       const finalTotal = data.totalAmount ?? amount
 
-      setSentToLine(Boolean(data.sentToLine))
+      // Post from the customer into the OA conversation. This is deliberately
+      // inbound: LINE OA Manager only alerts staff for a new incoming message;
+      // a Messaging API push from the OA to the customer is outbound and does
+      // not create a shop notification.
+      const orderFlex = buildOrderFlex({
+        orderNo: data.orderNo,
+        name: form.name,
+        phone: form.phone,
+        address: form.address,
+        items: items.map((i) => ({
+          name: i.name,
+          price: parseFloat(i.price) || 0,
+          qty: i.qty,
+          note: i.note || '',
+          sweetness: i.sweetness || SWEETNESS_OPTIONS[0],
+          coffeeBean: i.coffeeBean || COFFEE_BEAN_OPTIONS[0],
+        })),
+        total: finalTotal,
+        deliveryFee: finalDeliveryFee,
+        discountAmount: finalDiscount,
+        pointsRedeemed: data.pointsRedeemed || 0,
+        distanceKm: distanceResult?.distanceKm ?? null,
+        deliveryMethod,
+      })
+      const customerSentOrder = await sendMessagesToChat([orderFlex])
+      setSentToLine(customerSentOrder || Boolean(data.sentToLine))
 
       setCompleted({
         total: finalTotal,
@@ -1101,6 +1127,16 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         if (data.ok && data.verified) {
           setSlipStatus('ok')
           setCompleted((current) => current ? { ...current, status: 'paid' } : current)
+          // Same inbound path for payment confirmation, so the shop receives
+          // a real OA notification instead of only seeing its own outgoing
+          // message in the customer's history.
+          await sendMessagesToChat([
+            buildPaymentConfirmedFlex({
+              orderNo,
+              total: completed?.total || data.amount || 0,
+              pointsEarned: data.pointsEarned || completed?.pointsEarned || 0,
+            }),
+          ])
         } else if (data.ok && data.stored && !data.error) {
           setSlipStatus('stored')
         } else {

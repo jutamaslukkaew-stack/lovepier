@@ -36,8 +36,9 @@ export default async function handler(req, res) {
   // session, same as the order-received card in pages/api/orders.js.
   if (result.verified && !result.alreadyPaid) {
     const flex = buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount, pointsEarned: order.pointsEarned })
-    await pushOrderCardToStaff(flex)
-    if (order.lineUserId && !isStaffNotifyTarget(order.lineUserId)) {
+    const targetIsCustomer = isStaffNotifyTarget(order.lineUserId)
+    if (!targetIsCustomer) await pushOrderCardToStaff(flex)
+    if (order.lineUserId && !targetIsCustomer) {
       await pushToUser(order.lineUserId, [flex])
     }
   }

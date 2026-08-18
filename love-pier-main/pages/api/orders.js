@@ -252,15 +252,16 @@ export default async function handler(req, res) {
     // Alert staff with the branded card (not a plain-text summary) the
     // moment the order is created — doesn't depend on the customer tapping
     // anything on their end, unlike the client-side LINE-deep-link reminder.
-    await pushOrderCardToStaff(flex)
+    const targetIsCustomer = isStaffNotifyTarget(lineUserId)
+    if (!targetIsCustomer) await pushOrderCardToStaff(flex)
 
     // Send the order card "from the shop" to the customer too (Messaging
     // API push). Complements the customer-side liff.sendMessages(); skips
     // when there's no messaging token or no LINE userId for this order.
-    const customerPush = lineUserId && !isStaffNotifyTarget(lineUserId)
+    const customerPush = lineUserId && !targetIsCustomer
       ? await pushToUser(lineUserId, [flex])
-      : lineUserId
-        ? { ok: true, duplicateTargetSkipped: true }
+      : targetIsCustomer
+        ? { ok: false, inboundLiffRequired: true }
       : { ok: false, skipped: true }
 
     const slipVerify = Boolean(s.slipokApiKey && s.slipokBranchId)
