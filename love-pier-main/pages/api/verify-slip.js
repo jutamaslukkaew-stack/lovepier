@@ -39,9 +39,22 @@ export default async function handler(req, res) {
     const targetIsCustomer = isStaffNotifyTarget(order.lineUserId)
     // Always alert the configured shop destination from the server. If it is
     // also the customer's test account, skip only the duplicate customer push.
-    await pushOrderCardToStaff(flex)
+    const staffPush = await pushOrderCardToStaff(flex)
     if (order.lineUserId && !targetIsCustomer) {
       await pushToUser(order.lineUserId, [flex])
+    }
+    // Same reasoning as pages/api/orders.js: a payment the shop never hears
+    // about is an operational failure, and the low-level "push to staff
+    // failed" line doesn't say which order it belonged to. Grep the Vercel
+    // logs for PAYMENT_NOT_ALERTED to list the paid orders nobody was told
+    // about — those are the ones a customer has paid for and is waiting on.
+    if (!staffPush.ok) {
+      console.error('PAYMENT_NOT_ALERTED — shop was not notified of a verified payment:', {
+        orderNo: order.orderNo,
+        reason: staffPush.skipped
+          ? 'LINE_MESSAGING_TOKEN or LINE_ORDER_NOTIFY_TO is not configured'
+          : 'LINE rejected the push (see the LINE push to staff line above for the status)',
+      })
     }
   }
 

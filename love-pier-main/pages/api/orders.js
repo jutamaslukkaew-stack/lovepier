@@ -269,9 +269,29 @@ export default async function handler(req, res) {
         ? { ok: Boolean(staffPush.ok), duplicateTargetSkipped: true }
       : { ok: false, skipped: true }
 
+    // An order the shop never hears about is an operational failure even
+    // though the order itself saved fine. The low-level helper already logs
+    // "LINE push to staff failed", but that only says the API call lost —
+    // this line names the order that nobody was told about, so searching the
+    // Vercel logs for ORDER_NOT_ALERTED lists exactly the ones to chase.
+    if (!staffPush.ok) {
+      console.error('ORDER_NOT_ALERTED — shop was not notified of a new order:', {
+        orderNo,
+        reason: staffPush.skipped
+          ? 'LINE_MESSAGING_TOKEN or LINE_ORDER_NOTIFY_TO is not configured'
+          : 'LINE rejected the push (see the LINE push to staff line above for the status)',
+      })
+    }
+
     const slipVerify = Boolean(s.slipokApiKey && s.slipokBranchId)
 
-    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify, sentToLine: Boolean(customerPush.ok) })
+    // staffAlerted is reported separately from sentToLine: the customer
+    // getting their copy and the shop getting theirs fail independently, and
+    // conflating them hid a shop-side outage behind a healthy-looking
+    // response. Still a 200 — the order is saved and paid for either way, so
+    // failing the request here would tell the customer their order didn't go
+    // through, which is worse and untrue.
+    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify, sentToLine: Boolean(customerPush.ok), staffAlerted: Boolean(staffPush.ok) })
   } catch (err) {
     if (err?.message === 'POINTS_BALANCE_CHANGED') {
       return res.status(409).json({ error: 'ยอดคะแนนมีการเปลี่ยนแปลง กรุณาลองใหม่อีกครั้ง' })
