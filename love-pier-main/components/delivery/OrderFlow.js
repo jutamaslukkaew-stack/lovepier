@@ -28,7 +28,7 @@ import { SWEETNESS_OPTIONS, COFFEE_BEAN_OPTIONS } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
 import OrderJourney from './OrderJourney'
 import MenuExperience from '../menu/MenuExperience'
-import { CheckCircle2, Receipt, User, StickyNote } from 'lucide-react'
+import { Check, CheckCircle2, Receipt, User, StickyNote } from 'lucide-react'
 
 // Leaflet touches `window` at import time — must never be pulled into the
 // server bundle, hence ssr:false.
@@ -156,8 +156,10 @@ const COPY = {
     sentToShop: 'ส่งออเดอร์ให้ร้านทาง LINE แล้ว',
     processingTitle: 'ร้านกำลังรับออเดอร์ของคุณ',
     processingMessage: 'กรุณารอสักครู่',
-    waitingDelivery: 'ร้านกำลังเตรียมอาหารและจะจัดส่งให้ภายในรัศมีบริการ กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
-    pickupInstruction: 'กรุณามารับอาหารด้วยตนเอง หรือเรียก Grab, LINE MAN หรือแมสเซนเจอร์เจ้าอื่น มารับที่ร้าน Love Pier Beach Cafe เมื่อร้านแจ้งว่าอาหารพร้อม และกรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
+    waitingDelivery: 'ร้านกำลังเตรียมอาหารและจะจัดส่งให้ภายในรัศมีบริการ',
+    pickupInstruction: 'กรุณามารับอาหารด้วยตนเอง หรือเรียก Grab, LINE MAN หรือแมสเซนเจอร์เจ้าอื่น มารับที่ร้าน Love Pier Beach Cafe เมื่อร้านแจ้งว่าอาหารพร้อม',
+    nextStepLabel: 'ขั้นตอนต่อไป',
+    payNow: 'กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
     attachSlip: 'ยืนยันชำระเงิน · แนบสลิป',
     verifyingSlip: 'กำลังตรวจสอบสลิป...',
     slipVerified: 'ยืนยันการชำระเงินแล้ว',
@@ -269,8 +271,10 @@ const COPY = {
     sentToShop: 'Order sent to the shop on LINE',
     processingTitle: 'Processing your order',
     processingMessage: "We're sending your order to the shop. Please keep this page open and don't submit again.",
-    waitingDelivery: "We're preparing your order and will deliver within our service radius. Please attach your payment slip to confirm.",
-    pickupInstruction: 'Please come collect it yourself, or send Grab, LINE MAN, or another rider/courier to pick up the food from Love Pier Beach Cafe once the shop confirms it is ready — and please attach your payment slip to confirm.',
+    waitingDelivery: "We're preparing your order and will deliver within our service radius.",
+    pickupInstruction: 'Please come collect it yourself, or send Grab, LINE MAN, or another rider/courier to pick up the food from Love Pier Beach Cafe once the shop confirms it is ready.',
+    nextStepLabel: 'Next step',
+    payNow: 'Please attach your payment slip to confirm.',
     attachSlip: 'Attach slip to confirm payment',
     verifyingSlip: 'Verifying slip...',
     slipVerified: 'Payment verified',
@@ -382,8 +386,10 @@ const COPY = {
     sentToShop: '订单已通过 LINE 发送给店家',
     processingTitle: '正在处理，请稍候',
     processingMessage: '系统正在将订单发送给店家，请勿关闭页面或重复提交。',
-    waitingDelivery: '我们正在备餐，将在配送范围内为您送达。请附上付款凭证以确认。',
-    pickupInstruction: '请在店家通知餐点备好后，亲自到店取餐，或自行安排 Grab、LINE MAN 或其他骑手/快递员到 Love Pier Beach Cafe 取餐 — 并请附上付款凭证以确认。',
+    waitingDelivery: '我们正在备餐，将在配送范围内为您送达。',
+    pickupInstruction: '请在店家通知餐点备好后，亲自到店取餐，或自行安排 Grab、LINE MAN 或其他骑手/快递员到 Love Pier Beach Cafe 取餐。',
+    nextStepLabel: '下一步',
+    payNow: '请附上付款凭证以确认。',
     attachSlip: '上传凭证以确认付款',
     verifyingSlip: '正在核验凭证...',
     slipVerified: '付款已确认',
@@ -1802,7 +1808,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
                   </div>
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-[13px] font-semibold text-ink">{t.total}</span>
-                    <span className="font-display text-[20px] text-ink tabular-nums">฿{amount}</span>
+                    <span className="font-display text-[20px] text-ink tabular-nums"><span className="baht">฿</span>{amount}</span>
                   </div>
                   {hasLineId && pointsPreview > 0 && !belowMinOrder && (
                     <div className="text-right">
@@ -1973,7 +1979,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
               </div>
               <div className="flex items-baseline justify-between pt-1.5 mt-1 border-t border-black/10">
                 <span className="text-[11px] tracking-[0.12em] uppercase text-black/50">{t.amount}</span>
-                <span className="font-display text-[26px] text-ink tabular-nums leading-none">฿{amount}</span>
+                <span className="font-display text-[26px] text-ink tabular-nums leading-none"><span className="baht">฿</span>{amount}</span>
               </div>
             </div>
           </div>
@@ -2006,72 +2012,115 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // ═══════════════════════════════════════════════════════════════════
   // Step 7 — Success
   // ═══════════════════════════════════════════════════════════════════
+  // The screen answers three questions in order — did it go through, what is
+  // my reference, and what do I do now — so it is grouped that way rather than
+  // as one undifferentiated stack of same-width boxes. Status blocks are
+  // deliberately left-aligned with a badge instead of filled full-width bars:
+  // a bar that looks exactly like the primary button gets tapped, and nothing
+  // happens.
+  const paid = slipStatus === 'ok'
+  const fulfilment = completed?.deliveryMethod === 'pickup' ? t.pickupInstruction : t.waitingDelivery
+
   return (
-    <div className="min-h-[100dvh] bg-[#f5f2ee] flex items-start justify-center px-5 py-10">
-      <div className={`w-full ${CONTENT_WIDTH} flex flex-col items-center text-center gap-4`}>
-        <div className="w-full rounded-2xl bg-[#3a2818] px-5 py-7 text-white shadow-[0_12px_32px_rgba(58,40,24,0.2)]">
+    <div className="min-h-[100dvh] bg-[#f5f2ee] flex items-start justify-center px-5 py-8">
+      <div className={`w-full ${CONTENT_WIDTH} flex flex-col gap-3`}>
+        <div className="w-full rounded-2xl bg-[#3a2818] px-5 py-6 text-center text-white">
           <div
-            className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white"
+            className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white"
             style={{ animation: 'orderBadgePop 0.6s cubic-bezier(.34,1.56,.64,1) both' }}
           >
-            <CheckCircle2 size={46} strokeWidth={2.2} className="text-[#3a2818]" />
+            <CheckCircle2 size={38} strokeWidth={2.2} className="text-[#3a2818]" />
           </div>
-          <h1 className="mt-5 font-display text-[28px] leading-tight">{t.shopReceivedTitle}</h1>
-          <p className="mt-2 text-[16px] font-light text-white/75">{t.shopReceivedWait}</p>
+          <h1 className="mt-4 font-display text-[26px] leading-tight">{t.shopReceivedTitle}</h1>
+          <p className="mt-1.5 text-[15px] font-light text-white/70">{t.shopReceivedWait}</p>
         </div>
-        <div>
-          <span className="text-[11px] tracking-[0.12em] uppercase text-black/45">{t.orderNo}</span>
-          <p className="font-display text-[24px] text-ink tracking-wide">{orderNo}</p>
-          {completed && (
-            <p className="text-[15px] font-semibold text-ink tabular-nums mt-0.5">{t.total} ฿{completed.total}</p>
+
+        {/* Order number and total belong together — they are the two things a
+            customer reads back to staff. Splitting the label off its value also
+            stops the ฿ sign colliding with the digits. */}
+        <div className="w-full rounded-2xl border border-black/[0.07] bg-white/60 px-5 py-4">
+          <div className="flex items-end justify-between gap-4">
+            <div className="min-w-0">
+              <span className="block text-[10.5px] tracking-[0.12em] uppercase text-black/45">{t.orderNo}</span>
+              <p className="mt-0.5 font-display text-[22px] leading-none text-ink">{orderNo}</p>
+            </div>
+            {completed && (
+              <div className="shrink-0 text-right">
+                <span className="block text-[10.5px] tracking-[0.12em] uppercase text-black/45">{t.total}</span>
+                <p className="mt-0.5 font-display text-[22px] leading-none text-ink tabular-nums"><span className="baht">฿</span>{completed.total}</p>
+              </div>
+            )}
+          </div>
+          {sentToLine && (
+            <p className="mt-3.5 flex items-center gap-1.5 border-t border-black/[0.06] pt-3 text-[12px] text-[#4a3520]/80">
+              <Check size={13} strokeWidth={3} className="shrink-0" />
+              {t.sentToShop}
+            </p>
           )}
         </div>
 
-        {sentToLine && (
-          <div className="rounded-xl bg-[#efe9e1] border border-[#4a3520]/15 px-4 py-3 text-[13px] leading-[1.75] text-[#4a3520]">
-            {t.sentToShop}
-          </div>
-        )}
-
-        <p className={`w-full text-[13px] leading-[1.9] text-left rounded-xl px-4 py-3.5 ${completed?.deliveryMethod === 'pickup' ? 'bg-[#faf3e4] border border-[#c9a96e]/45 text-[#6b5326]' : 'bg-black/[0.03] text-black/60'}`}>
-          {completed?.deliveryMethod === 'pickup' ? t.pickupInstruction : t.waitingDelivery}
-        </p>
-
-        {slipStatus === 'ok' ? (
-          <div className="w-full flex flex-col gap-3">
-            <div className="w-full text-center rounded-xl bg-[#3a2818] text-white px-4 py-3 text-[14px] font-semibold leading-[1.6]">
-              {t.slipVerified}
+        {paid ? (
+          <>
+            <div className="flex items-center gap-2.5 rounded-xl border border-[#3a2818]/15 bg-[#3a2818]/[0.06] px-4 py-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3a2818] text-white">
+                <Check size={14} strokeWidth={3} />
+              </span>
+              <span className="text-[13.5px] font-semibold text-[#3a2818]">{t.slipVerified}</span>
+              {/* Same number shown as the Summary preview — fixed once at order
+                  creation (pages/api/orders.js), just "banked" now that payment
+                  is actually confirmed. Only shown here, not before, so
+                  "earned" means the payment really went through. */}
+              {completed?.pointsEarned > 0 && (
+                <span className="ml-auto shrink-0 text-[12.5px] font-semibold text-[#8f5520] tabular-nums">
+                  {t.pointsEarnedBanner(completed.pointsEarned)}
+                </span>
+              )}
             </div>
-            {/* Same number shown as the Summary preview — fixed once at order
-                creation (pages/api/orders.js), just "banked" now that payment
-                is actually confirmed. Only shown here, not before, so
-                "earned" means the payment really went through. */}
-            {completed?.pointsEarned > 0 && (
-              <p className="text-center text-[13px] font-semibold text-[#b06d2b]">{t.pointsEarnedBanner(completed.pointsEarned)}</p>
-            )}
-            <div className="w-full rounded-xl bg-white/60 border border-black/[0.06] px-2 py-3">
+            <div className="w-full rounded-2xl border border-black/[0.06] bg-white/60 px-3 pb-3 pt-4">
               <OrderJourney method={completed?.deliveryMethod} status={completed?.status} t={t} />
+              <p className="mt-3 border-t border-black/[0.06] pt-3 text-[12.5px] leading-[1.8] text-black/55">
+                {fulfilment}
+              </p>
             </div>
-          </div>
+          </>
         ) : slipStatus === 'stored' ? (
-          <div className="w-full text-center rounded-xl bg-[#3a2818] text-white px-4 py-3 text-[14px] font-semibold leading-[1.6]">
-            {t.slipUploaded}
-          </div>
+          <>
+            <div className="flex items-center gap-2.5 rounded-xl border border-[#3a2818]/15 bg-[#3a2818]/[0.06] px-4 py-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3a2818] text-white">
+                <Check size={14} strokeWidth={3} />
+              </span>
+              <span className="text-[13.5px] font-semibold text-[#3a2818]">{t.slipUploaded}</span>
+            </div>
+            <p className="w-full rounded-xl bg-black/[0.03] px-4 py-3.5 text-[13px] leading-[1.85] text-black/60">
+              {fulfilment}
+            </p>
+          </>
         ) : (
-          <div className="w-full">
-            <label className={`w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] flex items-center justify-center gap-2 cursor-pointer hover:bg-[#3a2818] transition ${slipStatus === 'verifying' ? 'opacity-60 pointer-events-none' : ''}`}>
-              {slipStatus === 'verifying' ? t.verifyingSlip : slipStatus === 'fail' ? t.slipRetry : t.attachSlip}
-              <input type="file" accept="image/*" className="hidden" onChange={handleSlipFile} disabled={slipStatus === 'verifying'} />
-            </label>
-            <p className="text-[11px] text-black/40 text-center mt-1.5">{slipVerify ? t.verifyHint : ''}</p>
-            {/* whitespace-pre-line so the \n in a slip error (added for LINE's
-                Flex auto-wrap, which breaks Thai mid-word without them) also
-                reads as real line breaks here instead of collapsing. */}
-            {slipStatus === 'fail' && slipError && <p className="text-[12px] leading-[1.7] text-red-600 text-center mt-1 whitespace-pre-line">{slipError}</p>}
-          </div>
+          <>
+            {/* Payment is the one thing still owed, so it leads — the
+                fulfilment note is context underneath it, not competition. */}
+            <div className="w-full rounded-2xl border border-[#4a3520]/15 bg-[#faf3e4] px-4 py-4">
+              <span className="block text-[10.5px] tracking-[0.12em] uppercase text-[#8a6a3a]">{t.nextStepLabel}</span>
+              <p className="mt-1 text-[13.5px] leading-[1.8] text-[#6b5326]">{t.payNow}</p>
+              <label className={`mt-3.5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#4a3520] py-3.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#3a2818] ${slipStatus === 'verifying' ? 'pointer-events-none opacity-60' : ''}`}>
+                {slipStatus === 'verifying' ? t.verifyingSlip : slipStatus === 'fail' ? t.slipRetry : t.attachSlip}
+                <input type="file" accept="image/*" className="hidden" onChange={handleSlipFile} disabled={slipStatus === 'verifying'} />
+              </label>
+              {slipVerify && <p className="mt-1.5 text-center text-[11px] text-[#8a6a3a]">{t.verifyHint}</p>}
+              {/* whitespace-pre-line so the \n in a slip error (added for LINE's
+                  Flex auto-wrap, which breaks Thai mid-word without them) also
+                  reads as real line breaks here instead of collapsing. */}
+              {slipStatus === 'fail' && slipError && (
+                <p className="mt-2 whitespace-pre-line text-center text-[12px] leading-[1.7] text-red-600">{slipError}</p>
+              )}
+            </div>
+            <p className="w-full rounded-xl bg-black/[0.03] px-4 py-3.5 text-[13px] leading-[1.85] text-black/60">
+              {fulfilment}
+            </p>
+          </>
         )}
 
-        <button onClick={resetFlow} className="w-full py-3 rounded-xl bg-black/[0.06] text-ink font-semibold text-[13px] hover:bg-black/10 transition">
+        <button onClick={resetFlow} className="mt-1 w-full rounded-xl py-3 text-[13px] font-semibold text-black/60 transition-colors hover:bg-black/[0.04] hover:text-ink">
           {t.done}
         </button>
       </div>

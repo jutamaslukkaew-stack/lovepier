@@ -14,7 +14,7 @@ export default function OrderJourney({ method, status = 'paid', t }) {
   const finalState = status === 'done' ? 'active' : 'upcoming'
 
   return (
-    <div className="w-full flex items-start justify-center gap-0 py-1">
+    <div className="w-full flex items-start justify-center gap-0">
       <JourneyStep icon={CheckCircle2} label={t.journeyPaid} state={paidState} />
       <Connector active={status === 'preparing' || status === 'done'} />
       <JourneyStep icon={ChefHat} label={t.journeyPrep} state={prepState} />
@@ -32,8 +32,11 @@ function JourneyStep({ icon: Icon, label, state }) {
       ? 'bg-white text-[#8c682c] border-2 border-[#8c682c]'
       : 'bg-black/[0.05] text-black/30'
 
+  // flex-1 rather than a fixed 76px: the Thai labels ("ร้านกำลังเตรียม") and the
+  // English ones ("Out for delivery") are both wider than 76px, so a fixed
+  // width pushed them outside the card and clipped them.
   return (
-    <div className="flex flex-col items-center gap-1.5 w-[76px] shrink-0">
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
       <div className="relative flex items-center justify-center">
         {state === 'active' && (
           <span
@@ -49,7 +52,9 @@ function JourneyStep({ icon: Icon, label, state }) {
           />
         </div>
       </div>
-      <span className={`text-[10.5px] leading-tight text-center ${state === 'upcoming' ? 'text-black/35' : 'text-[#4a3520]'}`}>
+      {/* leading-[1.5], not leading-tight: Thai tone marks and descenders sit
+          outside the tight line box and were being cut off. */}
+      <span className={`px-0.5 text-center text-[11px] leading-[1.5] ${state === 'upcoming' ? 'text-black/35' : 'text-[#4a3520]'}`}>
         {label}
       </span>
     </div>
@@ -58,7 +63,7 @@ function JourneyStep({ icon: Icon, label, state }) {
 
 function Connector({ active = false }) {
   return (
-    <div className="relative flex-1 h-9 flex items-center min-w-[16px] -mx-1">
+    <div className="relative flex h-9 w-6 shrink-0 items-center">
       <div className={`w-full h-[2px] rounded-full ${active ? 'bg-[#c9a96e]/60' : 'bg-black/[0.08]'}`} />
       {active && (
         <span

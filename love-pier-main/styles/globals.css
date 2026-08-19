@@ -135,6 +135,16 @@ body.menu-open {
   letter-spacing: 0;
 }
 
+/* Cormorant has no baht sign, so a bare ฿ inside .font-display falls back to a
+   Thai face whose metrics don't match the serif — the glyph lands on top of the
+   first digit. Set the currency mark in the sans stack and let the amount keep
+   the display face. */
+.baht {
+  font-family: var(--font-family-sans);
+  font-weight: 400;
+  margin-inline-end: 0.06em;
+}
+
 /* Homepage mosaic — match hero / two-up row (desaturated, no warm cast) */
 .home-mosaic-img {
   filter: saturate(0.7);
