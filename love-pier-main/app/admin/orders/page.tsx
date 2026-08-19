@@ -2,7 +2,7 @@ import { listOrders } from '@/app/admin/actions/orders'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { OrderStatusSelect } from '@/components/admin/order-status-select'
-import { STATUS_LABELS, STATUS_VARIANT } from '@/app/admin/orders/status'
+import { DELIVERY_METHOD_LABELS, STATUS_LABELS, STATUS_VARIANT } from '@/app/admin/orders/status'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
@@ -79,9 +79,7 @@ export default async function AdminOrdersPage() {
                         <Badge variant={STATUS_VARIANT[o.status] ?? 'outline'}>
                           {STATUS_LABELS[o.status] ?? o.status}
                         </Badge>
-                        <Badge variant="outline">
-                          {o.deliveryMethod === 'pickup' ? 'รับที่ร้าน' : 'จัดส่ง'}
-                        </Badge>
+                        <Badge variant="outline">{DELIVERY_METHOD_LABELS[o.deliveryMethod] ?? 'จัดส่ง'}</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {formatDate(o.createdAt)}

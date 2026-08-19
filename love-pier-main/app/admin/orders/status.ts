@@ -20,6 +20,14 @@ export const STATUS_LABELS: Record<string, string> = {
   cancelled: 'ยกเลิก',
 }
 
+// 'in-store' rows come from /admin/scan (a Love Pier ID scanned at the
+// counter), not from the delivery flow — see lib/inStore.ts.
+export const DELIVERY_METHOD_LABELS: Record<string, string> = {
+  delivery: 'จัดส่ง',
+  pickup: 'รับที่ร้าน',
+  'in-store': 'หน้าร้าน',
+}
+
 export const STATUS_VARIANT: Record<
   string,
   'default' | 'secondary' | 'destructive' | 'outline'

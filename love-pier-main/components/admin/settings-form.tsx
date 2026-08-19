@@ -148,6 +148,40 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
         </p>
       </div>
 
+      <div className="border-t pt-5 space-y-4">
+        <div>
+          <p className="font-medium text-sm">สมาชิกหน้าร้าน (Love Pier ID)</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            ใช้เฉพาะตอนพนักงานสแกน QR สมาชิกที่หน้าร้าน (/admin/scan) — แยกจากอัตราเดลิเวอรี่ด้านบน
+            แก้ค่าตรงนี้ไม่กระทบออเดอร์ออนไลน์
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>ส่วนลดสมาชิก (%)</Label>
+            <Input
+              value={form.inStoreDiscountPercent}
+              onChange={(e) => set('inStoreDiscountPercent', e.target.value)}
+              placeholder="10"
+              inputMode="decimal"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>สะสมแต้ม (บาทต่อ 1 แต้ม)</Label>
+            <Input
+              value={form.inStorePointsPerBaht}
+              onChange={(e) => set('inStorePointsPerBaht', e.target.value)}
+              placeholder="1"
+              inputMode="decimal"
+            />
+          </div>
+        </div>
+        <p className="-mt-1 text-xs text-muted-foreground">
+          ค่าเริ่มต้น: ลด 10% แล้วได้แต้มเท่ายอดที่จ่ายจริง (1 บาท = 1 แต้ม) เช่น ยอดเต็ม 700 บาท
+          → ลดเหลือ 630 บาท → ได้ 630 แต้ม ใส่ 0 ในช่องส่วนลดเพื่อปิดส่วนลด
+        </p>
+      </div>
+
       <div className="flex items-center justify-between gap-4 rounded-lg border px-3.5 py-3">
         <div className="space-y-0.5">
           <Label>ตัวเลือกความหวาน/สายพันธุ์กาแฟต่อรายการ</Label>

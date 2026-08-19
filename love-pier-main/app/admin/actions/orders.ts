@@ -9,6 +9,7 @@ import { ORDER_STATUSES, type OrderStatus } from '@/app/admin/orders/status'
 import { pushToUser } from '@/lib/lineMessaging'
 import { buildOrderStatusFlex } from '@/lib/orderFlex'
 import { awardPoints } from '@/lib/pointsAward'
+import { IN_STORE_METHOD } from '@/lib/inStore'
 
 export async function listOrders() {
   await requireUser()
@@ -55,7 +56,11 @@ export async function setOrderStatus(id: string, status: string) {
   }
 
   let sentToLine = false
-  if (order.lineUserId) {
+  // In-store sales (from /admin/scan) already sent the customer their receipt
+  // card at the counter. buildOrderStatusFlex only speaks in delivery/pickup
+  // terms ("ออเดอร์พร้อมจัดส่งแล้ว"), so pushing it for a walk-in would be
+  // actively wrong — skip it and just record the status change.
+  if (order.lineUserId && order.deliveryMethod !== IN_STORE_METHOD) {
     const message = buildOrderStatusFlex({
       orderNo: order.orderNo,
       status,

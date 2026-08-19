@@ -379,3 +379,86 @@ export function buildOrderStatusFlex({ orderNo, status, deliveryMethod }) {
     },
   }
 }
+
+/**
+ * Receipt card pushed to a member right after staff scan their Love Pier ID
+ * at the counter (see app/admin/actions/in-store.ts).
+ *
+ * Unlike the order cards above there is nothing for the customer to track or
+ * act on — the food is already in their hands — so this card has no footer
+ * button and no order link. It exists to close the loop: the customer should
+ * see their points land while still standing at the till, which is what makes
+ * the member card feel worth showing next time.
+ */
+export function buildInStoreVisitFlex({ memberNo, grossAmount, discountAmount, netAmount, pointsEarned, pointsBalance }) {
+  const bubble = {
+    type: 'bubble',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      backgroundColor: '#3a2818',
+      paddingAll: '18px',
+      contents: [
+        { type: 'text', text: 'ขอบคุณที่ใช้บริการ', color: '#ffffff', weight: 'bold', size: 'xl' },
+        { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm' },
+      ],
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: 'แต้มที่ได้รับ', size: 'xs', color: '#aaaaaa', align: 'center' },
+        {
+          type: 'text',
+          text: `+${money(pointsEarned)}`,
+          weight: 'bold',
+          size: 'xxl',
+          align: 'center',
+          color: '#b06d2b',
+        },
+        { type: 'separator', margin: 'lg' },
+        plainRow('รหัสสมาชิก', String(memberNo)),
+        plainRow('ยอดเต็ม', `฿${money(grossAmount)}`),
+        // Only worth a line when there actually was one — a "ส่วนลด ฿0" row
+        // reads like the member benefit failed to apply.
+        ...(discountAmount > 0 ? [plainRow('ส่วนลดสมาชิก', `-฿${money(discountAmount)}`)] : []),
+        {
+          type: 'box',
+          layout: 'horizontal',
+          margin: 'lg',
+          contents: [
+            { type: 'text', text: 'ยอดที่ชำระ', weight: 'bold', size: 'md', color: '#333333' },
+            { type: 'text', text: `฿${money(netAmount)}`, weight: 'bold', size: 'lg', color: '#4a3520', align: 'end' },
+          ],
+        },
+        { type: 'separator', margin: 'lg' },
+        {
+          type: 'text',
+          text: `แต้มสะสมทั้งหมด ${money(pointsBalance)} แต้ม`,
+          size: 'sm',
+          color: '#8c8c8c',
+          align: 'center',
+          margin: 'lg',
+        },
+        {
+          type: 'text',
+          // Explicit break — Thai has no word spacing, so LINE's auto-wrap
+          // splits mid-word on a long single line (see buildPaymentConfirmedFlex).
+          text: 'แต้มสะสมใช้เป็นส่วนลดได้\n1 แต้ม = 1 บาท',
+          size: 'xs',
+          color: '#8c8c8c',
+          wrap: true,
+          margin: 'md',
+          align: 'center',
+        },
+      ],
+    },
+  }
+
+  return {
+    type: 'flex',
+    altText: `ขอบคุณที่ใช้บริการ — ได้รับ ${money(pointsEarned)} แต้ม`,
+    contents: bubble,
+  }
+}

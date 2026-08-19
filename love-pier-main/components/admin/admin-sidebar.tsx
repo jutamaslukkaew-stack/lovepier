@@ -18,11 +18,13 @@ import {
   LogOut,
   FileUp,
   Users,
+  ScanLine,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/admin', label: 'ภาพรวม', icon: Home, exact: true },
+  { href: '/admin/scan', label: 'สแกนสมาชิก', icon: ScanLine },
   { href: '/admin/orders', label: 'ออเดอร์', icon: ShoppingBag },
   { href: '/admin/customers', label: 'ลูกค้า', icon: Users },
   { href: '/admin/menu', label: 'เมนูอาหาร', icon: UtensilsCrossed, exact: true },

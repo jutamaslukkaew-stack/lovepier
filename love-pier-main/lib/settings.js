@@ -28,6 +28,14 @@ export const SETTING_KEYS = {
   // % off itemsSubtotal for orders with a LINE ID attached (LIFF login
   // completed) — never applies to delivery fee. 0 disables the discount.
   memberDiscountPercent: 'member_discount_percent',
+  // ── In-store (Love Pier ID QR scanned at the counter — /admin/scan) ──
+  // Deliberately separate from the delivery rates above: the shop wanted a
+  // different, more generous rate for walk-ins, and coupling them would mean
+  // one can't change without moving the other.
+  // Baht of (post-discount) spend per 1 point. Default 1 = ฿1 earns 1 point.
+  inStorePointsPerBaht: 'in_store_baht_per_point',
+  // % off the amount the customer actually pays in store. 0 disables it.
+  inStoreDiscountPercent: 'in_store_discount_percent',
   // Whether the Summary step shows the sweetness/coffee-bean pickers per
   // cart item (lib/menuOptions.js). Off by default — added 2026-08-17 so
   // the shop can turn it on later without a code change; unset/anything
@@ -75,6 +83,12 @@ export async function getShopSettings() {
     })),
     pointsPerBaht: m[SETTING_KEYS.pointsPerBaht] ? num(m[SETTING_KEYS.pointsPerBaht]) : 20,
     memberDiscountPercent: 0,
+    inStorePointsPerBaht: m[SETTING_KEYS.inStorePointsPerBaht]
+      ? num(m[SETTING_KEYS.inStorePointsPerBaht])
+      : 1,
+    inStoreDiscountPercent: m[SETTING_KEYS.inStoreDiscountPercent]
+      ? num(m[SETTING_KEYS.inStoreDiscountPercent])
+      : 10,
     menuOptionsEnabled: m[SETTING_KEYS.menuOptionsEnabled] === 'true',
   }
 }
