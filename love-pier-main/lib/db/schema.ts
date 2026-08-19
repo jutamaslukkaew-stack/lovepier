@@ -178,6 +178,16 @@ export const customers = pgTable(
     // written directly. Source of truth for the actual award is the
     // pointTransactions ledger below; this is a denormalized fast-read cache.
     pointsBalance: integer('points_balance').notNull().default(0),
+    // Love Pier ID (0008) — both NULL until the customer registers at
+    // /member. memberNo is the human-readable number staff read/type,
+    // assigned from customers_member_no_seq and formatted for display in
+    // pages/api/member.js (2 -> "LP002"). memberCode is the unguessable
+    // secret encoded in the QR — never put memberNo in a QR, it's a small
+    // sequential integer anyone could type to impersonate another member.
+    memberNo: integer('member_no'),
+    memberCode: text('member_code'),
+    // Optional, for a future birthday promo. Never required at signup.
+    birthday: date('birthday'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -187,6 +197,13 @@ export const customers = pgTable(
     // fail/be skipped. Partial (excludes '') so legacy blank-phone rows never
     // collide. Lets /api/customer-lookup and the orders upsert both key on it.
     phoneIdx: uniqueIndex('customers_phone_unique_idx').on(t.phone).where(sql`${t.phone} <> ''`),
+    // Partial like phoneIdx above — most rows are non-members holding NULL.
+    memberNoIdx: uniqueIndex('customers_member_no_unique_idx')
+      .on(t.memberNo)
+      .where(sql`${t.memberNo} is not null`),
+    memberCodeIdx: uniqueIndex('customers_member_code_unique_idx')
+      .on(t.memberCode)
+      .where(sql`${t.memberCode} is not null`),
   })
 )
 
