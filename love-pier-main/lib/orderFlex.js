@@ -8,6 +8,53 @@ function money(n) {
   return `${(Number(n) || 0).toLocaleString('th-TH')}`
 }
 
+// Status light in the header's top-right corner. In the shop's LINE group the
+// cards scroll past fast and every header is the same espresso block, so staff
+// were reading the title to tell "new order" from "paid". The dot carries that
+// distinction at a glance; the title still says it in words, so the colour is a
+// shortcut, not the only signal.
+//
+// Colours are semantic rather than brand — a traffic light only works if it
+// reads as one. All clear 3:1 against the espresso header.
+const STATUS_DOT = {
+  waiting: '#e8a33d', // something is still outstanding — payment, or the cooking
+  done: '#5cbf62', // settled: money cleared, or the order finished
+  alert: '#e2725b', // a human has to look at this one
+}
+
+function cardHeader(title, dotColor, backgroundColor = '#3a2818') {
+  const heading = {
+    type: 'box',
+    layout: 'vertical',
+    flex: 1,
+    contents: [
+      { type: 'text', text: title, color: '#ffffff', weight: 'bold', size: 'xl', wrap: true },
+      { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm' },
+    ],
+  }
+  return {
+    type: 'box',
+    layout: 'horizontal',
+    backgroundColor,
+    paddingAll: '18px',
+    contents: dotColor
+      ? [
+          heading,
+          {
+            type: 'box',
+            layout: 'vertical',
+            flex: 0,
+            width: '20px',
+            height: '20px',
+            cornerRadius: '999px',
+            backgroundColor: dotColor,
+            contents: [{ type: 'filler' }],
+          },
+        ]
+      : [heading],
+  }
+}
+
 function checkRow(label, value, action) {
   return {
     type: 'box',
@@ -75,16 +122,7 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
 
   const bubble = {
     type: 'bubble',
-    header: {
-      type: 'box',
-      layout: 'vertical',
-      backgroundColor: '#3a2818',
-      paddingAll: '18px',
-      contents: [
-        { type: 'text', text: 'รับออเดอร์แล้ว', color: '#ffffff', weight: 'bold', size: 'xl' },
-        { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm' },
-      ],
-    },
+    header: cardHeader('รับออเดอร์แล้ว', STATUS_DOT.waiting),
     body: {
       type: 'box',
       layout: 'vertical',
@@ -162,16 +200,7 @@ export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned }) {
 
   const bubble = {
     type: 'bubble',
-    header: {
-      type: 'box',
-      layout: 'vertical',
-      backgroundColor: '#3a2818',
-      paddingAll: '18px',
-      contents: [
-        { type: 'text', text: 'ชำระเงินสำเร็จ', color: '#ffffff', weight: 'bold', size: 'xl' },
-        { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm' },
-      ],
-    },
+    header: cardHeader('ชำระเงินสำเร็จ', STATUS_DOT.done),
     body: {
       type: 'box',
       layout: 'vertical',
@@ -248,16 +277,7 @@ export function buildSlipReceivedFlex({ orderNo, total, reason }) {
 
   const bubble = {
     type: 'bubble',
-    header: {
-      type: 'box',
-      layout: 'vertical',
-      backgroundColor: '#3a2818',
-      paddingAll: '18px',
-      contents: [
-        { type: 'text', text: 'ได้รับสลิปแล้ว', color: '#ffffff', weight: 'bold', size: 'xl' },
-        { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm' },
-      ],
-    },
+    header: cardHeader('ได้รับสลิปแล้ว', STATUS_DOT.alert),
     body: {
       type: 'box',
       layout: 'vertical',
@@ -344,16 +364,15 @@ export function buildOrderStatusFlex({ orderNo, status, deliveryMethod }) {
     altText: `${copy.title} ${orderNo}`,
     contents: {
       type: 'bubble',
-      header: {
-        type: 'box',
-        layout: 'vertical',
-        backgroundColor: status === 'cancelled' ? '#7a3030' : '#3a2818',
-        paddingAll: '18px',
-        contents: [
-          { type: 'text', text: copy.title, color: '#ffffff', weight: 'bold', size: 'xl', wrap: true },
-          { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm' },
-        ],
-      },
+      header: cardHeader(
+        copy.title,
+        status === 'cancelled'
+          ? STATUS_DOT.alert
+          : status === 'preparing'
+            ? STATUS_DOT.waiting
+            : STATUS_DOT.done,
+        status === 'cancelled' ? '#7a3030' : '#3a2818'
+      ),
       body: {
         type: 'box',
         layout: 'vertical',
@@ -393,16 +412,7 @@ export function buildOrderStatusFlex({ orderNo, status, deliveryMethod }) {
 export function buildInStoreVisitFlex({ memberNo, grossAmount, discountAmount, netAmount, pointsEarned, pointsBalance }) {
   const bubble = {
     type: 'bubble',
-    header: {
-      type: 'box',
-      layout: 'vertical',
-      backgroundColor: '#3a2818',
-      paddingAll: '18px',
-      contents: [
-        { type: 'text', text: 'ขอบคุณที่ใช้บริการ', color: '#ffffff', weight: 'bold', size: 'xl' },
-        { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm' },
-      ],
-    },
+    header: cardHeader('ขอบคุณที่ใช้บริการ', STATUS_DOT.done),
     body: {
       type: 'box',
       layout: 'vertical',
