@@ -4,6 +4,9 @@ import Footer from '../components/Footer'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import OrderFlow from '../components/delivery/OrderFlow'
 import { useChrome } from '../lib/chrome'
+import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
+import { initLiff } from '../lib/liff'
 import { getMenuPageData } from '../lib/db/menuPageData'
 import { getShopSettings } from '../lib/settings'
 
@@ -21,6 +24,35 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
   const { lang } = useLanguage()
   const t = PAGE_COPY[lang] || PAGE_COPY.en
   const { hidden } = useChrome()
+  const router = useRouter()
+  const [finishingLiffReturn, setFinishingLiffReturn] = useState(false)
+
+  useEffect(() => {
+    if (!router.isReady) return
+    const raw = router.query.__liff_return_to
+    const returnTo = Array.isArray(raw) ? raw[0] : raw
+    if (!returnTo) return
+    setFinishingLiffReturn(true)
+
+    // Only a local absolute path is accepted. This parameter crosses an OAuth
+    // redirect and is therefore untrusted even though we generated it.
+    const safeReturnTo = returnTo.startsWith('/') && !returnTo.startsWith('//')
+      ? returnTo
+      : '/'
+    initLiff()
+      .catch(() => null)
+      .finally(() => router.replace(safeReturnTo))
+  }, [router.isReady, router.query.__liff_return_to, router])
+
+  // Never flash the delivery welcome screen while LIFF is consuming its
+  // callback and sending a member/rewards visitor back where they started.
+  if (finishingLiffReturn || (router.isReady && router.query.__liff_return_to)) {
+    return (
+      <main className="min-h-dvh bg-[#f5f1eb] px-6 py-20 text-center">
+        <p className="text-sm text-black/55">กำลังกลับไปยังหน้าที่คุณเปิด…</p>
+      </main>
+    )
+  }
 
   return (
     <>

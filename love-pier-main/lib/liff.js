@@ -66,7 +66,22 @@ export async function loginAndGetProfile() {
   if (!LIFF_ID) return null
   const liff = await initLiff()
   if (!liff.isLoggedIn()) {
-    liff.login()
+    // This project's LIFF Endpoint URL is /delivery. LINE returns a first-time
+    // login there unless redirectUri is supplied, which used to dump a new
+    // /member visitor into the delivery wizard. LINE also requires a custom
+    // redirectUri to start with the configured Endpoint URL, so routes such
+    // as /member cannot be passed directly. Bounce through /delivery with a
+    // same-origin return path; pages/delivery.js completes liff.init() (which
+    // consumes the OAuth callback) and replaces the URL before rendering the
+    // order flow.
+    if (typeof window !== 'undefined' && window.location.pathname !== '/delivery') {
+      const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`
+      const bridge = new URL('/delivery', window.location.origin)
+      bridge.searchParams.set('__liff_return_to', returnTo)
+      liff.login({ redirectUri: bridge.toString() })
+    } else {
+      liff.login()
+    }
     return null // page will redirect; profile is fetched after it comes back
   }
   const profile = await liff.getProfile()
