@@ -1,4 +1,4 @@
-import { listOrders } from '@/app/admin/actions/orders'
+import { listOrders, listPreorders } from '@/app/admin/actions/orders'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { OrderStatusSelect } from '@/components/admin/order-status-select'
@@ -63,8 +63,8 @@ function formatSchedule(d: Date | string | null) {
   })
 }
 
-export default async function AdminOrdersPage() {
-  const orders = await listOrders()
+export async function AdminOrdersContent({ preordersOnly = false }: { preordersOnly?: boolean }) {
+  const orders = preordersOnly ? await listPreorders() : await listOrders()
   const slipUrls = await signSlipUrls(
     orders.map((o) => o.slipUrl).filter((p): p is string => Boolean(p))
   )
@@ -72,14 +72,19 @@ export default async function AdminOrdersPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">ออเดอร์</h1>
-        <span className="text-sm text-muted-foreground">{orders.length} รายการล่าสุด</span>
+        <div>
+          <h1 className="text-2xl font-semibold">{preordersOnly ? 'พรีออเดอร์' : 'ออเดอร์'}</h1>
+          {preordersOnly && (
+            <p className="mt-1 text-sm text-muted-foreground">รายการที่ลูกค้าเลือกวันและเวลารับอาหารล่วงหน้า</p>
+          )}
+        </div>
+        <span className="text-sm text-muted-foreground">{orders.length} รายการ</span>
       </div>
 
       {orders.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            ยังไม่มีออเดอร์
+            {preordersOnly ? 'ยังไม่มีพรีออเดอร์' : 'ยังไม่มีออเดอร์'}
           </CardContent>
         </Card>
       ) : (
@@ -208,4 +213,8 @@ export default async function AdminOrdersPage() {
       )}
     </div>
   )
+}
+
+export default async function AdminOrdersPage() {
+  return <AdminOrdersContent />
 }

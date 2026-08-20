@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { desc, eq, sql } from 'drizzle-orm'
+import { desc, eq, isNotNull, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { orders } from '@/lib/db/schema'
 import { requireUser } from '@/lib/auth'
@@ -33,6 +33,22 @@ export async function listOrders() {
       sql`case when ${orders.scheduledFor} is not null
                 and ${orders.scheduledFor} >= now() then ${orders.scheduledFor} end asc`,
       desc(orders.createdAt)
+    )
+    .limit(200)
+}
+
+export async function listPreorders() {
+  await requireUser()
+  return db
+    .select()
+    .from(orders)
+    .where(isNotNull(orders.scheduledFor))
+    .orderBy(
+      // Future slots are the prep queue. Once their time passes, keep them
+      // underneath in most-recent-slot-first order for quick history lookup.
+      sql`case when ${orders.scheduledFor} >= now() then 0 else 1 end`,
+      sql`case when ${orders.scheduledFor} >= now() then ${orders.scheduledFor} end asc`,
+      desc(orders.scheduledFor)
     )
     .limit(200)
 }
@@ -99,5 +115,6 @@ export async function setOrderStatus(id: string, status: string) {
     }
   }
   revalidatePath('/admin/orders')
+  revalidatePath('/admin/preorders')
   return { ok: true as const, sentToLine }
 }

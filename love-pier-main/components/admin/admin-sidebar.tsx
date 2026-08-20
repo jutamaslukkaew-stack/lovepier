@@ -19,13 +19,15 @@ import {
   FileUp,
   Users,
   ScanLine,
+  CalendarClock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/admin', label: 'ภาพรวม', icon: Home, exact: true },
   { href: '/admin/scan', label: 'สแกนสมาชิก', icon: ScanLine },
-  { href: '/admin/orders', label: 'ออเดอร์', icon: ShoppingBag },
+  { href: '/admin/orders', label: 'ออเดอร์', icon: ShoppingBag, exact: true },
+  { href: '/admin/preorders', label: 'พรีออเดอร์', icon: CalendarClock },
   { href: '/admin/customers', label: 'ลูกค้า', icon: Users },
   { href: '/admin/menu', label: 'เมนูอาหาร', icon: UtensilsCrossed, exact: true },
   { href: '/admin/menu/import', label: 'นำเข้าเมนู', icon: FileUp },
@@ -76,10 +78,12 @@ export function AdminSidebar({
   email,
   signOut,
   pendingOrders = 0,
+  upcomingPreorders = 0,
 }: {
   email: string
   signOut: () => Promise<void>
   pendingOrders?: number
+  upcomingPreorders?: number
 }) {
   const pathname = usePathname() ?? ''
   const [open, setOpen] = useState(false)
@@ -100,7 +104,13 @@ export function AdminSidebar({
             item={item}
             pathname={pathname}
             onClick={() => setOpen(false)}
-            badge={item.href === '/admin/orders' ? pendingOrders : 0}
+            badge={
+              item.href === '/admin/orders'
+                ? pendingOrders
+                : item.href === '/admin/preorders'
+                  ? upcomingPreorders
+                  : 0
+            }
           />
         ))}
       </nav>
