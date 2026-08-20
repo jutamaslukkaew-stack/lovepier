@@ -10,6 +10,7 @@ import {
   TableCell,
 } from '@/components/ui/table'
 import { CopyPhonesButton } from '@/components/admin/copy-phones-button'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,6 +52,8 @@ export default async function AdminCustomersPage() {
                   <TableRow>
                     <TableHead>ชื่อ</TableHead>
                     <TableHead>เบอร์โทร</TableHead>
+                    <TableHead>สมาชิก</TableHead>
+                    <TableHead className="text-right">คะแนน</TableHead>
                     <TableHead>ที่อยู่</TableHead>
                     <TableHead className="text-center">สั่งแล้ว</TableHead>
                     <TableHead>ครั้งล่าสุด</TableHead>
@@ -60,10 +63,20 @@ export default async function AdminCustomersPage() {
                 <TableBody>
                   {customers.map((c) => (
                     <TableRow key={c.id}>
-                      <TableCell className="font-medium whitespace-nowrap">{c.name || '—'}</TableCell>
+                      <TableCell className="font-medium whitespace-nowrap">
+                        <Link href={`/admin/customers/${c.id}`} className="hover:underline">{c.name || '—'}</Link>
+                      </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <a href={`tel:${c.phone}`} className="hover:underline">{c.phone}</a>
                       </TableCell>
+                      <TableCell>
+                        {c.memberNo != null ? (
+                          <Badge>LP{String(c.memberNo).padStart(3, '0')}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{c.pointsBalance.toLocaleString()}</TableCell>
                       <TableCell className="max-w-[280px] truncate text-muted-foreground">
                         {c.address || '—'}
                       </TableCell>

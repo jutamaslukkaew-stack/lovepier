@@ -20,6 +20,7 @@ import {
   Users,
   ScanLine,
   CalendarClock,
+  UserRoundCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -29,6 +30,7 @@ const navItems = [
   { href: '/admin/orders', label: 'ออเดอร์', icon: ShoppingBag, exact: true },
   { href: '/admin/preorders', label: 'พรีออเดอร์', icon: CalendarClock },
   { href: '/admin/customers', label: 'ลูกค้า', icon: Users },
+  { href: '/admin/members', label: 'สมาชิก', icon: UserRoundCheck },
   { href: '/admin/menu', label: 'เมนูอาหาร', icon: UtensilsCrossed, exact: true },
   { href: '/admin/menu/import', label: 'นำเข้าเมนู', icon: FileUp },
   { href: '/admin/categories', label: 'หมวดเมนู', icon: FolderOpen },
