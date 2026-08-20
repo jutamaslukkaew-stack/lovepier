@@ -28,7 +28,8 @@ import { SWEETNESS_OPTIONS, COFFEE_BEAN_OPTIONS } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
 import OrderJourney from './OrderJourney'
 import MenuExperience from '../menu/MenuExperience'
-import { Check, CheckCircle2, Receipt, User, StickyNote } from 'lucide-react'
+import { Check, CheckCircle2, Clock, Receipt, User, StickyNote } from 'lucide-react'
+import { availableDates, bangkokDateParts, formatDayThai, formatSlotThai } from '../../lib/preorder'
 
 // Leaflet touches `window` at import time — must never be pulled into the
 // server bundle, hence ssr:false.
@@ -140,6 +141,20 @@ const COPY = {
     fillRequired: 'กรุณากรอกชื่อและเบอร์โทร',
     fillAddress: 'กรุณากรอกที่อยู่จัดส่ง',
     minOrderNotice: (remaining, min) => `สั่งอาหารเพิ่มอีก ฿${remaining} ให้ครบ ฿${min} จึงจะสั่งซื้อได้`,
+    // step 5 — pre-order ("สั่งล่วงหน้า"), shown inline on the summary step
+    timingTitle: 'เวลารับอาหาร',
+    timingNow: 'สั่งตอนนี้',
+    timingNowDesc: 'ร้านเริ่มทำทันทีหลังยืนยันการชำระเงิน',
+    timingScheduled: 'สั่งล่วงหน้า',
+    timingScheduledDesc: 'เลือกวันและเวลาที่ต้องการรับอาหาร',
+    scheduleDate: 'เลือกวัน',
+    scheduleTime: 'เลือกเวลา',
+    scheduleToday: 'วันนี้',
+    scheduleLeadNote: (m, open, close) => `เลือกล่วงหน้าอย่างน้อย ${m} นาที ภายในเวลาทำการ ${open}–${close} น.`,
+    scheduleRecap: (label) => `รับอาหาร ${label} น.`,
+    fillSchedule: 'กรุณาเลือกวันและเวลาที่ต้องการรับอาหาร',
+    scheduleExpired: 'เวลาที่เลือกเลยกำหนดแล้ว กรุณาเลือกเวลาใหม่',
+    scheduledFulfilment: (label) => `ออเดอร์นี้เป็นการสั่งล่วงหน้า ร้านจะเตรียมให้พร้อมเวลา ${label} น.`,
     // step 5 — payment
     paymentTitle: 'ยืนยันและชำระเงิน',
     paymentMethod: 'ช่องทางชำระเงิน',
@@ -257,6 +272,20 @@ const COPY = {
     fillRequired: 'Please enter name and phone',
     fillAddress: 'Please enter a delivery address',
     minOrderNotice: (remaining, min) => `Add ฿${remaining} more to reach the ฿${min} minimum order`,
+    // step 5 — pre-order, shown inline on the summary step
+    timingTitle: 'When do you want it?',
+    timingNow: 'Order now',
+    timingNowDesc: 'We start as soon as payment is confirmed',
+    timingScheduled: 'Schedule for later',
+    timingScheduledDesc: 'Pick the day and hour you want it ready',
+    scheduleDate: 'Choose a day',
+    scheduleTime: 'Choose a time',
+    scheduleToday: 'Today',
+    scheduleLeadNote: (m, open, close) => `At least ${m} minutes ahead, within opening hours ${open}–${close}.`,
+    scheduleRecap: (label) => `Ready at ${label}`,
+    fillSchedule: 'Please choose the day and time you want your order',
+    scheduleExpired: 'That time has passed — please pick a new one',
+    scheduledFulfilment: (label) => `This is a scheduled order — we'll have it ready at ${label}.`,
     paymentTitle: 'Confirm & pay',
     paymentMethod: 'Payment method',
     promptpayLabel: "The shop's QR code",
@@ -372,6 +401,20 @@ const COPY = {
     fillRequired: '请填写姓名和电话',
     fillAddress: '请填写配送地址',
     minOrderNotice: (remaining, min) => `还差 ฿${remaining} 才能达到最低消费 ฿${min}`,
+    // step 5 — pre-order, shown inline on the summary step
+    timingTitle: '取餐时间',
+    timingNow: '立即下单',
+    timingNowDesc: '确认付款后本店立即开始制作',
+    timingScheduled: '预约下单',
+    timingScheduledDesc: '选择您想取餐的日期和时间',
+    scheduleDate: '选择日期',
+    scheduleTime: '选择时间',
+    scheduleToday: '今天',
+    scheduleLeadNote: (m, open, close) => `至少提前 ${m} 分钟，营业时间 ${open}–${close}。`,
+    scheduleRecap: (label) => `取餐时间 ${label}`,
+    fillSchedule: '请选择您想取餐的日期和时间',
+    scheduleExpired: '所选时间已过，请重新选择',
+    scheduledFulfilment: (label) => `这是预约订单，本店将于 ${label} 备好。`,
     paymentTitle: '确认并付款',
     paymentMethod: '付款方式',
     promptpayLabel: '本店二维码',
@@ -546,7 +589,19 @@ function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
   )
 }
 
-export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusKm = 5, minDeliveryOrder = 300, pointsPerBaht = 20, menuOptionsEnabled = false }) {
+export default function OrderFlow({
+  dbMenuData, dbPromotions, heroTitle, radiusKm = 5, minDeliveryOrder = 300,
+  pointsPerBaht = 20, menuOptionsEnabled = false,
+  // /delivery is always an ASAP order. /preorder is the only route that
+  // enables scheduling, and forces a scheduled time instead of presenting it
+  // as an option mixed into the normal delivery checkout.
+  preOrderOnly = false,
+  // Pre-order settings, from getShopSettings() via pages/delivery.js. The
+  // defaults here mirror lib/settings.js so the picker still behaves sanely
+  // if this component is ever rendered without them.
+  preorderEnabled = false, shopOpenTime = '09:00', shopCloseTime = '18:00',
+  shopClosedDays = [3], preorderLeadMinutes = 60, preorderMaxDaysAhead = 7,
+}) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
   const { items, addItem, removeItem, updateNote, updateSweetness, updateCoffeeBean, clearCart, totalQty, totalPrice } = useCart()
@@ -588,6 +643,16 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // or their own rider collects at the shop). Forced to 'pickup' outside the
   // radius (the shop never delivers out there); an explicit choice inside it.
   const [deliveryMethod, setDeliveryMethod] = useState(null)
+
+  // Pre-order. 'now' = ASAP (the default, and what most customers want);
+  // 'scheduled' means they picked a Bangkok wall-clock hour. Three plain
+  // strings rather than one object so each <select> binds directly, matching
+  // how deliveryMethod/usePoints are held. Deliberately NOT folded into
+  // `form`: that's the four free-text contact fields, while this is a
+  // structured choice with its own validity rules (lib/preorder.js).
+  const [orderTiming, setOrderTiming] = useState(preOrderOnly ? 'scheduled' : 'now') // 'now' | 'scheduled'
+  const [scheduledDate, setScheduledDate] = useState('')
+  const [scheduledSlot, setScheduledSlot] = useState('')
 
   // step 1b — contact / address (resolved up front now; summary just recaps it)
   const [form, setForm] = useState({ name: '', phone: '', address: '', note: '' })
@@ -674,6 +739,53 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     pointsRedeemed: requestedPoints,
   })
   const amount = itemsSubtotal - discountAmount - pointsRedeemed + deliveryFee
+
+  // Recomputed every render on purpose — it's pure and at most a few dozen
+  // strings, and it must not go stale under a customer who sits on the
+  // summary step until their chosen slot falls past the lead-time cutoff.
+  // Nothing depends on its identity; never put it in a dependency array.
+  const scheduleDays = preorderEnabled
+    ? availableDates({
+        openTime: shopOpenTime,
+        closeTime: shopCloseTime,
+        closedDays: shopClosedDays,
+        leadMinutes: preorderLeadMinutes,
+        maxDaysAhead: preorderMaxDaysAhead,
+      })
+    : []
+  // Empty means nothing is bookable right now (shop closed all week, or the
+  // window is today-only and today is used up) — hide the option entirely
+  // rather than showing a picker with no dates in it.
+  const canPreorder = scheduleDays.length > 0
+  const selectedDay = scheduleDays.find((d) => d.ymd === scheduledDate) || null
+  const scheduleReady =
+    orderTiming === 'now' || Boolean(selectedDay && selectedDay.slots.includes(scheduledSlot))
+  const scheduledLabel =
+    orderTiming === 'scheduled' && scheduleReady ? formatSlotThai(scheduledDate, scheduledSlot) : ''
+
+  // Option label for the date <select>, e.g. 'วันนี้ · พฤ. 20 ส.ค.'. Unlike
+  // formatSlotThai (which must be language-neutral because it also goes into
+  // the shop's LINE card) this follows the customer's chosen language, so it
+  // uses ICU — with an explicit timeZone, because the customer may well be
+  // reading this from another country.
+  function dayLabel(ymd) {
+    // Thai goes through the module's own abbreviations rather than ICU:
+    // th-TH's `weekday: 'short'` is 'พฤหัส', long enough that 'วันนี้ · พฤหัส
+    // 20 ส.ค.' overflows the select. These are the same abbreviations the
+    // LINE card uses, so the two surfaces read alike too.
+    // Noon as the anchor hour so no rounding can nudge the date over midnight.
+    const label =
+      lang === 'th'
+        ? formatDayThai(ymd)
+        : new Date(`${ymd}T12:00:00+07:00`).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-GB', {
+            timeZone: 'Asia/Bangkok',
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+          })
+    const today = bangkokDateParts(new Date())
+    return today && ymd === today.ymd ? `${t.scheduleToday} · ${label}` : label
+  }
 
   // Silently pick up an already-logged-in LINE session (e.g. after a login
   // redirect back to this page) so returning customers aren't asked twice.
@@ -1007,6 +1119,19 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
       setSummaryError(t.fillAddress)
       return
     }
+    // Reported inline rather than by disabling the continue button — the
+    // convention on this step for name/address, and a silently dead button
+    // with no explanation is worse. /api/orders re-checks all of this anyway.
+    if (orderTiming === 'scheduled') {
+      if (!scheduledDate || !scheduledSlot) {
+        setSummaryError(t.fillSchedule)
+        return
+      }
+      if (!scheduleReady) {
+        setSummaryError(t.scheduleExpired)
+        return
+      }
+    }
     setStep('payment')
     if (PROMPTPAY_ID && amount > 0) {
       try {
@@ -1047,6 +1172,12 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
           paymentRef,
           distanceKm: distanceResult?.distanceKm ?? null,
           deliveryMethod: deliveryMethod || 'pickup',
+          // The two raw strings the picker displayed, never a client-computed
+          // instant — /api/orders re-runs the same lib/preorder.js rules
+          // against the live settings and does the one +07:00 conversion
+          // itself. '' rather than omitted keeps the payload shape stable.
+          scheduledDate: orderTiming === 'scheduled' ? scheduledDate : '',
+          scheduledSlot: orderTiming === 'scheduled' ? scheduledSlot : '',
           lineAccessToken: profile?.accessToken || '',
           pointsToRedeem: requestedPoints,
           items: items.map((i) => ({
@@ -1090,6 +1221,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         pointsRedeemed: data.pointsRedeemed || 0,
         distanceKm: distanceResult?.distanceKm ?? null,
         deliveryMethod,
+        scheduledLabel,
       })
       const customerSentOrder = await sendMessagesToChat([orderFlex])
       setSentToLine(customerSentOrder || Boolean(data.sentToLine))
@@ -1102,6 +1234,7 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
         distanceKm: distanceResult?.distanceKm ?? null,
         withinRadius,
         deliveryMethod,
+        scheduledLabel,
         status: 'pending',
       })
       setSlipVerify(Boolean(data.slipVerify))
@@ -1217,6 +1350,9 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
     setLocatePhase('idle')
     setAckOutOfRadius(false)
     setDeliveryMethod(null)
+    setOrderTiming(preOrderOnly ? 'scheduled' : 'now')
+    setScheduledDate('')
+    setScheduledSlot('')
     setQrDataUrl('')
     setPaymentRef('')
     setConfirmPay(false)
@@ -1831,6 +1967,76 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
               )}
 
               <div className="flex flex-col gap-3">
+                {/* Scheduling belongs exclusively to /preorder. The normal
+                    /delivery route never renders this control and always
+                    submits an ASAP order. */}
+                {preOrderOnly && preorderEnabled && canPreorder && (
+                  <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 flex flex-col gap-3">
+                    <span className="flex items-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/45">
+                      <Clock size={13} strokeWidth={2} className="text-[#8c682c]" />
+                      {t.timingTitle}
+                    </span>
+                    <div className="rounded-xl border border-[#4a3520] bg-[#4a3520]/[0.05] px-3 py-3">
+                      <span className="block text-[14px] font-medium text-ink">{t.timingScheduled}</span>
+                      <span className="mt-0.5 block text-[11px] leading-snug text-black/45">{t.timingScheduledDesc}</span>
+                    </div>
+                    {orderTiming === 'scheduled' && (
+                      <>
+                        {/* Not grid-cols-2: the date label is several words
+                            and the time is always five characters, so an even
+                            split clips the date and wastes room on the time. */}
+                        <div className="grid grid-cols-[1.45fr_1fr] gap-2">
+                          {/* A <select> rather than <input type="date">: min/max
+                              can express a window but cannot express "not
+                              Wednesdays" or "today is already used up", so a
+                              native picker would let the customer choose a day
+                              and then find no times on it. Fed by
+                              availableDates(), an unusable day is unpickable
+                              instead of merely rejected. */}
+                          <select
+                            className={inputCls}
+                            value={scheduledDate}
+                            aria-label={t.scheduleDate}
+                            onChange={(e) => {
+                              setScheduledDate(e.target.value)
+                              // MUST clear: the same HH:MM may not exist on
+                              // the new day (today's list is truncated by the
+                              // lead time).
+                              setScheduledSlot('')
+                            }}
+                          >
+                            <option value="" disabled>{t.scheduleDate}</option>
+                            {scheduleDays.map((d) => (
+                              <option key={d.ymd} value={d.ymd}>{dayLabel(d.ymd)}</option>
+                            ))}
+                          </select>
+                          <select
+                            className={inputCls}
+                            value={scheduledSlot}
+                            aria-label={t.scheduleTime}
+                            disabled={!selectedDay}
+                            onChange={(e) => setScheduledSlot(e.target.value)}
+                          >
+                            <option value="" disabled>{t.scheduleTime}</option>
+                            {(selectedDay?.slots || []).map((slot) => (
+                              <option key={slot} value={slot}>{slot}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <p className="text-[11px] leading-relaxed text-black/45">
+                          {t.scheduleLeadNote(preorderLeadMinutes, shopOpenTime, shopCloseTime)}
+                        </p>
+                        {/* A customer who lingers can watch their chosen slot
+                            fall past the cutoff. Without this the continue
+                            button would just start refusing with no cause on
+                            screen. */}
+                        {scheduledSlot && !scheduleReady && (
+                          <p className="text-[12px] text-red-600">{t.scheduleExpired}</p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
                 {/* Contact/address is already resolved by the earlier
                     `contact` step (right after login) — this is a read-only
                     recap, not another form. "แก้ไข" jumps back there with
@@ -1938,6 +2144,10 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
             </div>
           </div>
 
+          {scheduledLabel && (
+            <p className="text-[13px] font-medium text-[#8c682c]">{t.scheduleRecap(scheduledLabel)}</p>
+          )}
+
           <div>
             <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.paymentMethod}</span>
             <div className="mt-1.5 flex items-center gap-2.5 rounded-xl border border-[#4a3520] bg-[#4a3520]/[0.04] px-4 py-3">
@@ -2019,7 +2229,13 @@ export default function OrderFlow({ dbMenuData, dbPromotions, heroTitle, radiusK
   // a bar that looks exactly like the primary button gets tapped, and nothing
   // happens.
   const paid = slipStatus === 'ok'
-  const fulfilment = completed?.deliveryMethod === 'pickup' ? t.pickupInstruction : t.waitingDelivery
+  const baseFulfilment = completed?.deliveryMethod === 'pickup' ? t.pickupInstruction : t.waitingDelivery
+  // Prefixed as a sentence rather than rendered as its own <p>: `fulfilment`
+  // is dropped into three different containers below and not all of them
+  // carry whitespace-pre-line, so a '\n' would silently collapse.
+  const fulfilment = completed?.scheduledLabel
+    ? `${t.scheduledFulfilment(completed.scheduledLabel)} ${baseFulfilment}`
+    : baseFulfilment
 
   return (
     <div className="min-h-[100dvh] bg-[#f5f2ee] flex items-start justify-center px-5 py-8">

@@ -24,6 +24,16 @@ const SETTING_KEYS = {
   inStorePointsPerBaht: 'in_store_baht_per_point',
   inStoreDiscountPercent: 'in_store_discount_percent',
   menuOptionsEnabled: 'menu_customization_enabled',
+  // Pre-order — see the commented originals in lib/settings.js. This copy is
+  // duplicated on purpose: a 'use server' module may only export async
+  // functions, so it cannot import a shared const map without Next.js
+  // dropping the whole module's exports at build time.
+  preorderEnabled: 'preorder_enabled',
+  shopOpenTime: 'shop_open_time',
+  shopCloseTime: 'shop_close_time',
+  shopClosedDays: 'shop_closed_days',
+  preorderLeadMinutes: 'preorder_lead_minutes',
+  preorderMaxDaysAhead: 'preorder_max_days_ahead',
 } as const
 
 export type ShopSettingsForm = {
@@ -44,6 +54,14 @@ export type ShopSettingsForm = {
   inStorePointsPerBaht: string
   inStoreDiscountPercent: string
   menuOptionsEnabled: boolean
+  preorderEnabled: boolean
+  shopOpenTime: string
+  shopCloseTime: string
+  // Kept as the raw comma-separated string so the form round-trips whatever
+  // the shop typed, blank included.
+  shopClosedDays: string
+  preorderLeadMinutes: string
+  preorderMaxDaysAhead: string
 }
 
 export async function getSettings(): Promise<ShopSettingsForm> {
@@ -68,6 +86,14 @@ export async function getSettings(): Promise<ShopSettingsForm> {
     inStorePointsPerBaht: m[SETTING_KEYS.inStorePointsPerBaht] || '1',
     inStoreDiscountPercent: m[SETTING_KEYS.inStoreDiscountPercent] || '10',
     menuOptionsEnabled: m[SETTING_KEYS.menuOptionsEnabled] === 'true',
+    preorderEnabled: m[SETTING_KEYS.preorderEnabled] === 'true',
+    shopOpenTime: m[SETTING_KEYS.shopOpenTime] || '09:00',
+    shopCloseTime: m[SETTING_KEYS.shopCloseTime] || '18:00',
+    // `?? '3'` rather than `|| '3'`: once the shop has saved a blank (open
+    // every day) that blank must survive a reload, and '' is falsy.
+    shopClosedDays: m[SETTING_KEYS.shopClosedDays] ?? '3',
+    preorderLeadMinutes: m[SETTING_KEYS.preorderLeadMinutes] || '60',
+    preorderMaxDaysAhead: m[SETTING_KEYS.preorderMaxDaysAhead] || '7',
   }
 }
 
@@ -98,6 +124,14 @@ export async function saveSettings(data: ShopSettingsForm) {
   await put(SETTING_KEYS.inStorePointsPerBaht, (data.inStorePointsPerBaht || '1').trim())
   await put(SETTING_KEYS.inStoreDiscountPercent, (data.inStoreDiscountPercent || '10').trim())
   await put(SETTING_KEYS.menuOptionsEnabled, String(Boolean(data.menuOptionsEnabled)))
+  await put(SETTING_KEYS.preorderEnabled, String(Boolean(data.preorderEnabled)))
+  await put(SETTING_KEYS.shopOpenTime, (data.shopOpenTime || '09:00').trim())
+  await put(SETTING_KEYS.shopCloseTime, (data.shopCloseTime || '18:00').trim())
+  // Deliberately no `|| '3'` fallback — a blank here means "open every day"
+  // and must be storable as a blank.
+  await put(SETTING_KEYS.shopClosedDays, (data.shopClosedDays ?? '').trim())
+  await put(SETTING_KEYS.preorderLeadMinutes, (data.preorderLeadMinutes || '60').trim())
+  await put(SETTING_KEYS.preorderMaxDaysAhead, (data.preorderMaxDaysAhead || '7').trim())
   revalidatePath('/admin/settings')
   return { ok: true as const }
 }

@@ -251,11 +251,27 @@ export const orders = pgTable(
     slipRef: text('slip_ref'),
     // driving distance from the shop (km), null when unknown
     distanceKm: numeric('distance_km', { precision: 5, scale: 1 }),
+    // Pre-order: the instant the customer wants this order ready, for delivery
+    // or pickup alike. NULL = order now (ASAP) — every row that predates this
+    // column, and still the common case.
+    //
+    // The customer picks a Bangkok wall-clock slot ('YYYY-MM-DD' + 'HH:MM').
+    // That pair becomes this instant at exactly one place —
+    // lib/preorder.js#bangkokSlotToInstant, with a literal '+07:00' — and is
+    // read back through lib/preorder.js#bangkokDateParts. Never format this
+    // column with toLocale*() without an explicit timeZone: 'Asia/Bangkok':
+    // the server runs in UTC on Vercel and would render it 7 hours early.
+    scheduledFor: timestamp('scheduled_for', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
     createdIdx: index('orders_created_at_idx').on(t.createdAt),
     statusIdx: index('orders_status_idx').on(t.status),
+    // Partial — most rows are ASAP orders holding NULL, same reasoning as
+    // customers_member_no_unique_idx.
+    scheduledForIdx: index('orders_scheduled_for_idx')
+      .on(t.scheduledFor)
+      .where(sql`${t.scheduledFor} is not null`),
   })
 )
 

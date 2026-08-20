@@ -68,6 +68,19 @@ export default function OrderStatus({ order }) {
               <p>ชื่อ : {order.customerName}</p>
               <p>เบอร์โทร : {order.phone}</p>
               <p>รับอาหาร : {order.deliveryMethod === 'pickup' ? 'รับที่ร้าน' : 'ให้ร้านจัดส่ง'}</p>
+              {order.scheduledFor && (
+                <p className="font-medium text-[#8c682c]">
+                  สั่งล่วงหน้า : {new Date(order.scheduledFor).toLocaleString('th-TH', {
+                    // SSR'd on Vercel (UTC), and the page meta-refreshes every
+                    // 10s — a missing timeZone would be wrong on every reload.
+                    timeZone: 'Asia/Bangkok',
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })} น.
+                </p>
+              )}
               {order.address && <p>ที่อยู่ : {order.address}</p>}
               {order.distanceKm != null && <p>ระยะส่ง : {order.distanceKm} กม.</p>}
             </div>
@@ -104,6 +117,11 @@ export async function getServerSideProps({ params }) {
           address: row.address,
           deliveryMethod: row.deliveryMethod,
           distanceKm: row.distanceKm != null ? Number(row.distanceKm) : null,
+          // MUST be serialized — a raw Date in getServerSideProps props throws
+          // "cannot be serialized as JSON", the same reason distanceKm is
+          // Number()'d above. This is the page the LINE card links to, so a
+          // miss here is a hard 500 on the customer's own order link.
+          scheduledFor: row.scheduledFor ? row.scheduledFor.toISOString() : null,
           items: row.items,
           totalAmount: row.totalAmount,
         },

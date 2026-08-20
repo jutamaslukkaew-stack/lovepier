@@ -35,9 +35,27 @@ async function signSlipUrls(paths: string[]): Promise<Record<string, string>> {
   return out
 }
 
+// timeZone is MANDATORY in both formatters below. This is a server component
+// (`dynamic = 'force-dynamic'`, async default export), so it formats on
+// Vercel — where the process timezone is UTC and every time would render 7
+// hours early. That was already true of createdAt before scheduled_for
+// existed; it is fixed here because a card showing a 14:00 pickup next to an
+// 07:00 created-at for the same order reads as broken.
 function formatDate(d: Date | string | null) {
   if (!d) return ''
   return new Date(d).toLocaleString('th-TH', {
+    timeZone: 'Asia/Bangkok',
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function formatSchedule(d: Date | string | null) {
+  if (!d) return ''
+  return new Date(d).toLocaleString('th-TH', {
+    timeZone: 'Asia/Bangkok',
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
@@ -80,6 +98,14 @@ export default async function AdminOrdersPage() {
                           {STATUS_LABELS[o.status] ?? o.status}
                         </Badge>
                         <Badge variant="outline">{DELIVERY_METHOD_LABELS[o.deliveryMethod] ?? 'จัดส่ง'}</Badge>
+                        {/* Filled rather than outline, unlike the two badges
+                            beside it: this is the one fact on the card that
+                            changes what staff do right now. */}
+                        {o.scheduledFor && (
+                          <Badge className="bg-[#8c682c] text-white hover:bg-[#8c682c]">
+                            ล่วงหน้า · {formatSchedule(o.scheduledFor)}
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {formatDate(o.createdAt)}

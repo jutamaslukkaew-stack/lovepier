@@ -54,7 +54,9 @@ export async function getServerSideProps() {
   // The welcome screen states the delivery radius before the customer commits
   // to a LINE login, so it has to know it up front — /api/delivery-distance
   // only reports it after the GPS check.
-  const { radiusKm, minDeliveryOrder, pointsPerBaht, memberDiscountPercent, menuOptionsEnabled } = await getShopSettings()
+  const {
+    radiusKm, minDeliveryOrder, pointsPerBaht, memberDiscountPercent, menuOptionsEnabled,
+  } = await getShopSettings()
   return {
     props: {
       dbMenuData,

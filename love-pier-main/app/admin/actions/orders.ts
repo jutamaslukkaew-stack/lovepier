@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { orders } from '@/lib/db/schema'
 import { requireUser } from '@/lib/auth'
@@ -13,7 +13,28 @@ import { IN_STORE_METHOD } from '@/lib/inStore'
 
 export async function listOrders() {
   await requireUser()
-  return db.select().from(orders).orderBy(desc(orders.createdAt)).limit(200)
+  return db
+    .select()
+    .from(orders)
+    .orderBy(
+      // Upcoming pre-orders float to the top as a due-soonest-first prep
+      // queue; everything else — ASAP orders, in-store rows, and pre-orders
+      // whose time has already passed — keeps the existing newest-first order
+      // underneath, untouched. Key 2 is NULL for the whole second group, so
+      // every row there ties and falls through to created_at.
+      //
+      // Rejected: `desc(coalesce(scheduled_for, created_at))`, which would
+      // park a pre-order three days out permanently above every fresh order.
+      //
+      // now() is compared against a timestamptz, so this is an absolute
+      // comparison and doesn't care what timezone the server runs in.
+      sql`case when ${orders.scheduledFor} is not null
+                and ${orders.scheduledFor} >= now() then 0 else 1 end`,
+      sql`case when ${orders.scheduledFor} is not null
+                and ${orders.scheduledFor} >= now() then ${orders.scheduledFor} end asc`,
+      desc(orders.createdAt)
+    )
+    .limit(200)
 }
 
 export async function setOrderStatus(id: string, status: string) {

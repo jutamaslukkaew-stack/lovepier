@@ -87,7 +87,17 @@ function plainRow(label, value) {
   }
 }
 
-export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod }) {
+// scheduledLabel: a pre-order's pickup/delivery time, already formatted by
+// lib/preorder.js#formatSlotThai (e.g. 'ศ. 21 ส.ค. 14:00'). Blank/absent for
+// an ordinary ASAP order, which is the majority — the row then doesn't exist
+// at all rather than rendering an empty value.
+//
+// NOTE this builder has TWO call sites — pages/api/orders.js (the server push
+// to staff and to the customer) and components/delivery/OrderFlow.js (the
+// customer's own inbound copy via sendMessagesToChat). Passing a new field at
+// only one of them half-ships it silently: one copy shows the time and the
+// other doesn't.
+export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel }) {
   const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
 
   const itemRows = items.flatMap((i) => {
@@ -116,6 +126,10 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
     checkRow('เบอร์โทร', String(phone || '-'), phone ? { type: 'uri', label: 'call', uri: `tel:${String(phone).replace(/[^0-9+]/g, '')}` } : undefined),
     plainRow('รับอาหาร', deliveryMethod === 'pickup' ? 'รับที่ร้าน' : 'ให้ร้านจัดส่ง'),
   ]
+  // "How" and "when" belong next to each other, above the address. Label kept
+  // to four characters so it sits in the same width band as its neighbours
+  // (ชื่อ / รับอาหาร / ที่อยู่ / ระยะส่ง) and the value column doesn't jump.
+  if (scheduledLabel) detail.push(plainRow('รับเวลา', String(scheduledLabel)))
   if (address) detail.push(plainRow('ที่อยู่', String(address)))
   if (distanceKm != null) detail.push(plainRow('ระยะส่ง', `${distanceKm} กม.`))
   detail.push(plainRow('ชำระโดย', 'QR ของร้าน'))
@@ -189,7 +203,12 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
     },
   }
 
-  return { type: 'flex', altText: `รับออเดอร์แล้ว ${orderNo} — รวม ฿${money(total)}`, contents: bubble }
+  // The altText is all a locked phone's LINE notification shows, so a
+  // pre-order says so there rather than only inside the card.
+  const altText = scheduledLabel
+    ? `รับออเดอร์แล้ว ${orderNo} — รับ ${scheduledLabel} — รวม ฿${money(total)}`
+    : `รับออเดอร์แล้ว ${orderNo} — รวม ฿${money(total)}`
+  return { type: 'flex', altText, contents: bubble }
 }
 
 // Sent right after SlipOK auto-verifies a payment (pages/api/verify-slip.js),

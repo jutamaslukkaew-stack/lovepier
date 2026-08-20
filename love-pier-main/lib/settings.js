@@ -1,6 +1,8 @@
 import { db } from './db'
 import { settings } from './db/schema'
 import { DEFAULT_DELIVERY_FEE_TIERS } from './deliveryFee'
+// Safe to import here: lib/preorder.js is pure and imports nothing at all.
+import { DEFAULT_CLOSE_TIME, DEFAULT_OPEN_TIME, parseClosedDays } from './preorder'
 
 // Keys stored in the `settings` table (edited from /admin/settings).
 export const SETTING_KEYS = {
@@ -41,6 +43,28 @@ export const SETTING_KEYS = {
   // the shop can turn it on later without a code change; unset/anything
   // other than the literal string 'true' reads as off.
   menuOptionsEnabled: 'menu_customization_enabled',
+  // ── Pre-order ("สั่งล่วงหน้า" — the summary step lets the customer pick a
+  // day and hour to receive the order; payment is still immediate). ──
+  // Master switch, off by default like menuOptionsEnabled above: the code can
+  // ship inert and the shop turns it on when they're ready. Also the rollback
+  // lever — flipping this off restores exactly the previous behaviour with no
+  // deploy. Anything other than the literal string 'true' reads as off.
+  preorderEnabled: 'preorder_enabled',
+  // The shop's real trading hours, deliberately NOT prefixed `preorder_`:
+  // until now these existed only as hard-coded translated strings in six
+  // display files (pages/reservation.js, index.js, about.js, location.js,
+  // components/MenuOverlay.js, partials.js). This is the first machine-readable
+  // copy, and a later "we're closed right now" banner should read these too.
+  shopOpenTime: 'shop_open_time', // 'HH:MM'
+  shopCloseTime: 'shop_close_time', // 'HH:MM'
+  // Comma-separated weekday indices, 0=Sunday … 6=Saturday. Defaults to '3'
+  // (Wednesday). A BLANK value means "open every day" and is meaningful —
+  // see parseClosedDays, and the note on the read below.
+  shopClosedDays: 'shop_closed_days',
+  // How far ahead of the chosen slot the order must be placed, and how many
+  // days ahead the picker offers. Both are policy rather than trading hours.
+  preorderLeadMinutes: 'preorder_lead_minutes',
+  preorderMaxDaysAhead: 'preorder_max_days_ahead',
 }
 
 function num(v) {
@@ -90,5 +114,19 @@ export async function getShopSettings() {
       ? num(m[SETTING_KEYS.inStoreDiscountPercent])
       : 10,
     menuOptionsEnabled: m[SETTING_KEYS.menuOptionsEnabled] === 'true',
+    preorderEnabled: m[SETTING_KEYS.preorderEnabled] === 'true',
+    shopOpenTime: m[SETTING_KEYS.shopOpenTime] || DEFAULT_OPEN_TIME,
+    shopCloseTime: m[SETTING_KEYS.shopCloseTime] || DEFAULT_CLOSE_TIME,
+    // NOT the `m[K] ? … : default` idiom the numeric settings above use: a
+    // bare '' is a meaningful value here (open every day) and is falsy, so
+    // that idiom would silently reinstate the Wednesday closure the moment
+    // the shop turned it off. parseClosedDays distinguishes unset from blank.
+    shopClosedDays: parseClosedDays(m[SETTING_KEYS.shopClosedDays]),
+    preorderLeadMinutes: m[SETTING_KEYS.preorderLeadMinutes]
+      ? num(m[SETTING_KEYS.preorderLeadMinutes])
+      : 60,
+    preorderMaxDaysAhead: m[SETTING_KEYS.preorderMaxDaysAhead]
+      ? num(m[SETTING_KEYS.preorderMaxDaysAhead])
+      : 7,
   }
 }

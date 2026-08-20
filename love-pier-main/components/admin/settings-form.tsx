@@ -258,6 +258,80 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
 
       <div className="border-t pt-5 space-y-4">
         <div>
+          <p className="font-medium text-sm">สั่งล่วงหน้า (Pre-order)</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            ให้ลูกค้าเลือกวันและเวลาที่จะรับอาหารได้ ทั้งแบบจัดส่งและรับเองที่ร้าน — ชำระเงินทันทีตอนสั่งเหมือนเดิม
+          </p>
+        </div>
+        <div className="flex items-center justify-between gap-4 rounded-lg border px-3.5 py-3">
+          <div className="space-y-0.5">
+            <Label>เปิดให้สั่งล่วงหน้า</Label>
+            <p className="text-xs text-muted-foreground">
+              ปิดอยู่ = หน้าสรุปออเดอร์ไม่แสดงตัวเลือกนี้เลย ลูกค้าสั่งได้แบบทันทีอย่างเดียว
+            </p>
+          </div>
+          <Switch
+            checked={form.preorderEnabled}
+            onCheckedChange={(v) => set('preorderEnabled', v)}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>เวลาเปิดร้าน</Label>
+            <Input
+              value={form.shopOpenTime}
+              onChange={(e) => set('shopOpenTime', e.target.value)}
+              placeholder="09:00"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>เวลาปิดร้าน</Label>
+            <Input
+              value={form.shopCloseTime}
+              onChange={(e) => set('shopCloseTime', e.target.value)}
+              placeholder="18:00"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          ช่องเวลาที่ลูกค้าเลือกได้เป็นรายชั่วโมง และช่องสุดท้ายจะอยู่ก่อนเวลาปิดหนึ่งชั่วโมง — 09:00–18:00 จะได้ 09:00 ถึง 17:00
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>ต้องสั่งล่วงหน้าอย่างน้อย (นาที)</Label>
+            <Input
+              value={form.preorderLeadMinutes}
+              onChange={(e) => set('preorderLeadMinutes', e.target.value)}
+              placeholder="60"
+              inputMode="decimal"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>สั่งล่วงหน้าได้ไม่เกิน (วัน)</Label>
+            <Input
+              value={form.preorderMaxDaysAhead}
+              onChange={(e) => set('preorderMaxDaysAhead', e.target.value)}
+              placeholder="7"
+              inputMode="decimal"
+            />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>วันที่ร้านปิด</Label>
+          <Input
+            value={form.shopClosedDays}
+            onChange={(e) => set('shopClosedDays', e.target.value)}
+            placeholder="3"
+            className="w-40"
+          />
+          <p className="text-xs text-muted-foreground">
+            0=อาทิตย์ 1=จันทร์ 2=อังคาร 3=พุธ 4=พฤหัส 5=ศุกร์ 6=เสาร์ · คั่นด้วยจุลภาค เช่น 3 · เว้นว่าง = เปิดทุกวัน
+          </p>
+        </div>
+      </div>
+
+      <div className="border-t pt-5 space-y-4">
+        <div>
           <p className="font-medium text-sm">ตรวจสลิปอัตโนมัติ (SlipOK)</p>
           <p className="text-xs text-muted-foreground mt-0.5">
             ลูกค้าแนบสลิป → ระบบเช็คกับธนาคารว่าจริง/ยอดตรง แล้วอัปเดตเป็น &ldquo;จ่ายแล้ว&rdquo;

@@ -8,6 +8,7 @@ import { calcDeliveryFee } from '../../lib/deliveryFee'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
 import { SWEETNESS_OPTIONS, COFFEE_BEAN_OPTIONS } from '../../lib/menuOptions'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
+import { formatSlotThai, validateScheduleRequest } from '../../lib/preorder'
 
 function pickString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -42,6 +43,11 @@ export default async function handler(req, res) {
   // the customer money.
   const deliveryMethod = req.body?.deliveryMethod === 'delivery' ? 'delivery' : 'pickup'
   const rawItems = Array.isArray(req.body?.items) ? req.body.items : []
+  // Pre-order: the two raw strings the picker displayed, never a
+  // client-computed instant. Both blank = an ordinary "as soon as possible"
+  // order, which is the overwhelming majority.
+  const scheduledDate = pickString(req.body?.scheduledDate)
+  const scheduledSlot = pickString(req.body?.scheduledSlot)
 
   if (!name || !phone) {
     return res.status(400).json({ error: 'กรุณากรอกชื่อและเบอร์โทร' })
@@ -111,6 +117,38 @@ export default async function handler(req, res) {
   // trust that alone.
   if (s.minDeliveryOrder > 0 && itemsSubtotal < s.minDeliveryOrder) {
     return res.status(400).json({ error: `ยอดสั่งซื้อไม่ถึงขั้นต่ำ (฿${s.minDeliveryOrder})` })
+  }
+
+  // Pre-order time — never trust the client's slot list. The same pure module
+  // the picker uses (lib/preorder.js) is re-run here against the shop's live
+  // settings, so an old client build, a hand-crafted POST, and a customer who
+  // sat on the summary screen past the lead-time cutoff all get the answer
+  // the picker would give right now. This is also the ONLY place the
+  // customer's wall-clock pick becomes an instant: bangkokSlotToInstant
+  // writes '+07:00' literally, so the stored value doesn't depend on this
+  // process's timezone (UTC on Vercel, UTC+7 on a shop laptop).
+  //
+  // `||` not `&&`: one field without the other must fail rather than be
+  // silently ignored, and validateScheduleRequest returns MALFORMED for it.
+  let scheduledFor = null
+  if (scheduledDate || scheduledSlot) {
+    if (!s.preorderEnabled) {
+      return res.status(400).json({ error: 'ขณะนี้ยังไม่เปิดให้สั่งล่วงหน้า' })
+    }
+    const schedule = validateScheduleRequest(
+      { scheduledDate, scheduledSlot },
+      {
+        openTime: s.shopOpenTime,
+        closeTime: s.shopCloseTime,
+        closedDays: s.shopClosedDays,
+        leadMinutes: s.preorderLeadMinutes,
+        maxDaysAhead: s.preorderMaxDaysAhead,
+      }
+    )
+    // 400 like the other order-level rejections above — 401 is reserved for
+    // LINE identity and 409 for conflicts.
+    if (!schedule.ok) return res.status(400).json({ error: schedule.error })
+    scheduledFor = schedule.scheduledFor
   }
 
   // Recompute the delivery fee server-side from distance + settings — never
@@ -187,6 +225,8 @@ export default async function handler(req, res) {
         paymentMethod: 'promptpay',
         paymentRef: paymentRef || null,
         distanceKm: distanceKm != null ? String(distanceKm) : null,
+        // null = ASAP. drizzle's timestamp({withTimezone:true}) takes a Date.
+        scheduledFor,
       }).returning({ id: orders.id })
 
       if (pointsRedeemed > 0) {
@@ -247,7 +287,7 @@ export default async function handler(req, res) {
     // Same Flex card, sent to two destinations: the customer's own chat,
     // and the shop's own staff LINE (LINE_ORDER_NOTIFY_TO). Both best-effort
     // — a push failure never fails the order itself.
-    const flex = buildOrderFlex({ orderNo, name, phone, address, items, total: totalAmount, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod })
+    const flex = buildOrderFlex({ orderNo, name, phone, address, items, total: totalAmount, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel: scheduledFor ? formatSlotThai(scheduledDate, scheduledSlot) : '' })
 
     // Alert staff with the branded card (not a plain-text summary) the
     // moment the order is created — doesn't depend on the customer tapping
@@ -291,7 +331,7 @@ export default async function handler(req, res) {
     // response. Still a 200 — the order is saved and paid for either way, so
     // failing the request here would tell the customer their order didn't go
     // through, which is worse and untrue.
-    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify, sentToLine: Boolean(customerPush.ok), staffAlerted: Boolean(staffPush.ok) })
+    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify, scheduledFor: scheduledFor ? scheduledFor.toISOString() : null, sentToLine: Boolean(customerPush.ok), staffAlerted: Boolean(staffPush.ok) })
   } catch (err) {
     if (err?.message === 'POINTS_BALANCE_CHANGED') {
       return res.status(409).json({ error: 'ยอดคะแนนมีการเปลี่ยนแปลง กรุณาลองใหม่อีกครั้ง' })
