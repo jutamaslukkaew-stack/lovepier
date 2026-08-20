@@ -8,7 +8,7 @@ const COPY = {
     language: 'Language',
     navItems: [
       { href: '/',            label: 'Home' },
-      { href: '/promotion#rewards', label: 'Rewards' },
+      { href: '/rewards', label: 'Rewards' },
       { href: '/menu',        label: 'Menu' },
       { href: '/preorder',    label: 'Pre-order' },
       { href: '/gallery',     label: 'Gallery' },
@@ -28,7 +28,7 @@ const COPY = {
     language: 'ภาษา',
     navItems: [
       { href: '/',            label: 'หน้าหลัก' },
-      { href: '/promotion#rewards', label: 'สะสมแต้ม' },
+      { href: '/rewards', label: 'สะสมแต้ม' },
       { href: '/menu',        label: 'เมนู' },
       { href: '/preorder',    label: 'พรีออเดอร์' },
       { href: '/gallery',     label: 'แกลเลอรี' },
@@ -48,7 +48,7 @@ const COPY = {
     language: '语言',
     navItems: [
       { href: '/',            label: '首页' },
-      { href: '/promotion#rewards', label: '积分奖励' },
+      { href: '/rewards', label: '积分奖励' },
       { href: '/menu',        label: '菜单' },
       { href: '/preorder',    label: '预约点餐' },
       { href: '/gallery',     label: '图库' },
