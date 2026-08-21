@@ -17,7 +17,6 @@ const COPY = {
       { href: '/about', label: 'About Us' },
     ],
     reserve: 'Reserve',
-    rewards: 'Rewards',
   },
   th: {
     navItems: [
@@ -31,7 +30,6 @@ const COPY = {
       { href: '/about', label: 'เกี่ยวกับเรา' },
     ],
     reserve: 'จองโต๊ะ',
-    rewards: 'สะสมแต้ม',
   },
   zh: {
     navItems: [
@@ -45,7 +43,6 @@ const COPY = {
       { href: '/about', label: '关于我们' },
     ],
     reserve: '预订',
-    rewards: '积分奖励',
   },
 }
 
@@ -189,12 +186,6 @@ export default function Nav({ onOpenMenu }) {
           </Link>
         ))}
         <span className="w-px h-3 bg-black/[0.12] shrink-0" />
-        <Link
-          href="/rewards"
-          className="shrink-0 whitespace-nowrap border border-[#a9824f]/45 bg-[#a9824f] px-3 py-2 text-[10px] font-semibold tracking-[0.1em] text-white transition-colors duration-200 hover:border-[#4a3520] hover:bg-[#4a3520] lg:px-4 lg:text-[12px] lg:tracking-[0.12em]"
-        >
-          <span aria-hidden="true" className="mr-1.5">✦</span>{dict.rewards}
-        </Link>
         <Link
           href="/reservation"
           className={`shrink-0 text-[11px] lg:text-[12px] tracking-[0.14em] uppercase whitespace-nowrap px-4 py-2 border transition-colors duration-200 ${
