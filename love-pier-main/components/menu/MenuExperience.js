@@ -23,7 +23,10 @@ import {
 
 const CART_BTN_LABEL = { th: 'ตะกร้า', en: 'Cart', zh: '购物车' }
 
-export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddToCart = false, heroTitle, onCartClick }) {
+// cartBlockedNote: when set, the floating cart button is disabled and this
+// line explains why (currently only /delivery's ฿300 minimum). Left undefined
+// by /menu, which has no checkout to block.
+export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddToCart = false, heroTitle, onCartClick, cartBlockedNote = '' }) {
   const { lang } = useLanguage()
   const { totalQty, openCart } = useCart()
   const handleCartClick = onCartClick || openCart
@@ -261,13 +264,26 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
       )}
 
       {showAddToCart && totalQty > 0 && (
-        <button
-          onClick={handleCartClick}
-          className="fixed bottom-6 right-5 z-[170] flex items-center gap-2 bg-[#4a3520] text-white px-4 py-3 rounded-full shadow-lg font-semibold text-[13px] hover:bg-[#3a2818] transition-colors active:scale-95"
-        >
-          <span>{cartLabel}</span>
-          <span className="bg-white text-[#4a3520] text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{totalQty}</span>
-        </button>
+        // `cartBlockedNote` is how the /delivery wizard says the cart has not
+        // reached the shop's minimum yet. It matters here specifically because
+        // the menu now comes FIRST in that flow: this button is the way out of
+        // the menu, so the reason it won't move has to be legible on the
+        // button itself rather than waiting on a later screen.
+        <div className="fixed bottom-6 right-5 z-[170] flex flex-col items-end gap-1.5">
+          {cartBlockedNote && (
+            <span className="max-w-[15rem] rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] leading-snug text-amber-800 shadow-sm">
+              {cartBlockedNote}
+            </span>
+          )}
+          <button
+            onClick={handleCartClick}
+            disabled={Boolean(cartBlockedNote)}
+            className="flex items-center gap-2 bg-[#4a3520] text-white px-4 py-3 rounded-full shadow-lg font-semibold text-[13px] hover:bg-[#3a2818] transition-colors active:scale-95 disabled:opacity-45 disabled:cursor-not-allowed disabled:active:scale-100"
+          >
+            <span>{cartLabel}</span>
+            <span className="bg-white text-[#4a3520] text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{totalQty}</span>
+          </button>
+        </div>
       )}
     </>
   )

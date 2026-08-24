@@ -29,13 +29,18 @@ export const PROTEIN_OPTIONS = ['น่อง', 'สะโพก', 'อก', '�
  * from the picker through pages/api/orders.js to the LINE card.
  *
  * `cats` scopes a group to menu categories: null = every line (how sweetness
- * and coffee bean have always behaved), otherwise a list of category keys
- * from components/menu/menuData.js#TAB_SECTION_CATS.
+ * and coffee bean have always behaved), otherwise a list of CATEGORY keys —
+ * the values inside components/menu/menuData.js#TAB_SECTION_CATS, not the tab
+ * ids that key it. Chicken rice has two: 'chicken-rice-1' from the Excel
+ * import and 'chickenRice' from the hand-built menu that predates it, and
+ * both are live. Listed literally rather than imported so this module (which
+ * pages/api/orders.js loads) stays independent of components/; the pairing is
+ * held to the real list by a test in menuOptions.test.js.
  */
 export const OPTION_GROUPS = [
   { field: 'sweetness', labelKey: 'sweetnessLabel', options: SWEETNESS_OPTIONS, cats: null },
   { field: 'coffeeBean', labelKey: 'coffeeBeanLabel', options: COFFEE_BEAN_OPTIONS, cats: null },
-  { field: 'protein', labelKey: 'proteinLabel', options: PROTEIN_OPTIONS, cats: ['chicken-rice'] },
+  { field: 'protein', labelKey: 'proteinLabel', options: PROTEIN_OPTIONS, cats: ['chicken-rice-1', 'chickenRice'] },
 ]
 
 /**

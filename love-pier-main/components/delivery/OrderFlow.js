@@ -49,7 +49,17 @@ function makePaymentRef() {
   return Date.now().toString().slice(-10)
 }
 
-const STEP_ORDER = ['welcome', 'contact', 'distance', 'method', 'menu', 'summary', 'payment', 'success']
+// Menu first (2026-08-24 journey review, Journey A steps 2–6): the customer
+// browses and fills a cart BEFORE being asked who they are or where they
+// live. The old order put contact + GPS in front of the menu, so someone
+// arriving from the Rich Menu met a login, a location prompt and an address
+// form before ever seeing a dish — the document's "กด Delivery → เด้งเข้า
+// หน้าที่อยู่ + ชื่อลูกค้าทันที (ตัดหน้ายืนยันซ้ำ)".
+//
+// 'distance' is gone as a step of its own: the GPS check now runs inside
+// `contact`, which is the screen that asks where to deliver, so choosing
+// "ให้ร้านจัดส่ง" lands on ONE screen instead of two.
+const STEP_ORDER = ['welcome', 'menu', 'method', 'contact', 'summary', 'payment', 'success']
 
 const COPY = {
   th: {
@@ -80,6 +90,8 @@ const COPY = {
     canOrderNow: (r) => `ยินดีด้วย คุณอยู่ในรัศมี ${r} กม. สามารถสั่งอาหารได้เลย`,
     canOrderUnknown: 'คุณสามารถสั่งอาหารได้ตามปกติ',
     distanceBadge: (km) => `ห่างจากร้าน ${km} กม.`,
+    deliveryEstimate: (km, fee) => `ห่างจากร้าน ${km} กม. · ค่าจัดส่ง ฿${fee}`,
+    switchToPickup: 'เปลี่ยนเป็นไปรับเองที่ร้าน',
     outOfRadiusHeading: 'นอกพื้นที่บริการจัดส่ง',
     outOfRadius: (km, r) => `ห่างจากร้าน ${km} กม. — นอกระยะจัดส่ง ${r} กม.`,
     outOfRadiusNote: 'คุณยังสั่งอาหารได้ตามปกติ แต่ร้านจัดส่งได้เฉพาะในรัศมีที่กำหนด — กรุณาเรียก Grab, LINE MAN หรือแมสเซนเจอร์เจ้าอื่น มารับอาหารที่หน้าร้านด้วยตนเอง และรับผิดชอบค่าส่งส่วนนี้เอง',
@@ -94,6 +106,7 @@ const COPY = {
     methodTitle: 'รับอาหารอย่างไร',
     methodDeliveryLabel: 'ให้ร้านจัดส่ง',
     methodDeliveryDesc: (fee) => `จัดส่งถึงที่ • ค่าจัดส่ง ฿${fee}`,
+    methodDeliveryDescUnknown: 'จัดส่งถึงที่ • ค่าจัดส่งคิดตามระยะทาง ทราบในขั้นตอนถัดไป',
     methodPickupLabel: 'รับเองที่ร้าน',
     methodPickupDesc: 'ไม่มีค่าจัดส่ง — มารับเองหรือเรียก Grab, LINE MAN มารับที่ร้าน',
     methodOutOfRadiusNote: 'ร้านจัดส่งได้เฉพาะในรัศมีที่กำหนด คุณจึงรับอาหารได้ด้วยวิธีนี้เท่านั้น',
@@ -136,6 +149,7 @@ const COPY = {
     newAddressDesc: 'กรอกที่อยู่จัดส่งใหม่ในขั้นตอนถัดไป',
     addressSaveNote: 'เมื่อยืนยันออเดอร์ ที่อยู่นี้จะถูกบันทึกเป็นที่อยู่ล่าสุดของคุณ',
     contactFormTitle: 'ข้อมูลติดต่อและที่อยู่จัดส่ง',
+    contactFormTitlePickup: 'ข้อมูลติดต่อ',
     contactChecking: 'กำลังตรวจสอบข้อมูล...',
     orderRecapTitle: 'ตรวจสอบรายการก่อนชำระเงิน',
     noteLabel: 'หมายเหตุ',
@@ -216,6 +230,8 @@ const COPY = {
     canOrderNow: (r) => `Good news — you're within our ${r} km radius. You can order now.`,
     canOrderUnknown: 'You can go ahead and order.',
     distanceBadge: (km) => `${km} km from the shop`,
+    deliveryEstimate: (km, fee) => `${km} km away · ฿${fee} delivery`,
+    switchToPickup: 'Collect at the shop instead',
     outOfRadiusHeading: 'Outside our delivery area',
     outOfRadius: (km, r) => `${km} km from the shop — outside the ${r} km delivery area`,
     outOfRadiusNote: "You can still place an order, but we only deliver within our radius — please arrange your own rider (Grab, LINE MAN, or another courier/messenger service) to pick up the food from the shop, and cover that delivery cost yourself.",
@@ -229,6 +245,7 @@ const COPY = {
     methodTitle: 'How would you like to receive it?',
     methodDeliveryLabel: 'Shop delivers',
     methodDeliveryDesc: (fee) => `Delivered to you • Delivery fee ฿${fee}`,
+    methodDeliveryDescUnknown: 'Delivered to you • fee depends on distance, shown next',
     methodPickupLabel: 'Pick up yourself',
     methodPickupDesc: 'No delivery fee — come yourself or send Grab/LINE MAN to the shop',
     methodOutOfRadiusNote: "We only deliver within our radius, so this is the only way to receive your order.",
@@ -268,6 +285,7 @@ const COPY = {
     newAddressDesc: 'Enter a different delivery address on the next step.',
     addressSaveNote: 'After you confirm the order, this becomes your latest saved address.',
     contactFormTitle: 'Contact & delivery address',
+    contactFormTitlePickup: 'Contact details',
     contactChecking: 'Checking your details...',
     orderRecapTitle: 'Review before you pay',
     noteLabel: 'Note',
@@ -346,6 +364,8 @@ const COPY = {
     canOrderNow: (r) => `好消息 — 您在 ${r} 公里配送范围内，现在可以下单了。`,
     canOrderUnknown: '您现在可以正常下单。',
     distanceBadge: (km) => `距离门店 ${km} 公里`,
+    deliveryEstimate: (km, fee) => `距离门店 ${km} 公里 · 配送费 ฿${fee}`,
+    switchToPickup: '改为到店自取',
     outOfRadiusHeading: '超出配送范围',
     outOfRadius: (km, r) => `距离门店 ${km} 公里 — 超出 ${r} 公里配送范围`,
     outOfRadiusNote: '您仍然可以下单，但本店仅在配送范围内配送 — 请自行安排 Grab、LINE MAN 或其他快递员到店取餐，配送费用由您自行承担。',
@@ -359,6 +379,7 @@ const COPY = {
     methodTitle: '您希望如何取餐？',
     methodDeliveryLabel: '由本店配送',
     methodDeliveryDesc: (fee) => `送货上门 • 配送费 ฿${fee}`,
+    methodDeliveryDescUnknown: '送货上门 • 配送费按距离计算，下一步显示',
     methodPickupLabel: '自行到店取餐',
     methodPickupDesc: '无需配送费 — 亲自到店或安排 Grab/LINE MAN 到店取餐',
     methodOutOfRadiusNote: '本店仅在配送范围内配送，因此您只能以此方式取餐。',
@@ -398,6 +419,7 @@ const COPY = {
     newAddressDesc: '在下一步输入新的配送地址。',
     addressSaveNote: '确认订单后，此地址将保存为您的最近地址。',
     contactFormTitle: '联系方式和配送地址',
+    contactFormTitlePickup: '联系方式',
     contactChecking: '正在核对您的资料...',
     orderRecapTitle: '付款前请核对订单',
     noteLabel: '备注',
@@ -889,20 +911,16 @@ export default function OrderFlow({
   // not to gate a returning customer we could greet immediately. ──────────
   useEffect(() => {
     if (editingInfo || contactMode) return
-    if (step !== 'welcome' && step !== 'contact') return
+    if (step !== 'contact') return
 
-    // The one resolution allowed from Welcome itself: recognized, with an
-    // address to offer. Everything else below needs the customer to have
-    // actually tapped in first (see the `step !== 'contact'` guard) — most
-    // importantly, "no profile yet" must NOT resolve to the plain form while
-    // still on Welcome, or a silent LINE login still in flight would get
-    // permanently locked out by the time it actually resolves.
+    // A recognized customer with an address on file is asked whether to reuse
+    // it — the one question worth a screen of its own, because answering
+    // "ใช้ที่อยู่เดิม" also replays their last order's distance and skips the
+    // GPS prompt entirely.
     if (customerRecognized && form.address.trim()) {
       setContactMode('popup')
       return
     }
-    if (step !== 'contact') return
-
     if (!profile) {
       // No LINE session to check (LIFF unconfigured, or login skipped) —
       // nothing to look up, straight to the plain form.
@@ -910,45 +928,33 @@ export default function OrderFlow({
       return
     }
     if (lineLookupStatus !== 'done') return // still checking (or hasn't started)
-    if (customerRecognized) {
-      // We know the LINE identity but have no usable saved address. Still
-      // greet the customer and ask for a new address; skipping straight to
-      // GPS made the app look as if it had forgotten their LINE account.
-      setContactMode('form')
-    } else {
-      setContactMode('form')
-    }
-  }, [step, profile, lineLookupStatus, customerRecognized, cachedDistanceKm, editingInfo, contactMode, form.address])
+    // Recognized but with no usable saved address, or not recognized at all:
+    // either way the plain form, which greets them by LINE name at the top.
+    setContactMode('form')
+  }, [step, profile, lineLookupStatus, customerRecognized, editingInfo, contactMode, form.address])
 
-  // "ใช้ที่อยู่เดิม" — reuse the address + distance already on file. Called
-  // from either Welcome or `contact` (see the effect above); either way it
-  // jumps straight past both of those into Method/Menu.
+  // "ใช้ที่อยู่เดิม" — reuse the address + distance already on file, which is
+  // the whole point: with a distance on record there is nothing left to ask,
+  // so this goes straight to the summary without ever prompting for GPS.
   async function useSavedAddress() {
     if (cachedDistanceKm == null) {
-      setStep('distance')
+      // Address but no recorded distance — keep the address, still need a
+      // fresh reading, so fall through to the form (which starts GPS itself).
+      setContactMode('form')
       return
     }
     await fetchDistanceFromCache(cachedDistanceKm)
-    goToMethodOrMenu()
+    setStep('summary')
   }
 
   // "ใช้ที่อยู่ใหม่" — same identity (name/phone kept), fresh address to be
-  // typed and, next step, a fresh GPS reading. Explicit setStep so this
-  // works whether it was called from Welcome (still needs to move into the
-  // `contact` step to show the form) or from `contact` already (a no-op).
+  // typed and a fresh GPS reading alongside it. The saved distance belongs to
+  // the address being discarded, so it must not be reused for the new one.
   function useNewAddress() {
     setForm((f) => ({ ...f, address: '' }))
     setContactMode('form')
-    setStep('contact')
-  }
-
-  function goToDistanceFromContact() {
-    setSummaryError('')
-    if (!form.name.trim() || !form.phone.trim()) {
-      setSummaryError(t.fillRequired)
-      return
-    }
-    setStep('distance')
+    setCachedDistanceKm(null)
+    if (deliveryMethod === 'delivery') startLocating()
   }
 
   // ── Step 1: welcome + LINE login ─────────────────────────────────────
@@ -965,7 +971,7 @@ export default function OrderFlow({
           setProfile(p)
           setDeliverySessionProfile(p)
           setLoginPhase('idle')
-          setStep('contact')
+          setStep('menu')
         }
         // else: liff.login() redirected the page away — nothing else to do.
       } catch {
@@ -973,7 +979,7 @@ export default function OrderFlow({
       }
       return
     }
-    setStep('contact')
+    setStep('menu')
   }
 
   // ── Step 2: GPS + distance ────────────────────────────────────────────
@@ -1087,24 +1093,64 @@ export default function OrderFlow({
     }
   }
 
-  const distanceContinueEnabled = locatePhase === 'found' && (withinRadius || ackOutOfRadius)
-
-  // ── Step 2 → 3: within the radius the customer picks a method; outside it
-  // the shop never delivers, so pickup is the only option and there's
-  // nothing to choose — skip straight past the method screen.
-  function goToMethodOrMenu() {
-    if (withinRadius) {
-      setStep('method')
-    } else {
-      setDeliveryMethod('pickup')
-      setStep('menu')
-    }
-  }
-
   const methodContinueEnabled = Boolean(deliveryMethod)
 
-  // ── Step 3: menu — hand the floating cart button to advance the wizard ──
-  function goToSummaryFromMenu() {
+  // ── Step 2: menu — the floating cart button advances the wizard. It leads
+  // to the method choice rather than straight to the summary because
+  // everything the summary shows (delivery fee, whether an address is even
+  // needed) depends on that answer. Blocked below the shop's minimum, which
+  // is stated on the bar itself — see the menu step's render. ─────────────
+  function goToMethodFromMenu() {
+    if (items.length === 0 || belowMinOrder) return
+    setStep('method')
+  }
+
+  // Delivery needs a location; pickup never does. Fired from the tap that
+  // moves the customer onto `contact`, not from an effect on arrival: they
+  // already said "ให้ร้านจัดส่ง", so the browser's permission prompt is a
+  // direct consequence of that tap — and asking them to then press
+  // "ขอตำแหน่งปัจจุบัน" on an otherwise empty screen is exactly the duplicate
+  // confirmation step the journey document asked to remove.
+  function maybeStartLocating() {
+    // A distance already on file is an answer; don't ask the browser again.
+    if (deliveryMethod !== 'delivery' || distanceResult) return
+    startLocating()
+  }
+
+  // ── Step 3 → 4: whichever method was chosen, the next screen asks who this
+  // order is for, and for delivery it works out the distance while they type.
+  function goToContactFromMethod() {
+    setStep('contact')
+    maybeStartLocating()
+  }
+
+  // Out of range the shop does not deliver at all, so the only way forward is
+  // to collect at the shop. Gated on the acknowledgement rather than switched
+  // silently: the customer is taking on a courier cost they didn't choose.
+  function switchToPickupOutOfRadius() {
+    setDeliveryMethod('pickup')
+    setAckOutOfRadius(true)
+  }
+
+  // Everything `contact` must have before the summary can be honest about the
+  // total: an identity, and — for delivery — an address plus a settled
+  // distance inside the radius.
+  const contactContinueEnabled =
+    Boolean(form.name.trim() && form.phone.trim()) &&
+    (deliveryMethod !== 'delivery' ||
+      (Boolean(form.address.trim()) && locatePhase === 'found' && withinRadius))
+
+  function goToSummaryFromContact() {
+    setSummaryError('')
+    if (!form.name.trim() || !form.phone.trim()) {
+      setSummaryError(t.fillRequired)
+      return
+    }
+    if (deliveryMethod === 'delivery' && !form.address.trim()) {
+      setSummaryError(t.fillAddress)
+      return
+    }
+    setEditingInfo(false)
     setStep('summary')
   }
 
@@ -1366,35 +1412,16 @@ export default function OrderFlow({
   // Step 1 — Welcome
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'welcome') {
-    // A customer we already recognize (LINE ID + a distance on file from a
-    // past order) skips the tap-to-start CTA below entirely — the "start
-    // ordering" ritual exists to explain what's about to happen (LINE
-    // login, then GPS) to someone we don't know yet, not to gate a
-    // returning customer we could already greet by name. See the
-    // useEffect above for exactly when this resolves.
-    if (contactMode === 'popup') {
-      return (
-        <div className="flex flex-col min-h-[calc(100dvh-var(--nav-h,64px))] sm:min-h-0">
-          <div className="shrink-0">
-            <PageHero title={heroTitle} subtitle={t.welcomeSubtitle} compact />
-          </div>
-          <section
-            className="flex-1 bg-[#f5f2ee] px-6 pt-8 pb-8 flex flex-col justify-center"
-            style={{ paddingBottom: 'max(1.75rem, env(safe-area-inset-bottom))' }}
-          >
-            <div className={`${CONTENT_WIDTH} mx-auto w-full`}>
-              <GreetingChoiceCard t={t} name={profile?.displayName || form.name} address={form.address} onUseSaved={useSavedAddress} onUseNew={useNewAddress} />
-            </div>
-          </section>
-        </div>
-      )
-    }
-
-    // The CTA deliberately sits BELOW the hero rather than inside it. Tapping it
-    // starts a LINE login and then asks for GPS, and customers were meeting both
-    // prompts with no idea why — so the radius and what the button does have to
-    // be readable before it is reachable. The hero is also height-capped, so this
-    // copy would not fit inside it.
+    // The CTA deliberately sits BELOW the hero rather than inside it. Tapping
+    // it starts a LINE login, and customers were meeting that prompt with no
+    // idea why — so the radius and what the button does have to be readable
+    // before it is reachable. The hero is also height-capped, so this copy
+    // would not fit inside it.
+    //
+    // The returning-customer greeting used to be able to appear right here,
+    // in place of the CTA. It now waits for the `contact` step: with the menu
+    // first, "shall we deliver to your usual address?" is a question about a
+    // cart that does not exist yet.
     const steps = [t.welcomeStep1, t.welcomeStep2(radiusKm), t.welcomeStep3]
     return (
       // Fills the screen below the nav on purpose: at natural height the copy
@@ -1468,12 +1495,26 @@ export default function OrderFlow({
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // Step 1b — Contact / address
+  // Step 4 — Contact / address (+ the delivery distance check)
   // ═══════════════════════════════════════════════════════════════════
+  // One screen, not two. Choosing "ให้ร้านจัดส่ง" on the previous step lands
+  // here and the GPS reading starts on its own (see the effect above), so the
+  // customer answers "who and where" once instead of tapping through a
+  // near-empty location screen first. Pickup skips the location half entirely
+  // and only asks for a name and a phone number.
   if (step === 'contact') {
+    const isDelivery = deliveryMethod === 'delivery'
+    const gpsErrorText =
+      gpsErrorCode === 'denied' ? t.gpsDenied :
+      gpsErrorCode === 'timeout' ? t.gpsTimeout :
+      gpsErrorCode === 'unsupported' ? t.gpsUnsupported : ''
+    const statusText =
+      locatePhase === 'locating' ? t.locating :
+      locatePhase === 'calculating' ? t.calculating : ''
+
     return (
       <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
-        <StepHeader t={t} step={step} onBack={() => setStep('welcome')} />
+        <StepHeader t={t} step={step} onBack={() => setStep('method')} />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
           <div className={`w-full ${CONTENT_WIDTH}`}>
             {contactMode === 'popup' ? (
@@ -1496,8 +1537,11 @@ export default function OrderFlow({
                   <p className="mt-1.5 text-[12px] text-[#06a847]">✓ {t.lineConnected(profile?.displayName || form.name)}</p>
                   <span aria-hidden="true" className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full border border-[#b89567]/10" />
                 </div>
-                <h1 className="font-display text-[22px] text-ink text-center">{t.contactFormTitle}</h1>
-                <p className="-mt-2 text-center text-[12px] leading-relaxed text-black/45">{t.addressSaveNote}</p>
+                <h1 className="font-display text-[22px] text-ink text-center">{isDelivery ? t.contactFormTitle : t.contactFormTitlePickup}</h1>
+                {/* Only true when there is an address to save. */}
+                {isDelivery && (
+                  <p className="-mt-2 text-center text-[12px] leading-relaxed text-black/45">{t.addressSaveNote}</p>
+                )}
                 <label className="block">
                   <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.phone}</span>
                   <input className={`mt-1 ${inputCls}`} inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
@@ -1509,17 +1553,121 @@ export default function OrderFlow({
                   <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.name}</span>
                   <input className={`mt-1 ${inputCls}`} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 </label>
-                <label className="block">
-                  <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.address}</span>
-                  <textarea rows={2} className={`mt-1 resize-none ${inputCls}`} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-                </label>
+                {/* Pickup needs no address: the customer is coming to the
+                    shop, or sending their own courier to it. */}
+                {isDelivery && (
+                  <label className="block">
+                    <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.address}</span>
+                    <textarea rows={2} className={`mt-1 resize-none ${inputCls}`} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+                  </label>
+                )}
+
+                {/* The distance half — a panel inside this form rather than a
+                    screen of its own. It resolves while the customer types
+                    their address, which is why it can afford to be quiet. */}
+                {isDelivery && (
+                  <div className="rounded-2xl border border-black/10 bg-white/70 p-4 flex flex-col gap-3">
+                    <span className="text-[11px] tracking-[0.1em] uppercase text-black/45">{t.distanceTitle}</span>
+
+                    {(locatePhase === 'idle' || locatePhase === 'locating' || locatePhase === 'calculating') && (
+                      <LocatingAnimation
+                        phase={locatePhase === 'calculating' ? 'calculating' : 'locating'}
+                        statusText={statusText || t.locating}
+                        tone="neutral"
+                      />
+                    )}
+
+                    {locatePhase === 'gps-error' && (
+                      <div className="flex flex-col gap-2">
+                        <p className="text-[13px] text-red-600">{gpsErrorText}</p>
+                        <button
+                          onClick={startLocating}
+                          className="w-full py-2.5 rounded-xl border border-[#4a3520]/25 text-[#4a3520] font-semibold text-[13px] hover:bg-[#4a3520]/[0.04] transition"
+                        >
+                          {t.retry}
+                        </button>
+                        {/* Without a location the shop cannot price the
+                            delivery, so collecting at the shop is the only
+                            way this order can still happen. */}
+                        <button
+                          onClick={switchToPickupOutOfRadius}
+                          className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-black/55 hover:bg-black/[0.04] transition"
+                        >
+                          {t.switchToPickup}
+                        </button>
+                        <button
+                          onClick={() => setTestModeOpen((v) => !v)}
+                          className="text-[11px] text-black/35 hover:text-black/60 underline underline-offset-2 self-center"
+                        >
+                          {t.testModeToggle}
+                        </button>
+                        {testModeOpen && (
+                          <div className="flex gap-2 justify-center">
+                            <button onClick={() => simulateDistance('within')} className="px-3 py-2 rounded-lg border border-black/15 text-[11px] text-black/55 hover:bg-black/[0.04] transition">{t.simulateWithin}</button>
+                            <button onClick={() => simulateDistance('outside')} className="px-3 py-2 rounded-lg border border-black/15 text-[11px] text-black/55 hover:bg-black/[0.04] transition">{t.simulateOutside}</button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {locatePhase === 'found' && withinRadius && distanceResult?.distanceKm != null && (
+                      <p className="text-[13px] font-medium text-[#4a3520]">
+                        ✓ {t.deliveryEstimate(distanceResult.distanceKm, distanceResult.deliveryFee || 0)}
+                      </p>
+                    )}
+
+                    {locatePhase === 'found' && distanceResult?.distanceKm == null && (
+                      <p className="text-[13px] text-black/55">{t.canOrderUnknown}</p>
+                    )}
+
+                    {locatePhase === 'found' && !withinRadius && (
+                      <>
+                        <p className="text-[13px] font-medium text-amber-800">
+                          {t.outOfRadius(distanceResult.distanceKm, distanceResult.radiusKm)}
+                        </p>
+                        <p className="px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[13px] text-amber-800 leading-relaxed">
+                          {t.outOfRadiusNote}
+                        </p>
+                        {/* One button, not a checkbox: out here there is no
+                            choice to acknowledge — shop delivery simply is
+                            not available, and collecting is the only way on.
+                            It still takes a deliberate tap. */}
+                        <button
+                          onClick={switchToPickupOutOfRadius}
+                          className="w-full py-2.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[13px] hover:bg-[#3a2818] transition-colors"
+                        >
+                          {t.switchToPickup}
+                        </button>
+                      </>
+                    )}
+
+                    {locatePhase === 'found' && distanceResult?.shopLat != null && (
+                      <div className="rounded-xl border border-black/10 overflow-hidden h-36">
+                        <DeliveryRadiusMap
+                          shopLat={distanceResult.shopLat}
+                          shopLng={distanceResult.shopLng}
+                          userLat={coords?.lat}
+                          userLng={coords?.lng}
+                          radiusKm={distanceResult.radiusKm}
+                          withinRadius={distanceResult.withinRadius}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* The delivery panel above disappears the moment the method
+                    flips to pickup, taking the amber warning with it. Without
+                    this the screen would silently lose the address field and
+                    the explanation at the same time, leaving no trace of what
+                    the customer just agreed to. */}
+                {!isDelivery && ackOutOfRadius && (
+                  <p className="px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[13px] text-amber-800 leading-relaxed">
+                    {t.methodOutOfRadiusNote}
+                  </p>
+                )}
+
                 {summaryError && <p className="text-[12px] text-red-600">{summaryError}</p>}
-                <button
-                  onClick={goToDistanceFromContact}
-                  className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors"
-                >
-                  {t.next}
-                </button>
               </div>
             ) : (
               // Recognition lookup still in flight (brief, non-blocking —
@@ -1528,160 +1676,11 @@ export default function OrderFlow({
             )}
           </div>
         </div>
-      </div>
-    )
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // Step 2 — Distance check
-  // ═══════════════════════════════════════════════════════════════════
-  if (step === 'distance') {
-    const gpsErrorText =
-      gpsErrorCode === 'denied' ? t.gpsDenied :
-      gpsErrorCode === 'timeout' ? t.gpsTimeout :
-      gpsErrorCode === 'unsupported' ? t.gpsUnsupported : ''
-
-    const statusText =
-      locatePhase === 'locating' ? t.locating :
-      locatePhase === 'calculating' ? t.calculating : ''
-
-    return (
-      <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
-        <StepHeader t={t} step={step} onBack={() => setStep('contact')} />
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
-          <div className={`w-full ${CONTENT_WIDTH}`}>
-            {locatePhase !== 'found' && (
-              <h1 className="text-[13px] font-semibold tracking-wide text-[#4a3520]/50 text-center uppercase mb-1">
-                {t.distanceTitle}
-              </h1>
-            )}
-
-            {locatePhase === 'idle' && (
-              <div className="flex flex-col items-center gap-3 py-10">
-                <button
-                  onClick={startLocating}
-                  className="px-6 py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] hover:bg-[#3a2818] transition"
-                >
-                  {t.requestLocation}
-                </button>
-                <button
-                  onClick={() => setTestModeOpen((v) => !v)}
-                  className="text-[11px] text-black/35 hover:text-black/60 underline underline-offset-2"
-                >
-                  {t.testModeToggle}
-                </button>
-                {testModeOpen && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => simulateDistance('within')}
-                      className="px-3 py-2 rounded-lg border border-black/15 text-[11px] text-black/55 hover:bg-black/[0.04] transition"
-                    >
-                      {t.simulateWithin}
-                    </button>
-                    <button
-                      onClick={() => simulateDistance('outside')}
-                      className="px-3 py-2 rounded-lg border border-black/15 text-[11px] text-black/55 hover:bg-black/[0.04] transition"
-                    >
-                      {t.simulateOutside}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {(locatePhase === 'locating' || locatePhase === 'calculating') && (
-              <LocatingAnimation
-                phase={locatePhase === 'calculating' ? 'calculating' : 'locating'}
-                statusText={statusText}
-                tone="neutral"
-              />
-            )}
-
-            {locatePhase === 'gps-error' && (
-              <div className="flex flex-col gap-2 py-8">
-                <p className="text-[13px] text-red-600 text-center mb-1">{gpsErrorText}</p>
-                <button
-                  onClick={startLocating}
-                  className="w-full py-3 rounded-xl border border-[#4a3520]/25 text-[#4a3520] font-semibold text-[13px] hover:bg-[#4a3520]/[0.04] transition"
-                >
-                  {t.retry}
-                </button>
-                <button
-                  onClick={() => setTestModeOpen((v) => !v)}
-                  className="text-[11px] text-black/35 hover:text-black/60 underline underline-offset-2 self-center mt-1"
-                >
-                  {t.testModeToggle}
-                </button>
-                {testModeOpen && (
-                  <div className="flex gap-2 justify-center">
-                    <button onClick={() => simulateDistance('within')} className="px-3 py-2 rounded-lg border border-black/15 text-[11px] text-black/55 hover:bg-black/[0.04] transition">{t.simulateWithin}</button>
-                    <button onClick={() => simulateDistance('outside')} className="px-3 py-2 rounded-lg border border-black/15 text-[11px] text-black/55 hover:bg-black/[0.04] transition">{t.simulateOutside}</button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {locatePhase === 'found' && withinRadius && distanceResult?.distanceKm != null && (
-              <div className="text-center mb-6">
-                <p className="text-[11px] tracking-[0.25em] uppercase text-[#4a3520]/40 mb-2">{t.distanceTitle}</p>
-                <h1 className="font-display text-[26px] text-ink leading-snug mb-3">{t.canOrderNow(distanceResult.radiusKm)}</h1>
-                <span className="inline-block text-[12px] font-medium tracking-wide text-[#4a3520]/70 border border-[#4a3520]/20 px-4 py-1.5 rounded-full">
-                  {t.distanceBadge(distanceResult.distanceKm)}
-                </span>
-              </div>
-            )}
-
-            {locatePhase === 'found' && distanceResult?.distanceKm == null && (
-              <div className="text-center mb-6">
-                <p className="text-[11px] tracking-[0.25em] uppercase text-[#4a3520]/40 mb-2">{t.distanceTitle}</p>
-                <h1 className="font-display text-[26px] text-ink leading-snug">{t.canOrderUnknown}</h1>
-              </div>
-            )}
-
-            {locatePhase === 'found' && !withinRadius && (
-              <>
-                <div className="text-center mb-4">
-                  <p className="text-[11px] tracking-[0.25em] uppercase text-amber-700/60 mb-2">{t.distanceTitle}</p>
-                  <h1 className="font-display text-[24px] text-ink leading-snug mb-3">{t.outOfRadiusHeading}</h1>
-                  <span className="inline-block text-[12px] font-medium tracking-wide text-amber-800 border border-amber-300 px-4 py-1.5 rounded-full">
-                    {t.outOfRadius(distanceResult.distanceKm, distanceResult.radiusKm)}
-                  </span>
-                </div>
-                <div className="mb-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-[13px] text-amber-800 leading-relaxed text-center">
-                  {t.outOfRadiusNote}
-                </div>
-                <label className="flex items-start gap-2 mb-3 px-1 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={ackOutOfRadius}
-                    onChange={(e) => setAckOutOfRadius(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 accent-[#4a3520] shrink-0"
-                  />
-                  <span className="text-[13px] text-[#4a3520] leading-snug">{t.ackCheckbox}</span>
-                </label>
-              </>
-            )}
-
-            {locatePhase === 'found' && distanceResult?.shopLat != null && (
-              <div className="rounded-2xl border border-black/10 bg-white shadow-sm overflow-hidden h-40 mb-3">
-                <DeliveryRadiusMap
-                  shopLat={distanceResult.shopLat}
-                  shopLng={distanceResult.shopLng}
-                  userLat={coords?.lat}
-                  userLng={coords?.lng}
-                  radiusKm={distanceResult.radiusKm}
-                  withinRadius={distanceResult.withinRadius}
-                />
-              </div>
-            )}
-
-          </div>
-        </div>
-        {locatePhase === 'found' && (
+        {contactMode === 'form' && (
           <StickyActionBar>
             <button
-              onClick={goToMethodOrMenu}
-              disabled={!distanceContinueEnabled}
+              onClick={goToSummaryFromContact}
+              disabled={!contactContinueEnabled}
               className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {t.next}
@@ -1695,15 +1694,18 @@ export default function OrderFlow({
   // ═══════════════════════════════════════════════════════════════════
   // Step 3 — Delivery method
   // ═══════════════════════════════════════════════════════════════════
-  // Only reached within the radius (goToMethodOrMenu skips it otherwise) —
-  // an explicit choice between shop-delivery and self pickup, where before
-  // this was decided implicitly by distance alone and pickup wasn't offered
-  // to anyone within range who'd rather skip the delivery fee.
+  // An explicit choice between shop-delivery and self pickup. It now comes
+  // AFTER the menu and BEFORE the distance check, which is the order the
+  // journey document asks for: the customer says how they want their food,
+  // and only a "ให้ร้านจัดส่ง" answer makes an address and a GPS reading
+  // worth asking for at all.
   if (step === 'method') {
+    // No reading has been taken yet at this point, so the fee is only ever
+    // known here for a returning customer whose last order left one on file.
     const previewFee = distanceResult?.deliveryFee || 0
     return (
       <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
-        <StepHeader t={t} step={step} onBack={() => setStep('distance')} />
+        <StepHeader t={t} step={step} onBack={() => setStep('menu')} />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
           <div className={`w-full ${CONTENT_WIDTH}`}>
             <div className="mb-8 text-center">
@@ -1716,13 +1718,11 @@ export default function OrderFlow({
               <h1 className="font-display text-[28px] text-ink leading-tight">{t.methodTitle}</h1>
             </div>
             <div className="flex flex-col gap-4">
-              {/* Both options stay selectable here regardless of the ฿300
-                  minimum — the cart is often still empty at this point (this
-                  step comes before menu) and the customer needs a way to
-                  reach the menu no matter which method they'll end up
-                  needing. The minimum is enforced once at the summary step's
-                  continue button instead, uniformly for whichever method was
-                  picked — see the belowMinOrder note above. */}
+              {/* Both options stay selectable regardless of the ฿300
+                  minimum — the cart already cleared it to get here (the menu
+                  step's cart bar blocks below it), and the minimum applies to
+                  both methods anyway, so neither can be the way around it.
+                  See the belowMinOrder note above. */}
               <button
                 type="button"
                 onClick={() => setDeliveryMethod('delivery')}
@@ -1741,7 +1741,7 @@ export default function OrderFlow({
                   </span>
                   <span className="flex-1">
                     <span className="block text-[18px] font-medium text-ink leading-snug">{t.methodDeliveryLabel}</span>
-                    <span className="block text-[15px] leading-relaxed text-black/50 mt-1">{t.methodDeliveryDesc(previewFee)}</span>
+                    <span className="block text-[15px] leading-relaxed text-black/50 mt-1">{previewFee > 0 ? t.methodDeliveryDesc(previewFee) : t.methodDeliveryDescUnknown}</span>
                   </span>
                 </div>
               </button>
@@ -1773,7 +1773,7 @@ export default function OrderFlow({
         </div>
         <StickyActionBar>
           <button
-            onClick={() => setStep('menu')}
+            onClick={goToContactFromMethod}
             disabled={!methodContinueEnabled}
             className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
@@ -1785,19 +1785,26 @@ export default function OrderFlow({
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // Step 4 — Menu
+  // Step 2 — Menu
   // ═══════════════════════════════════════════════════════════════════
+  // The first thing a customer sees after logging in. Promotions render above
+  // the food categories (components/menu/MenuExperience.js), which is the
+  // order the journey document fixes as standard.
   if (step === 'menu') {
     return (
       <div className="min-h-[100dvh]">
-        <StepHeader t={t} step={step} onBack={() => setStep(withinRadius ? 'method' : 'distance')} />
+        <StepHeader t={t} step={step} onBack={() => setStep('welcome')} />
         <p className="text-center text-[12px] text-black/45 py-2 bg-[#f5f2ee]">{t.menuHint}</p>
         <MenuExperience
           dbMenuData={dbMenuData}
           dbPromotions={dbPromotions}
           showAddToCart
           heroTitle={heroTitle}
-          onCartClick={goToSummaryFromMenu}
+          onCartClick={goToMethodFromMenu}
+          // Stated on the cart button rather than only at checkout: with the
+          // menu first, this is the screen where the customer can actually do
+          // something about it.
+          cartBlockedNote={belowMinOrder ? t.minOrderNotice(minDeliveryOrder - itemsSubtotal, minDeliveryOrder) : ''}
         />
       </div>
     )
@@ -1809,7 +1816,7 @@ export default function OrderFlow({
   if (step === 'summary') {
     return (
       <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
-        <StepHeader t={t} step={step} onBack={() => setStep('menu')} />
+        <StepHeader t={t} step={step} onBack={() => setStep('contact')} />
         <div className={`flex-1 ${CONTENT_WIDTH} w-full mx-auto px-5 py-5 flex flex-col gap-4`}>
           <h1 className="font-display text-[22px] text-ink flex items-center gap-2">
             <Receipt size={20} strokeWidth={1.75} className="text-[#8c682c] shrink-0" />
