@@ -113,8 +113,18 @@ export default function MemberPage() {
   useEffect(() => {
     if (!isLiffConfigured()) return
     getProfileIfLoggedIn()
-      .then(loadMember)
-      .catch(() => setStatus('logged-out'))
+      .then(async (lineProfile) => {
+        if (lineProfile) {
+          await loadMember(lineProfile)
+          return
+        }
+        // The membership page is a LINE-only destination. Start authentication
+        // immediately and return to this route instead of presenting a second
+        // login choice to a customer who already arrived from the LINE OA.
+        const authenticatedProfile = await loginAndGetProfile()
+        if (authenticatedProfile) await loadMember(authenticatedProfile)
+      })
+      .catch(() => setStatus('error'))
   }, [loadMember])
 
   // Only ever runs once a card exists — the qrcode bundle is never pulled in
@@ -168,8 +178,18 @@ export default function MemberPage() {
           </header>
 
           {status === 'loading' ? (
-            <div className="rounded-[28px] border border-black/10 bg-[#fffdf8] px-6 py-14 text-center shadow-[0_24px_70px_rgba(74,53,32,0.08)]">
-              <p className="text-[13px] text-muted-strong">{t.loading}</p>
+            <div className="overflow-hidden rounded-[28px] border border-black/10 bg-[#fffdf8] shadow-[0_24px_70px_rgba(74,53,32,0.08)]" aria-label={t.loading}>
+              <div className="px-7 pb-7 pt-8">
+                <div className="mx-auto h-56 w-56 animate-pulse rounded-2xl bg-black/[0.06]" />
+              </div>
+              <div className="bg-[#4a3520] px-7 py-7 text-center">
+                <div className="mx-auto h-3 w-24 animate-pulse rounded-full bg-white/20" />
+                <div className="mx-auto mt-3 h-14 w-20 animate-pulse rounded-xl bg-white/20" />
+              </div>
+              <div className="border-t border-black/10 bg-white/35 px-7 py-6">
+                <div className="mx-auto h-3 w-20 animate-pulse rounded-full bg-black/[0.07]" />
+                <div className="mx-auto mt-3 h-9 w-32 animate-pulse rounded-lg bg-black/[0.07]" />
+              </div>
             </div>
           ) : null}
 
@@ -210,15 +230,7 @@ export default function MemberPage() {
 
           {status === 'card' && member ? (
             <div className="overflow-hidden rounded-[28px] border border-black/10 bg-[#fffdf8] shadow-[0_24px_70px_rgba(74,53,32,0.08)]">
-              <div className="bg-[#4a3520] px-7 py-6 text-center text-white">
-                <p className="text-[10px] tracking-[0.28em] text-white/70">{t.memberNo}</p>
-                <strong className="mt-2 block font-display text-[clamp(30px,8vw,40px)] font-normal leading-none tracking-[0.06em]">
-                  {member.memberNo}
-                </strong>
-                {member.name ? <p className="mt-3 text-[13px] text-white/80">{member.name}</p> : null}
-              </div>
-
-              <div className="px-7 py-7 text-center">
+              <div className="px-7 pb-7 pt-8 text-center">
                 {qrDataUrl ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -236,22 +248,19 @@ export default function MemberPage() {
                 )}
               </div>
 
-              {/* Centred, not label-left/value-right. Split across the full
-                  card width the two halves read as unrelated scraps in the
-                  corners, and the balance — the one number a customer opens
-                  this card to check after the QR — was the smallest thing on
-                  the screen. Stacked and centred it matches the header and
-                  the QR above it, so the whole card reads on one axis. */}
-              <div className="border-t border-black/10 px-7 py-6 text-center">
-                <p className="text-[11px] tracking-[0.14em] text-muted-strong">{t.points}</p>
-                {/* The numeral alone, so it lands ON the centre axis rather
-                    than beside it — pairing it with a unit word centres the
-                    PAIR and pushes the digit off to the left. Nothing is lost
-                    by dropping the unit: the label directly above it already
-                    says these are points. */}
-                <p className="mt-1.5 font-display text-[clamp(44px,13vw,56px)] font-normal leading-none text-gold-deep">
+              <div className="bg-[#4a3520] px-7 py-7 text-center text-white">
+                <p className="text-[11px] font-medium tracking-[0.18em] text-white/75">{t.points}</p>
+                <p className="mt-2 font-display text-[clamp(52px,16vw,68px)] font-normal leading-none text-white">
                   {Number(member.pointsBalance || 0).toLocaleString()}
                 </p>
+              </div>
+
+              <div className="border-t border-black/10 bg-white/35 px-7 py-6 text-center">
+                <p className="text-[10px] tracking-[0.24em] text-muted-strong">{t.memberNo}</p>
+                <strong className="mt-2 block font-display text-[clamp(28px,8vw,38px)] font-normal leading-none tracking-[0.08em] text-ink">
+                  {member.memberNo}
+                </strong>
+                {member.name ? <p className="mt-3 text-[12px] text-muted-strong">{member.name}</p> : null}
               </div>
             </div>
           ) : null}

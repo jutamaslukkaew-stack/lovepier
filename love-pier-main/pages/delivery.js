@@ -6,7 +6,7 @@ import OrderFlow from '../components/delivery/OrderFlow'
 import { useChrome } from '../lib/chrome'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import { initLiff } from '../lib/liff'
+import { initLiff, LIFF_RETURN_TO_KEY } from '../lib/liff'
 import { getMenuPageData } from '../lib/db/menuPageData'
 import { getShopSettings } from '../lib/settings'
 
@@ -25,14 +25,23 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
   const t = PAGE_COPY[lang] || PAGE_COPY.en
   const { hidden } = useChrome()
   const router = useRouter()
-  const [finishingLiffReturn, setFinishingLiffReturn] = useState(false)
+  // Start guarded so an OAuth callback can never flash the delivery wizard
+  // before the client has checked sessionStorage for its intended route.
+  const [checkingLiffReturn, setCheckingLiffReturn] = useState(true)
 
   useEffect(() => {
     if (!router.isReady) return
     const raw = router.query.__liff_return_to
-    const returnTo = Array.isArray(raw) ? raw[0] : raw
-    if (!returnTo) return
-    setFinishingLiffReturn(true)
+    const queryReturnTo = Array.isArray(raw) ? raw[0] : raw
+    let storedReturnTo = ''
+    try {
+      storedReturnTo = window.sessionStorage.getItem(LIFF_RETURN_TO_KEY) || ''
+    } catch {}
+    const returnTo = queryReturnTo || storedReturnTo
+    if (!returnTo) {
+      const timer = window.setTimeout(() => setCheckingLiffReturn(false), 0)
+      return () => window.clearTimeout(timer)
+    }
 
     // Only a local absolute path is accepted. This parameter crosses an OAuth
     // redirect and is therefore untrusted even though we generated it.
@@ -41,17 +50,18 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
       : '/'
     initLiff()
       .catch(() => null)
-      .finally(() => router.replace(safeReturnTo))
+      .finally(() => {
+        try {
+          window.sessionStorage.removeItem(LIFF_RETURN_TO_KEY)
+        } catch {}
+        router.replace(safeReturnTo)
+      })
   }, [router.isReady, router.query.__liff_return_to, router])
 
   // Never flash the delivery welcome screen while LIFF is consuming its
   // callback and sending a member/rewards visitor back where they started.
-  if (finishingLiffReturn || (router.isReady && router.query.__liff_return_to)) {
-    return (
-      <main className="min-h-dvh bg-[#f5f1eb] px-6 py-20 text-center">
-        <p className="text-sm text-black/55">กำลังกลับไปยังหน้าที่คุณเปิด…</p>
-      </main>
-    )
+  if (checkingLiffReturn || (router.isReady && router.query.__liff_return_to)) {
+    return <main className="min-h-dvh bg-[#f5f1eb]" aria-label="กำลังเปิดบัตรสมาชิก" />
   }
 
   return (

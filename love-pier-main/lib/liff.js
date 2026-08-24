@@ -10,6 +10,8 @@ let _liff = null
 let _initPromise = null
 let _sheetLogged = false
 
+export const LIFF_RETURN_TO_KEY = 'love-pier:liff-return-to'
+
 // Best-effort: log the LINE profile (name/picture/userId) to Google Sheets,
 // once per session. Fire-and-forget, never throws.
 export function logProfileToSheet(profile) {
@@ -76,6 +78,12 @@ export async function loginAndGetProfile() {
     // order flow.
     if (typeof window !== 'undefined' && window.location.pathname !== '/delivery') {
       const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`
+      // LINE can drop custom query parameters while completing its two-step
+      // OAuth redirect. Keep the intended route in this tab as a fallback so
+      // /delivery never becomes the customer's accidental destination.
+      try {
+        window.sessionStorage.setItem(LIFF_RETURN_TO_KEY, returnTo)
+      } catch {}
       const bridge = new URL('/delivery', window.location.origin)
       bridge.searchParams.set('__liff_return_to', returnTo)
       liff.login({ redirectUri: bridge.toString() })
