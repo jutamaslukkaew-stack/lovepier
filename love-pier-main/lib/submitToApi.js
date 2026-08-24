@@ -1,15 +1,18 @@
 import { submitViaFormSubmitClient } from './formSubmitClient'
 
-export async function submitToApi(endpoint, payload, emailEnvelope) {
+export async function submitToApi(endpoint, payload, emailEnvelope, { accessToken = '', allowFallback = true } = {}) {
   const res = await fetch(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
     body: JSON.stringify(payload),
   })
 
   const data = await res.json().catch(() => ({}))
 
-  if (res.status === 503 && data.fallback === 'formsubmit' && emailEnvelope) {
+  if (allowFallback && res.status === 503 && data.fallback === 'formsubmit' && emailEnvelope) {
     await submitViaFormSubmitClient(emailEnvelope)
     return { ok: true }
   }

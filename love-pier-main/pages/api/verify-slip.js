@@ -1,9 +1,10 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { orders } from '../../lib/db/schema'
 import { processSlipForOrder } from '../../lib/slipVerification'
 import { buildPaymentConfirmedFlex } from '../../lib/orderFlex'
 import { isStaffNotifyTarget, pushToUser, pushOrderCardToStaff } from '../../lib/lineMessaging'
+import { verifyLineAccessToken } from '../../lib/lineIdentity'
 
 // Allow a slip image (base64) in the request body.
 export const config = { api: { bodyParser: { sizeLimit: '8mb' } } }
@@ -20,7 +21,18 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'ข้อมูลไม่ครบ' })
   }
 
-  const [order] = await db.select().from(orders).where(eq(orders.orderNo, orderNo)).limit(1)
+  const authorization = String(req.headers.authorization || '')
+  const accessToken = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : ''
+  const verifiedLine = await verifyLineAccessToken(accessToken)
+  if (!verifiedLine?.userId) {
+    return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ LINE ใหม่อีกครั้ง' })
+  }
+
+  const [order] = await db
+    .select()
+    .from(orders)
+    .where(and(eq(orders.orderNo, orderNo), eq(orders.lineUserId, verifiedLine.userId)))
+    .limit(1)
   if (!order) return res.status(404).json({ error: 'ไม่พบออเดอร์' })
 
   // Storing, verifying and marking paid is shared with the LINE webhook, so a

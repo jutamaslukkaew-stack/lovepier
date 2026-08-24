@@ -1,7 +1,6 @@
-import { eq } from 'drizzle-orm'
 import Head from 'next/head'
-import { db } from '../../lib/db'
-import { orders } from '../../lib/db/schema'
+import { useEffect, useState } from 'react'
+import { getProfileIfLoggedIn, loginAndGetProfile } from '../../lib/liff'
 
 const STATUS = {
   pending: { label: 'รอชำระเงิน', color: '#b58900', bg: '#fdf6e3' },
@@ -11,7 +10,52 @@ const STATUS = {
   cancelled: { label: 'ยกเลิก', color: '#c0392b', bg: '#fdeceb' },
 }
 
-export default function OrderStatus({ order }) {
+export default function OrderStatus({ orderNo }) {
+  const [order, setOrder] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    let timer
+
+    ;(async () => {
+      try {
+        const existingProfile = await getProfileIfLoggedIn()
+        const profile = existingProfile || await loginAndGetProfile()
+        if (!profile?.accessToken || cancelled) return
+
+        const loadOrder = async () => {
+          const res = await fetch(`/api/order-status?orderNo=${encodeURIComponent(orderNo)}`, {
+            headers: { Authorization: `Bearer ${profile.accessToken}` },
+          })
+          const data = await res.json()
+          if (!cancelled) {
+            setOrder(res.ok ? data.order : null)
+            setLoading(false)
+          }
+        }
+
+        await loadOrder()
+        timer = window.setInterval(loadOrder, 10000)
+      } catch {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+      if (timer) window.clearInterval(timer)
+    }
+  }, [orderNo])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f3ef] px-6 text-center">
+        <p className="text-ink/60">กำลังโหลดออเดอร์จาก LINE…</p>
+      </div>
+    )
+  }
+
   if (!order) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f5f3ef] px-6 text-center">
@@ -28,7 +72,6 @@ export default function OrderStatus({ order }) {
       <Head>
         <title>ออเดอร์ {order.orderNo} — Love Pier Beach Cafe</title>
         <meta name="robots" content="noindex" />
-        <meta httpEquiv="refresh" content="10" />
       </Head>
       <div className="min-h-screen bg-[#f5f3ef] py-8 px-4">
         <div className="mx-auto max-w-md bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -103,31 +146,5 @@ export default function OrderStatus({ order }) {
 }
 
 export async function getServerSideProps({ params }) {
-  const orderNo = String(params?.orderNo || '')
-  try {
-    const [row] = await db.select().from(orders).where(eq(orders.orderNo, orderNo)).limit(1)
-    if (!row) return { props: { order: null } }
-    return {
-      props: {
-        order: {
-          orderNo: row.orderNo,
-          status: row.status,
-          customerName: row.customerName,
-          phone: row.phone,
-          address: row.address,
-          deliveryMethod: row.deliveryMethod,
-          distanceKm: row.distanceKm != null ? Number(row.distanceKm) : null,
-          // MUST be serialized — a raw Date in getServerSideProps props throws
-          // "cannot be serialized as JSON", the same reason distanceKm is
-          // Number()'d above. This is the page the LINE card links to, so a
-          // miss here is a hard 500 on the customer's own order link.
-          scheduledFor: row.scheduledFor ? row.scheduledFor.toISOString() : null,
-          items: row.items,
-          totalAmount: row.totalAmount,
-        },
-      },
-    }
-  } catch {
-    return { props: { order: null } }
-  }
+  return { props: { orderNo: String(params?.orderNo || '') } }
 }

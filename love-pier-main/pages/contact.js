@@ -6,6 +6,7 @@ import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
 import { buildContactEmail } from '../lib/emailContent'
 import { submitToApi } from '../lib/submitToApi'
+import { getProfileIfLoggedIn, loginAndGetProfile } from '../lib/liff'
 import { useState } from 'react'
 
 export default function Contact() {
@@ -162,7 +163,12 @@ export default function Contact() {
       message: form.message.value,
     }
     try {
-      await submitToApi('/api/contact', payload, buildContactEmail(payload))
+      const profile = await getProfileIfLoggedIn() || await loginAndGetProfile()
+      if (!profile?.accessToken) throw new Error('LINE_LOGIN_REQUIRED')
+      await submitToApi('/api/contact', payload, buildContactEmail(payload), {
+        accessToken: profile.accessToken,
+        allowFallback: false,
+      })
       setStatus('success')
       form.reset()
     } catch (err) {

@@ -1,5 +1,6 @@
 import { buildReservationEmail } from '../../lib/emailContent'
 import { sendRestaurantEmail } from '../../lib/sendEmail'
+import { verifyLineAccessToken } from '../../lib/lineIdentity'
 
 function pickString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -17,6 +18,13 @@ export default async function handler(req, res) {
   const date = pickString(req.body?.date)
   const time = pickString(req.body?.time)
   const guests = pickString(req.body?.guests)
+  const authorization = String(req.headers.authorization || '')
+  const accessToken = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : ''
+  const verifiedLine = await verifyLineAccessToken(accessToken)
+
+  if (!verifiedLine?.userId) {
+    return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ LINE ใหม่อีกครั้ง' })
+  }
 
   // Phone is the confirmation channel; email is intentionally optional so the
   // customer can finish a reservation without another redundant field.
@@ -24,7 +32,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing required fields' })
   }
 
-  const envelope = buildReservationEmail(req.body)
+  const envelope = buildReservationEmail({
+    ...req.body,
+    lineUserId: verifiedLine.userId,
+    lineDisplayName: verifiedLine.displayName,
+  })
 
   try {
     await sendRestaurantEmail(envelope)

@@ -21,7 +21,18 @@ export default async function handler(req, res) {
   }
 
   const [order] = await db
-    .select({ status: orders.status })
+    .select({
+      orderNo: orders.orderNo,
+      status: orders.status,
+      customerName: orders.customerName,
+      phone: orders.phone,
+      address: orders.address,
+      deliveryMethod: orders.deliveryMethod,
+      distanceKm: orders.distanceKm,
+      scheduledFor: orders.scheduledFor,
+      items: orders.items,
+      totalAmount: orders.totalAmount,
+    })
     .from(orders)
     .where(and(eq(orders.orderNo, orderNo), eq(orders.lineUserId, profile.userId)))
     .limit(1)
@@ -29,5 +40,13 @@ export default async function handler(req, res) {
   if (!order) return res.status(404).json({ error: 'ไม่พบออเดอร์' })
 
   res.setHeader('Cache-Control', 'private, no-store')
-  return res.status(200).json({ ok: true, status: order.status })
+  return res.status(200).json({
+    ok: true,
+    status: order.status,
+    order: {
+      ...order,
+      distanceKm: order.distanceKm != null ? Number(order.distanceKm) : null,
+      scheduledFor: order.scheduledFor ? order.scheduledFor.toISOString() : null,
+    },
+  })
 }

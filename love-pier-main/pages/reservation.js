@@ -6,6 +6,7 @@ import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
 import { buildReservationEmail } from '../lib/emailContent'
 import { submitToApi } from '../lib/submitToApi'
+import { getProfileIfLoggedIn, loginAndGetProfile } from '../lib/liff'
 
 const RESERVATION_COPY = {
   th: {
@@ -163,7 +164,12 @@ export default function Reservation() {
       notes: form.notes.value,
     }
     try {
-      await submitToApi('/api/reservation', payload, buildReservationEmail(payload))
+      const profile = await getProfileIfLoggedIn() || await loginAndGetProfile()
+      if (!profile?.accessToken) throw new Error('LINE_LOGIN_REQUIRED')
+      await submitToApi('/api/reservation', payload, buildReservationEmail(payload), {
+        accessToken: profile.accessToken,
+        allowFallback: false,
+      })
       setStatus('success')
       form.reset()
       setSeatingIndex(0)

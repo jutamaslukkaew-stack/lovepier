@@ -1,15 +1,13 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { customers } from '../../lib/db/schema'
+import { verifyLineAccessToken } from '../../lib/lineIdentity'
 
 // GET /api/customer-lookup?phone=xxx → { customer: { name, address } | null }
 // Used to auto-fill the order form for a returning customer once they've
-// typed their phone number — phone, not LINE login, is the key here, since
-// the guided order flow now asks for it first (see OrderFlow.js) and LINE
-// login can fail/be skipped while a phone number is always collected.
-// Deliberately does not return lineUserId/phone/internal ids — only what the
-// form needs to pre-fill, since this endpoint is unauthenticated by design
-// (a customer types their own number before we know who they are).
+// typed their phone number. The caller must prove the same LINE identity that
+// owns the customer row; knowing a phone number alone never reveals a name or
+// address.
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET')
@@ -22,11 +20,18 @@ export default async function handler(req, res) {
   // keystroke while the customer is still typing.
   if (phone.replace(/\D/g, '').length < 9) return res.status(200).json({ customer: null })
 
+  const authorization = String(req.headers.authorization || '')
+  const accessToken = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : ''
+  const verifiedLine = await verifyLineAccessToken(accessToken)
+  if (!verifiedLine?.userId) {
+    return res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ LINE ใหม่อีกครั้ง' })
+  }
+
   try {
     const rows = await db
       .select()
       .from(customers)
-      .where(eq(customers.phone, phone))
+      .where(and(eq(customers.phone, phone), eq(customers.lineUserId, verifiedLine.userId)))
       .limit(1)
 
     const c = rows[0]

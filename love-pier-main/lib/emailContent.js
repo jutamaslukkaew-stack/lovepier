@@ -12,12 +12,15 @@ export function buildReservationEmail(body) {
   const seating = pickString(body?.seating)
   const occasion = pickString(body?.occasion)
   const notes = pickString(body?.notes)
+  const lineUserId = pickString(body?.lineUserId)
+  const lineDisplayName = pickString(body?.lineDisplayName)
 
   const text = [
     'New reservation request from Love Pier website',
     '',
     `Name: ${name}`,
     `Phone: ${phone}`,
+    `LINE: ${lineDisplayName || '—'} (${lineUserId || '—'})`,
     `Email: ${email}`,
     `Date: ${date}`,
     `Time: ${time}`,
@@ -38,6 +41,8 @@ export function buildReservationEmail(body) {
     fields: {
       Name: name,
       Phone: phone,
+      'LINE Name': lineDisplayName || '—',
+      'LINE User ID': lineUserId || '—',
       Email: email,
       Date: date,
       Time: time,
@@ -56,6 +61,8 @@ export function buildContactEmail(body) {
   const phone = pickString(body?.phone)
   const company = pickString(body?.company)
   const message = pickString(body?.message)
+  const lineUserId = pickString(body?.lineUserId)
+  const lineDisplayName = pickString(body?.lineDisplayName)
 
   const text = [
     'New message from Love Pier website (Contact form)',
@@ -63,6 +70,7 @@ export function buildContactEmail(body) {
     `Subject: ${subject}`,
     `Name: ${name}`,
     `Email: ${email}`,
+    `LINE: ${lineDisplayName || '—'} (${lineUserId || '—'})`,
     phone ? `Phone: ${phone}` : null,
     company ? `Company: ${company}` : null,
     '',
@@ -80,6 +88,8 @@ export function buildContactEmail(body) {
       Subject: subject,
       Name: name,
       Email: email,
+      'LINE Name': lineDisplayName || '—',
+      'LINE User ID': lineUserId || '—',
       Phone: phone || '—',
       Company: company || '—',
       Message: message,

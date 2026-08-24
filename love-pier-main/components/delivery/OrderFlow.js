@@ -889,11 +889,16 @@ export default function OrderFlow({
   // customers the lineUserId lookup above didn't already fill in.
   useEffect(() => {
     const digits = form.phone.replace(/\D/g, '')
-    if (digits.length < 9) { setPhoneLookup('idle'); return }
-    setPhoneLookup('checking')
+    if (digits.length < 9 || !profile?.accessToken) {
+      const idleTimer = setTimeout(() => setPhoneLookup('idle'), 0)
+      return () => clearTimeout(idleTimer)
+    }
     const timer = setTimeout(async () => {
+      setPhoneLookup('checking')
       try {
-        const res = await fetch(`/api/customer-lookup?phone=${encodeURIComponent(form.phone.trim())}`)
+        const res = await fetch(`/api/customer-lookup?phone=${encodeURIComponent(form.phone.trim())}`, {
+          headers: { Authorization: `Bearer ${profile?.accessToken || ''}` },
+        })
         const data = await res.json()
         if (data?.customer) {
           setForm((f) => ({
@@ -911,7 +916,7 @@ export default function OrderFlow({
       }
     }, 500)
     return () => clearTimeout(timer)
-  }, [form.phone])
+  }, [form.phone, profile?.accessToken])
 
   // ── Step 1b: contact / address — decide what to show, once, when
   // recognition resolves (not derived live in render, so typing into the
@@ -929,20 +934,13 @@ export default function OrderFlow({
     // it — the one question worth a screen of its own, because answering
     // "ใช้ที่อยู่เดิม" also replays their last order's distance and skips the
     // GPS prompt entirely.
-    if (customerRecognized && form.address.trim()) {
-      setContactMode('popup')
-      return
-    }
-    if (!profile) {
-      // No LINE session to check (LIFF unconfigured, or login skipped) —
-      // nothing to look up, straight to the plain form.
-      setContactMode('form')
-      return
-    }
-    if (lineLookupStatus !== 'done') return // still checking (or hasn't started)
-    // Recognized but with no usable saved address, or not recognized at all:
-    // either way the plain form, which greets them by LINE name at the top.
-    setContactMode('form')
+    let nextMode = null
+    if (customerRecognized && form.address.trim()) nextMode = 'popup'
+    else if (!profile || lineLookupStatus === 'done') nextMode = 'form'
+    if (!nextMode) return // still checking (or hasn't started)
+
+    const timer = setTimeout(() => setContactMode(nextMode), 0)
+    return () => clearTimeout(timer)
   }, [step, profile, lineLookupStatus, customerRecognized, editingInfo, contactMode, form.address])
 
   // "ใช้ที่อยู่เดิม" — reuse the address + distance already on file, which is
@@ -1321,7 +1319,10 @@ export default function OrderFlow({
       try {
         const res = await fetch('/api/verify-slip', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${profile?.accessToken || ''}`,
+          },
           body: JSON.stringify({ orderNo, imageBase64: reader.result }),
         })
         const data = await res.json()

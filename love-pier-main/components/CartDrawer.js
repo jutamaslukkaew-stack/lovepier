@@ -413,7 +413,10 @@ export default function CartDrawer() {
       try {
         const res = await fetch('/api/verify-slip', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${profile?.accessToken || ''}`,
+          },
           body: JSON.stringify({ orderNo, imageBase64: reader.result }),
         })
         const data = await res.json()
