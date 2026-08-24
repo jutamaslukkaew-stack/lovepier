@@ -24,7 +24,7 @@ import { setDeliverySessionProfile, setDeliverySessionDistance } from '../../lib
 import { buildPaymentPayload } from '../../lib/promptpay'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
 import { buildOrderFlex, buildPaymentConfirmedFlex } from '../../lib/orderFlex'
-import { SWEETNESS_OPTIONS, COFFEE_BEAN_OPTIONS } from '../../lib/menuOptions'
+import { normalizeItemOptions, optionGroupsFor } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
 import OrderJourney from './OrderJourney'
 import MenuExperience from '../menu/MenuExperience'
@@ -106,6 +106,7 @@ const COPY = {
     itemNotePlaceholder: 'หมายเหตุ เช่น หวานน้อย, นมอัลมอนด์',
     sweetnessLabel: 'ความหวาน',
     coffeeBeanLabel: 'สายพันธุ์กาแฟ',
+    proteinLabel: 'เลือกเนื้อ',
     itemsSubtotalLabel: 'ค่าอาหาร',
     discountLabel: 'ส่วนลดสมาชิก',
     deliveryFeeLabel: 'ค่าจัดส่ง',
@@ -238,6 +239,7 @@ const COPY = {
     itemNotePlaceholder: 'Note, e.g. less sweet, almond milk',
     sweetnessLabel: 'Sweetness',
     coffeeBeanLabel: 'Coffee bean',
+    proteinLabel: 'Cut',
     itemsSubtotalLabel: 'Food total',
     discountLabel: 'Member discount',
     deliveryFeeLabel: 'Delivery fee',
@@ -367,6 +369,7 @@ const COPY = {
     itemNotePlaceholder: '备注，例如少糖、杏仁奶',
     sweetnessLabel: '甜度',
     coffeeBeanLabel: '咖啡豆种',
+    proteinLabel: '部位',
     itemsSubtotalLabel: '餐点小计',
     discountLabel: '会员折扣',
     deliveryFeeLabel: '配送费',
@@ -604,7 +607,7 @@ export default function OrderFlow({
 }) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
-  const { items, addItem, removeItem, updateNote, updateSweetness, updateCoffeeBean, clearCart, totalQty, totalPrice } = useCart()
+  const { items, addItem, removeItem, updateNote, updateOption, clearCart, totalQty, totalPrice } = useCart()
   const { setHidden: setChromeHidden } = useChrome()
 
   const [step, setStep] = useState('welcome')
@@ -1186,8 +1189,10 @@ export default function OrderFlow({
             price: parseFloat(i.price) || 0,
             qty: i.qty,
             note: i.note || '',
-            sweetness: i.sweetness || SWEETNESS_OPTIONS[0],
-            coffeeBean: i.coffeeBean || COFFEE_BEAN_OPTIONS[0],
+            // Only the groups this line actually offers, each defaulted —
+            // /api/orders normalizes with the same function, so what the
+            // kitchen ticket says matches what the picker showed.
+            ...normalizeItemOptions(i),
           })),
         }),
       })
@@ -1212,8 +1217,7 @@ export default function OrderFlow({
           price: parseFloat(i.price) || 0,
           qty: i.qty,
           note: i.note || '',
-          sweetness: i.sweetness || SWEETNESS_OPTIONS[0],
-          coffeeBean: i.coffeeBean || COFFEE_BEAN_OPTIONS[0],
+          ...normalizeItemOptions(i),
         })),
         total: finalTotal,
         deliveryFee: finalDeliveryFee,
@@ -1838,48 +1842,35 @@ export default function OrderFlow({
                         ฿{Math.round(parseFloat(item.price) * item.qty)}
                       </p>
                     </div>
-                    {/* Structured options — same global set on every line
-                        (lib/menuOptions.js), applies to the whole qty, same
-                        as the note below. First option shown selected until
-                        the customer actually picks something (item.sweetness
-                        / item.coffeeBean stay undefined until then). Gated
-                        behind /admin/settings — off by default (2026-08-17,
-                        shop wants it hidden for now; the toggle is there to
-                        turn it back on later with no code change). */}
+                    {/* Structured options (lib/menuOptions.js), applying to
+                        the whole qty, same as the note below. First option
+                        shown selected until the customer actually picks
+                        something (the field stays undefined until then).
+                        Which groups appear depends on the line's category —
+                        "เลือกเนื้อ" belongs on ข้าวมันไก่, not on a latte.
+                        Gated behind /admin/settings — off by default
+                        (2026-08-17, shop wants it hidden for now; the toggle
+                        is there to turn it back on with no code change). */}
                     {menuOptionsEnabled && (
                       <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] tracking-[0.08em] uppercase text-black/40 w-full">{t.sweetnessLabel}</span>
-                          {SWEETNESS_OPTIONS.map((opt) => {
-                            const selected = (item.sweetness || SWEETNESS_OPTIONS[0]) === opt
-                            return (
-                              <button
-                                key={opt}
-                                type="button"
-                                onClick={() => updateSweetness(item.id, opt)}
-                                className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${selected ? 'bg-[#4a3520] text-white' : 'bg-black/[0.06] text-ink hover:bg-black/10'}`}
-                              >
-                                {opt}
-                              </button>
-                            )
-                          })}
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] tracking-[0.08em] uppercase text-black/40 w-full">{t.coffeeBeanLabel}</span>
-                          {COFFEE_BEAN_OPTIONS.map((opt) => {
-                            const selected = (item.coffeeBean || COFFEE_BEAN_OPTIONS[0]) === opt
-                            return (
-                              <button
-                                key={opt}
-                                type="button"
-                                onClick={() => updateCoffeeBean(item.id, opt)}
-                                className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${selected ? 'bg-[#4a3520] text-white' : 'bg-black/[0.06] text-ink hover:bg-black/10'}`}
-                              >
-                                {opt}
-                              </button>
-                            )
-                          })}
-                        </div>
+                        {optionGroupsFor(item.id).map((group) => (
+                          <div key={group.field} className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] tracking-[0.08em] uppercase text-black/40 w-full">{t[group.labelKey]}</span>
+                            {group.options.map((opt) => {
+                              const selected = (item[group.field] || group.options[0]) === opt
+                              return (
+                                <button
+                                  key={opt}
+                                  type="button"
+                                  onClick={() => updateOption(item.id, group.field, opt)}
+                                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${selected ? 'bg-[#4a3520] text-white' : 'bg-black/[0.06] text-ink hover:bg-black/10'}`}
+                                >
+                                  {opt}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        ))}
                       </div>
                     )}
                     {/* Applies to the whole line (all `qty` of this item), not

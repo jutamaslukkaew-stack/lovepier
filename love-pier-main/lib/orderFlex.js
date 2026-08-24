@@ -1,6 +1,7 @@
 // Builds a LINE Flex Message (order-confirmation card, Tassana-style) for an order.
 // Used both by liff.sendMessages() (customer side) and the Messaging API push
 // (shop side), so the card looks identical whichever way it's sent.
+import { OPTION_GROUPS } from './menuOptions'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://lovepier.cafe'
 
@@ -112,8 +113,10 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
       ],
     }
     // Structured options (see lib/menuOptions.js) — shown as a sub-line
-    // alongside the free-text note, same xxs/gray treatment.
-    const optionBits = [i.sweetness, i.coffeeBean].filter(Boolean).join(' · ')
+    // alongside the free-text note, same xxs/gray treatment. Read from the
+    // group list rather than named one by one, so a group added there reaches
+    // the kitchen's card without a second edit here.
+    const optionBits = OPTION_GROUPS.map((g) => i[g.field]).filter(Boolean).join(' · ')
     const subLines = [
       optionBits ? { type: 'text', text: optionBits, size: 'xxs', color: '#8c8c8c', margin: 'xs', wrap: true } : null,
       i.note ? { type: 'text', text: `— ${i.note}`, size: 'xxs', color: '#8c8c8c', margin: 'xs', wrap: true } : null,

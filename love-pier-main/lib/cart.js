@@ -41,17 +41,17 @@ export function CartProvider({ children }) {
     setItems((prev) => prev.map((i) => i.id === id ? { ...i, note } : i))
   }, [])
 
-  // Structured per-line options — same global option set on every item
-  // (sweetness / coffee bean), same "set at review time" rule and per-line
-  // (not per-unit) scope as updateNote above. Undefined until the customer
-  // picks something; the Summary UI shows the first option as selected by
-  // default without writing it here (see OrderFlow.js).
-  const updateSweetness = useCallback((id, sweetness) => {
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, sweetness } : i))
-  }, [])
-
-  const updateCoffeeBean = useCallback((id, coffeeBean) => {
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, coffeeBean } : i))
+  // Structured per-line options (sweetness / coffee bean / protein — see
+  // lib/menuOptions.js), same "set at review time" rule and per-line (not
+  // per-unit) scope as updateNote above. Undefined until the customer picks
+  // something; the Summary UI shows the first option as selected by default
+  // without writing it here (see OrderFlow.js).
+  //
+  // One setter keyed by field rather than one per option: the groups are
+  // data now, so a new group must not need a new context method (and every
+  // consumer re-render) to go with it.
+  const updateOption = useCallback((id, field, value) => {
+    setItems((prev) => prev.map((i) => i.id === id ? { ...i, [field]: value } : i))
   }, [])
 
   const clearCart = useCallback(() => setItems([]), [])
@@ -62,7 +62,7 @@ export function CartProvider({ children }) {
   const totalPrice = items.reduce((sum, i) => sum + (parseFloat(i.price) || 0) * i.qty, 0)
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateNote, updateSweetness, updateCoffeeBean, clearCart, totalQty, totalPrice, isOpen, openCart, closeCart }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, updateNote, updateOption, clearCart, totalQty, totalPrice, isOpen, openCart, closeCart }}>
       {children}
     </CartContext.Provider>
   )

@@ -6,7 +6,7 @@ import { buildOrderFlex } from '../../lib/orderFlex'
 import { getShopSettings } from '../../lib/settings'
 import { calcDeliveryFee } from '../../lib/deliveryFee'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
-import { SWEETNESS_OPTIONS, COFFEE_BEAN_OPTIONS } from '../../lib/menuOptions'
+import { normalizeItemOptions } from '../../lib/menuOptions'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
 import { formatSlotThai, validateScheduleRequest } from '../../lib/preorder'
 
@@ -99,9 +99,9 @@ export default async function handler(req, res) {
     // Structured options — default to the first choice server-side too, same
     // as the client shows selected by default (lib/menuOptions.js), so an
     // old client build or a line that never touched these still lands on a
-    // sane value rather than an empty string.
-    sweetness: SWEETNESS_OPTIONS.includes(i?.sweetness) ? i.sweetness : SWEETNESS_OPTIONS[0],
-    coffeeBean: COFFEE_BEAN_OPTIONS.includes(i?.coffeeBean) ? i.coffeeBean : COFFEE_BEAN_OPTIONS[0],
+    // sane value rather than an empty string. Which fields appear depends on
+    // the line's category, so a drink never carries a cut of chicken.
+    ...normalizeItemOptions(i),
   }))
   const itemsSubtotal = Math.round(
     items.reduce((sum, i) => sum + i.price * i.qty, 0)
