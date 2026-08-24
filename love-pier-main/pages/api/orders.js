@@ -261,45 +261,82 @@ export default async function handler(req, res) {
     })
 
     // Remember this customer for next time (auto-fill on their next order via
-    // /api/customer-lookup) — keyed on phone, not lineUserId, since phone is
-    // required on every order but LINE login can fail or be skipped. Wrapped
-    // in try/catch and never awaited-to-fail-the-order: a phone reused under
-    // a different lineUserId would hit that column's own unique constraint,
-    // and this bookkeeping must not be able to block placing a real order.
+    // /api/customer-lookup). Wrapped in try/catch and never
+    // awaited-to-fail-the-order: this bookkeeping must not be able to block
+    // placing a real order.
+    //
+    // TWO PATHS, and the LINE one has to come first. Since 2026-08-26 every
+    // /member visitor is issued a card immediately, which creates a customers
+    // row holding their line_user_id and, usually, a BLANK phone. line_user_id
+    // is UNIQUE. So the phone-keyed upsert below — which is still right for
+    // an order with no LINE session — would try to INSERT a second row for a
+    // person who already has one, hit that unique constraint, and land in the
+    // catch: the order saves, but their phone and address are silently never
+    // recorded, and /api/customer-lookup never finds them again. Updating the
+    // row that already owns this line_user_id is the only correct move.
     try {
-      await db
-        .insert(customers)
-        .values({
-          lineUserId: lineUserId || null,
-          lineDisplayName,
-          name,
-          phone,
-          address,
-        })
-        .onConflictDoUpdate({
-          target: customers.phone,
-          // customers_phone_unique_idx (0005) is a PARTIAL index (WHERE
-          // phone <> ''), so Postgres can't infer it as the ON CONFLICT
-          // arbiter from `target` alone — this must repeat the same WHERE or
-          // every upsert errors at the planning stage (silently swallowed by
-          // the catch below) and no customer row is ever written. Found
-          // 2026-08-17 while verifying loyalty-points crediting: confirmed
-          // via server logs that this had been failing for every phone
-          // number since 0005 shipped.
-          targetWhere: sql`${customers.phone} <> ''`,
-          // COALESCE so an order placed without a LINE session (LIFF
-          // failed/skipped) never blanks out a lineUserId this phone already
-          // had on file from an earlier order.
-          set: {
+      const [byLine] = lineUserId
+        ? await db
+            .select({ id: customers.id })
+            .from(customers)
+            .where(eq(customers.lineUserId, lineUserId))
+            .limit(1)
+        : []
+
+      if (byLine) {
+        // The phone is safe to write: the guard near the top of this handler
+        // already rejected (409) any phone owned by a DIFFERENT verified LINE
+        // account. It can still collide with an unlinked row left by an
+        // order placed without a LINE session, which the catch below reports.
+        await db
+          .update(customers)
+          .set({
             name,
+            phone,
             // A pickup order can have no address. Never let that blank erase
             // the customer's last usable delivery address.
-            address: sql`coalesce(nullif(excluded.address, ''), ${customers.address})`,
-            lineUserId: sql`coalesce(${customers.lineUserId}, excluded.line_user_id)`,
-            lineDisplayName: sql`coalesce(${customers.lineDisplayName}, excluded.line_display_name)`,
+            address: sql`coalesce(nullif(${address}, ''), ${customers.address})`,
+            lineDisplayName: sql`coalesce(${customers.lineDisplayName}, ${lineDisplayName})`,
             updatedAt: sql`now()`,
-          },
-        })
+          })
+          .where(eq(customers.id, byLine.id))
+      } else {
+        // No row owns this LINE account (or there is no LINE session at all):
+        // fall back to the phone, which every order carries.
+        await db
+          .insert(customers)
+          .values({
+            lineUserId: lineUserId || null,
+            lineDisplayName,
+            name,
+            phone,
+            address,
+          })
+          .onConflictDoUpdate({
+            target: customers.phone,
+            // customers_phone_unique_idx (0005) is a PARTIAL index (WHERE
+            // phone <> ''), so Postgres can't infer it as the ON CONFLICT
+            // arbiter from `target` alone — this must repeat the same WHERE
+            // or every upsert errors at the planning stage (silently
+            // swallowed by the catch below) and no customer row is ever
+            // written. Found 2026-08-17 while verifying loyalty-points
+            // crediting: confirmed via server logs that this had been failing
+            // for every phone number since 0005 shipped.
+            targetWhere: sql`${customers.phone} <> ''`,
+            // COALESCE so an order placed without a LINE session (LIFF
+            // failed/skipped) never blanks out a lineUserId this phone
+            // already had on file from an earlier order.
+            set: {
+              name,
+              // A pickup order can have no address. Never let that blank
+              // erase the customer's last usable delivery address.
+              address: sql`coalesce(nullif(excluded.address, ''), ${customers.address})`,
+              lineUserId: sql`coalesce(${customers.lineUserId}, excluded.line_user_id)`,
+              lineDisplayName: sql`coalesce(${customers.lineDisplayName}, excluded.line_display_name)`,
+              updatedAt: sql`now()`,
+            },
+          })
+      }
     } catch (err) {
       console.error('Customer upsert failed (non-fatal):', err)
     }

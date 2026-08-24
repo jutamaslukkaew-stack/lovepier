@@ -1,17 +1,29 @@
 import crypto from 'crypto'
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, isNull, ne, sql } from 'drizzle-orm'
 import { db } from '../../lib/db'
-import { customers } from '../../lib/db/schema'
+import { customers, orders } from '../../lib/db/schema'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
 
-// Love Pier ID — member registration + card data (Phase 1).
+// Love Pier ID — the membership card.
 //
-//   GET  /api/member → { member, prefill }
-//   POST /api/member { name, phone, birthday? } → { member }
+//   GET  /api/member                    → { member }        (read only)
+//   POST /api/member { birthday?, name? } → { member }      (issue if needed)
 //
 // Both require `Authorization: Bearer <LIFF access token>` and re-derive the
 // LINE user id server-side (lib/lineIdentity.js), exactly like
 // pages/api/customer.js — a browser-supplied lineUserId is never trusted.
+//
+// NO SIGNUP FORM (2026-08-26, journey document item 1: "เพิ่มเพื่อน = สมาชิก
+// ทันที ไม่มีฟอร์มสมัครซ้ำ"). POST used to require a name and a phone number.
+// It no longer requires anything: opening /member issues the card straight
+// away, named from the LINE profile the token already proves. Every field the
+// form used to collect was either already known (the name) or not needed to
+// scan a card at the counter (the phone).
+//
+// POST is the issuing verb, not GET, because issuing writes — a sequence
+// value is consumed and a row is created. It is idempotent all the same: the
+// `WHERE member_no IS NULL` guard below means calling it twice returns the
+// same card rather than re-rolling one.
 
 // Staff read this off the customer's phone screen, so keep it short and
 // unambiguous. LP prefix matches the LP…-style order numbers customers
@@ -62,76 +74,94 @@ export default async function handler(req, res) {
         .where(eq(customers.lineUserId, lineUserId))
         .limit(1)
 
-      if (!c) return res.status(200).json({ member: null, prefill: null })
-
-      return res.status(200).json({
-        member: toMemberView(c),
-        // Returning delivery customers shouldn't retype what we already have.
-        prefill: c.memberNo == null ? { name: c.name || '', phone: c.phone || '' } : null,
-      })
+      // null means "no card yet" — POST issues one. Read-only on purpose:
+      // nothing here should be able to consume a member number.
+      return res.status(200).json({ member: c ? toMemberView(c) : null })
     } catch (err) {
       console.error('Fetch member failed:', err)
-      return res.status(200).json({ member: null, prefill: null })
+      return res.status(200).json({ member: null })
     }
   }
 
   if (req.method === 'POST') {
-    const name = pickString(req.body?.name)
-    const phone = pickString(req.body?.phone)
+    // Nothing here is required. `name` is accepted so a future "edit my card"
+    // screen has a way in, but the default — and what every customer gets
+    // today — is the display name on the LINE account the token belongs to.
+    const requestedName = pickString(req.body?.name)
+    const displayName = pickString(verifiedLine.displayName)
     const birthdayRaw = pickString(req.body?.birthday)
     // Optional by design — an unparseable or empty birthday is dropped, never
     // an error. Only the shape is validated; Postgres rejects impossible dates.
     const birthday = /^\d{4}-\d{2}-\d{2}$/.test(birthdayRaw) ? birthdayRaw : null
 
-    if (!name) return res.status(400).json({ member: null, error: 'กรุณากรอกชื่อ' })
-    if (!phone) return res.status(400).json({ member: null, error: 'กรุณากรอกเบอร์โทร' })
-
     try {
       // 1. Find-or-attach this LINE user's customer row. Check lineUserId
-      //    FIRST so an existing member/customer is always reused even if the
-      //    phone typed here differs from what's on file — never split one
-      //    person across two rows. Only when this LINE user has no row at all
-      //    do we fall back to the upsert-by-phone in pages/api/orders.js,
-      //    which attaches to a row left by a past delivery order.
+      //    FIRST so an existing member/customer is always reused — never
+      //    split one person across two rows.
       let customerId
       const [byLine] = await db
-        .select({ id: customers.id })
+        .select({ id: customers.id, name: customers.name })
         .from(customers)
         .where(eq(customers.lineUserId, lineUserId))
         .limit(1)
 
       if (byLine) {
         customerId = byLine.id
-        try {
-          await db
-            .update(customers)
-            .set({ name, phone, updatedAt: sql`now()` })
-            .where(eq(customers.id, customerId))
-        } catch (err) {
-          // e.g. this phone already belongs to a different row. Non-fatal:
-          // the member card matters more than syncing contact details, same
-          // convention as the customer upsert in pages/api/orders.js.
-          console.error('Member contact update failed (non-fatal):', err)
+        // Only fill a name in, never overwrite one. A returning delivery
+        // customer typed theirs at checkout and it is the name staff know
+        // them by; the LINE display name is the fallback, not the authority.
+        const name = requestedName || byLine.name || displayName
+        if (name && name !== byLine.name) {
+          try {
+            await db
+              .update(customers)
+              .set({ name, updatedAt: sql`now()` })
+              .where(eq(customers.id, customerId))
+          } catch (err) {
+            // Non-fatal: the card matters more than the label on it, same
+            // convention as the customer upsert in pages/api/orders.js.
+            console.error('Member name update failed (non-fatal):', err)
+          }
         }
       } else {
-        const [upserted] = await db
+        // No row yet. Before creating one, look for a phone this LINE account
+        // has already used on an order: without the signup form there is
+        // nothing else that can link the card to a delivery history, and a
+        // second row for the same person would split their points. Skipped
+        // when another row already owns that phone — the unique index would
+        // reject it, and merging two people's rows is not this endpoint's
+        // job.
+        let phone = ''
+        try {
+          const [lastOrder] = await db
+            .select({ phone: orders.phone })
+            .from(orders)
+            .where(and(eq(orders.lineUserId, lineUserId), ne(orders.phone, '')))
+            .orderBy(desc(orders.createdAt))
+            .limit(1)
+          if (lastOrder?.phone) {
+            const [taken] = await db
+              .select({ id: customers.id })
+              .from(customers)
+              .where(eq(customers.phone, lastOrder.phone))
+              .limit(1)
+            if (!taken) phone = lastOrder.phone
+          }
+        } catch (err) {
+          // A card with no phone on it is still a working card.
+          console.error('Member phone recovery failed (non-fatal):', err)
+        }
+
+        const [inserted] = await db
           .insert(customers)
-          .values({ lineUserId, lineDisplayName: verifiedLine.displayName, name, phone })
-          .onConflictDoUpdate({
-            target: customers.phone,
-            // customers_phone_unique_idx (0005) is partial — Postgres can't
-            // infer it as the arbiter without repeating the same WHERE. See
-            // the long note on the same upsert in pages/api/orders.js.
-            targetWhere: sql`${customers.phone} <> ''`,
-            set: {
-              name,
-              lineUserId: sql`coalesce(${customers.lineUserId}, excluded.line_user_id)`,
-              lineDisplayName: sql`coalesce(${customers.lineDisplayName}, excluded.line_display_name)`,
-              updatedAt: sql`now()`,
-            },
+          .values({
+            lineUserId,
+            lineDisplayName: displayName,
+            name: requestedName || displayName,
+            phone,
           })
           .returning({ id: customers.id })
-        customerId = upserted?.id
+        customerId = inserted?.id
       }
 
       if (!customerId) {
@@ -149,7 +179,10 @@ export default async function handler(req, res) {
         .set({
           memberNo: sql`nextval('customers_member_no_seq')`,
           memberCode,
-          birthday,
+          // Only when one was actually supplied. Since the signup form is
+          // gone this is almost always absent, and writing a bare null here
+          // would clear a birthday rather than leave it alone.
+          ...(birthday ? { birthday } : {}),
           updatedAt: sql`now()`,
         })
         .where(and(eq(customers.id, customerId), isNull(customers.memberNo)))

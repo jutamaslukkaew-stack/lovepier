@@ -4,13 +4,18 @@ import { useChrome } from '../lib/chrome'
 import { useLanguage } from '../lib/language'
 import { getProfileIfLoggedIn, isLiffConfigured, loginAndGetProfile } from '../lib/liff'
 
-// Love Pier ID — the customer's membership card (Phase 1).
+// Love Pier ID — the customer's membership card.
 //
 // Opened from the LINE OA Rich Menu inside LIFF, so it hides the site
 // nav/footer and reads as a dedicated card screen. States:
-//   loading → logged-out → form (first time) → card
-// A returning member skips the form entirely: GET /api/member already
-// returns their card.
+//   loading → logged-out → card
+//
+// THERE IS NO SIGNUP FORM (2026-08-26, journey document item 1: "เพิ่มเพื่อน =
+// สมาชิกทันที ไม่มีฟอร์มสมัครซ้ำ"). First-time visitors used to be asked for a
+// name, a phone number and an optional birthday before they could see a card.
+// Now the page POSTs on load and the card comes back — named from the LINE
+// profile, which the access token already proves. First visit and every visit
+// after it take exactly the same path.
 
 const COPY = {
   th: {
@@ -21,15 +26,6 @@ const COPY = {
     loginLead: 'เข้าสู่ระบบด้วย LINE เพื่อรับบัตรสมาชิก Love Pier ID ของคุณ',
     login: 'เข้าสู่ระบบด้วย LINE',
     unavailable: 'เปิดหน้านี้จากแอป LINE ของร้าน เพื่อรับบัตรสมาชิก',
-    formLead: 'กรอกข้อมูลเพื่อรับบัตรสมาชิก ใช้เวลาไม่ถึงนาที',
-    name: 'ชื่อ',
-    namePlaceholder: 'ชื่อที่ให้พนักงานเรียก',
-    phone: 'เบอร์โทร',
-    phonePlaceholder: '08x-xxx-xxxx',
-    birthday: 'วันเกิด',
-    birthdayHint: 'ไม่บังคับ · ใส่ไว้เพื่อรับสิทธิพิเศษวันเกิด',
-    submit: 'รับบัตรสมาชิก',
-    submitting: 'กำลังสมัคร…',
     memberNo: 'รหัสสมาชิก',
     points: 'คะแนนสะสม',
     pointsUnit: 'คะแนน',
@@ -45,15 +41,6 @@ const COPY = {
     loginLead: 'Log in with LINE to get your Love Pier ID card.',
     login: 'Log in with LINE',
     unavailable: 'Open this page from our LINE account to get your card.',
-    formLead: 'Fill this in to get your card — it takes under a minute.',
-    name: 'Name',
-    namePlaceholder: 'What our staff should call you',
-    phone: 'Phone',
-    phonePlaceholder: '08x-xxx-xxxx',
-    birthday: 'Birthday',
-    birthdayHint: 'Optional · add it for a birthday treat',
-    submit: 'Get my card',
-    submitting: 'Signing up…',
     memberNo: 'Member ID',
     points: 'Points balance',
     pointsUnit: 'points',
@@ -69,15 +56,6 @@ const COPY = {
     loginLead: '使用 LINE 登录，即可领取您的 Love Pier ID 会员卡。',
     login: '使用 LINE 登录',
     unavailable: '请从本店 LINE 官方账号打开此页面以领取会员卡。',
-    formLead: '填写以下信息即可领取会员卡，不到一分钟。',
-    name: '姓名',
-    namePlaceholder: '方便店员称呼您',
-    phone: '电话',
-    phonePlaceholder: '08x-xxx-xxxx',
-    birthday: '生日',
-    birthdayHint: '选填 · 填写可获得生日礼遇',
-    submit: '领取会员卡',
-    submitting: '注册中…',
     memberNo: '会员编号',
     points: '积分余额',
     pointsUnit: '积分',
@@ -96,8 +74,6 @@ export default function MemberPage() {
   const [profile, setProfile] = useState(null)
   const [member, setMember] = useState(null)
   const [qrDataUrl, setQrDataUrl] = useState('')
-  const [form, setForm] = useState({ name: '', phone: '', birthday: '' })
-  const [formError, setFormError] = useState('')
 
   // This is a card screen reached from the Rich Menu, not a marketing page.
   useEffect(() => {
@@ -113,22 +89,25 @@ export default function MemberPage() {
     setProfile(lineProfile)
     setStatus('loading')
     try {
+      // POST, not GET: this both issues the card on a first visit and returns
+      // an existing one, so there is a single round trip and a single code
+      // path whether or not the customer has been here before. Idempotent —
+      // /api/member only assigns a member number where there isn't one.
       const res = await fetch('/api/member', {
-        headers: { Authorization: `Bearer ${lineProfile.accessToken || ''}` },
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${lineProfile.accessToken || ''}`,
+        },
+        body: '{}',
       })
       const data = await res.json()
-      if (data.member) {
-        setMember(data.member)
-        setStatus('card')
+      if (!res.ok || !data.member) {
+        setStatus('error')
         return
       }
-      // Returning delivery customers already have a name/phone on file.
-      setForm((prev) => ({
-        ...prev,
-        name: data.prefill?.name || lineProfile.displayName || '',
-        phone: data.prefill?.phone || '',
-      }))
-      setStatus('form')
+      setMember(data.member)
+      setStatus('card')
     } catch {
       setStatus('error')
     }
@@ -142,7 +121,7 @@ export default function MemberPage() {
   }, [loadMember])
 
   // Only ever runs once a card exists — the qrcode bundle is never pulled in
-  // on the login/form screens. Same dynamic-import + data-URL technique as
+  // on the login screen. Same dynamic-import + data-URL technique as
   // the PromptPay QR in components/delivery/OrderFlow.js.
   useEffect(() => {
     if (!member?.qrPayload) return
@@ -171,41 +150,6 @@ export default function MemberPage() {
     }
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault()
-    setFormError('')
-    if (!form.name.trim() || !form.phone.trim()) {
-      setFormError(t.error)
-      return
-    }
-    setStatus('submitting')
-    try {
-      const res = await fetch('/api/member', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${profile?.accessToken || ''}`,
-        },
-        body: JSON.stringify({
-          name: form.name.trim(),
-          phone: form.phone.trim(),
-          birthday: form.birthday || '',
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok || !data.member) {
-        setFormError(data.error || t.error)
-        setStatus('form')
-        return
-      }
-      setMember(data.member)
-      setStatus('card')
-    } catch {
-      setFormError(t.error)
-      setStatus('form')
-    }
-  }
-
   return (
     <>
       <Head>
@@ -226,11 +170,9 @@ export default function MemberPage() {
             <p className="mt-3 text-[13px] font-light text-[#555]">{t.tagline}</p>
           </header>
 
-          {status === 'loading' || status === 'submitting' ? (
+          {status === 'loading' ? (
             <div className="rounded-[28px] border border-black/10 bg-[#fffdf8] px-6 py-14 text-center shadow-[0_24px_70px_rgba(74,53,32,0.08)]">
-              <p className="text-[13px] text-muted-strong">
-                {status === 'submitting' ? t.submitting : t.loading}
-              </p>
+              <p className="text-[13px] text-muted-strong">{t.loading}</p>
             </div>
           ) : null}
 
@@ -267,64 +209,6 @@ export default function MemberPage() {
                 {t.retry}
               </button>
             </div>
-          ) : null}
-
-          {status === 'form' ? (
-            <form
-              onSubmit={handleSubmit}
-              className="rounded-[28px] border border-black/10 bg-[#fffdf8] p-7 shadow-[0_24px_70px_rgba(74,53,32,0.08)]"
-            >
-              <p className="mb-6 text-[13px] font-light leading-[1.9] text-[#555]">{t.formLead}</p>
-
-              <label className="block">
-                <span className="text-[11px] font-semibold tracking-[0.14em] text-muted-strong">{t.name}</span>
-                <input
-                  type="text"
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                  placeholder={t.namePlaceholder}
-                  className="mt-2 min-h-12 w-full rounded-2xl border border-black/10 bg-white px-4 text-[15px] text-ink outline-none transition focus:border-gold-deep"
-                />
-              </label>
-
-              <label className="mt-5 block">
-                <span className="text-[11px] font-semibold tracking-[0.14em] text-muted-strong">{t.phone}</span>
-                <input
-                  type="tel"
-                  required
-                  inputMode="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-                  placeholder={t.phonePlaceholder}
-                  className="mt-2 min-h-12 w-full rounded-2xl border border-black/10 bg-white px-4 text-[15px] text-ink outline-none transition focus:border-gold-deep"
-                />
-              </label>
-
-              <label className="mt-5 block">
-                <span className="text-[11px] font-semibold tracking-[0.14em] text-muted-strong">{t.birthday}</span>
-                <input
-                  type="date"
-                  value={form.birthday}
-                  onChange={(e) => setForm((p) => ({ ...p, birthday: e.target.value }))}
-                  className="mt-2 min-h-12 w-full rounded-2xl border border-black/10 bg-white px-4 text-[15px] text-ink outline-none transition focus:border-gold-deep"
-                />
-                <span className="mt-2 block text-[11px] text-muted-strong">{t.birthdayHint}</span>
-              </label>
-
-              {formError ? (
-                <p className="mt-5 text-[12px] text-[#b3261e]" role="alert">
-                  {formError}
-                </p>
-              ) : null}
-
-              <button
-                type="submit"
-                className="mt-7 min-h-13 w-full rounded-full bg-gold-deep px-6 py-3.5 text-[14px] font-semibold tracking-[0.04em] text-white transition hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(177,138,84,0.28)]"
-              >
-                {t.submit}
-              </button>
-            </form>
           ) : null}
 
           {status === 'card' && member ? (
