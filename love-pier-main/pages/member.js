@@ -28,7 +28,6 @@ const COPY = {
     unavailable: 'เปิดหน้านี้จากแอป LINE ของร้าน เพื่อรับบัตรสมาชิก',
     memberNo: 'รหัสสมาชิก',
     points: 'คะแนนสะสม',
-    pointsUnit: 'คะแนน',
     scanHint: 'ให้พนักงานสแกน QR นี้ก่อนชำระเงิน',
     error: 'ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่',
     retry: 'ลองใหม่',
@@ -43,7 +42,6 @@ const COPY = {
     unavailable: 'Open this page from our LINE account to get your card.',
     memberNo: 'Member ID',
     points: 'Points balance',
-    pointsUnit: 'points',
     scanHint: 'Show this QR to our staff before you pay',
     error: 'Could not load your card. Please try again.',
     retry: 'Try again',
@@ -58,7 +56,6 @@ const COPY = {
     unavailable: '请从本店 LINE 官方账号打开此页面以领取会员卡。',
     memberNo: '会员编号',
     points: '积分余额',
-    pointsUnit: '积分',
     scanHint: '结账前请向店员出示此二维码',
     error: '无法加载会员卡，请重试。',
     retry: '重试',
@@ -239,14 +236,22 @@ export default function MemberPage() {
                 )}
               </div>
 
-              <div className="flex items-end justify-between gap-4 border-t border-black/10 px-7 py-6">
-                <span className="text-[11px] tracking-[0.14em] text-muted-strong">{t.points}</span>
-                <span className="flex items-end gap-2">
-                  <strong className="font-display text-[clamp(28px,7vw,38px)] font-normal leading-none text-gold-deep">
-                    {Number(member.pointsBalance || 0).toLocaleString()}
-                  </strong>
-                  <span className="pb-1 text-[12px] text-muted-strong">{t.pointsUnit}</span>
-                </span>
+              {/* Centred, not label-left/value-right. Split across the full
+                  card width the two halves read as unrelated scraps in the
+                  corners, and the balance — the one number a customer opens
+                  this card to check after the QR — was the smallest thing on
+                  the screen. Stacked and centred it matches the header and
+                  the QR above it, so the whole card reads on one axis. */}
+              <div className="border-t border-black/10 px-7 py-6 text-center">
+                <p className="text-[11px] tracking-[0.14em] text-muted-strong">{t.points}</p>
+                {/* The numeral alone, so it lands ON the centre axis rather
+                    than beside it — pairing it with a unit word centres the
+                    PAIR and pushes the digit off to the left. Nothing is lost
+                    by dropping the unit: the label directly above it already
+                    says these are points. */}
+                <p className="mt-1.5 font-display text-[clamp(44px,13vw,56px)] font-normal leading-none text-gold-deep">
+                  {Number(member.pointsBalance || 0).toLocaleString()}
+                </p>
               </div>
             </div>
           ) : null}
