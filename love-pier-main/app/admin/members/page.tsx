@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { tierLabel } from '@/lib/tiers'
 import { listMembers } from '@/app/admin/actions/customers'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -36,7 +37,8 @@ export default async function AdminMembersPage() {
             <Table>
               <TableHeader><TableRow>
                 <TableHead>รหัส</TableHead><TableHead>ชื่อ</TableHead><TableHead>เบอร์โทร</TableHead>
-                <TableHead>วันเกิด</TableHead><TableHead className="text-right">คะแนน</TableHead>
+                <TableHead>วันเกิด</TableHead><TableHead>กลุ่ม</TableHead>
+                <TableHead className="text-right">คะแนน</TableHead>
                 <TableHead className="text-center">ออเดอร์</TableHead><TableHead>ล่าสุด</TableHead>
               </TableRow></TableHeader>
               <TableBody>{members.map((m) => (
@@ -45,6 +47,9 @@ export default async function AdminMembersPage() {
                   <TableCell className="font-medium"><Link href={`/admin/customers/${m.id}`} className="hover:underline">{m.name || m.lineDisplayName || '—'}</Link></TableCell>
                   <TableCell><a href={`tel:${m.phone}`} className="hover:underline">{m.phone}</a></TableCell>
                   <TableCell>{m.birthday ? formatDate(m.birthday) : '—'}</TableCell>
+                  {/* Only the tiers worth flagging get a badge — 'general' is
+                      almost every row and would just add colour to the table. */}
+                  <TableCell>{m.tier === 'general' ? <span className="text-muted-foreground">—</span> : <Badge className="bg-amber-600">{tierLabel(m.tier)}</Badge>}</TableCell>
                   <TableCell className="text-right font-medium tabular-nums">{m.pointsBalance.toLocaleString()}</TableCell>
                   <TableCell className="text-center tabular-nums">{m.orderCount}</TableCell>
                   <TableCell className="text-muted-foreground">{formatDate(m.lastOrderAt)}</TableCell>

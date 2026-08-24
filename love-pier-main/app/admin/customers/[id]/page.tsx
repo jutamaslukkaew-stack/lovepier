@@ -4,6 +4,8 @@ import { getCustomerDetail } from '@/app/admin/actions/customers'
 import { DELIVERY_METHOD_LABELS, STATUS_LABELS, STATUS_VARIANT } from '@/app/admin/orders/status'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CustomerTierSelect } from '@/components/admin/customer-tier-select'
+import { tierLabel } from '@/lib/tiers'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +51,10 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-semibold">{customer.name || customer.lineDisplayName || 'ไม่ระบุชื่อ'}</h1>
               {customer.memberNo != null ? <Badge>{memberNo(customer.memberNo)}</Badge> : <Badge variant="outline">ลูกค้าทั่วไป</Badge>}
+              {/* Only when it says something: every customer is 'general', so
+                  a badge on all of them would be noise on the one screen
+                  where a 50% or 100% rate needs to be obvious. */}
+              {customer.tier !== 'general' && <Badge className="bg-amber-600">{tierLabel(customer.tier)}</Badge>}
               {customer.lineLinked && <Badge variant="secondary">เชื่อม LINE แล้ว</Badge>}
             </div>
             {customer.lineDisplayName && customer.lineDisplayName !== customer.name && <p className="mt-1 text-sm text-muted-foreground">LINE: {customer.lineDisplayName}</p>}
@@ -72,6 +78,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             <div><p className="text-xs text-muted-foreground">วันเกิด</p><p className="mt-1">{dateOnly(customer.birthday)}</p></div>
             <div><p className="text-xs text-muted-foreground">เบอร์โทร</p><a href={`tel:${customer.phone}`} className="mt-1 block hover:underline">{customer.phone || '—'}</a></div>
             <div><p className="text-xs text-muted-foreground">LINE</p><p className="mt-1">{customer.lineLinked ? customer.lineDisplayName || 'เชื่อมแล้ว' : 'ยังไม่เชื่อม'}</p></div>
+            <CustomerTierSelect id={customer.id} tier={customer.tier} />
             <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">ที่อยู่ล่าสุด</p><p className="mt-1 whitespace-pre-line">{customer.address || '—'}</p></div>
           </CardContent>
         </Card>

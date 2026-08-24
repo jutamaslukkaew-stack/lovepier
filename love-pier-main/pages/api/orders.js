@@ -6,6 +6,7 @@ import { buildOrderFlex } from '../../lib/orderFlex'
 import { getShopSettings } from '../../lib/settings'
 import { calcDeliveryFee } from '../../lib/deliveryFee'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
+import { TIER_GENERAL, tierDiscountPercent } from '../../lib/tiers'
 import { normalizeItemOptions } from '../../lib/menuOptions'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
 import { formatSlotThai, validateScheduleRequest } from '../../lib/preorder'
@@ -171,17 +172,35 @@ export default async function handler(req, res) {
   // confirmed — see lib/slipVerification.js.
   const requestedPoints = Math.max(0, Math.floor(Number(req.body?.pointsToRedeem) || 0))
   let pointsBalance = 0
-  if (lineUserId && requestedPoints > 0) {
+  let customerTier = TIER_GENERAL
+  // One read for both the balance and the tier. Unconditional now (the old
+  // version only ran when points were being spent) because the tier decides
+  // the price of every order, not just point-redeeming ones — and the tier
+  // MUST come from the row, never from the request body: 50% and 100% are
+  // real money, and a browser-supplied percentage would be a self-service
+  // discount for anyone who can open devtools.
+  if (lineUserId) {
     const [customer] = await db
-      .select({ pointsBalance: customers.pointsBalance })
+      .select({ pointsBalance: customers.pointsBalance, tier: customers.tier })
       .from(customers)
       .where(eq(customers.lineUserId, lineUserId))
       .limit(1)
     pointsBalance = Math.max(0, customer?.pointsBalance || 0)
+    customerTier = customer?.tier || TIER_GENERAL
   }
-  const pointsRequestedAndAvailable = Math.min(requestedPoints, pointsBalance, Math.max(0, itemsSubtotal - 1))
-  const { discountAmount, pointsRedeemed, pointsEarned } = calcOrderDiscountAndPoints(itemsSubtotal, {
+  const discountPercentForOrder = tierDiscountPercent(customerTier, {
+    enabled: s.memberDiscountEnabled,
+    percentByTier: s.tierDiscountPercent,
+  })
+  // Ceiling mirrors lib/points.js: points are spent against the POST-discount
+  // amount, so a 50% member cannot "redeem" points the discount already paid
+  // for. calcOrderDiscountAndPoints re-clamps this anyway; the balance is the
+  // part it cannot know.
+  const subtotalAfterTierDiscount = itemsSubtotal - Math.floor((itemsSubtotal * discountPercentForOrder) / 100)
+  const pointsRequestedAndAvailable = Math.min(requestedPoints, pointsBalance, Math.max(0, subtotalAfterTierDiscount - 1))
+  const { discountAmount, discountPercent, pointsRedeemed, pointsEarned } = calcOrderDiscountAndPoints(itemsSubtotal, {
     hasLineId: Boolean(lineUserId),
+    discountPercent: discountPercentForOrder,
     pointsPerBaht: s.pointsPerBaht,
     pointsRedeemed: pointsRequestedAndAvailable,
   })
@@ -217,6 +236,7 @@ export default async function handler(req, res) {
         items,
         itemsSubtotal,
         discountAmount,
+        discountPercent,
         pointsEarned,
         pointsRedeemed,
         deliveryFee,

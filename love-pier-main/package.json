@@ -12,6 +12,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:migrate-points-redemption": "node scripts/apply-points-redemption-migration.mjs --apply",
     "db:migrate-preorder": "node scripts/apply-preorder-migration.mjs --apply",
+    "db:migrate-tiers": "node scripts/apply-customer-tiers-migration.mjs --apply",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx --env-file=.env.local lib/db/seed.ts",

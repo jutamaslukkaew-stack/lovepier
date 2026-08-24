@@ -2,9 +2,12 @@ import { and, desc, eq, isNotNull, ne } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { customers, orders } from '../../lib/db/schema'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
+import { getShopSettings } from '../../lib/settings'
+import { normalizeTier, tierDiscountPercent } from '../../lib/tiers'
 
 // GET /api/customer?lineUserId=xxx
-//   → { customer: { name, phone, address, lastOrderDistanceKm } | null }
+//   → { customer: { name, phone, address, lastOrderDistanceKm, tier,
+//                   discountPercent } | null }
 // Used to auto-fill the checkout form for returning LINE customers, and —
 // via lastOrderDistanceKm — to offer skipping the GPS prompt by reusing the
 // distance from their most recent order (see the `contact` step in
@@ -23,6 +26,7 @@ export default async function handler(req, res) {
   const lineUserId = verifiedLine.userId
 
   try {
+    const s = await getShopSettings()
     const rows = await db
       .select()
       .from(customers)
@@ -57,6 +61,15 @@ export default async function handler(req, res) {
         address: c.address || lastAddressOrder?.address || '',
         pointsBalance: c.pointsBalance || 0,
         lastOrderDistanceKm: lastOrder ? Number(lastOrder.distanceKm) : null,
+        // Tier + what it is worth today, for the summary's preview line only.
+        // /api/orders re-derives both from this same row when the order is
+        // actually priced, so a stale or edited value here cannot change what
+        // the customer is charged.
+        tier: normalizeTier(c.tier),
+        discountPercent: tierDiscountPercent(c.tier, {
+          enabled: s.memberDiscountEnabled,
+          percentByTier: s.tierDiscountPercent,
+        }),
       },
     })
   } catch (err) {

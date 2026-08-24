@@ -692,6 +692,11 @@ export default function OrderFlow({
   // escape hatch back to the plain form, e.g. their address changed.
   const [customerRecognized, setCustomerRecognized] = useState(false)
   const [pointsBalance, setPointsBalance] = useState(0)
+  // Tier discount, for the summary preview only. Resolved server-side from
+  // the customer row (/api/customer) so this never has to know the tier
+  // rates; /api/orders re-derives it when the order is actually priced, so a
+  // tampered value here changes the preview and nothing that is charged.
+  const [tierDiscountPct, setTierDiscountPct] = useState(0)
   const [usePoints, setUsePoints] = useState(false)
   const [editingInfo, setEditingInfo] = useState(false)
   // Distance (km) from the customer's most recent order, from the LINE ID
@@ -756,10 +761,16 @@ export default function OrderFlow({
   // source of truth, so a stale/tampered preview can never affect what's
   // actually charged.
   const hasLineId = Boolean(profile?.userId)
-  const maxPointsUsable = Math.min(pointsBalance, Math.max(0, itemsSubtotal - 1))
+  // Against the POST-discount amount, matching the ceiling in lib/points.js
+  // and /api/orders — otherwise a 50% member would be offered more points
+  // than their order can absorb and the "use N points" button would promise
+  // a saving the server then refuses.
+  const subtotalAfterTierDiscount = itemsSubtotal - Math.floor((itemsSubtotal * (hasLineId ? tierDiscountPct : 0)) / 100)
+  const maxPointsUsable = Math.min(pointsBalance, Math.max(0, subtotalAfterTierDiscount - 1))
   const requestedPoints = usePoints ? maxPointsUsable : 0
   const { discountAmount, pointsRedeemed, pointsEarned: pointsPreview } = calcOrderDiscountAndPoints(itemsSubtotal, {
     hasLineId,
+    discountPercent: tierDiscountPct,
     pointsPerBaht,
     pointsRedeemed: requestedPoints,
   })
@@ -857,6 +868,7 @@ export default function OrderFlow({
         setPhoneLookup('found')
         setCustomerRecognized(true)
         setPointsBalance(Math.max(0, Number(data.customer.pointsBalance) || 0))
+        setTierDiscountPct(Math.max(0, Number(data.customer.discountPercent) || 0))
         if (Number.isFinite(data.customer.lastOrderDistanceKm)) {
           setCachedDistanceKm(data.customer.lastOrderDistanceKm)
         }
@@ -1387,6 +1399,7 @@ export default function OrderFlow({
     setPhoneLookup('idle')
     setCustomerRecognized(false)
     setPointsBalance(0)
+    setTierDiscountPct(0)
     setUsePoints(false)
     setEditingInfo(false)
     setCachedDistanceKm(null)
@@ -1898,7 +1911,11 @@ export default function OrderFlow({
                   </div>
                   {discountAmount > 0 && (
                     <div className="flex items-center justify-between text-[13px] text-emerald-700">
-                      <span>{t.discountLabel}</span>
+                      {/* The percentage is on the label, not folded into the
+                          amount: "ตัวเลขสับสน" was the journey document's
+                          complaint about this screen, and a bare "-฿90" does
+                          not say where it came from. */}
+                      <span>{t.discountLabel} {tierDiscountPct}%</span>
                       <span className="tabular-nums">-฿{discountAmount}</span>
                     </div>
                   )}

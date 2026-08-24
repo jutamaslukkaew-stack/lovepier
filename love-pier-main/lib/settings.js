@@ -27,9 +27,19 @@ export const SETTING_KEYS = {
   // Loyalty points earned per baht of (post-discount) item subtotal — see
   // lib/points.js#calcOrderDiscountAndPoints. 0 disables points entirely.
   pointsPerBaht: 'loyalty_baht_per_point_v2',
-  // % off itemsSubtotal for orders with a LINE ID attached (LIFF login
-  // completed) — never applies to delivery fee. 0 disables the discount.
-  memberDiscountPercent: 'member_discount_percent',
+  // ── Tier discounts (2026-08-24 journey review) ────────────────────────
+  // Master switch, off by default like preorderEnabled below: the code ships
+  // inert, the shop turns it on when the rates are agreed, and flipping it
+  // back off is the rollback with no deploy. This matters more here than
+  // usual — turning it on takes 10% off every delivery order.
+  memberDiscountEnabled: 'member_discount_enabled',
+  // % off itemsSubtotal per customer tier (lib/tiers.js), never off the
+  // delivery fee. An unset key falls back to that tier's own default, so a
+  // shop that never opens this form still gets the documented 10/15/50/100.
+  tierDiscountGeneral: 'tier_discount_general',
+  tierDiscountCondo: 'tier_discount_condo',
+  tierDiscountScc: 'tier_discount_scc',
+  tierDiscountStaff: 'tier_discount_staff',
   // ── In-store (Love Pier ID QR scanned at the counter — /admin/scan) ──
   // Deliberately separate from the delivery rates above: the shop wanted a
   // different, more generous rate for walk-ins, and coupling them would mean
@@ -106,7 +116,23 @@ export async function getShopSettings() {
       fee: Number.isFinite(tier.fee) ? tier.fee : DEFAULT_DELIVERY_FEE_TIERS[i].fee,
     })),
     pointsPerBaht: m[SETTING_KEYS.pointsPerBaht] ? num(m[SETTING_KEYS.pointsPerBaht]) : 20,
-    memberDiscountPercent: 0,
+    memberDiscountEnabled: m[SETTING_KEYS.memberDiscountEnabled] === 'true',
+    // Only the keys the shop has actually set. Absent tiers are filled in by
+    // lib/tiers.js#tierDiscountPercent from each tier's own default, so a
+    // blank settings table still hands out the documented rates rather than
+    // silently zeroing a tier. NaN is dropped for the same reason.
+    tierDiscountPercent: Object.fromEntries(
+      [
+        ['general', m[SETTING_KEYS.tierDiscountGeneral]],
+        ['condo', m[SETTING_KEYS.tierDiscountCondo]],
+        ['scc', m[SETTING_KEYS.tierDiscountScc]],
+        ['staff', m[SETTING_KEYS.tierDiscountStaff]],
+      ]
+        // `!= null` not a truthiness check: '0' is a meaningful value the
+        // shop can set to switch one tier off without touching the others.
+        .filter(([, v]) => v != null && v !== '' && Number.isFinite(num(v)))
+        .map(([k, v]) => [k, num(v)])
+    ),
     inStorePointsPerBaht: m[SETTING_KEYS.inStorePointsPerBaht]
       ? num(m[SETTING_KEYS.inStorePointsPerBaht])
       : 1,

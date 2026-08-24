@@ -20,7 +20,7 @@ const PAGE_COPY = {
 // payment → success) — see components/delivery/OrderFlow.js. The menu step
 // reuses components/menu/MenuExperience, the same shared menu layout as
 // /menu, so section/layout edits there apply to both pages.
-export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDeliveryOrder, pointsPerBaht, memberDiscountPercent, menuOptionsEnabled }) {
+export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDeliveryOrder, pointsPerBaht, menuOptionsEnabled }) {
   const { lang } = useLanguage()
   const t = PAGE_COPY[lang] || PAGE_COPY.en
   const { hidden } = useChrome()
@@ -72,7 +72,6 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
         radiusKm={radiusKm}
         minDeliveryOrder={minDeliveryOrder}
         pointsPerBaht={pointsPerBaht}
-        memberDiscountPercent={memberDiscountPercent}
         menuOptionsEnabled={menuOptionsEnabled}
       />
 
@@ -87,7 +86,7 @@ export async function getServerSideProps() {
   // to a LINE login, so it has to know it up front — /api/delivery-distance
   // only reports it after the GPS check.
   const {
-    radiusKm, minDeliveryOrder, pointsPerBaht, memberDiscountPercent, menuOptionsEnabled,
+    radiusKm, minDeliveryOrder, pointsPerBaht, menuOptionsEnabled,
   } = await getShopSettings()
   return {
     props: {
@@ -96,7 +95,6 @@ export async function getServerSideProps() {
       radiusKm: radiusKm ?? 5,
       minDeliveryOrder: minDeliveryOrder ?? 300,
       pointsPerBaht: pointsPerBaht ?? 20,
-      memberDiscountPercent: 0,
       menuOptionsEnabled: menuOptionsEnabled ?? false,
     },
   }

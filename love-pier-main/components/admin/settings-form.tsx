@@ -149,6 +149,67 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
       </div>
 
       <div className="border-t pt-5 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-medium text-sm">ส่วนลดตามกลุ่มลูกค้า (เดลิเวอรี่)</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              ลดทันทีจากค่าอาหาร (ไม่รวมค่าจัดส่ง) ตามกลุ่มที่ตั้งไว้ให้ลูกค้าแต่ละคนในหน้าลูกค้า
+              ลูกค้ายังได้แต้มสะสมตามปกติจากยอดหลังหักส่วนลด
+            </p>
+          </div>
+          <Switch
+            checked={form.memberDiscountEnabled}
+            onCheckedChange={(v) => set('memberDiscountEnabled', v)}
+          />
+        </div>
+        {/* Rates stay editable while the switch is off so the shop can agree
+            the numbers before anything goes live. */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>ลูกค้าทั่วไป (%)</Label>
+            <Input
+              value={form.tierDiscountGeneral}
+              onChange={(e) => set('tierDiscountGeneral', e.target.value)}
+              placeholder="10"
+              inputMode="decimal"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>คอนโด / แนะนำพิเศษ (%)</Label>
+            <Input
+              value={form.tierDiscountCondo}
+              onChange={(e) => set('tierDiscountCondo', e.target.value)}
+              placeholder="15"
+              inputMode="decimal"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>พนักงานในเครือ SCC (%)</Label>
+            <Input
+              value={form.tierDiscountScc}
+              onChange={(e) => set('tierDiscountScc', e.target.value)}
+              placeholder="50"
+              inputMode="decimal"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>ทีมงาน (%)</Label>
+            <Input
+              value={form.tierDiscountStaff}
+              onChange={(e) => set('tierDiscountStaff', e.target.value)}
+              placeholder="100"
+              inputMode="decimal"
+            />
+          </div>
+        </div>
+        <p className="-mt-1 text-xs text-muted-foreground">
+          {form.memberDiscountEnabled
+            ? 'เปิดอยู่ — ลูกค้าที่ล็อกอิน LINE ทุกคนได้ส่วนลดตามกลุ่มของตัวเองทันที ปิดสวิตช์นี้เพื่อกลับไปเป็นแต้มสะสมอย่างเดียว'
+            : 'ปิดอยู่ — ยังไม่มีใครได้ส่วนลด ลูกค้าได้เฉพาะแต้มสะสมเหมือนเดิม เปิดสวิตช์เมื่อตกลงอัตราแล้ว'}
+        </p>
+      </div>
+
+      <div className="border-t pt-5 space-y-4">
         <div>
           <p className="font-medium text-sm">สมาชิกหน้าร้าน (Love Pier ID)</p>
           <p className="text-xs text-muted-foreground mt-0.5">

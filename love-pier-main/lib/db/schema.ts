@@ -188,6 +188,13 @@ export const customers = pgTable(
     memberCode: text('member_code'),
     // Optional, for a future birthday promo. Never required at signup.
     birthday: date('birthday'),
+    // Discount tier (0010) — 'general' | 'condo' | 'scc' | 'staff', see
+    // lib/tiers.js. The KEY lives here; the percentage each key is worth is a
+    // setting (/admin/settings), because the rates are policy and change
+    // while a customer's group does not. Only staff can move a customer
+    // between tiers — the 50% and 100% tiers exist for verified affiliated
+    // staff and the shop's own team, so nothing customer-facing may write it.
+    tier: text('tier').notNull().default('general'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -231,9 +238,15 @@ export const orders = pgTable(
     items: jsonb('items').notNull().default([]),
     // subtotal (items only); totalAmount = itemsSubtotal - discountAmount + deliveryFee
     itemsSubtotal: integer('items_subtotal').notNull().default(0),
-    // 10%-off-itemsSubtotal member discount, only for orders with a LINE ID
-    // attached — see lib/points.js#calcOrderDiscountAndPoints. 0 otherwise.
+    // Tier discount in baht, off itemsSubtotal only (never the delivery fee),
+    // and only for orders with a LINE ID attached — see
+    // lib/points.js#calcOrderDiscountAndPoints. 0 otherwise, which is every
+    // row placed between 2026-08-17 and the tier rollout.
     discountAmount: integer('discount_amount').notNull().default(0),
+    // The percentage that produced discountAmount. Stored because the tier
+    // rates are editable settings: without it, changing a rate would rewrite
+    // what every past order's discount meant.
+    discountPercent: integer('discount_percent').notNull().default(0),
     // Computed once here (deterministic from itemsSubtotal/discountAmount),
     // "banked" into customers.pointsBalance + pointTransactions only once
     // payment is confirmed — see lib/slipVerification.js.

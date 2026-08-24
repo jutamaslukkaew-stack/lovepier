@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { calcInStoreVisit } from '@/lib/points'
 import { type ScannedMember } from '@/lib/inStore'
+import { tierLabel } from '@/lib/tiers'
 import { lookupMember, recordInStoreVisit } from '@/app/admin/actions/in-store'
 
 // The barcode API isn't in TypeScript's DOM lib yet. Only the two members
@@ -237,6 +238,14 @@ export function ScanTerminal() {
               แต้มสะสม {member.pointsBalance.toLocaleString('th-TH')} แต้ม
               {member.discountPercent > 0 && ` · สิทธิ์ลด ${member.discountPercent}%`}
             </p>
+            {/* Named only when it is NOT the ordinary counter rate. Staff need
+                to know why this customer's discount is 50% before they hand
+                over the food, and an unexplained number invites a re-ring. */}
+            {member.tierApplied && (
+              <p className="mt-1 text-sm font-medium text-amber-700">
+                กลุ่มพิเศษ: {tierLabel(member.tier)} — ใช้อัตราของกลุ่มแทนอัตราหน้าร้าน
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">

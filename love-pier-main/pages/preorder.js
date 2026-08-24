@@ -65,7 +65,7 @@ export default function Preorder(props) {
 export async function getServerSideProps() {
   const { dbMenuData, dbPromotions } = await getMenuPageData()
   const {
-    radiusKm, minDeliveryOrder, pointsPerBaht, memberDiscountPercent, menuOptionsEnabled,
+    radiusKm, minDeliveryOrder, pointsPerBaht, menuOptionsEnabled,
     preorderEnabled, shopOpenTime, shopCloseTime, shopClosedDays, preorderLeadMinutes, preorderMaxDaysAhead,
   } = await getShopSettings()
 
@@ -76,7 +76,6 @@ export async function getServerSideProps() {
       radiusKm: radiusKm ?? 5,
       minDeliveryOrder: minDeliveryOrder ?? 300,
       pointsPerBaht: pointsPerBaht ?? 20,
-      memberDiscountPercent: memberDiscountPercent ?? 0,
       menuOptionsEnabled: menuOptionsEnabled ?? false,
       preorderEnabled: preorderEnabled ?? false,
       shopOpenTime: shopOpenTime ?? '09:00',

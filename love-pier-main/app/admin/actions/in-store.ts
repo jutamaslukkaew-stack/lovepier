@@ -10,7 +10,7 @@ import { calcInStoreVisit } from '@/lib/points'
 import { awardPoints } from '@/lib/pointsAward'
 import { pushToUser } from '@/lib/lineMessaging'
 import { buildInStoreVisitFlex } from '@/lib/orderFlex'
-import { IN_STORE_METHOD, type ScannedMember } from '@/lib/inStore'
+import { IN_STORE_METHOD, inStoreDiscountFor, type ScannedMember } from '@/lib/inStore'
 
 // Staff-side counter flow for Love Pier ID (see /admin/scan). Both actions are
 // behind requireUser(), the same admin session that guards /admin/orders.
@@ -79,7 +79,8 @@ export async function lookupMember(raw: string) {
     return { ok: false as const, error: 'ไม่พบสมาชิกรายนี้' }
   }
 
-  const { inStoreDiscountPercent, inStorePointsPerBaht } = await getShopSettings()
+  const settings = await getShopSettings()
+  const { percent, tier, tierApplied } = inStoreDiscountFor(c.tier, settings)
 
   return {
     ok: true as const,
@@ -89,8 +90,10 @@ export async function lookupMember(raw: string) {
       name: c.name || c.lineDisplayName || '',
       pointsBalance: c.pointsBalance || 0,
       hasLine: Boolean(c.lineUserId),
-      discountPercent: inStoreDiscountPercent,
-      pointsPerBaht: inStorePointsPerBaht,
+      discountPercent: percent,
+      pointsPerBaht: settings.inStorePointsPerBaht,
+      tier,
+      tierApplied,
     } satisfies ScannedMember,
   }
 }
@@ -117,10 +120,14 @@ export async function recordInStoreVisit(customerId: string, grossAmount: number
   const [c] = await db.select().from(customers).where(eq(customers.id, customerId)).limit(1)
   if (!c || c.memberNo == null) return { ok: false as const, error: 'ไม่พบสมาชิกรายนี้' }
 
-  const { inStoreDiscountPercent, inStorePointsPerBaht } = await getShopSettings()
+  const settings = await getShopSettings()
+  // Re-resolved from the row, not from the scan tab that opened minutes ago —
+  // same reasoning as the rates themselves: a tier changed in another window
+  // must not be applied at yesterday's value.
+  const { percent: discountPercent } = inStoreDiscountFor(c.tier, settings)
   const { discountAmount, netAmount, pointsEarned } = calcInStoreVisit(gross, {
-    discountPercent: inStoreDiscountPercent,
-    pointsPerBaht: inStorePointsPerBaht,
+    discountPercent,
+    pointsPerBaht: settings.inStorePointsPerBaht,
   })
 
   const memberNo = formatMemberNo(c.memberNo)
@@ -139,6 +146,7 @@ export async function recordInStoreVisit(customerId: string, grossAmount: number
       items: [],
       itemsSubtotal: gross,
       discountAmount,
+      discountPercent,
       pointsEarned,
       pointsRedeemed: 0,
       deliveryFee: 0,

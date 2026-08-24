@@ -1,13 +1,16 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireUser } from '@/lib/auth'
+import { isTierKey, normalizeTier } from '@/lib/tiers'
 
 export type CustomerRow = {
   id: string; name: string; phone: string; address: string
   lineLinked: boolean; lineDisplayName: string
   memberNo: number | null; birthday: string | null; pointsBalance: number
+  tier: string
   orderCount: number; lastOrderAt: string | null; createdAt: string
 }
 
@@ -33,7 +36,7 @@ export async function listCustomers(): Promise<CustomerRow[]> {
   await requireUser()
   const rows = await db.execute(sql`
     select c.id, c.name, c.phone, c.address, c.line_display_name,
-      c.member_no, c.birthday, c.points_balance,
+      c.member_no, c.birthday, c.points_balance, c.tier,
       (c.line_user_id is not null) as line_linked, c.created_at,
       coalesce(o.order_count, 0)::int as order_count, o.last_order_at
     from customers c
@@ -50,7 +53,8 @@ export async function listCustomers(): Promise<CustomerRow[]> {
     lineDisplayName: String(r.line_display_name ?? ''),
     memberNo: r.member_no == null ? null : Number(r.member_no),
     birthday: r.birthday ? String(r.birthday) : null,
-    pointsBalance: Number(r.points_balance ?? 0), orderCount: Number(r.order_count ?? 0),
+    pointsBalance: Number(r.points_balance ?? 0), tier: normalizeTier(r.tier as string),
+    orderCount: Number(r.order_count ?? 0),
     lastOrderAt: r.last_order_at ? new Date(r.last_order_at as string).toISOString() : null,
     createdAt: new Date(r.created_at as string).toISOString(),
   }))
@@ -64,7 +68,7 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetail | nu
   await requireUser()
   const customerRows = await db.execute(sql`
     select id, name, phone, address, line_user_id, line_display_name,
-      member_no, birthday, points_balance, created_at, updated_at
+      member_no, birthday, points_balance, tier, created_at, updated_at
     from customers where id = ${id}::uuid limit 1
   `)
   const c = (customerRows as unknown as Array<Record<string, unknown>>)[0]
@@ -118,7 +122,8 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetail | nu
     lineLinked: Boolean(c.line_user_id), lineDisplayName: String(c.line_display_name ?? ''),
     memberNo: c.member_no == null ? null : Number(c.member_no),
     birthday: c.birthday ? String(c.birthday) : null,
-    pointsBalance: Number(c.points_balance ?? 0), orderCount: customerOrders.length,
+    pointsBalance: Number(c.points_balance ?? 0), tier: normalizeTier(c.tier as string),
+    orderCount: customerOrders.length,
     lastOrderAt: customerOrders[0]?.createdAt ?? null,
     createdAt: new Date(c.created_at as string).toISOString(),
     updatedAt: new Date(c.updated_at as string).toISOString(), totalSpend,
@@ -134,4 +139,34 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetail | nu
     favoriteItems: [...favoriteMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, qty]) => ({ name, qty })),
     orders: customerOrders, pointHistory,
   }
+}
+
+/**
+ * Move a customer between discount tiers.
+ *
+ * Staff-only by construction — there is no customer-facing path to this, and
+ * there must not be: the 50% and 100% tiers are real money, and the journey
+ * document requires affiliated-staff status to be verified by a person
+ * ("ต้องมีการยืนยันสถานะพนักงาน"). requireUser() is the same admin session
+ * that guards the rest of /admin.
+ *
+ * The tier only changes what FUTURE orders cost. Past orders keep the
+ * percentage they were placed at, in orders.discount_percent.
+ */
+export async function setCustomerTier(id: string, tier: string) {
+  await requireUser()
+  if (!isTierKey(tier)) return { ok: false as const, error: 'กลุ่มลูกค้าไม่ถูกต้อง' }
+
+  const rows = await db.execute(sql`
+    update customers set tier = ${tier}, updated_at = now()
+    where id = ${id}::uuid returning id
+  `)
+  if ((rows as unknown as unknown[]).length === 0) {
+    return { ok: false as const, error: 'ไม่พบลูกค้ารายนี้' }
+  }
+
+  revalidatePath(`/admin/customers/${id}`)
+  revalidatePath('/admin/customers')
+  revalidatePath('/admin/members')
+  return { ok: true as const }
 }
