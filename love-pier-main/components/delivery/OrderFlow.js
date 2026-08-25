@@ -19,7 +19,7 @@ import PageHero from '../PageHero'
 import { useLanguage } from '../../lib/language'
 import { useCart } from '../../lib/cart'
 import { useChrome } from '../../lib/chrome'
-import { isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessagesToChat } from '../../lib/liff'
+import { isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessagesToChat, closeLiffWindow } from '../../lib/liff'
 import { setDeliverySessionProfile, setDeliverySessionDistance } from '../../lib/deliverySession'
 import { buildPaymentPayload } from '../../lib/promptpay'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
@@ -175,6 +175,8 @@ const COPY = {
     paymentMethod: 'ช่องทางชำระเงิน',
     promptpayLabel: 'QR โค้ดของร้าน',
     payHint: 'สแกน QR ของร้านด้วยแอปธนาคาร แล้วติ๊กยืนยันด้านล่าง',
+    saveQr: 'บันทึกรูป QR',
+    saveQrHint: 'กดค้างที่รูป QR แล้วเลือกบันทึกรูปภาพ',
     amount: 'ยอดชำระ',
     noPromptpay: 'ยังไม่ได้ตั้งค่า QR รับเงินของร้าน กรุณาแจ้งร้านทาง LINE',
     confirmCheckbox: 'ฉันตรวจสอบรายการและยอดเงินถูกต้องแล้ว ยืนยันสั่งซื้อ',
@@ -198,7 +200,8 @@ const COPY = {
     slipUploaded: 'แนบสลิปแล้ว รอร้านตรวจสอบ',
     slipRetry: 'แนบสลิปใหม่อีกครั้ง',
     verifyHint: 'ระบบตรวจสลิปอัตโนมัติ (จับสลิปปลอมได้)',
-    done: 'เสร็จสิ้น — สั่งใหม่',
+    done: 'เสร็จสิ้น',
+    orderAgain: 'สั่งใหม่',
     journeyPaid: 'ชำระเงิน',
     journeyPrep: 'ร้านกำลังเตรียม',
     journeyDeliver: 'กำลังจัดส่ง',
@@ -310,6 +313,8 @@ const COPY = {
     paymentMethod: 'Payment method',
     promptpayLabel: "The shop's QR code",
     payHint: "Scan the shop's QR with your banking app, then tick confirm below",
+    saveQr: 'Save QR image',
+    saveQrHint: 'Press and hold the QR, then choose Save Image',
     amount: 'Amount',
     noPromptpay: 'The shop payment QR is not set up yet — please contact us on LINE',
     confirmCheckbox: "I've checked the order and total — confirm purchase",
@@ -332,7 +337,8 @@ const COPY = {
     slipUploaded: 'Slip attached — pending review',
     slipRetry: 'Attach a different slip',
     verifyHint: 'Automatic slip check (detects fakes)',
-    done: 'Done — order again',
+    done: 'Done',
+    orderAgain: 'Order again',
     journeyPaid: 'Paid',
     journeyPrep: 'Shop is preparing',
     journeyDeliver: 'Out for delivery',
@@ -444,6 +450,8 @@ const COPY = {
     paymentMethod: '付款方式',
     promptpayLabel: '本店二维码',
     payHint: '用银行 App 扫描二维码，然后在下方勾选确认',
+    saveQr: '保存二维码',
+    saveQrHint: '长按二维码，选择保存图片',
     amount: '金额',
     noPromptpay: '本店收款二维码尚未设置 — 请通过 LINE 联系我们',
     confirmCheckbox: '我已核对订单和金额，确认下单',
@@ -466,7 +474,8 @@ const COPY = {
     slipUploaded: '凭证已上传 — 等待店家核对',
     slipRetry: '重新上传凭证',
     verifyHint: '自动核验凭证（可识别伪造）',
-    done: '完成 — 再次下单',
+    done: '完成',
+    orderAgain: '再次下单',
     journeyPaid: '已付款',
     journeyPrep: '店家备餐中',
     journeyDeliver: '配送中',
@@ -720,6 +729,10 @@ export default function OrderFlow({
 
   // step 5 — payment
   const [qrDataUrl, setQrDataUrl] = useState('')
+  // Shown only after saving the QR turned out to be unavailable, so the
+  // long-press instruction never clutters the screen for the customers whose
+  // phone handled it — see saveQrImage().
+  const [qrSaveHint, setQrSaveHint] = useState(false)
   const [paymentRef, setPaymentRef] = useState('')
   const [confirmPay, setConfirmPay] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -1420,6 +1433,52 @@ export default function OrderFlow({
     setQrDataUrl('')
     setPaymentRef('')
     setConfirmPay(false)
+  }
+
+  // The customer is paying from the same phone that is displaying this QR, so
+  // they can never scan it off their own screen — they have to save it and
+  // pick it up again from their banking app's "scan from gallery". iOS
+  // in-app browsers (LINE's included) ignore <a download> on an image, but do
+  // honour the share sheet, whose "Save Image" is exactly the action wanted;
+  // <a download> is the Android/desktop path. If neither is available, fall
+  // back to telling them to long-press the image, which always works.
+  async function saveQrImage() {
+    if (!qrDataUrl) return
+    setQrSaveHint(false)
+    let objectUrl = ''
+    try {
+      const blob = await (await fetch(qrDataUrl)).blob()
+      const file = new File([blob], `lovepier-promptpay-${paymentRef || 'qr'}.png`, { type: 'image/png' })
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file] })
+        return
+      }
+      objectUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = objectUrl
+      link.download = file.name
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+    } catch (err) {
+      // AbortError means the customer dismissed the share sheet themselves —
+      // their choice, not a failure, so don't nag them with the hint.
+      if (err?.name !== 'AbortError') setQrSaveHint(true)
+    } finally {
+      // Revoked late: some browsers cancel an in-flight download if the URL
+      // is released in the same tick as the click.
+      if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 60000)
+    }
+  }
+
+  // "เสร็จสิ้น" — the customer is done and wants to be back where they came
+  // from. Inside LINE that means closing the LIFF webview onto their chat with
+  // the shop, which is also where the order card and payment confirmation are
+  // waiting. Outside LINE there is no window to close, so fall back to the
+  // site's front page rather than leaving a button that does nothing.
+  async function finishOrder() {
+    const closed = await closeLiffWindow()
+    if (!closed) window.location.href = '/'
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -2186,6 +2245,21 @@ export default function OrderFlow({
                     <div className="w-56 h-56 flex items-center justify-center text-black/30 text-sm">...</div>
                   )}
                 </div>
+                {/* Outlined rather than filled: saving the QR is genuinely
+                    useful (see saveQrImage) but it is not the step's action —
+                    the confirm checkbox and pay button below are. */}
+                {qrDataUrl && (
+                  <button
+                    type="button"
+                    onClick={saveQrImage}
+                    className="rounded-full border border-[#4a3520]/25 px-4 py-2 text-[12px] font-semibold text-[#4a3520] transition-colors hover:bg-[#4a3520]/[0.06]"
+                  >
+                    {t.saveQr}
+                  </button>
+                )}
+                {qrSaveHint && (
+                  <p className="text-[12px] leading-[1.7] text-black/50">{t.saveQrHint}</p>
+                )}
               </>
             ) : (
               <p className="text-[13px] text-black/60 py-6">{t.noPromptpay}</p>
@@ -2352,9 +2426,25 @@ export default function OrderFlow({
           </>
         )}
 
-        <button onClick={resetFlow} className="mt-1 w-full rounded-xl py-3 text-[13px] font-semibold text-black/60 transition-colors hover:bg-black/[0.04] hover:text-ink">
-          {t.done}
-        </button>
+        {/* Two separate actions, not one "Done — order again" label: they do
+            opposite things (leave vs start over) and a customer reading the
+            combined label had no way to tell which one tapping it would do.
+            Both stay quiet — this screen's job is the confirmation above, so
+            neither should compete with it for attention. */}
+        <div className="mt-1 flex w-full gap-2.5">
+          <button
+            onClick={finishOrder}
+            className="flex-1 rounded-xl bg-black/[0.06] py-3 text-[13px] font-semibold text-ink transition-colors hover:bg-black/10"
+          >
+            {t.done}
+          </button>
+          <button
+            onClick={resetFlow}
+            className="flex-1 rounded-xl py-3 text-[13px] font-semibold text-black/60 transition-colors hover:bg-black/[0.04] hover:text-ink"
+          >
+            {t.orderAgain}
+          </button>
+        </div>
       </div>
     </div>
   )

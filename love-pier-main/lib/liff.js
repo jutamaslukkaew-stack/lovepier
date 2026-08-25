@@ -133,6 +133,23 @@ export async function sendMessagesToChat(messages) {
   }
 }
 
+// Close the LIFF webview and hand the customer back to the LINE chat they
+// opened it from. Returns false when there is no LINE window to close (an
+// ordinary browser, or LIFF unavailable) so the caller can navigate instead
+// — closeWindow() is a no-op outside the LINE app, which would otherwise
+// leave a button that visibly does nothing.
+export async function closeLiffWindow(liffId = DEFAULT_LIFF_ID) {
+  if (!liffId) return false
+  try {
+    const liff = await initLiff(liffId)
+    if (!liff?.isInClient || !liff.isInClient()) return false
+    liff.closeWindow()
+    return true
+  } catch {
+    return false
+  }
+}
+
 // If we're already logged in (e.g. after the login redirect), grab the profile
 // silently without triggering another login.
 export async function getProfileIfLoggedIn(liffId = DEFAULT_LIFF_ID) {
