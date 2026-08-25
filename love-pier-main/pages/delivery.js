@@ -6,7 +6,7 @@ import OrderFlow from '../components/delivery/OrderFlow'
 import { useChrome } from '../lib/chrome'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import { initLiff, LIFF_RETURN_TO_KEY } from '../lib/liff'
+import { cacheLiffProfile, initLiff, LIFF_RETURN_TO_KEY } from '../lib/liff'
 import { getMenuPageData } from '../lib/db/menuPageData'
 import { getShopSettings } from '../lib/settings'
 
@@ -49,10 +49,19 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
       ? returnTo
       : '/'
     initLiff()
-      .then((liff) => {
+      .then(async (liff) => {
         if (liff && !liff.isLoggedIn()) {
           liff.login()
           return false
+        }
+        if (liff) {
+          const profile = await liff.getProfile()
+          cacheLiffProfile({
+            userId: profile.userId,
+            displayName: profile.displayName,
+            pictureUrl: profile.pictureUrl || '',
+            accessToken: liff.getAccessToken() || '',
+          })
         }
         return true
       })

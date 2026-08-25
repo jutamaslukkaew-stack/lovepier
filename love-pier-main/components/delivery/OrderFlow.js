@@ -19,7 +19,7 @@ import PageHero from '../PageHero'
 import { useLanguage } from '../../lib/language'
 import { useCart } from '../../lib/cart'
 import { useChrome } from '../../lib/chrome'
-import { isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessagesToChat, closeLiffWindow } from '../../lib/liff'
+import { getCachedLiffProfile, isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessagesToChat, closeLiffWindow } from '../../lib/liff'
 import { setDeliverySessionProfile, setDeliverySessionDistance } from '../../lib/deliverySession'
 import { buildPaymentPayload } from '../../lib/promptpay'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
@@ -859,6 +859,13 @@ export default function OrderFlow({
   useEffect(() => {
     if (!isLiffConfigured() || triedSilentLoginRef.current) return
     triedSilentLoginRef.current = true
+    const cached = getCachedLiffProfile()
+    if (cached) {
+      setProfile(cached)
+      setDeliverySessionProfile(cached)
+      setLoginPhase('idle')
+      return
+    }
     setLoginPhase('logging-in')
     getProfileIfLoggedIn()
       .then((existing) => existing || loginAndGetProfile())

@@ -26,6 +26,24 @@ const _initPromises = new Map()
 let _sheetLogged = false
 
 export const LIFF_RETURN_TO_KEY = 'love-pier:liff-return-to'
+export const LIFF_PROFILE_KEY = 'love-pier:liff-profile'
+
+export function cacheLiffProfile(profile) {
+  if (typeof window === 'undefined' || !profile?.userId || !profile?.accessToken) return
+  try {
+    window.sessionStorage.setItem(LIFF_PROFILE_KEY, JSON.stringify(profile))
+  } catch {}
+}
+
+export function getCachedLiffProfile() {
+  if (typeof window === 'undefined') return null
+  try {
+    const profile = JSON.parse(window.sessionStorage.getItem(LIFF_PROFILE_KEY) || 'null')
+    return profile?.userId && profile?.accessToken ? profile : null
+  } catch {
+    return null
+  }
+}
 
 // Best-effort: log the LINE profile (name/picture/userId) to Google Sheets,
 // once per session. Fire-and-forget, never throws.
@@ -117,6 +135,7 @@ export async function loginAndGetProfile({ liffId = DEFAULT_LIFF_ID, ownEndpoint
     pictureUrl: profile.pictureUrl || '',
     accessToken: liff.getAccessToken() || '',
   }
+  cacheLiffProfile(p)
   logProfileToSheet(p)
   return p
 }
@@ -166,6 +185,7 @@ export async function getProfileIfLoggedIn(liffId = DEFAULT_LIFF_ID) {
       pictureUrl: profile.pictureUrl || '',
       accessToken: liff.getAccessToken() || '',
     }
+    cacheLiffProfile(p)
     logProfileToSheet(p)
     return p
   } catch {
