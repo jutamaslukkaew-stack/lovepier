@@ -9,6 +9,7 @@ import { effectiveTier, isTierExpired, isTierKey, normalizeTier } from '@/lib/ti
 export type CustomerRow = {
   id: string; name: string; phone: string; address: string
   lineLinked: boolean; lineDisplayName: string
+  lineFriend: boolean; lineFollowedAt: string | null
   memberNo: number | null; birthday: string | null; pointsBalance: number
   tier: string; assignedTier: string; tierExpiresAt: string | null; tierExpired: boolean
   orderCount: number; lastOrderAt: string | null; createdAt: string
@@ -37,6 +38,7 @@ export async function listCustomers(): Promise<CustomerRow[]> {
   const rows = await db.execute(sql`
     select c.id, c.name, c.phone, c.address, c.line_display_name,
       c.member_no, c.birthday, c.points_balance, c.tier, c.tier_expires_at,
+      c.line_friend_status, c.line_followed_at,
       (c.line_user_id is not null) as line_linked, c.created_at,
       coalesce(o.order_count, 0)::int as order_count, o.last_order_at
     from customers c
@@ -50,6 +52,8 @@ export async function listCustomers(): Promise<CustomerRow[]> {
     id: String(r.id), name: String(r.name ?? ''), phone: String(r.phone ?? ''),
     address: String(r.address ?? ''), lineLinked: Boolean(r.line_linked),
     lineDisplayName: String(r.line_display_name ?? ''),
+    lineFriend: Boolean(r.line_friend_status),
+    lineFollowedAt: r.line_followed_at ? new Date(r.line_followed_at as string).toISOString() : null,
     memberNo: r.member_no == null ? null : Number(r.member_no),
     birthday: r.birthday ? String(r.birthday) : null,
     pointsBalance: Number(r.points_balance ?? 0),
@@ -71,7 +75,8 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetail | nu
   await requireUser()
   const customerRows = await db.execute(sql`
     select id, name, phone, address, line_user_id, line_display_name,
-      member_no, birthday, points_balance, tier, tier_expires_at, created_at, updated_at
+      member_no, birthday, points_balance, tier, tier_expires_at,
+      line_friend_status, line_followed_at, created_at, updated_at
     from customers where id = ${id}::uuid limit 1
   `)
   const c = (customerRows as unknown as Array<Record<string, unknown>>)[0]
@@ -123,6 +128,8 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetail | nu
   return {
     id: String(c.id), name: String(c.name ?? ''), phone, address: String(c.address ?? ''),
     lineLinked: Boolean(c.line_user_id), lineDisplayName: String(c.line_display_name ?? ''),
+    lineFriend: Boolean(c.line_friend_status),
+    lineFollowedAt: c.line_followed_at ? new Date(c.line_followed_at as string).toISOString() : null,
     memberNo: c.member_no == null ? null : Number(c.member_no),
     birthday: c.birthday ? String(c.birthday) : null,
     pointsBalance: Number(c.points_balance ?? 0),
@@ -193,4 +200,53 @@ export async function setCustomerTier(id: string, tier: string, expiresAt?: stri
   revalidatePath('/admin/customers')
   revalidatePath('/admin/members')
   return { ok: true as const }
+}
+
+/** Import all current OA friends when LINE enables the followers endpoint. */
+export async function syncLineOaFriends() {
+  await requireUser()
+  const token = process.env.LINE_MESSAGING_TOKEN || ''
+  if (!token) return { ok: false as const, error: 'ยังไม่ได้ตั้งค่า LINE Messaging token' }
+
+  const userIds: string[] = []
+  let start = ''
+  do {
+    const url = new URL('https://api.line.me/v2/bot/followers/ids')
+    url.searchParams.set('limit', '1000')
+    if (start) url.searchParams.set('start', start)
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+    if (response.status === 403) {
+      return { ok: false as const, error: 'LINE อนุญาตให้ดึงเพื่อนเดิมเฉพาะบัญชี Verified หรือ Premium เท่านั้น' }
+    }
+    if (!response.ok) return { ok: false as const, error: `LINE ตอบกลับ ${response.status}` }
+    const data = await response.json() as { userIds?: string[]; next?: string }
+    userIds.push(...(Array.isArray(data.userIds) ? data.userIds : []))
+    start = typeof data.next === 'string' ? data.next : ''
+  } while (start && userIds.length < 50000)
+
+  let synced = 0
+  for (let offset = 0; offset < userIds.length; offset += 10) {
+    const batch = userIds.slice(offset, offset + 10)
+    await Promise.all(batch.map(async (userId) => {
+      const profileResponse = await fetch(`https://api.line.me/v2/bot/profile/${encodeURIComponent(userId)}`, {
+        headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
+      })
+      if (!profileResponse.ok) return
+      const profile = await profileResponse.json() as { displayName?: string }
+      const displayName = typeof profile.displayName === 'string' ? profile.displayName.trim() : ''
+      await db.execute(sql`
+        insert into customers (line_user_id, line_display_name, name, line_friend_status, line_followed_at)
+        values (${userId}, ${displayName}, ${displayName}, true, now())
+        on conflict (line_user_id) do update set
+          line_display_name = coalesce(nullif(${displayName}, ''), customers.line_display_name),
+          name = coalesce(nullif(customers.name, ''), ${displayName}),
+          line_friend_status = true, line_unfollowed_at = null, updated_at = now()
+      `)
+      synced += 1
+    }))
+  }
+
+  revalidatePath('/admin/customers')
+  revalidatePath('/admin/members')
+  return { ok: true as const, synced, total: userIds.length }
 }

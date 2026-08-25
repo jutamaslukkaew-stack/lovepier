@@ -27,9 +27,9 @@
 // does not involve this webhook at all.
 
 import crypto from 'crypto'
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 import { db } from '../../lib/db'
-import { orders } from '../../lib/db/schema'
+import { customers, orders } from '../../lib/db/schema'
 import { processSlipForOrder } from '../../lib/slipVerification'
 import { buildPaymentConfirmedFlex, buildSlipReceivedFlex } from '../../lib/orderFlex'
 import { pushOrderCardToStaff } from '../../lib/lineMessaging'
@@ -82,6 +82,65 @@ async function replyMessages(replyToken, messages) {
 
 function reply(replyToken, text) {
   return replyMessages(replyToken, [{ type: 'text', text }])
+}
+
+async function fetchLineProfile(userId) {
+  if (!TOKEN || !userId) return null
+  try {
+    const response = await fetch(`https://api.line.me/v2/bot/profile/${encodeURIComponent(userId)}`, {
+      headers: { Authorization: `Bearer ${TOKEN}` },
+    })
+    if (!response.ok) {
+      console.error('LINE profile fetch failed:', response.status)
+      return null
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('LINE profile fetch error:', error)
+    return null
+  }
+}
+
+/** Save a new OA friend before they ever open LIFF or place an order. */
+async function handleFollow(userId) {
+  if (!userId) return
+  const profile = await fetchLineProfile(userId)
+  const displayName = typeof profile?.displayName === 'string' ? profile.displayName.trim() : ''
+  try {
+    await db.insert(customers).values({
+      lineUserId: userId,
+      lineDisplayName: displayName,
+      name: displayName,
+      lineFriendStatus: true,
+      lineFollowedAt: new Date(),
+      lineUnfollowedAt: null,
+    }).onConflictDoUpdate({
+      target: customers.lineUserId,
+      set: {
+        lineDisplayName: displayName || sql`${customers.lineDisplayName}`,
+        name: displayName ? sql`coalesce(nullif(${customers.name}, ''), ${displayName})` : sql`${customers.name}`,
+        lineFriendStatus: true,
+        lineFollowedAt: new Date(),
+        lineUnfollowedAt: null,
+        updatedAt: sql`now()`,
+      },
+    })
+  } catch (error) {
+    console.error('LINE friend upsert failed:', error)
+  }
+}
+
+async function handleUnfollow(userId) {
+  if (!userId) return
+  try {
+    await db.update(customers).set({
+      lineFriendStatus: false,
+      lineUnfollowedAt: new Date(),
+      updatedAt: sql`now()`,
+    }).where(eq(customers.lineUserId, userId))
+  } catch (error) {
+    console.error('LINE unfollow update failed:', error)
+  }
 }
 
 // LINE keeps message media on a separate host and only hands it over to the
@@ -199,6 +258,16 @@ export default async function handler(req, res) {
   for (const event of events) {
     const { kind, id } = chatIdOf(event.source)
     if (!id) continue
+
+    if (event.type === 'follow' && event.source?.type === 'user') {
+      await handleFollow(event.source.userId)
+      continue
+    }
+
+    if (event.type === 'unfollow' && event.source?.type === 'user') {
+      await handleUnfollow(event.source.userId)
+      continue
+    }
 
     const asked =
       event.type === 'message' &&

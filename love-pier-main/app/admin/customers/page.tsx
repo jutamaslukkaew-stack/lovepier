@@ -12,6 +12,7 @@ import {
 import { CopyPhonesButton } from '@/components/admin/copy-phones-button'
 import Link from 'next/link'
 import { tierLabel } from '@/lib/tiers'
+import { SyncLineFriendsButton } from '@/components/admin/sync-line-friends-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,7 @@ const FILTERS = [
   { key: 'general', label: 'สมาชิกทั่วไป' },
   { key: 'special', label: 'สมาชิกกลุ่มพิเศษ' },
   { key: 'expired', label: 'สิทธิ์หมดอายุ' },
-  { key: 'no-line', label: 'ไม่ได้ล็อกอิน LINE' },
+  { key: 'no-line', label: 'ไม่ได้เป็นเพื่อน LINE OA' },
 ] as const
 
 export default async function AdminCustomersPage({ searchParams }: { searchParams: Promise<{ group?: string }> }) {
@@ -32,16 +33,16 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
   const { group = '' } = await searchParams
   const countFor = (key: string) => customers.filter((c) =>
     key === 'expired' ? c.tierExpired
-    : key === 'no-line' ? !c.lineLinked
+    : key === 'no-line' ? !c.lineFriend
     : key === 'special' ? !c.tierExpired && c.tier !== 'general'
-    : !c.tierExpired && c.tier === 'general' && c.lineLinked
+    : !c.tierExpired && c.tier === 'general' && c.lineFriend
   ).length
   const shown = group
     ? customers.filter((c) =>
         group === 'expired' ? c.tierExpired
-        : group === 'no-line' ? !c.lineLinked
+        : group === 'no-line' ? !c.lineFriend
         : group === 'special' ? !c.tierExpired && c.tier !== 'general'
-        : group === 'general' ? !c.tierExpired && c.tier === 'general' && c.lineLinked
+        : group === 'general' ? !c.tierExpired && c.tier === 'general' && c.lineFriend
         : true
       )
     : customers
@@ -57,6 +58,7 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">{customers.length} คน</span>
+          <SyncLineFriendsButton />
           <CopyPhonesButton phones={customers.map((c) => c.phone)} />
         </div>
       </div>
@@ -121,8 +123,10 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
                         {formatDate(c.lastOrderAt)}
                       </TableCell>
                       <TableCell>
-                        {c.lineLinked ? (
-                          <Badge variant="secondary">เชื่อมแล้ว</Badge>
+                        {c.lineFriend ? (
+                          <Badge variant="secondary">เพื่อน OA</Badge>
+                        ) : c.lineLinked ? (
+                          <Badge variant="outline">มี LINE ID</Badge>
                         ) : (
                           <Badge variant="outline" className="text-muted-foreground">ไม่มี</Badge>
                         )}

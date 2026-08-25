@@ -170,6 +170,11 @@ export const customers = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     lineUserId: text('line_user_id').unique(),
     lineDisplayName: text('line_display_name'),
+    // Messaging API friendship state. A follow webhook creates/updates the
+    // row before the customer ever opens LIFF or places an order.
+    lineFriendStatus: boolean('line_friend_status').notNull().default(false),
+    lineFollowedAt: timestamp('line_followed_at', { withTimezone: true }),
+    lineUnfollowedAt: timestamp('line_unfollowed_at', { withTimezone: true }),
     name: text('name').notNull().default(''),
     phone: text('phone').notNull().default(''),
     address: text('address').notNull().default(''),
