@@ -4,13 +4,13 @@ import { revalidatePath } from 'next/cache'
 import { sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireUser } from '@/lib/auth'
-import { isTierKey, normalizeTier } from '@/lib/tiers'
+import { effectiveTier, isTierExpired, isTierKey, normalizeTier } from '@/lib/tiers'
 
 export type CustomerRow = {
   id: string; name: string; phone: string; address: string
   lineLinked: boolean; lineDisplayName: string
   memberNo: number | null; birthday: string | null; pointsBalance: number
-  tier: string
+  tier: string; assignedTier: string; tierExpiresAt: string | null; tierExpired: boolean
   orderCount: number; lastOrderAt: string | null; createdAt: string
 }
 
@@ -36,7 +36,7 @@ export async function listCustomers(): Promise<CustomerRow[]> {
   await requireUser()
   const rows = await db.execute(sql`
     select c.id, c.name, c.phone, c.address, c.line_display_name,
-      c.member_no, c.birthday, c.points_balance, c.tier,
+      c.member_no, c.birthday, c.points_balance, c.tier, c.tier_expires_at,
       (c.line_user_id is not null) as line_linked, c.created_at,
       coalesce(o.order_count, 0)::int as order_count, o.last_order_at
     from customers c
@@ -44,7 +44,6 @@ export async function listCustomers(): Promise<CustomerRow[]> {
       select phone, count(*)::int as order_count, max(created_at) as last_order_at
       from orders where phone <> '' group by phone
     ) o on o.phone = c.phone
-    where c.phone <> ''
     order by o.last_order_at desc nulls last, c.created_at desc
   `)
   return (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
@@ -53,7 +52,11 @@ export async function listCustomers(): Promise<CustomerRow[]> {
     lineDisplayName: String(r.line_display_name ?? ''),
     memberNo: r.member_no == null ? null : Number(r.member_no),
     birthday: r.birthday ? String(r.birthday) : null,
-    pointsBalance: Number(r.points_balance ?? 0), tier: normalizeTier(r.tier as string),
+    pointsBalance: Number(r.points_balance ?? 0),
+    assignedTier: normalizeTier(r.tier as string),
+    tier: effectiveTier(r.tier as string, r.tier_expires_at),
+    tierExpiresAt: r.tier_expires_at ? String(r.tier_expires_at).slice(0, 10) : null,
+    tierExpired: isTierExpired(r.tier as string, r.tier_expires_at),
     orderCount: Number(r.order_count ?? 0),
     lastOrderAt: r.last_order_at ? new Date(r.last_order_at as string).toISOString() : null,
     createdAt: new Date(r.created_at as string).toISOString(),
@@ -68,7 +71,7 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetail | nu
   await requireUser()
   const customerRows = await db.execute(sql`
     select id, name, phone, address, line_user_id, line_display_name,
-      member_no, birthday, points_balance, tier, created_at, updated_at
+      member_no, birthday, points_balance, tier, tier_expires_at, created_at, updated_at
     from customers where id = ${id}::uuid limit 1
   `)
   const c = (customerRows as unknown as Array<Record<string, unknown>>)[0]
@@ -122,7 +125,11 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetail | nu
     lineLinked: Boolean(c.line_user_id), lineDisplayName: String(c.line_display_name ?? ''),
     memberNo: c.member_no == null ? null : Number(c.member_no),
     birthday: c.birthday ? String(c.birthday) : null,
-    pointsBalance: Number(c.points_balance ?? 0), tier: normalizeTier(c.tier as string),
+    pointsBalance: Number(c.points_balance ?? 0),
+    assignedTier: normalizeTier(c.tier as string),
+    tier: effectiveTier(c.tier as string, c.tier_expires_at),
+    tierExpiresAt: c.tier_expires_at ? String(c.tier_expires_at).slice(0, 10) : null,
+    tierExpired: isTierExpired(c.tier as string, c.tier_expires_at),
     orderCount: customerOrders.length,
     lastOrderAt: customerOrders[0]?.createdAt ?? null,
     createdAt: new Date(c.created_at as string).toISOString(),
@@ -153,14 +160,31 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetail | nu
  * The tier only changes what FUTURE orders cost. Past orders keep the
  * percentage they were placed at, in orders.discount_percent.
  */
-export async function setCustomerTier(id: string, tier: string) {
-  await requireUser()
+export async function setCustomerTier(id: string, tier: string, expiresAt?: string | null) {
+  const user = await requireUser()
   if (!isTierKey(tier)) return { ok: false as const, error: 'กลุ่มลูกค้าไม่ถูกต้อง' }
+  const expiry = tier === 'general' || !expiresAt ? null : expiresAt
+  if (expiry && !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) {
+    return { ok: false as const, error: 'วันหมดอายุไม่ถูกต้อง' }
+  }
 
-  const rows = await db.execute(sql`
-    update customers set tier = ${tier}, updated_at = now()
-    where id = ${id}::uuid returning id
-  `)
+  const rows = await db.transaction(async (tx) => {
+    const before = await tx.execute(sql`select tier, tier_expires_at from customers where id = ${id}::uuid limit 1`)
+    const previous = (before as unknown as Array<Record<string, unknown>>)[0]
+    if (!previous) return []
+    const updated = await tx.execute(sql`
+      update customers set tier = ${tier}, tier_expires_at = ${expiry}::date, updated_at = now()
+      where id = ${id}::uuid returning id
+    `)
+    await tx.execute(sql`
+      insert into customer_tier_history
+        (customer_id, previous_tier, new_tier, previous_expires_at, new_expires_at, changed_by)
+      values (${id}::uuid, ${String(previous.tier || 'general')}, ${tier},
+        ${previous.tier_expires_at ? String(previous.tier_expires_at).slice(0, 10) : null}::date,
+        ${expiry}::date, ${user.email || user.id})
+    `)
+    return updated
+  })
   if ((rows as unknown as unknown[]).length === 0) {
     return { ok: false as const, error: 'ไม่พบลูกค้ารายนี้' }
   }

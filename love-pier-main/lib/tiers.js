@@ -40,6 +40,20 @@ export function normalizeTier(value) {
   return isTierKey(value) ? value : TIER_GENERAL
 }
 
+/** Special access expires at the end of the stored Bangkok calendar date. */
+export function isTierExpired(tier, expiresAt, now = new Date()) {
+  if (normalizeTier(tier) === TIER_GENERAL || !expiresAt) return false
+  const expiry = String(expiresAt).slice(0, 10)
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(now)
+  return expiry < today
+}
+
+export function effectiveTier(tier, expiresAt, now = new Date()) {
+  return isTierExpired(tier, expiresAt, now) ? TIER_GENERAL : normalizeTier(tier)
+}
+
 export function tierLabel(tier, lang = 'th') {
   const found = TIERS.find((t) => t.key === normalizeTier(tier))
   return lang === 'th' ? found.labelTh : found.labelEn

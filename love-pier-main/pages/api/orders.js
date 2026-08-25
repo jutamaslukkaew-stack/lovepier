@@ -6,7 +6,7 @@ import { buildOrderFlex } from '../../lib/orderFlex'
 import { getShopSettings } from '../../lib/settings'
 import { calcDeliveryFee } from '../../lib/deliveryFee'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
-import { TIER_GENERAL, tierDiscountPercent } from '../../lib/tiers'
+import { TIER_GENERAL, effectiveTier, tierDiscountPercent } from '../../lib/tiers'
 import { normalizeItemOptions } from '../../lib/menuOptions'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
 import { formatSlotThai, validateScheduleRequest } from '../../lib/preorder'
@@ -181,12 +181,12 @@ export default async function handler(req, res) {
   // discount for anyone who can open devtools.
   if (lineUserId) {
     const [customer] = await db
-      .select({ pointsBalance: customers.pointsBalance, tier: customers.tier })
+      .select({ pointsBalance: customers.pointsBalance, tier: customers.tier, tierExpiresAt: customers.tierExpiresAt })
       .from(customers)
       .where(eq(customers.lineUserId, lineUserId))
       .limit(1)
     pointsBalance = Math.max(0, customer?.pointsBalance || 0)
-    customerTier = customer?.tier || TIER_GENERAL
+    customerTier = effectiveTier(customer?.tier || TIER_GENERAL, customer?.tierExpiresAt)
   }
   const discountPercentForOrder = tierDiscountPercent(customerTier, {
     enabled: s.memberDiscountEnabled,

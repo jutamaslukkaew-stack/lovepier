@@ -29,6 +29,7 @@ type Receipt = {
   memberNo: string
   grossAmount: number
   discountAmount: number
+  pointsRedeemed: number
   netAmount: number
   pointsEarned: number
   pointsBalance: number
@@ -44,6 +45,7 @@ export function ScanTerminal() {
   const [receipt, setReceipt] = useState<Receipt | null>(null)
   const [manualCode, setManualCode] = useState('')
   const [amount, setAmount] = useState('')
+  const [pointsToRedeem, setPointsToRedeem] = useState('')
   const [scanning, setScanning] = useState(false)
   const [cameraError, setCameraError] = useState('')
   const [pending, startTransition] = useTransition()
@@ -77,6 +79,7 @@ export function ScanTerminal() {
         setMember(res.member)
         setReceipt(null)
         setAmount('')
+        setPointsToRedeem('')
       })
     },
     [startTransition]
@@ -133,7 +136,7 @@ export function ScanTerminal() {
       return
     }
     startTransition(async () => {
-      const res = await recordInStoreVisit(member.customerId, gross)
+      const res = await recordInStoreVisit(member.customerId, gross, Math.floor(Number(pointsToRedeem) || 0))
       if (!res.ok) {
         toast.error(res.error)
         return
@@ -150,6 +153,7 @@ export function ScanTerminal() {
     setReceipt(null)
     setManualCode('')
     setAmount('')
+    setPointsToRedeem('')
     setCameraError('')
   }
 
@@ -159,6 +163,7 @@ export function ScanTerminal() {
     ? calcInStoreVisit(Number(amount) || 0, {
         discountPercent: member.discountPercent,
         pointsPerBaht: member.pointsPerBaht,
+        pointsRedeemed: Math.min(member.pointsBalance, Math.max(0, Math.floor(Number(pointsToRedeem) || 0))),
       })
     : null
 
@@ -196,6 +201,7 @@ export function ScanTerminal() {
                 <dd className="text-green-700">-{baht(receipt.discountAmount)}</dd>
               </div>
             )}
+            {receipt.pointsRedeemed > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">ใช้คะแนน</dt><dd className="text-green-700">-{baht(receipt.pointsRedeemed)}</dd></div>}
             <div className="flex justify-between border-t pt-2 text-base font-semibold">
               <dt>ยอดที่เก็บจริง</dt>
               <dd>{baht(receipt.netAmount)}</dd>
@@ -261,6 +267,11 @@ export function ScanTerminal() {
             />
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="points">ใช้คะแนน (สูงสุด {member.pointsBalance.toLocaleString('th-TH')})</Label>
+            <Input id="points" value={pointsToRedeem} onChange={(e) => setPointsToRedeem(e.target.value)} placeholder="0" inputMode="numeric" />
+          </div>
+
           {preview && preview.grossAmount > 0 && (
             <dl className="space-y-2 rounded-lg border px-4 py-3 text-sm">
               {preview.discountAmount > 0 && (
@@ -269,6 +280,7 @@ export function ScanTerminal() {
                   <dd className="text-green-700">-{baht(preview.discountAmount)}</dd>
                 </div>
               )}
+              {preview.pointsRedeemed > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">ใช้คะแนน</dt><dd className="text-green-700">-{baht(preview.pointsRedeemed)}</dd></div>}
               <div className="flex justify-between text-base font-semibold">
                 <dt>เก็บเงินลูกค้า</dt>
                 <dd>{baht(preview.netAmount)}</dd>

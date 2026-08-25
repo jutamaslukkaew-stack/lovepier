@@ -33,10 +33,9 @@ export type ScannedMember = {
  * SCC employee on 50% who is told "10%, this is the counter" has not been
  * given the discount the shop agreed to.
  *
- * So the tier wins where it says something the counter rate does not — any
- * tier above 'general' — and the counter rate stands for ordinary members,
- * which is every existing member today. With the master switch off, the
- * counter rate always stands and nothing about /admin/scan changes.
+ * When grouped discounts are enabled, the same tier rate is used at the
+ * counter and online. With the master switch off, the legacy counter rate is
+ * the rollback behaviour.
  */
 export function inStoreDiscountFor(
   tier: string | null | undefined,
@@ -47,7 +46,7 @@ export function inStoreDiscountFor(
   }
 ): { percent: number; tier: string; tierApplied: boolean } {
   const key = normalizeTier(tier)
-  const useTier = Boolean(settings.memberDiscountEnabled) && key !== TIER_GENERAL
+  const useTier = Boolean(settings.memberDiscountEnabled)
   const percent = useTier
     ? tierDiscountPercent(key, {
         enabled: true,

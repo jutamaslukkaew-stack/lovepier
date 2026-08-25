@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '../lib/language'
-import { getProfileIfLoggedIn, isLiffConfigured } from '../lib/liff'
+import { getProfileIfLoggedIn, isLiffConfigured, loginAndGetProfile } from '../lib/liff'
 
 const COPY = {
   th: {
@@ -45,6 +45,7 @@ export default function RewardsSection() {
         headers: { Authorization: `Bearer ${lineProfile.accessToken || ''}` },
       })
       const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Could not load customer')
       setPointsBalance(Math.max(0, Number(data.customer?.pointsBalance) || 0))
       setAccountStatus('ready')
     } catch {
@@ -54,37 +55,39 @@ export default function RewardsSection() {
 
   useEffect(() => {
     if (!isLiffConfigured()) return
-    // liff.init() never settles in a browser whose domain isn't registered with
-    // the LIFF app (localhost, or a desktop visitor arriving from search). This
-    // card is now the only thing in the column, so stop waiting after a few
-    // seconds rather than leaving a spinner there forever.
-    let settled = false
-    const timer = setTimeout(() => { if (!settled) setAccountStatus('logged-out') }, 6000)
-    const finish = () => { settled = true; clearTimeout(timer) }
+    let cancelled = false
     getProfileIfLoggedIn()
-      .then((lineProfile) => { finish(); return loadBalance(lineProfile) })
-      .catch(() => { finish(); setAccountStatus('logged-out') })
-    return () => clearTimeout(timer)
-  }, [])
+      .then(async (lineProfile) => {
+        if (cancelled) return
+        if (lineProfile) return loadBalance(lineProfile)
 
-  // Signed-out visitors see no card at all: the shop asked to drop the
-  // add-LINE-friend panel (customers reach this page from inside LINE, already
-  // signed in), and the login button lived in the same box.
-  const showCard = accountStatus !== 'logged-out'
+        // /rewards is opened from the Rich Menu. A direct HTTPS Rich Menu link
+        // has no authenticated LIFF session yet, so silently checking alone
+        // used to hide the entire balance card. Start LINE authentication and
+        // bridge through /delivery (the configured endpoint for this LIFF app),
+        // which returns the customer to /rewards after login.
+        const authenticatedProfile = await loginAndGetProfile()
+        if (!cancelled && authenticatedProfile) return loadBalance(authenticatedProfile)
+        // A null profile here means liff.login() has started navigation. Keep
+        // the loading card visible until LINE returns to this page instead of
+        // flashing a redundant logged-out action in between.
+      })
+      .catch(() => { if (!cancelled) setAccountStatus('error') })
+    return () => { cancelled = true }
+  }, [])
 
   return (
     <section id="rewards" className="relative scroll-mt-32 overflow-hidden border-b border-black/10 bg-[#f5f1eb] px-4 py-14 sm:px-8 sm:py-20 lg:px-14 lg:py-24 reveal">
       <div aria-hidden="true" className="absolute -right-24 -top-24 h-72 w-72 rounded-full border border-[#b18a54]/20" />
       <div aria-hidden="true" className="absolute -right-10 -top-10 h-44 w-44 rounded-full border border-[#b18a54]/25" />
       <div className="relative mx-auto max-w-6xl">
-        <div className={`grid gap-10 ${showCard ? 'lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)] lg:items-center lg:gap-16' : ''}`}>
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)] lg:items-center lg:gap-16">
           <div>
             <p className="mb-4 text-[10px] font-semibold tracking-[0.32em] text-gold-deep">{t.eyebrow}</p>
             <h2 className="max-w-3xl font-display text-[clamp(34px,5vw,66px)] font-light leading-[1.05] tracking-[-0.02em] text-ink">{t.title}</h2>
             <p className="mt-5 max-w-2xl text-[14px] font-light leading-[1.9] text-[#555] sm:text-[15px]">{t.intro}</p>
           </div>
-          {showCard ? (
-            <div className="rounded-[28px] border border-black/10 bg-[#fffdf8] p-6 shadow-[0_24px_70px_rgba(74,53,32,0.08)] sm:p-8">
+          <div className="rounded-[28px] border border-black/10 bg-[#fffdf8] p-6 shadow-[0_24px_70px_rgba(74,53,32,0.08)] sm:p-8">
               {accountStatus === 'ready' ? (
                 <div>
                   <p className="text-[10px] tracking-[0.16em] text-muted-strong">{t.myPoints}</p>
@@ -102,11 +105,12 @@ export default function RewardsSection() {
                 </div>
               ) : accountStatus === 'loading' ? (
                 <p className="py-5 text-center text-[12px] text-muted-strong">{t.loading}</p>
+              ) : accountStatus === 'logged-out' ? (
+                <p className="py-5 text-center text-[12px] text-muted-strong">{t.unavailable}</p>
               ) : (
                 <p className="py-5 text-center text-[12px] text-muted-strong">{t.unavailable}</p>
               )}
             </div>
-          ) : null}
         </div>
       </div>
     </section>

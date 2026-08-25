@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TIERS, isTierKey, normalizeTier, tierDiscountPercent, tierLabel } from './tiers'
+import { TIERS, effectiveTier, isTierExpired, isTierKey, normalizeTier, tierDiscountPercent, tierLabel } from './tiers'
 
 const ON = { enabled: true }
 
@@ -81,5 +81,23 @@ describe('tier policy', () => {
     // The document requires affiliated-staff status to be verified by a
     // person; nothing customer-facing may put someone in these.
     expect(TIERS.filter((t) => t.staffOnly).map((t) => t.key)).toEqual(['scc', 'staff'])
+  })
+})
+
+describe('tier expiry', () => {
+  const now = new Date('2026-08-25T05:00:00.000Z')
+
+  it('keeps a special tier through its expiry date in Bangkok', () => {
+    expect(isTierExpired('condo', '2026-08-25', now)).toBe(false)
+    expect(effectiveTier('condo', '2026-08-25', now)).toBe('condo')
+  })
+
+  it('falls an expired special tier back to general', () => {
+    expect(isTierExpired('scc', '2026-08-24', now)).toBe(true)
+    expect(effectiveTier('scc', '2026-08-24', now)).toBe('general')
+  })
+
+  it('never marks the general tier expired', () => {
+    expect(isTierExpired('general', '2020-01-01', now)).toBe(false)
   })
 })

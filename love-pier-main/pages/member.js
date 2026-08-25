@@ -42,6 +42,7 @@ const COPY = {
     errorNetwork: 'เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
     codeLabel: 'รหัส',
     retry: 'ลองใหม่',
+    group: 'กลุ่มสมาชิก', validUntil: 'สิทธิ์ถึง', allChannels: 'ใช้สิทธิ์ได้ทั้งหน้าร้านและเดลิเวอรี่',
   },
   en: {
     title: 'Love Pier ID — Membership card',
@@ -60,6 +61,7 @@ const COPY = {
     errorNetwork: 'Could not reach the server. Please try again.',
     codeLabel: 'Code',
     retry: 'Try again',
+    group: 'Member group', validUntil: 'Valid until', allChannels: 'Benefits apply in store and on delivery',
   },
   zh: {
     title: 'Love Pier ID — 会员卡',
@@ -78,6 +80,7 @@ const COPY = {
     errorNetwork: '连接失败，请重试。',
     codeLabel: '代码',
     retry: '重试',
+    group: '会员组', validUntil: '有效期至', allChannels: '店内及配送均可使用权益',
   },
 }
 
@@ -318,6 +321,11 @@ export default function MemberPage() {
                   {member.memberNo}
                 </strong>
                 {member.name ? <p className="mt-3 text-[12px] text-muted-strong">{member.name}</p> : null}
+                <div className="mt-5 border-t border-black/10 pt-4 text-[12px] text-muted-strong">
+                  <p>{t.group}: <strong className="text-ink">{member.tierLabel}</strong></p>
+                  {member.tierExpiresAt ? <p className="mt-1">{t.validUntil}: {member.tierExpiresAt}</p> : null}
+                  <p className="mt-1">{t.allChannels}</p>
+                </div>
               </div>
             </div>
           ) : null}

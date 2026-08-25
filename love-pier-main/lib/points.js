@@ -64,14 +64,16 @@ export function calcOrderDiscountAndPoints(
  * bigger discount means slightly fewer points, never points on money that was
  * never spent.
  */
-export function calcInStoreVisit(grossAmount, { discountPercent = 0, pointsPerBaht = 1 } = {}) {
+export function calcInStoreVisit(grossAmount, { discountPercent = 0, pointsPerBaht = 1, pointsRedeemed = 0 } = {}) {
   const gross = Math.max(0, Math.floor(Number(grossAmount) || 0))
   const pct = Math.min(100, Math.max(0, Number(discountPercent) || 0))
   // Round the discount down so the shop never gives away more than the stated
   // percentage, and the customer's payable amount stays a whole baht.
   const discountAmount = Math.floor((gross * pct) / 100)
-  const netAmount = Math.max(0, gross - discountAmount)
+  const afterDiscount = Math.max(0, gross - discountAmount)
+  const redeemed = Math.min(afterDiscount, Math.max(0, Math.floor(Number(pointsRedeemed) || 0)))
+  const netAmount = Math.max(0, afterDiscount - redeemed)
   const perPoint = Number(pointsPerBaht) || 0
   const pointsEarned = perPoint > 0 ? Math.floor(netAmount / perPoint) : 0
-  return { grossAmount: gross, discountAmount, netAmount, pointsEarned }
+  return { grossAmount: gross, discountAmount, pointsRedeemed: redeemed, netAmount, pointsEarned }
 }

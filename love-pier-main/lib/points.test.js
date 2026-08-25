@@ -107,6 +107,7 @@ describe('calcInStoreVisit', () => {
     expect(calcInStoreVisit(700, DEFAULTS)).toEqual({
       grossAmount: 700,
       discountAmount: 70,
+      pointsRedeemed: 0,
       netAmount: 630,
       pointsEarned: 630,
     })
@@ -131,6 +132,18 @@ describe('calcInStoreVisit', () => {
 
   it('supports a slower earning band', () => {
     expect(calcInStoreVisit(700, { discountPercent: 10, pointsPerBaht: 20 }).pointsEarned).toBe(31)
+  })
+
+  it('applies group discount before redeemed points and earns on the remainder', () => {
+    expect(calcInStoreVisit(700, { ...DEFAULTS, pointsRedeemed: 100 })).toEqual({
+      grossAmount: 700, discountAmount: 70, pointsRedeemed: 100, netAmount: 530, pointsEarned: 530,
+    })
+  })
+
+  it('does not spend points on a 100% discounted order', () => {
+    expect(calcInStoreVisit(700, { discountPercent: 100, pointsPerBaht: 1, pointsRedeemed: 100 })).toMatchObject({
+      discountAmount: 700, pointsRedeemed: 0, netAmount: 0, pointsEarned: 0,
+    })
   })
 
   it('can disable earning without disabling the discount', () => {

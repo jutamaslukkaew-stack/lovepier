@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table'
 import { CopyPhonesButton } from '@/components/admin/copy-phones-button'
 import Link from 'next/link'
+import { tierLabel } from '@/lib/tiers'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,8 +20,31 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })
 }
 
-export default async function AdminCustomersPage() {
+const FILTERS = [
+  { key: 'general', label: 'สมาชิกทั่วไป' },
+  { key: 'special', label: 'สมาชิกกลุ่มพิเศษ' },
+  { key: 'expired', label: 'สิทธิ์หมดอายุ' },
+  { key: 'no-line', label: 'ไม่ได้ล็อกอิน LINE' },
+] as const
+
+export default async function AdminCustomersPage({ searchParams }: { searchParams: Promise<{ group?: string }> }) {
   const customers = await listCustomers()
+  const { group = '' } = await searchParams
+  const countFor = (key: string) => customers.filter((c) =>
+    key === 'expired' ? c.tierExpired
+    : key === 'no-line' ? !c.lineLinked
+    : key === 'special' ? !c.tierExpired && c.tier !== 'general'
+    : !c.tierExpired && c.tier === 'general' && c.lineLinked
+  ).length
+  const shown = group
+    ? customers.filter((c) =>
+        group === 'expired' ? c.tierExpired
+        : group === 'no-line' ? !c.lineLinked
+        : group === 'special' ? !c.tierExpired && c.tier !== 'general'
+        : group === 'general' ? !c.tierExpired && c.tier === 'general' && c.lineLinked
+        : true
+      )
+    : customers
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 space-y-6">
@@ -35,6 +59,19 @@ export default async function AdminCustomersPage() {
           <span className="text-sm text-muted-foreground">{customers.length} คน</span>
           <CopyPhonesButton phones={customers.map((c) => c.phone)} />
         </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {FILTERS.map((item) => (
+          <Link key={item.key} href={group === item.key ? '/admin/customers' : `/admin/customers?group=${item.key}`}>
+            <Card className={group === item.key ? 'border-primary ring-1 ring-primary' : 'transition hover:border-primary/50'}>
+              <CardContent className="px-5 py-4">
+                <p className="text-xs text-muted-foreground">{item.label}</p>
+                <p className="mt-1 text-2xl font-semibold tabular-nums">{countFor(item.key)}</p>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
       </div>
 
       {customers.length === 0 ? (
@@ -61,7 +98,7 @@ export default async function AdminCustomersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {customers.map((c) => (
+                  {shown.map((c) => (
                     <TableRow key={c.id}>
                       <TableCell className="font-medium whitespace-nowrap">
                         <Link href={`/admin/customers/${c.id}`} className="hover:underline">{c.name || '—'}</Link>
@@ -69,12 +106,11 @@ export default async function AdminCustomersPage() {
                       <TableCell className="whitespace-nowrap">
                         <a href={`tel:${c.phone}`} className="hover:underline">{c.phone}</a>
                       </TableCell>
-                      <TableCell>
-                        {c.memberNo != null ? (
-                          <Badge>LP{String(c.memberNo).padStart(3, '0')}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
+                      <TableCell className="space-x-1 whitespace-nowrap">
+                        {c.memberNo != null ? <Badge>LP{String(c.memberNo).padStart(3, '0')}</Badge> : <span className="text-muted-foreground">—</span>}
+                        {c.tierExpired
+                          ? <Badge variant="outline" className="text-red-600">หมดอายุ</Badge>
+                          : c.tier !== 'general' ? <Badge className="bg-amber-600">{tierLabel(c.tier)}</Badge> : null}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{c.pointsBalance.toLocaleString()}</TableCell>
                       <TableCell className="max-w-[280px] truncate text-muted-foreground">

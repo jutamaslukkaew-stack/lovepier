@@ -3,6 +3,7 @@ import { and, desc, eq, isNull, ne, sql } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { customers, orders } from '../../lib/db/schema'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
+import { effectiveTier, isTierExpired, tierLabel } from '../../lib/tiers'
 
 // Love Pier ID — the membership card.
 //
@@ -52,6 +53,10 @@ function toMemberView(c) {
     phone: c.phone || '',
     birthday: c.birthday || null,
     joinedAt: c.createdAt || null,
+    tier: effectiveTier(c.tier, c.tierExpiresAt),
+    tierLabel: tierLabel(effectiveTier(c.tier, c.tierExpiresAt)),
+    tierExpiresAt: c.tierExpiresAt || null,
+    tierExpired: isTierExpired(c.tier, c.tierExpiresAt),
   }
 }
 

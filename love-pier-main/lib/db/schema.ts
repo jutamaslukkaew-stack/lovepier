@@ -195,6 +195,9 @@ export const customers = pgTable(
     // between tiers — the 50% and 100% tiers exist for verified affiliated
     // staff and the shop's own team, so nothing customer-facing may write it.
     tier: text('tier').notNull().default('general'),
+    // Optional end date for a special tier. Expired tiers are treated as
+    // general at pricing time; the original tier remains for admin reporting.
+    tierExpiresAt: date('tier_expires_at'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

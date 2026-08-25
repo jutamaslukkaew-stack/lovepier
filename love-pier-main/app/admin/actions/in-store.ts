@@ -1,9 +1,9 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { and, eq, isNotNull } from 'drizzle-orm'
+import { and, eq, gte, isNotNull, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { customers, orders } from '@/lib/db/schema'
+import { customers, orders, pointTransactions } from '@/lib/db/schema'
 import { requireUser } from '@/lib/auth'
 import { getShopSettings } from '@/lib/settings'
 import { calcInStoreVisit } from '@/lib/points'
@@ -11,6 +11,7 @@ import { awardPoints } from '@/lib/pointsAward'
 import { pushToUser } from '@/lib/lineMessaging'
 import { buildInStoreVisitFlex } from '@/lib/orderFlex'
 import { IN_STORE_METHOD, inStoreDiscountFor, type ScannedMember } from '@/lib/inStore'
+import { effectiveTier } from '@/lib/tiers'
 
 // Staff-side counter flow for Love Pier ID (see /admin/scan). Both actions are
 // behind requireUser(), the same admin session that guards /admin/orders.
@@ -80,7 +81,7 @@ export async function lookupMember(raw: string) {
   }
 
   const settings = await getShopSettings()
-  const { percent, tier, tierApplied } = inStoreDiscountFor(c.tier, settings)
+  const { percent, tier, tierApplied } = inStoreDiscountFor(effectiveTier(c.tier, c.tierExpiresAt), settings)
 
   return {
     ok: true as const,
@@ -111,7 +112,7 @@ export async function lookupMember(raw: string) {
  * Rates are re-read from settings here and never taken from the client, so a
  * stale open scan tab can't apply yesterday's discount.
  */
-export async function recordInStoreVisit(customerId: string, grossAmount: number) {
+export async function recordInStoreVisit(customerId: string, grossAmount: number, requestedPoints = 0) {
   await requireUser()
 
   const gross = money(grossAmount)
@@ -124,18 +125,26 @@ export async function recordInStoreVisit(customerId: string, grossAmount: number
   // Re-resolved from the row, not from the scan tab that opened minutes ago —
   // same reasoning as the rates themselves: a tier changed in another window
   // must not be applied at yesterday's value.
-  const { percent: discountPercent } = inStoreDiscountFor(c.tier, settings)
-  const { discountAmount, netAmount, pointsEarned } = calcInStoreVisit(gross, {
+  const { percent: discountPercent } = inStoreDiscountFor(effectiveTier(c.tier, c.tierExpiresAt), settings)
+  const pointsToRedeem = Math.min(Math.max(0, Math.floor(Number(requestedPoints) || 0)), c.pointsBalance || 0)
+  const { discountAmount, pointsRedeemed, netAmount, pointsEarned } = calcInStoreVisit(gross, {
     discountPercent,
     pointsPerBaht: settings.inStorePointsPerBaht,
+    pointsRedeemed: pointsToRedeem,
   })
 
   const memberNo = formatMemberNo(c.memberNo)
   const orderNo = makeOrderNo()
 
-  const [created] = await db
-    .insert(orders)
-    .values({
+  const created = await db.transaction(async (tx) => {
+    if (pointsRedeemed > 0) {
+      const [updated] = await tx.update(customers)
+        .set({ pointsBalance: sql`${customers.pointsBalance} - ${pointsRedeemed}`, updatedAt: sql`now()` })
+        .where(and(eq(customers.id, customerId), gte(customers.pointsBalance, pointsRedeemed)))
+        .returning({ id: customers.id })
+      if (!updated) throw new Error('POINTS_BALANCE_CHANGED')
+    }
+    const [order] = await tx.insert(orders).values({
       orderNo,
       lineUserId: c.lineUserId,
       customerName: c.name || c.lineDisplayName || memberNo,
@@ -148,7 +157,7 @@ export async function recordInStoreVisit(customerId: string, grossAmount: number
       discountAmount,
       discountPercent,
       pointsEarned,
-      pointsRedeemed: 0,
+      pointsRedeemed,
       deliveryFee: 0,
       totalAmount: netAmount,
       // 'done', not 'paid': at the counter the money and the food have
@@ -158,15 +167,19 @@ export async function recordInStoreVisit(customerId: string, grossAmount: number
       // delivery-flavoured status card to that customer.
       status: 'done',
       paymentMethod: IN_STORE_METHOD,
-    })
-    .returning({ id: orders.id })
+    }).returning({ id: orders.id })
+    if (pointsRedeemed > 0) {
+      await tx.insert(pointTransactions).values({ orderId: order.id, customerId, phone: c.phone || '', points: -pointsRedeemed, type: 'redeem' })
+    }
+    return order
+  })
 
   if (!created?.id) return { ok: false as const, error: 'บันทึกรายการไม่สำเร็จ' }
 
   // Best-effort from here on, matching the convention in pages/api/orders.js:
   // the sale is already recorded, so a points or LINE failure must not make
   // staff think the transaction failed and ring it up a second time.
-  let pointsBalance = c.pointsBalance || 0
+  let pointsBalance = (c.pointsBalance || 0) - pointsRedeemed
   if (pointsEarned > 0) {
     try {
       await awardPoints({
@@ -205,6 +218,6 @@ export async function recordInStoreVisit(customerId: string, grossAmount: number
 
   return {
     ok: true as const,
-    receipt: { orderNo, memberNo, grossAmount: gross, discountAmount, netAmount, pointsEarned, pointsBalance, sentToLine },
+    receipt: { orderNo, memberNo, grossAmount: gross, discountAmount, pointsRedeemed, netAmount, pointsEarned, pointsBalance, sentToLine },
   }
 }

@@ -78,7 +78,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             <div><p className="text-xs text-muted-foreground">วันเกิด</p><p className="mt-1">{dateOnly(customer.birthday)}</p></div>
             <div><p className="text-xs text-muted-foreground">เบอร์โทร</p><a href={`tel:${customer.phone}`} className="mt-1 block hover:underline">{customer.phone || '—'}</a></div>
             <div><p className="text-xs text-muted-foreground">LINE</p><p className="mt-1">{customer.lineLinked ? customer.lineDisplayName || 'เชื่อมแล้ว' : 'ยังไม่เชื่อม'}</p></div>
-            <CustomerTierSelect id={customer.id} tier={customer.tier} />
+            <CustomerTierSelect id={customer.id} tier={customer.assignedTier} expiresAt={customer.tierExpiresAt} />
             <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">ที่อยู่ล่าสุด</p><p className="mt-1 whitespace-pre-line">{customer.address || '—'}</p></div>
           </CardContent>
         </Card>

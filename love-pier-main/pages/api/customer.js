@@ -3,7 +3,7 @@ import { db } from '../../lib/db'
 import { customers, orders } from '../../lib/db/schema'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
 import { getShopSettings } from '../../lib/settings'
-import { normalizeTier, tierDiscountPercent } from '../../lib/tiers'
+import { effectiveTier, isTierExpired, tierDiscountPercent } from '../../lib/tiers'
 
 // GET /api/customer?lineUserId=xxx
 //   → { customer: { name, phone, address, lastOrderDistanceKm, tier,
@@ -65,8 +65,10 @@ export default async function handler(req, res) {
         // /api/orders re-derives both from this same row when the order is
         // actually priced, so a stale or edited value here cannot change what
         // the customer is charged.
-        tier: normalizeTier(c.tier),
-        discountPercent: tierDiscountPercent(c.tier, {
+        tier: effectiveTier(c.tier, c.tierExpiresAt),
+        tierExpiresAt: c.tierExpiresAt || null,
+        tierExpired: isTierExpired(c.tier, c.tierExpiresAt),
+        discountPercent: tierDiscountPercent(effectiveTier(c.tier, c.tierExpiresAt), {
           enabled: s.memberDiscountEnabled,
           percentByTier: s.tierDiscountPercent,
         }),
