@@ -62,8 +62,12 @@ function pickString(v) {
 export default async function handler(req, res) {
   const authorization = typeof req.headers.authorization === 'string' ? req.headers.authorization : ''
   const accessToken = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : ''
-  const verifiedLine = await verifyLineAccessToken(accessToken)
-  if (!verifiedLine) return res.status(401).json({ member: null, error: 'Invalid LINE session' })
+  // TEMPORARY (2026-08-26): diagnosing the E401 seen on production /member —
+  // see lib/lineIdentity.js's matching temporary `debug` param. Revert both
+  // together once the cause is found.
+  const _debug = {}
+  const verifiedLine = await verifyLineAccessToken(accessToken, _debug)
+  if (!verifiedLine) return res.status(401).json({ member: null, error: 'Invalid LINE session', _debug })
   const lineUserId = verifiedLine.userId
 
   if (req.method === 'GET') {

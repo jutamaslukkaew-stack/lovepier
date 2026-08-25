@@ -137,7 +137,10 @@ export default function MemberPage() {
       } catch {
         data = null
       }
-      if (res.status === 401) return fail('auth', 'E401')
+      // TEMPORARY (2026-08-26): appends the server's debug.reason to the
+      // visible code so a screenshot of this card is the diagnosis — see the
+      // matching temporary code in lib/lineIdentity.js / pages/api/member.js.
+      if (res.status === 401) return fail('auth', `E401:${data?._debug?.reason || '?'}`)
       if (!res.ok) return fail('server', `E${res.status}`)
       if (!data?.member) return fail('server', 'E-EMPTY')
       setMember(data.member)
