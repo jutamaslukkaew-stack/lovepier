@@ -49,13 +49,21 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
       ? returnTo
       : '/'
     initLiff()
-      .catch(() => null)
-      .finally(() => {
+      .then((liff) => {
+        if (liff && !liff.isLoggedIn()) {
+          liff.login()
+          return false
+        }
+        return true
+      })
+      .then((authenticated) => {
+        if (!authenticated) return
         try {
           window.sessionStorage.removeItem(LIFF_RETURN_TO_KEY)
         } catch {}
         router.replace(safeReturnTo)
       })
+      .catch(() => setCheckingLiffReturn(false))
   }, [router.isReady, router.query.__liff_return_to, router])
 
   // Never flash the delivery welcome screen while LIFF is consuming its

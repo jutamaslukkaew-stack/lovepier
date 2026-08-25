@@ -90,22 +90,24 @@ export function initLiff(liffId = DEFAULT_LIFF_ID) {
 // redirecting straight back to itself.
 export async function loginAndGetProfile({ liffId = DEFAULT_LIFF_ID, ownEndpointPath = '/delivery' } = {}) {
   if (!liffId) return null
+  // A LIFF app may only initialise reliably on (or below) the Endpoint URL
+  // registered in LINE Developers. Pre-order shares delivery's LIFF app, so
+  // enter through /delivery first and let that page complete authentication
+  // before returning here. Doing this before liff.init() avoids the endpoint
+  // mismatch that previously surfaced as E-LIFF on /preorder.
+  if (typeof window !== 'undefined' && window.location.pathname !== ownEndpointPath) {
+    const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`
+    try {
+      window.sessionStorage.setItem(LIFF_RETURN_TO_KEY, returnTo)
+    } catch {}
+    const bridge = new URL(ownEndpointPath, window.location.origin)
+    bridge.searchParams.set('__liff_return_to', returnTo)
+    window.location.replace(bridge.toString())
+    return null
+  }
   const liff = await initLiff(liffId)
   if (!liff.isLoggedIn()) {
-    if (typeof window !== 'undefined' && window.location.pathname !== ownEndpointPath) {
-      const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`
-      // LINE can drop custom query parameters while completing its two-step
-      // OAuth redirect. Keep the intended route in this tab as a fallback so
-      // the endpoint page never becomes the customer's accidental destination.
-      try {
-        window.sessionStorage.setItem(LIFF_RETURN_TO_KEY, returnTo)
-      } catch {}
-      const bridge = new URL(ownEndpointPath, window.location.origin)
-      bridge.searchParams.set('__liff_return_to', returnTo)
-      liff.login({ redirectUri: bridge.toString() })
-    } else {
-      liff.login()
-    }
+    liff.login()
     return null // page will redirect; profile is fetched after it comes back
   }
   const profile = await liff.getProfile()

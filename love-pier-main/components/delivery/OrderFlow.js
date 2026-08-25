@@ -853,14 +853,22 @@ export default function OrderFlow({
     return today && ymd === today.ymd ? `${t.scheduleToday} · ${label}` : label
   }
 
-  // Silently pick up an already-logged-in LINE session (e.g. after a login
-  // redirect back to this page) so returning customers aren't asked twice.
+  // Authenticate as soon as the order page opens. Inside LINE this is silent;
+  // in an external browser LINE may show its required consent/login screen.
+  // The welcome button remains only as a recovery action if LINE itself fails.
   useEffect(() => {
     if (!isLiffConfigured() || triedSilentLoginRef.current) return
     triedSilentLoginRef.current = true
-    getProfileIfLoggedIn().then((p) => {
-      if (p) { setProfile(p); setDeliverySessionProfile(p) }
-    })
+    setLoginPhase('logging-in')
+    getProfileIfLoggedIn()
+      .then((existing) => existing || loginAndGetProfile())
+      .then((p) => {
+        if (!p) return // navigation to LINE Login or the registered endpoint
+        setProfile(p)
+        setDeliverySessionProfile(p)
+        setLoginPhase('idle')
+      })
+      .catch(() => setLoginPhase('failed'))
   }, [])
 
   // As soon as we know who the customer is via LINE (either an explicit
