@@ -32,5 +32,22 @@ export async function uploadImage(file: File): Promise<UploadResult> {
   return { url: json.url, srcset: json.srcset ?? '' }
 }
 
+export async function uploadMedia(file: File): Promise<{ url: string; type: 'image' | 'video' }> {
+  if (file.type.startsWith('image/')) {
+    const result = await uploadImage(file)
+    return { url: result.url, type: 'image' }
+  }
+  if (!file.type.startsWith('video/')) throw new Error('ไฟล์ต้องเป็นรูปภาพหรือวิดีโอ')
+  const fd = new FormData()
+  fd.append('file', file)
+  const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: 'Upload failed' }))
+    throw new Error(body.error || 'อัปโหลดไม่สำเร็จ')
+  }
+  const body = await res.json()
+  return { url: body.url, type: 'video' }
+}
+
 // Alias for backward-compatibility
 export { uploadImage as uploadMenuImage }

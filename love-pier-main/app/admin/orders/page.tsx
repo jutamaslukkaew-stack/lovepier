@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge'
 import { OrderStatusSelect } from '@/components/admin/order-status-select'
 import { DELIVERY_METHOD_LABELS, STATUS_LABELS, STATUS_VARIANT } from '@/app/admin/orders/status'
 import { createAdminClient } from '@/lib/supabase/admin'
+import Link from 'next/link'
+import { Images } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,7 +80,15 @@ export async function AdminOrdersContent({ preordersOnly = false }: { preordersO
             <p className="mt-1 text-sm text-muted-foreground">รายการที่ลูกค้าเลือกวันและเวลารับอาหารล่วงหน้า</p>
           )}
         </div>
-        <span className="text-sm text-muted-foreground">{orders.length} รายการ</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm text-muted-foreground">{orders.length} รายการ</span>
+          {preordersOnly && (
+            <Link href="/admin/preorder-menu" className="inline-flex h-10 items-center gap-2 rounded-md bg-[#4a3520] px-4 text-sm font-medium text-white transition hover:bg-[#3a2818]">
+              <Images className="size-4" />
+              จัดการเมนู รูปและวิดีโอ
+            </Link>
+          )}
+        </div>
       </div>
 
       {orders.length === 0 ? (

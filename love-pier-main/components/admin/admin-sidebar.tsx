@@ -29,6 +29,7 @@ const navItems = [
   { href: '/admin/scan', label: 'สแกนสมาชิก', icon: ScanLine },
   { href: '/admin/orders', label: 'ออเดอร์', icon: ShoppingBag, exact: true },
   { href: '/admin/preorders', label: 'พรีออเดอร์', icon: CalendarClock },
+  { href: '/admin/preorder-menu', label: 'เมนู Pre Order', icon: UtensilsCrossed },
   { href: '/admin/customers', label: 'ลูกค้า', icon: Users },
   { href: '/admin/members', label: 'สมาชิก', icon: UserRoundCheck },
   { href: '/admin/menu', label: 'เมนูอาหาร', icon: UtensilsCrossed, exact: true },

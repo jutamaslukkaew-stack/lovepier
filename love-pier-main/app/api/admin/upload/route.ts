@@ -6,6 +6,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 const BUCKET = 'uploads'
 const WIDTHS = [480, 960, 1440]
 const MAX_INPUT_MB = 20
+const MAX_VIDEO_MB = 100
 
 async function requireAuth() {
   const supabase = await createClient()
@@ -27,7 +28,19 @@ export async function POST(req: Request) {
   const form = await req.formData()
   const file = form.get('file') as File | null
   if (!file) return NextResponse.json({ error: 'No file' }, { status: 400 })
-  if (!file.type.startsWith('image/')) return NextResponse.json({ error: 'Not an image' }, { status: 400 })
+  if (file.type.startsWith('video/')) {
+    if (file.size > MAX_VIDEO_MB * 1024 * 1024) return NextResponse.json({ error: `วิดีโอใหญ่เกิน ${MAX_VIDEO_MB}MB` }, { status: 400 })
+    const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp4'
+    const path = `video/${crypto.randomUUID()}.${ext}`
+    const supabase = serviceSupabase()
+    const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+      contentType: file.type, cacheControl: '31536000', upsert: false,
+    })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
+    return NextResponse.json({ url: data.publicUrl, type: 'video' })
+  }
+  if (!file.type.startsWith('image/')) return NextResponse.json({ error: 'รองรับเฉพาะรูปภาพหรือวิดีโอ' }, { status: 400 })
   if (file.size > MAX_INPUT_MB * 1024 * 1024) {
     return NextResponse.json({ error: `ไฟล์ใหญ่เกิน ${MAX_INPUT_MB}MB` }, { status: 400 })
   }

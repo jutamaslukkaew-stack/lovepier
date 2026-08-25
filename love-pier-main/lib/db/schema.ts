@@ -125,6 +125,34 @@ export const promotions = pgTable('promotions', {
 export type Promotion = typeof promotions.$inferSelect
 export type NewPromotion = typeof promotions.$inferInsert
 
+export const preorderItems = pgTable(
+  'preorder_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    nameTh: text('name_th').notNull().unique(),
+    descriptionTh: text('description_th').notNull().default(''),
+    category: text('category').notNull().default('อาหารพรีออเดอร์'),
+    price: integer('price'),
+    unit: text('unit').notNull().default('ชุด'),
+    minQuantity: integer('min_quantity').notNull().default(1),
+    leadDays: integer('lead_days').notNull().default(3),
+    dailyQuota: integer('daily_quota'),
+    coverImageUrl: text('cover_image_url'),
+    // [{ type: 'image'|'video', url, label? }] in display order.
+    media: jsonb('media').notNull().default([]),
+    options: jsonb('options').notNull().default([]),
+    status: text('status').notNull().default('draft'),
+    isDeleted: boolean('is_deleted').notNull().default(false),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({ sortIdx: index('preorder_items_sort_order_idx').on(t.sortOrder) })
+)
+
+export type PreorderItem = typeof preorderItems.$inferSelect
+export type NewPreorderItem = typeof preorderItems.$inferInsert
+
 export const events = pgTable('events', {
   id: serial('id').primaryKey(),
   titleTh: text('title_th').notNull(),

@@ -149,6 +149,13 @@ describe('slotsForDate', () => {
 })
 
 describe('availableDates', () => {
+  it('can enforce the Pre Order catalogue minimum of three full days', () => {
+    const now = new Date('2026-08-20T01:00:00Z') // Thu 08:00 Bangkok
+    const days = availableDates({ ...HOURS, leadMinutes: 3 * 24 * 60, maxDaysAhead: 7, now })
+    expect(days[0].ymd).toBe('2026-08-23')
+    expect(days[0].slots[0]).toBe('09:00')
+  })
+
   it('omits closed days and never returns an empty slot list', () => {
     const now = new Date('2026-08-20T01:00:00Z') // 08:00 Thursday in Bangkok
     const days = availableDates({ ...HOURS, leadMinutes: 60, maxDaysAhead: 7, now })

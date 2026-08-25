@@ -21,7 +21,7 @@ export function CartProvider({ children }) {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === item.id)
       if (existing) return prev.map((i) => i.id === item.id ? { ...i, qty: i.qty + 1 } : i)
-      return [...prev, { ...item, qty: 1 }]
+      return [...prev, { ...item, qty: Math.max(1, Math.floor(Number(item.qty) || 1)) }]
     })
   }, [])
 

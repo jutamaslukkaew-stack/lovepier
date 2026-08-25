@@ -28,6 +28,7 @@ import { normalizeItemOptions, optionGroupsFor } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
 import OrderJourney from './OrderJourney'
 import MenuExperience from '../menu/MenuExperience'
+import PreorderCatalog from '../preorder/PreorderCatalog'
 import { Check, CheckCircle2, Clock, Receipt, User, StickyNote } from 'lucide-react'
 import { availableDates, bangkokDateParts, formatDayThai, formatSlotThai } from '../../lib/preorder'
 
@@ -165,7 +166,7 @@ const COPY = {
     scheduleDate: 'เลือกวัน',
     scheduleTime: 'เลือกเวลา',
     scheduleToday: 'วันนี้',
-    scheduleLeadNote: (m, open, close) => `เลือกล่วงหน้าอย่างน้อย ${m} นาที ภายในเวลาทำการ ${open}–${close} น.`,
+    scheduleLeadNote: (m, open, close) => `สั่งล่วงหน้าอย่างน้อย ${m >= 1440 ? `${Math.ceil(m / 1440)} วัน` : `${m} นาที`} · รับสินค้า ${open}–${close} น.`,
     scheduleRecap: (label) => `รับอาหาร ${label} น.`,
     fillSchedule: 'กรุณาเลือกวันและเวลาที่ต้องการรับอาหาร',
     scheduleExpired: 'เวลาที่เลือกเลยกำหนดแล้ว กรุณาเลือกเวลาใหม่',
@@ -304,7 +305,7 @@ const COPY = {
     scheduleDate: 'Choose a day',
     scheduleTime: 'Choose a time',
     scheduleToday: 'Today',
-    scheduleLeadNote: (m, open, close) => `At least ${m} minutes ahead, within opening hours ${open}–${close}.`,
+    scheduleLeadNote: (m, open, close) => `Order at least ${m >= 1440 ? `${Math.ceil(m / 1440)} days` : `${m} minutes`} ahead · collection ${open}–${close}.`,
     scheduleRecap: (label) => `Ready at ${label}`,
     fillSchedule: 'Please choose the day and time you want your order',
     scheduleExpired: 'That time has passed — please pick a new one',
@@ -441,7 +442,7 @@ const COPY = {
     scheduleDate: '选择日期',
     scheduleTime: '选择时间',
     scheduleToday: '今天',
-    scheduleLeadNote: (m, open, close) => `至少提前 ${m} 分钟，营业时间 ${open}–${close}。`,
+    scheduleLeadNote: (m, open, close) => `至少提前${m >= 1440 ? `${Math.ceil(m / 1440)}天` : `${m}分钟`}预订 · 取货时间 ${open}–${close}。`,
     scheduleRecap: (label) => `取餐时间 ${label}`,
     fillSchedule: '请选择您想取餐的日期和时间',
     scheduleExpired: '所选时间已过，请重新选择',
@@ -624,7 +625,7 @@ function GreetingChoiceCard({ t, name, address, onUseSaved, onUseNew }) {
 }
 
 export default function OrderFlow({
-  dbMenuData, dbPromotions, heroTitle, radiusKm = 5, minDeliveryOrder = 300,
+  dbMenuData, dbPromotions, preorderItems = [], heroTitle, radiusKm = 5, minDeliveryOrder = 300,
   pointsPerBaht = 20, menuOptionsEnabled = false,
   // /delivery is always an ASAP order. /preorder is the only route that
   // enables scheduling, and forces a scheduled time instead of presenting it
@@ -640,6 +641,18 @@ export default function OrderFlow({
   const t = COPY[lang] || COPY.en
   const { items, addItem, removeItem, updateNote, updateOption, clearCart, totalQty, totalPrice } = useCart()
   const { setHidden: setChromeHidden } = useChrome()
+
+  // Delivery and Pre Order have different catalogues. Never carry lines from
+  // one route into the other's checkout through the shared local cart.
+  useEffect(() => {
+    const incompatible = preOrderOnly
+      ? items.some((item) => !item.preorder)
+      : items.some((item) => item.preorder)
+    if (incompatible) clearCart()
+    // Route mode is fixed for this component's lifetime; this is a one-time
+    // compatibility cleanup, not a reaction to subsequent cart edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [step, setStep] = useState('welcome')
 
@@ -793,12 +806,16 @@ export default function OrderFlow({
   // strings, and it must not go stale under a customer who sits on the
   // summary step until their chosen slot falls past the lead-time cutoff.
   // Nothing depends on its identity; never put it in a dependency array.
+  const requiredLeadDays = preOrderOnly
+    ? Math.max(3, ...items.filter((item) => item.preorder).map((item) => Number(item.leadDays) || 3))
+    : 0
+  const effectivePreorderLeadMinutes = Math.max(preorderLeadMinutes, requiredLeadDays * 24 * 60)
   const scheduleDays = preorderEnabled
     ? availableDates({
         openTime: shopOpenTime,
         closeTime: shopCloseTime,
         closedDays: shopClosedDays,
-        leadMinutes: preorderLeadMinutes,
+        leadMinutes: effectivePreorderLeadMinutes,
         maxDaysAhead: preorderMaxDaysAhead,
       })
     : []
@@ -1868,7 +1885,11 @@ export default function OrderFlow({
       <div className="min-h-[100dvh]">
         <StepHeader t={t} step={step} onBack={() => setStep('welcome')} />
         <p className="text-center text-[12px] text-black/45 py-2 bg-[#f5f2ee]">{t.menuHint}</p>
-        <MenuExperience
+        {preOrderOnly ? <PreorderCatalog
+          preorderItems={preorderItems}
+          onCartClick={goToMethodFromMenu}
+          cartBlockedNote={belowMinOrder ? t.minOrderNotice(minDeliveryOrder - itemsSubtotal, minDeliveryOrder) : ''}
+        /> : <MenuExperience
           dbMenuData={dbMenuData}
           dbPromotions={dbPromotions}
           showAddToCart
@@ -1878,7 +1899,7 @@ export default function OrderFlow({
           // menu first, this is the screen where the customer can actually do
           // something about it.
           cartBlockedNote={belowMinOrder ? t.minOrderNotice(minDeliveryOrder - itemsSubtotal, minDeliveryOrder) : ''}
-        />
+        />}
       </div>
     )
   }
@@ -2099,7 +2120,7 @@ export default function OrderFlow({
                           </select>
                         </div>
                         <p className="text-[11px] leading-relaxed text-black/45">
-                          {t.scheduleLeadNote(preorderLeadMinutes, shopOpenTime, shopCloseTime)}
+                          {t.scheduleLeadNote(effectivePreorderLeadMinutes, shopOpenTime, shopCloseTime)}
                         </p>
                         {/* A customer who lingers can watch their chosen slot
                             fall past the cutoff. Without this the continue

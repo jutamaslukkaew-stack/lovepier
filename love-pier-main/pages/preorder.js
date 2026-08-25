@@ -7,6 +7,7 @@ import OrderFlow from '../components/delivery/OrderFlow'
 import { useChrome } from '../lib/chrome'
 import { getMenuPageData } from '../lib/db/menuPageData'
 import { getShopSettings } from '../lib/settings'
+import { getActivePreorderItems } from '../lib/db/preorderCatalog'
 
 const PAGE_COPY = {
   th: {
@@ -64,6 +65,7 @@ export default function Preorder(props) {
 
 export async function getServerSideProps() {
   const { dbMenuData, dbPromotions } = await getMenuPageData()
+  const preorderItems = await getActivePreorderItems()
   const {
     radiusKm, minDeliveryOrder, pointsPerBaht, menuOptionsEnabled,
     preorderEnabled, shopOpenTime, shopCloseTime, shopClosedDays, preorderLeadMinutes, preorderMaxDaysAhead,
@@ -73,6 +75,7 @@ export async function getServerSideProps() {
     props: {
       dbMenuData,
       dbPromotions,
+      preorderItems: JSON.parse(JSON.stringify(preorderItems)),
       radiusKm: radiusKm ?? 5,
       minDeliveryOrder: minDeliveryOrder ?? 300,
       pointsPerBaht: pointsPerBaht ?? 20,
@@ -81,7 +84,7 @@ export async function getServerSideProps() {
       shopOpenTime: shopOpenTime ?? '09:00',
       shopCloseTime: shopCloseTime ?? '18:00',
       shopClosedDays: shopClosedDays ?? [3],
-      preorderLeadMinutes: preorderLeadMinutes ?? 60,
+      preorderLeadMinutes: Math.max(preorderLeadMinutes ?? 60, 3 * 24 * 60),
       preorderMaxDaysAhead: preorderMaxDaysAhead ?? 7,
     },
   }

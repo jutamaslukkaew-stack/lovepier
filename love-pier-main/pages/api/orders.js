@@ -1,6 +1,6 @@
-import { and, eq, gte, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, sql } from 'drizzle-orm'
 import { db } from '../../lib/db'
-import { orders, customers, pointTransactions } from '../../lib/db/schema'
+import { orders, customers, pointTransactions, preorderItems } from '../../lib/db/schema'
 import { isStaffNotifyTarget, pushOrderCardToStaff, pushToUser } from '../../lib/lineMessaging'
 import { buildOrderFlex } from '../../lib/orderFlex'
 import { getShopSettings } from '../../lib/settings'
@@ -89,9 +89,34 @@ export default async function handler(req, res) {
     }
   }
 
-  // Trust prices from the server-provided cart shape but recompute the total
+  // Scheduled orders use the dedicated Pre Order catalogue as their price
+  // authority. This also prevents paused/deleted items from being ordered by
+  // a stale tab and enforces each menu's minimum quantity and lead days.
+  let orderItemsInput = rawItems
+  let requiredPreorderLeadMinutes = 3 * 24 * 60
+  if (scheduledDate || scheduledSlot) {
+    const ids = [...new Set(rawItems.map((item) => pickString(item?.id)).filter(Boolean))]
+    const rows = ids.length ? await db.select().from(preorderItems).where(and(
+      inArray(preorderItems.id, ids), eq(preorderItems.status, 'active'), eq(preorderItems.isDeleted, false)
+    )) : []
+    const byId = new Map(rows.map((row) => [row.id, row]))
+    if (rows.length !== ids.length || rows.some((row) => row.price == null)) {
+      return res.status(400).json({ error: 'มีเมนูพรีออเดอร์ที่ปิดรับหรือยังไม่พร้อมขาย กรุณาเลือกใหม่' })
+    }
+    orderItemsInput = rawItems.map((item) => {
+      const row = byId.get(pickString(item?.id))
+      const qty = Math.max(1, parseInt(item?.qty, 10) || 1)
+      if (!row || qty < row.minQuantity) return null
+      requiredPreorderLeadMinutes = Math.max(requiredPreorderLeadMinutes, row.leadDays * 24 * 60)
+      return { ...item, name: row.nameTh, price: row.price, qty }
+    })
+    if (orderItemsInput.some((item) => !item)) return res.status(400).json({ error: 'จำนวนสินค้าต่ำกว่าขั้นต่ำของเมนู' })
+  }
+
+  // Trust prices from the server-provided cart shape for normal delivery but
+  // recompute the total; Pre Order prices above come from the database.
   // so the client can't tamper with the amount.
-  const items = rawItems.map((i) => ({
+  const items = orderItemsInput.map((i) => ({
     id: pickString(i?.id),
     name: pickString(i?.name),
     price: Number(i?.price) || 0,
@@ -142,7 +167,7 @@ export default async function handler(req, res) {
         openTime: s.shopOpenTime,
         closeTime: s.shopCloseTime,
         closedDays: s.shopClosedDays,
-        leadMinutes: s.preorderLeadMinutes,
+        leadMinutes: Math.max(s.preorderLeadMinutes, requiredPreorderLeadMinutes),
         maxDaysAhead: s.preorderMaxDaysAhead,
       }
     )
