@@ -30,6 +30,10 @@ const COPY = {
     points: 'คะแนนสะสม',
     scanHint: 'ให้พนักงานสแกน QR นี้ก่อนชำระเงิน',
     error: 'ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่',
+    errorLiff: 'เปิดบัตรสมาชิกจากเมนูในแชท LINE ของร้าน เพื่อให้ระบบรู้จักบัญชีของคุณ',
+    errorAuth: 'เซสชัน LINE หมดอายุ กรุณาเข้าสู่ระบบใหม่',
+    errorNetwork: 'เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
+    codeLabel: 'รหัส',
     retry: 'ลองใหม่',
   },
   en: {
@@ -44,6 +48,10 @@ const COPY = {
     points: 'Points balance',
     scanHint: 'Show this QR to our staff before you pay',
     error: 'Could not load your card. Please try again.',
+    errorLiff: 'Open your card from our LINE chat menu so we can recognise your account.',
+    errorAuth: 'Your LINE session has expired. Please log in again.',
+    errorNetwork: 'Could not reach the server. Please try again.',
+    codeLabel: 'Code',
     retry: 'Try again',
   },
   zh: {
@@ -58,6 +66,10 @@ const COPY = {
     points: '积分余额',
     scanHint: '结账前请向店员出示此二维码',
     error: '无法加载会员卡，请重试。',
+    errorLiff: '请从本店 LINE 聊天的菜单打开会员卡，以便系统识别您的账号。',
+    errorAuth: 'LINE 登录已过期，请重新登录。',
+    errorNetwork: '连接失败，请重试。',
+    codeLabel: '代码',
     retry: '重试',
   },
 }
@@ -71,12 +83,23 @@ export default function MemberPage() {
   const [profile, setProfile] = useState(null)
   const [member, setMember] = useState(null)
   const [qrDataUrl, setQrDataUrl] = useState('')
+  // { kind, code } — every path to the error card records why it got there.
+  // Until 2026-08-25 all of them set a single 'error' state, so a LIFF failure
+  // (the card cannot be issued at all) and a passing network blip (retrying
+  // works) produced the same sentence, and a real-phone report carried no
+  // information about which one had happened. See note_2026_08_25_member_liff.
+  const [failure, setFailure] = useState(null)
 
   // This is a card screen reached from the Rich Menu, not a marketing page.
   useEffect(() => {
     setChromeHidden(true)
     return () => setChromeHidden(false)
   }, [setChromeHidden])
+
+  const fail = useCallback((kind, code) => {
+    setFailure({ kind, code })
+    setStatus('error')
+  }, [])
 
   const loadMember = useCallback(async (lineProfile) => {
     if (!lineProfile?.userId) {
@@ -98,17 +121,25 @@ export default function MemberPage() {
         },
         body: '{}',
       })
-      const data = await res.json()
-      if (!res.ok || !data.member) {
-        setStatus('error')
-        return
+      // Parsed defensively: a 500 or a gateway timeout comes back as HTML, and
+      // res.json() would then throw inside this try and be reported as a
+      // network failure, which is the one thing it is not.
+      let data = null
+      try {
+        data = await res.json()
+      } catch {
+        data = null
       }
+      if (res.status === 401) return fail('auth', 'E401')
+      if (!res.ok) return fail('server', `E${res.status}`)
+      if (!data?.member) return fail('server', 'E-EMPTY')
       setMember(data.member)
       setStatus('card')
     } catch {
-      setStatus('error')
+      // fetch() itself rejected: offline, blocked, or the request was dropped.
+      fail('network', 'E-NET')
     }
-  }, [])
+  }, [fail])
 
   useEffect(() => {
     if (!isLiffConfigured()) return
@@ -124,8 +155,13 @@ export default function MemberPage() {
         const authenticatedProfile = await loginAndGetProfile()
         if (authenticatedProfile) await loadMember(authenticatedProfile)
       })
-      .catch(() => setStatus('error'))
-  }, [loadMember])
+      // liff.init()/liff.login() rejecting is the expected failure when this
+      // page is opened as a plain https:// URL inside the LINE in-app browser
+      // rather than through a liff.line.me URL — there is no LIFF context to
+      // log in with. That is a Rich Menu/Endpoint URL configuration problem,
+      // not something a retry fixes, so it gets its own message.
+      .catch(() => fail('liff', 'E-LIFF'))
+  }, [loadMember, fail])
 
   // Only ever runs once a card exists — the qrcode bundle is never pulled in
   // on the login screen. Same dynamic-import + data-URL technique as
@@ -153,9 +189,15 @@ export default function MemberPage() {
       const lineProfile = await loginAndGetProfile()
       if (lineProfile) await loadMember(lineProfile)
     } catch {
-      setStatus('error')
+      fail('liff', 'E-LIFF')
     }
   }
+
+  const failureCopy =
+    failure?.kind === 'liff' ? t.errorLiff
+    : failure?.kind === 'auth' ? t.errorAuth
+    : failure?.kind === 'network' ? t.errorNetwork
+    : t.error
 
   return (
     <>
@@ -217,7 +259,7 @@ export default function MemberPage() {
 
           {status === 'error' ? (
             <div className="rounded-[28px] border border-black/10 bg-[#fffdf8] p-7 text-center shadow-[0_24px_70px_rgba(74,53,32,0.08)]">
-              <p className="text-[13px] text-muted-strong">{t.error}</p>
+              <p className="text-[13px] leading-[1.9] text-muted-strong">{failureCopy}</p>
               <button
                 type="button"
                 onClick={handleLogin}
@@ -225,6 +267,11 @@ export default function MemberPage() {
               >
                 {t.retry}
               </button>
+              {/* Small enough to ignore, specific enough that a screenshot of
+                  this card is a diagnosis rather than the start of one. */}
+              {failure?.code ? (
+                <p className="mt-4 text-[11px] text-muted-strong">{t.codeLabel}: {failure.code}</p>
+              ) : null}
             </div>
           ) : null}
 
