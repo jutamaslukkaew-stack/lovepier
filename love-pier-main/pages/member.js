@@ -2,7 +2,14 @@ import Head from 'next/head'
 import { useCallback, useEffect, useState } from 'react'
 import { useChrome } from '../lib/chrome'
 import { useLanguage } from '../lib/language'
-import { getProfileIfLoggedIn, isLiffConfigured, loginAndGetProfile } from '../lib/liff'
+import { getProfileIfLoggedIn, isLiffConfigured, loginAndGetProfile, MEMBER_LIFF_ID } from '../lib/liff'
+
+// This page uses its OWN LIFF app (NEXT_PUBLIC_MEMBER_LIFF_ID), separate from
+// the one /delivery uses — each LIFF app's Endpoint URL is fixed to one path,
+// and this one's is /member. Passing the wrong LIFF ID to liff.init() fails
+// even when the Console side (Rich Menu link, Endpoint URL) is configured
+// correctly — see lib/liff.js's own comment and state.json's
+// note_2026_08_25_member_liff / handoff_2026_08_25.
 
 // Love Pier ID — the customer's membership card.
 //
@@ -79,7 +86,7 @@ export default function MemberPage() {
   const t = COPY[lang] || COPY.en
   const { setHidden: setChromeHidden } = useChrome()
 
-  const [status, setStatus] = useState(() => (isLiffConfigured() ? 'loading' : 'logged-out'))
+  const [status, setStatus] = useState(() => (isLiffConfigured(MEMBER_LIFF_ID) ? 'loading' : 'logged-out'))
   const [profile, setProfile] = useState(null)
   const [member, setMember] = useState(null)
   const [qrDataUrl, setQrDataUrl] = useState('')
@@ -142,8 +149,8 @@ export default function MemberPage() {
   }, [fail])
 
   useEffect(() => {
-    if (!isLiffConfigured()) return
-    getProfileIfLoggedIn()
+    if (!isLiffConfigured(MEMBER_LIFF_ID)) return
+    getProfileIfLoggedIn(MEMBER_LIFF_ID)
       .then(async (lineProfile) => {
         if (lineProfile) {
           await loadMember(lineProfile)
@@ -152,7 +159,7 @@ export default function MemberPage() {
         // The membership page is a LINE-only destination. Start authentication
         // immediately and return to this route instead of presenting a second
         // login choice to a customer who already arrived from the LINE OA.
-        const authenticatedProfile = await loginAndGetProfile()
+        const authenticatedProfile = await loginAndGetProfile({ liffId: MEMBER_LIFF_ID, ownEndpointPath: '/member' })
         if (authenticatedProfile) await loadMember(authenticatedProfile)
       })
       // liff.init()/liff.login() rejecting is the expected failure when this
@@ -186,7 +193,7 @@ export default function MemberPage() {
   async function handleLogin() {
     setStatus('loading')
     try {
-      const lineProfile = await loginAndGetProfile()
+      const lineProfile = await loginAndGetProfile({ liffId: MEMBER_LIFF_ID, ownEndpointPath: '/member' })
       if (lineProfile) await loadMember(lineProfile)
     } catch {
       fail('liff', 'E-LIFF')
@@ -237,7 +244,7 @@ export default function MemberPage() {
 
           {status === 'logged-out' ? (
             <div className="rounded-[28px] border border-black/10 bg-[#fffdf8] p-7 text-center shadow-[0_24px_70px_rgba(74,53,32,0.08)]">
-              {isLiffConfigured() ? (
+              {isLiffConfigured(MEMBER_LIFF_ID) ? (
                 <>
                   <p className="mb-6 text-[13px] font-light leading-[1.9] text-[#555]">{t.loginLead}</p>
                   <button

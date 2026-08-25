@@ -1,13 +1,28 @@
 // Thin wrapper around the LINE Front-end Framework (LIFF) SDK.
 // Loaded only in the browser and only when a LIFF ID is configured, so the
 // rest of the site keeps working outside LINE / before LIFF is set up.
-
-const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || ''
+//
+// TWO LIFF apps exist on the same LINE Login channel, each with its own fixed
+// Endpoint URL (a LIFF app can only have one) — DEFAULT_LIFF_ID's is
+// /delivery, MEMBER_LIFF_ID's is /member. Every exported function here takes
+// an optional `liffId` (defaulting to DEFAULT_LIFF_ID, so every existing
+// /delivery call site is unchanged) — passing the wrong one is exactly the
+// 2026-08-25 bug: liff.init() with an ID that doesn't match the context the
+// page was actually launched in fails, even though the Console side (Rich
+// Menu link, Endpoint URL) is configured correctly. See note_2026_08_25_member_liff
+// / handoff_2026_08_25 in state.json and pages/member.js's own call sites.
+const DEFAULT_LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || ''
+export const MEMBER_LIFF_ID = process.env.NEXT_PUBLIC_MEMBER_LIFF_ID || ''
 // Google Apps Script Web App that logs LINE customers into a Google Sheet.
 const SHEETS_WEBHOOK = process.env.NEXT_PUBLIC_SHEETS_WEBHOOK_URL || ''
 
-let _liff = null
-let _initPromise = null
+let _liffSdk = null
+// Keyed by liffId — normally only ever holds one entry per page load (each
+// page uses exactly one LIFF app for its own lifetime), but keying like this
+// rather than a single cached value means a page that somehow needs both
+// (or a hot-reload re-entry with a different id) re-inits correctly instead
+// of silently reusing a promise resolved for the other app.
+const _initPromises = new Map()
 let _sheetLogged = false
 
 export const LIFF_RETURN_TO_KEY = 'love-pier:liff-return-to'
@@ -35,56 +50,57 @@ export function logProfileToSheet(profile) {
   } catch {}
 }
 
-export function isLiffConfigured() {
-  return Boolean(LIFF_ID)
+export function isLiffConfigured(liffId = DEFAULT_LIFF_ID) {
+  return Boolean(liffId)
 }
 
-async function getLiff() {
-  if (_liff) return _liff
+async function getLiffSdk() {
+  if (_liffSdk) return _liffSdk
   const mod = await import('@line/liff')
-  _liff = mod.default || mod
-  return _liff
+  _liffSdk = mod.default || mod
+  return _liffSdk
 }
 
-// Initialise once. Safe to call repeatedly.
-export function initLiff() {
-  if (!LIFF_ID) return Promise.resolve(null)
-  if (_initPromise) return _initPromise
-  _initPromise = (async () => {
-    const liff = await getLiff()
-    await liff.init({ liffId: LIFF_ID })
+// Initialise once per liffId. Safe to call repeatedly.
+export function initLiff(liffId = DEFAULT_LIFF_ID) {
+  if (!liffId) return Promise.resolve(null)
+  if (_initPromises.has(liffId)) return _initPromises.get(liffId)
+  const promise = (async () => {
+    const liff = await getLiffSdk()
+    await liff.init({ liffId })
     return liff
   })().catch((err) => {
-    _initPromise = null
+    _initPromises.delete(liffId)
     throw err
   })
-  return _initPromise
+  _initPromises.set(liffId, promise)
+  return promise
 }
 
 // Log the user in (redirects inside LINE, opens LINE Login popup on web) and
 // return their profile: { userId, displayName, pictureUrl }. Returns null when
 // LIFF isn't configured so callers can fall back to manual entry.
-export async function loginAndGetProfile() {
-  if (!LIFF_ID) return null
-  const liff = await initLiff()
+//
+// `ownEndpointPath` must match the liffId's actual registered Endpoint URL
+// (path only) — defaults to '/delivery' for DEFAULT_LIFF_ID's existing
+// behavior, unchanged. A LIFF app's Endpoint URL is fixed to one path, and
+// LINE requires any custom redirectUri to start with it, so a page whose own
+// path ISN'T the endpoint (the old /member-via-the-delivery-app case) has to
+// bounce through the real endpoint with a same-origin return path instead of
+// redirecting straight back to itself.
+export async function loginAndGetProfile({ liffId = DEFAULT_LIFF_ID, ownEndpointPath = '/delivery' } = {}) {
+  if (!liffId) return null
+  const liff = await initLiff(liffId)
   if (!liff.isLoggedIn()) {
-    // This project's LIFF Endpoint URL is /delivery. LINE returns a first-time
-    // login there unless redirectUri is supplied, which used to dump a new
-    // /member visitor into the delivery wizard. LINE also requires a custom
-    // redirectUri to start with the configured Endpoint URL, so routes such
-    // as /member cannot be passed directly. Bounce through /delivery with a
-    // same-origin return path; pages/delivery.js completes liff.init() (which
-    // consumes the OAuth callback) and replaces the URL before rendering the
-    // order flow.
-    if (typeof window !== 'undefined' && window.location.pathname !== '/delivery') {
+    if (typeof window !== 'undefined' && window.location.pathname !== ownEndpointPath) {
       const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`
       // LINE can drop custom query parameters while completing its two-step
       // OAuth redirect. Keep the intended route in this tab as a fallback so
-      // /delivery never becomes the customer's accidental destination.
+      // the endpoint page never becomes the customer's accidental destination.
       try {
         window.sessionStorage.setItem(LIFF_RETURN_TO_KEY, returnTo)
       } catch {}
-      const bridge = new URL('/delivery', window.location.origin)
+      const bridge = new URL(ownEndpointPath, window.location.origin)
       bridge.searchParams.set('__liff_return_to', returnTo)
       liff.login({ redirectUri: bridge.toString() })
     } else {
@@ -106,7 +122,7 @@ export async function loginAndGetProfile() {
 // Send messages into the LINE chat the LIFF was opened from (works only inside
 // the LINE app). Best-effort: returns false when unavailable instead of throwing.
 export async function sendMessagesToChat(messages) {
-  if (!LIFF_ID) return false
+  if (!DEFAULT_LIFF_ID) return false
   try {
     const liff = await initLiff()
     if (!liff.isApiAvailable || !liff.isApiAvailable('sendMessages')) return false
@@ -119,10 +135,10 @@ export async function sendMessagesToChat(messages) {
 
 // If we're already logged in (e.g. after the login redirect), grab the profile
 // silently without triggering another login.
-export async function getProfileIfLoggedIn() {
-  if (!LIFF_ID) return null
+export async function getProfileIfLoggedIn(liffId = DEFAULT_LIFF_ID) {
+  if (!liffId) return null
   try {
-    const liff = await initLiff()
+    const liff = await initLiff(liffId)
     if (!liff.isLoggedIn()) return null
     const profile = await liff.getProfile()
     const p = {
