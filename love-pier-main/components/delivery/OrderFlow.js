@@ -659,9 +659,11 @@ export default function OrderFlow({
   // Once the customer commits to ordering (past the welcome screen), hide
   // the site nav/footer so the flow reads as a dedicated full-screen app
   // rather than a webpage with marketing chrome wrapped around it.
+  // Pre Order is opened from the LINE Rich Menu and never browsed as a web
+  // page, so it hides the chrome from its very first screen.
   useEffect(() => {
-    setChromeHidden(step !== 'welcome')
-  }, [step, setChromeHidden])
+    setChromeHidden(preOrderOnly || step !== 'welcome')
+  }, [preOrderOnly, step, setChromeHidden])
   // Restore normal chrome if the customer navigates away entirely (separate
   // effect so this only fires on unmount, not on every step change).
   useEffect(() => () => setChromeHidden(false), [setChromeHidden])
