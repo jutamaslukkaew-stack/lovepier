@@ -13,6 +13,11 @@
 // / handoff_2026_08_25 in state.json and pages/member.js's own call sites.
 const DEFAULT_LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || ''
 export const MEMBER_LIFF_ID = process.env.NEXT_PUBLIC_MEMBER_LIFF_ID || ''
+// Pre Order's own LIFF app, Endpoint URL /preorder. Without it /preorder has
+// to borrow the /delivery app and bounce through that endpoint to log in,
+// which is what stranded customers on a blank bridge screen. Optional: when
+// it is unset the bridge path still works.
+export const PREORDER_LIFF_ID = process.env.NEXT_PUBLIC_PREORDER_LIFF_ID || ''
 // Google Apps Script Web App that logs LINE customers into a Google Sheet.
 const SHEETS_WEBHOOK = process.env.NEXT_PUBLIC_SHEETS_WEBHOOK_URL || ''
 
@@ -177,10 +182,10 @@ export async function loginAndGetProfile({ liffId = DEFAULT_LIFF_ID, ownEndpoint
 
 // Send messages into the LINE chat the LIFF was opened from (works only inside
 // the LINE app). Best-effort: returns false when unavailable instead of throwing.
-export async function sendMessagesToChat(messages) {
-  if (!DEFAULT_LIFF_ID) return false
+export async function sendMessagesToChat(messages, liffId = DEFAULT_LIFF_ID) {
+  if (!liffId) return false
   try {
-    const liff = await initLiff()
+    const liff = await initLiff(liffId)
     if (!liff.isApiAvailable || !liff.isApiAvailable('sendMessages')) return false
     await liff.sendMessages(messages)
     return true

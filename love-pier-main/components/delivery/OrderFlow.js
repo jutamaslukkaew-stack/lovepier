@@ -19,7 +19,7 @@ import PageHero from '../PageHero'
 import { useLanguage } from '../../lib/language'
 import { useCart } from '../../lib/cart'
 import { useChrome } from '../../lib/chrome'
-import { getCachedLiffProfile, hasTriedLiffBridge, isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessagesToChat, closeLiffWindow } from '../../lib/liff'
+import { getCachedLiffProfile, hasTriedLiffBridge, isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessagesToChat, closeLiffWindow, PREORDER_LIFF_ID } from '../../lib/liff'
 import { setDeliverySessionProfile, setDeliverySessionDistance } from '../../lib/deliverySession'
 import { buildPaymentPayload } from '../../lib/promptpay'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
@@ -642,6 +642,13 @@ export default function OrderFlow({
   const { items, addItem, removeItem, updateNote, updateOption, clearCart, totalQty, totalPrice } = useCart()
   const { setHidden: setChromeHidden } = useChrome()
 
+  // Pre Order authenticates through its own LIFF app when one is configured,
+  // so it logs in on its own URL instead of bouncing through /delivery's
+  // endpoint. Falling back to `undefined` keeps every delivery call site on
+  // lib/liff's DEFAULT_LIFF_ID exactly as before.
+  const liffId = preOrderOnly && PREORDER_LIFF_ID ? PREORDER_LIFF_ID : undefined
+  const liffEndpointPath = liffId ? '/preorder' : '/delivery'
+
   // Delivery and Pre Order have different catalogues. Never carry lines from
   // one route into the other's checkout through the shared local cart.
   useEffect(() => {
@@ -859,7 +866,7 @@ export default function OrderFlow({
   // in an external browser LINE may show its required consent/login screen.
   // The welcome button remains only as a recovery action if LINE itself fails.
   useEffect(() => {
-    if (!isLiffConfigured() || triedSilentLoginRef.current) return
+    if (!isLiffConfigured(liffId) || triedSilentLoginRef.current) return
     triedSilentLoginRef.current = true
     const cached = getCachedLiffProfile()
     if (cached) {
@@ -875,8 +882,8 @@ export default function OrderFlow({
     const loginTimeout = window.setTimeout(() => {
       setLoginPhase((phase) => (phase === 'logging-in' ? 'failed' : phase))
     }, 12000)
-    getProfileIfLoggedIn()
-      .then((existing) => existing || loginAndGetProfile())
+    getProfileIfLoggedIn(liffId)
+      .then((existing) => existing || loginAndGetProfile({ liffId, ownEndpointPath: liffEndpointPath }))
       .then((p) => {
         if (!p) {
           // No profile and no navigation left to make: the endpoint bridge has
@@ -1037,13 +1044,13 @@ export default function OrderFlow({
   // ── Step 1: welcome + LINE login ─────────────────────────────────────
   async function handleStart() {
     if (!profile) {
-      if (!isLiffConfigured()) {
+      if (!isLiffConfigured(liffId)) {
         setLoginPhase('failed')
         return
       }
       setLoginPhase('logging-in')
       try {
-        const p = await loginAndGetProfile()
+        const p = await loginAndGetProfile({ liffId, ownEndpointPath: liffEndpointPath })
         if (p) {
           setProfile(p)
           setDeliverySessionProfile(p)
@@ -1350,7 +1357,7 @@ export default function OrderFlow({
         deliveryMethod,
         scheduledLabel,
       })
-      const customerSentOrder = await sendMessagesToChat([orderFlex])
+      const customerSentOrder = await sendMessagesToChat([orderFlex], liffId)
       setSentToLine(customerSentOrder || Boolean(data.sentToLine))
 
       setCompleted({
@@ -1405,7 +1412,7 @@ export default function OrderFlow({
               total: completed?.total || data.amount || 0,
               pointsEarned: data.pointsEarned || completed?.pointsEarned || 0,
             }),
-          ])
+          ], liffId)
         } else if (data.ok && data.stored && !data.error) {
           setSlipStatus('stored')
         } else {
@@ -1531,7 +1538,7 @@ export default function OrderFlow({
   // waiting. Outside LINE there is no window to close, so fall back to the
   // site's front page rather than leaving a button that does nothing.
   async function finishOrder() {
-    const closed = await closeLiffWindow()
+    const closed = await closeLiffWindow(liffId)
     if (!closed) window.location.href = '/'
   }
 
