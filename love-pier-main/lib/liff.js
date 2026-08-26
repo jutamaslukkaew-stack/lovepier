@@ -27,11 +27,37 @@ let _sheetLogged = false
 
 export const LIFF_RETURN_TO_KEY = 'love-pier:liff-return-to'
 export const LIFF_PROFILE_KEY = 'love-pier:liff-profile'
+// One bridge attempt per browser session. Without this, a page that needs a
+// profile redirects to the /delivery endpoint, and an endpoint that cannot
+// authenticate sends the customer back — a ping-pong that shows as a blank
+// screen inside the LINE webview with no way out.
+export const LIFF_BRIDGE_TRIED_KEY = 'love-pier:liff-bridge-tried'
+
+// True once this session has bounced through the registered endpoint without
+// coming back with a profile — the signal that LINE login is not going to
+// happen here and the caller should stop waiting for one.
+export function hasTriedLiffBridge() {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.sessionStorage.getItem(LIFF_BRIDGE_TRIED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function clearLiffBridgeAttempt() {
+  if (typeof window === 'undefined') return
+  try {
+    window.sessionStorage.removeItem(LIFF_BRIDGE_TRIED_KEY)
+  } catch {}
+}
 
 export function cacheLiffProfile(profile) {
   if (typeof window === 'undefined' || !profile?.userId || !profile?.accessToken) return
   try {
     window.sessionStorage.setItem(LIFF_PROFILE_KEY, JSON.stringify(profile))
+    // Authentication worked, so a later page in this session may bridge again.
+    window.sessionStorage.removeItem(LIFF_BRIDGE_TRIED_KEY)
   } catch {}
 }
 
@@ -114,9 +140,18 @@ export async function loginAndGetProfile({ liffId = DEFAULT_LIFF_ID, ownEndpoint
   // before returning here. Doing this before liff.init() avoids the endpoint
   // mismatch that previously surfaced as E-LIFF on /preorder.
   if (typeof window !== 'undefined' && window.location.pathname !== ownEndpointPath) {
+    // Already bounced through the endpoint once this session and still have no
+    // profile: bridging again would loop. Let the caller carry on without a
+    // LINE identity instead (the welcome step keeps a manual login button).
+    let alreadyTried = false
+    try {
+      alreadyTried = window.sessionStorage.getItem(LIFF_BRIDGE_TRIED_KEY) === '1'
+    } catch {}
+    if (alreadyTried) return null
     const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`
     try {
       window.sessionStorage.setItem(LIFF_RETURN_TO_KEY, returnTo)
+      window.sessionStorage.setItem(LIFF_BRIDGE_TRIED_KEY, '1')
     } catch {}
     const bridge = new URL(ownEndpointPath, window.location.origin)
     bridge.searchParams.set('__liff_return_to', returnTo)

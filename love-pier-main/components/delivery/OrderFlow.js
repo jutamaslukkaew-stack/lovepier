@@ -19,7 +19,7 @@ import PageHero from '../PageHero'
 import { useLanguage } from '../../lib/language'
 import { useCart } from '../../lib/cart'
 import { useChrome } from '../../lib/chrome'
-import { getCachedLiffProfile, isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessagesToChat, closeLiffWindow } from '../../lib/liff'
+import { getCachedLiffProfile, hasTriedLiffBridge, isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessagesToChat, closeLiffWindow } from '../../lib/liff'
 import { setDeliverySessionProfile, setDeliverySessionDistance } from '../../lib/deliverySession'
 import { buildPaymentPayload } from '../../lib/promptpay'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
@@ -869,15 +869,35 @@ export default function OrderFlow({
       return
     }
     setLoginPhase('logging-in')
+    // liff.init() can hang (wrong endpoint, blocked webview) and leave the
+    // start button disabled and captioned "logging in" for good. Give LINE a
+    // window, then hand the customer back a button they can actually press.
+    const loginTimeout = window.setTimeout(() => {
+      setLoginPhase((phase) => (phase === 'logging-in' ? 'failed' : phase))
+    }, 12000)
     getProfileIfLoggedIn()
       .then((existing) => existing || loginAndGetProfile())
       .then((p) => {
-        if (!p) return // navigation to LINE Login or the registered endpoint
+        if (!p) {
+          // No profile and no navigation left to make: the endpoint bridge has
+          // already had its turn this session. Stop showing "logging in…" and
+          // let the welcome step offer its manual retry instead.
+          if (hasTriedLiffBridge()) {
+            window.clearTimeout(loginTimeout)
+            setLoginPhase('failed')
+          }
+          return // otherwise: navigating to LINE Login or the endpoint
+        }
+        window.clearTimeout(loginTimeout)
         setProfile(p)
         setDeliverySessionProfile(p)
         setLoginPhase('idle')
       })
-      .catch(() => setLoginPhase('failed'))
+      .catch(() => {
+        window.clearTimeout(loginTimeout)
+        setLoginPhase('failed')
+      })
+    return () => window.clearTimeout(loginTimeout)
   }, [])
 
   // As soon as we know who the customer is via LINE (either an explicit
