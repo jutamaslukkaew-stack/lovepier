@@ -184,6 +184,58 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
       </div>
 
       <div className="border-t pt-5 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-medium text-sm">ค่าแนะนำสำหรับตัวแทน</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              ตัวแทนได้ส่วนแบ่งจากออเดอร์ของลูกค้าที่ตัวเองชวนเข้ามา นับเฉพาะออเดอร์ที่ชำระเงินแล้ว
+              และคิดจากค่าอาหารหลังหักส่วนลด ไม่รวมค่าจัดส่ง
+            </p>
+          </div>
+          <Switch
+            checked={form.referralEnabled}
+            onCheckedChange={(v) => set('referralEnabled', v)}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>ค่าแนะนำ (%)</Label>
+            <Input
+              value={form.referralPercent}
+              onChange={(e) => set('referralPercent', e.target.value)}
+              placeholder="5"
+              inputMode="decimal"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>นับกี่เดือนหลังลูกค้าเข้าระบบ</Label>
+            <Input
+              value={form.referralMonths}
+              onChange={(e) => set('referralMonths', e.target.value)}
+              placeholder="6"
+              inputMode="numeric"
+            />
+          </div>
+          <div className="space-y-1.5 col-span-2">
+            <Label>จำกัดลูกทีมต่อตัวแทน (0 = ไม่จำกัด)</Label>
+            <Input
+              value={form.referralMaxDownline}
+              onChange={(e) => set('referralMaxDownline', e.target.value)}
+              placeholder="0"
+              inputMode="numeric"
+            />
+          </div>
+        </div>
+        {/* The system totals the figure up; it never transfers anything. Said
+            here so nobody expects money to move on its own. */}
+        <p className="-mt-1 text-xs text-muted-foreground">
+          {form.referralEnabled
+            ? 'เปิดอยู่ — ระบบจะบันทึกว่าใครชวนใครและรวมยอดให้ที่หน้า ค่าแนะนำ · ร้านโอนเงินเอง ระบบไม่โอนให้'
+            : 'ปิดอยู่ — ยังไม่บันทึกผู้แนะนำรายใหม่ และหน้ารายงานจะว่าง (ข้อมูลเดิมไม่ถูกลบ)'}
+        </p>
+      </div>
+
+      <div className="border-t pt-5 space-y-4">
         <div>
           <p className="font-medium text-sm">สมาชิกหน้าร้าน (Love Pier ID)</p>
           <p className="text-xs text-muted-foreground mt-0.5">

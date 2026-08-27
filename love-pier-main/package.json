@@ -19,6 +19,7 @@
     "db:migrate-preorder-descriptions": "node scripts/apply-preorder-descriptions-migration.mjs --apply",
     "db:migrate-tier-catalog": "node scripts/apply-tier-catalog-migration.mjs --apply",
     "db:migrate-group-invites": "node scripts/apply-group-invites-migration.mjs --apply",
+    "db:migrate-referrals": "node scripts/apply-referrals-migration.mjs --apply",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx --env-file=.env.local lib/db/seed.ts",

@@ -25,6 +25,8 @@ import { inviteUrl } from '@/lib/invites'
 // actual product here — everything else is bookkeeping around them.
 
 type TierOption = { key: string; labelTh: string; percent: number }
+/** Candidates for "this link belongs to an agent" (0017). */
+export type AgentOption = { id: string; name: string; phone: string }
 
 // Same source as lib/orderFlex.js, and deliberately NOT window.location.origin:
 // an admin working on localhost would otherwise generate a QR pointing at
@@ -64,7 +66,15 @@ function InviteQr({ url }: { url: string }) {
   return <img src={dataUrl} alt="QR ลิงก์เชิญ" className="h-48 w-48 rounded-md border bg-white" />
 }
 
-export function InviteManager({ initial, tiers }: { initial: InviteRow[]; tiers: TierOption[] }) {
+export function InviteManager({
+  initial,
+  tiers,
+  customers,
+}: {
+  initial: InviteRow[]
+  tiers: TierOption[]
+  customers: AgentOption[]
+}) {
   const [pending, startTransition] = useTransition()
   const [creating, setCreating] = useState(false)
   const [showQr, setShowQr] = useState<string | null>(null)
@@ -74,7 +84,19 @@ export function InviteManager({ initial, tiers }: { initial: InviteRow[]; tiers:
     maxUses: '',
     expiresAt: '',
     tierExpiresAt: '',
+    ownerCustomerId: '',
   })
+  const [agentQuery, setAgentQuery] = useState('')
+  const agentMatches = agentQuery.trim()
+    ? customers
+        .filter(
+          (c) =>
+            c.name.toLowerCase().includes(agentQuery.trim().toLowerCase()) ||
+            c.phone.includes(agentQuery.trim())
+        )
+        .slice(0, 6)
+    : []
+  const pickedAgent = customers.find((c) => c.id === draft.ownerCustomerId) || null
   const router = useRouter()
 
   function run(action: () => Promise<{ ok: boolean; error?: string }>, success: string, done?: () => void) {
@@ -124,6 +146,11 @@ export function InviteManager({ initial, tiers }: { initial: InviteRow[]; tiers:
                   <span className="text-sm">→ {inv.tierLabelTh}</span>
                 </div>
                 {inv.label && <p className="mt-1 text-sm text-muted-foreground">{inv.label}</p>}
+                {inv.ownerCustomerId && (
+                  <p className="mt-1 text-sm">
+                    <span className="text-muted-foreground">ตัวแทน:</span> {inv.ownerName || '—'}
+                  </p>
+                )}
                 <p className="mt-1 text-xs text-muted-foreground">
                   ใช้แล้ว {inv.useCount}
                   {inv.maxUses == null ? ' ครั้ง (ไม่จำกัด)' : ` / ${inv.maxUses} ครั้ง`}
@@ -223,6 +250,54 @@ export function InviteManager({ initial, tiers }: { initial: InviteRow[]; tiers:
                 onChange={(e) => setDraft({ ...draft, expiresAt: e.target.value })}
               />
             </label>
+            <div className="text-sm sm:col-span-2">
+              <span className="text-xs text-muted-foreground">ตัวแทนเจ้าของลิงก์ (ไม่บังคับ)</span>
+              {pickedAgent ? (
+                <div className="mt-1 flex items-center justify-between gap-3 rounded-md bg-muted px-3 py-2">
+                  <span className="min-w-0 truncate">
+                    <span className="font-medium">{pickedAgent.name || '—'}</span>{' '}
+                    <span className="text-muted-foreground">{pickedAgent.phone}</span>
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setDraft({ ...draft, ownerCustomerId: '' })
+                      setAgentQuery('')
+                    }}
+                  >
+                    เอาออก
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Input
+                    className="mt-1"
+                    placeholder="ค้นหาชื่อหรือเบอร์โทรของตัวแทน"
+                    value={agentQuery}
+                    onChange={(e) => setAgentQuery(e.target.value)}
+                  />
+                  {agentMatches.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setDraft({ ...draft, ownerCustomerId: c.id })}
+                      className="mt-1 flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left text-sm hover:bg-muted"
+                    >
+                      <span className="min-w-0 truncate">
+                        <span className="font-medium">{c.name || '—'}</span>{' '}
+                        <span className="text-muted-foreground">{c.phone}</span>
+                      </span>
+                    </button>
+                  ))}
+                </>
+              )}
+              {/* Said at the point of choosing: an ordinary campaign link
+                  without an owner earns nobody anything, and that is fine. */}
+              <span className="mt-1 block text-[11px] text-muted-foreground">
+                ใส่เมื่อเป็นลิงก์ของตัวแทน เพื่อให้ระบบนับค่าแนะนำให้ · ลิงก์ทั่วไปเว้นว่างไว้
+              </span>
+            </div>
             <label className="text-sm sm:col-span-2">
               <span className="text-xs text-muted-foreground">สิทธิ์ของลูกค้าหมดอายุวันที่ (เว้นว่าง = ไม่หมด)</span>
               <Input
@@ -250,11 +325,13 @@ export function InviteManager({ initial, tiers }: { initial: InviteRow[]; tiers:
                         // through that whole day, so expire it at the end.
                         expiresAt: draft.expiresAt ? `${draft.expiresAt}T23:59:59+07:00` : null,
                         tierExpiresAt: draft.tierExpiresAt || null,
+                        ownerCustomerId: draft.ownerCustomerId || null,
                       }),
                     'สร้างลิงก์แล้ว',
                     () => {
                       setCreating(false)
-                      setDraft({ tierKey: tiers[0]?.key ?? '', label: '', maxUses: '', expiresAt: '', tierExpiresAt: '' })
+                      setAgentQuery('')
+                      setDraft({ tierKey: tiers[0]?.key ?? '', label: '', maxUses: '', expiresAt: '', tierExpiresAt: '', ownerCustomerId: '' })
                     }
                   )
                 }

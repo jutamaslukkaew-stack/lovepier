@@ -232,6 +232,14 @@ export const customers = pgTable(
     // Optional end date for a special tier. Expired tiers are treated as
     // general at pricing time; the original tier remains for admin reporting.
     tierExpiresAt: date('tier_expires_at'),
+    // Who recruited this customer (0017), set once and never rewritten —
+    // opening a second agent's link does not change owner. Self-reference, so
+    // no `references()` helper: drizzle cannot express a FK to the table being
+    // defined inline, and the constraint lives in the migration.
+    referredByCustomerId: uuid('referred_by_customer_id'),
+    // When they were recruited — the six-month referral window counts from
+    // here, not from their first order and not from createdAt.
+    referredAt: timestamp('referred_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -463,6 +471,30 @@ export const groupInviteRedemptions = pgTable(
     oncePerCustomer: uniqueIndex('group_invite_redemptions_once_idx').on(t.inviteId, t.customerId),
   })
 )
+
+// What the shop has already paid each agent (0017). A running ledger of
+// payments, not a per-period statement: outstanding = accrued from orders −
+// sum of these. See the migration for why.
+export const referralPayouts = pgTable(
+  'referral_payouts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    agentCustomerId: uuid('agent_customer_id')
+      .notNull()
+      .references(() => customers.id, { onDelete: 'cascade' }),
+    amount: integer('amount').notNull(),
+    // What the admin was looking at when they paid — informational only.
+    orderCount: integer('order_count').notNull().default(0),
+    note: text('note').notNull().default(''),
+    paidBy: text('paid_by').notNull().default(''),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    agentIdx: index('referral_payouts_agent_idx').on(t.agentCustomerId, t.createdAt),
+  })
+)
+
+export type ReferralPayout = typeof referralPayouts.$inferSelect
 
 export type GroupInvite = typeof groupInvites.$inferSelect
 export type NewGroupInvite = typeof groupInvites.$inferInsert

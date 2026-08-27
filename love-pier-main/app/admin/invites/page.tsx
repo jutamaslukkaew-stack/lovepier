@@ -1,4 +1,5 @@
 import { listInvites, listSelfServiceTiers } from '@/app/admin/actions/invites'
+import { listCustomers } from '@/app/admin/actions/customers'
 import { getShopSettings } from '@/lib/settings'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { InviteManager } from '@/components/admin/invite-manager'
@@ -8,10 +9,11 @@ export const dynamic = 'force-dynamic'
 // Invite links (phase 2). ผัง 1's right-hand path: the admin mints a link,
 // sends it into LINE, and the customer puts themselves in the group.
 export default async function AdminInvitesPage() {
-  const [result, tiers, settings] = await Promise.all([
+  const [result, tiers, settings, customers] = await Promise.all([
     listInvites(),
     listSelfServiceTiers(),
     getShopSettings(),
+    listCustomers(),
   ])
 
   return (
@@ -50,7 +52,12 @@ export default async function AdminInvitesPage() {
         <Card>
           <CardHeader><CardTitle className="text-base">ลิงก์ทั้งหมด</CardTitle></CardHeader>
           <CardContent>
-            <InviteManager initial={result.invites} tiers={tiers} />
+            <InviteManager
+              initial={result.invites}
+              tiers={tiers}
+              // Only what the agent picker searches on.
+              customers={customers.map((c) => ({ id: c.id, name: c.name, phone: c.phone }))}
+            />
           </CardContent>
         </Card>
       ) : (

@@ -29,6 +29,10 @@ export type InviteRow = {
   tierExpiresAt: string | null
   isActive: boolean
   status: 'ok' | 'inactive' | 'expired' | 'exhausted'
+  // The agent this link belongs to (0017). Null for an ordinary campaign
+  // link that earns nobody a referral fee.
+  ownerCustomerId: string | null
+  ownerName: string
   createdAt: string
 }
 
@@ -56,6 +60,9 @@ function generateCode() {
 function revalidateInviteConsumers() {
   revalidatePath('/admin/invites')
   revalidatePath('/admin/tiers')
+  // An agent's link list feeds the referral report's "where did this downline
+  // come from" column.
+  revalidatePath('/admin/referrals')
 }
 
 export async function listInvites(): Promise<
@@ -67,9 +74,12 @@ export async function listInvites(): Promise<
     rows = await db.execute(sql`
       select i.id, i.code, i.tier_key, i.label, i.max_uses, i.use_count,
         i.expires_at, i.tier_expires_at, i.is_active, i.created_at,
-        t.label_th as tier_label_th
+        i.owner_customer_id,
+        t.label_th as tier_label_th,
+        coalesce(nullif(o.name, ''), o.phone, '') as owner_name
       from group_invites i
       left join customer_tiers t on t.key = i.tier_key
+      left join customers o on o.id = i.owner_customer_id
       order by i.created_at desc
     `)
   } catch {
@@ -97,6 +107,8 @@ export async function listInvites(): Promise<
       tierExpiresAt: r.tier_expires_at ? String(r.tier_expires_at).slice(0, 10) : null,
       isActive: invite.isActive,
       status: inviteStatus(invite, now),
+      ownerCustomerId: r.owner_customer_id ? String(r.owner_customer_id) : null,
+      ownerName: String(r.owner_name ?? ''),
       createdAt: new Date(r.created_at as string).toISOString(),
     }
   })
@@ -118,6 +130,8 @@ export async function createInvite(input: {
   maxUses?: number | null
   expiresAt?: string | null
   tierExpiresAt?: string | null
+  /** The agent who owns this link (0017). Optional. */
+  ownerCustomerId?: string | null
 }) {
   const user = await requireUser()
   const tiers = await getTierCatalog()
@@ -150,6 +164,16 @@ export async function createInvite(input: {
     return { ok: false as const, error: 'วันหมดอายุสิทธิ์ไม่ถูกต้อง' }
   }
 
+  // An owner has to be a real customer: the column is a FK, and failing here
+  // with a sentence beats a foreign-key violation reaching the admin.
+  const ownerCustomerId = input.ownerCustomerId?.trim() || null
+  if (ownerCustomerId) {
+    const owner = await db.execute(sql`select id from customers where id = ${ownerCustomerId}::uuid limit 1`)
+    if ((owner as unknown as unknown[]).length === 0) {
+      return { ok: false as const, error: 'ไม่พบลูกค้าที่เลือกเป็นตัวแทน' }
+    }
+  }
+
   // Retry on the unique-code collision rather than trusting 49 bits blindly.
   // At the shop's scale this loop effectively never runs twice; it exists so
   // that if it ever does, the admin gets a link instead of an error.
@@ -158,10 +182,11 @@ export async function createInvite(input: {
     try {
       await db.execute(sql`
         insert into group_invites
-          (code, tier_key, label, max_uses, expires_at, tier_expires_at, created_by)
+          (code, tier_key, label, max_uses, expires_at, tier_expires_at,
+           owner_customer_id, created_by)
         values (${code}, ${tier.key}, ${String(input.label || '').trim()},
           ${maxUses}, ${expiresAt}::timestamptz, ${tierExpiresAt}::date,
-          ${user.email || user.id})
+          ${ownerCustomerId}::uuid, ${user.email || user.id})
       `)
       revalidateInviteConsumers()
       return { ok: true as const, code }

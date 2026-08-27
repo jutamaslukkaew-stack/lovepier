@@ -1,6 +1,7 @@
 import { db } from './db'
 import { settings } from './db/schema'
 import { getTierCatalog, percentByTier } from './tierCatalog'
+import { DEFAULT_REFERRAL_MONTHS, DEFAULT_REFERRAL_PERCENT } from './referrals'
 import { DEFAULT_DELIVERY_FEE_TIERS } from './deliveryFee'
 // Safe to import here: lib/preorder.js is pure and imports nothing at all.
 import { DEFAULT_CLOSE_TIME, DEFAULT_OPEN_TIME, parseClosedDays } from './preorder'
@@ -49,6 +50,22 @@ export const SETTING_KEYS = {
   tierDiscountCondo: 'tier_discount_condo',
   tierDiscountScc: 'tier_discount_scc',
   tierDiscountStaff: 'tier_discount_staff',
+  // ── Referral fees for agents (0017, plan ผัง 3) ──────────────────────
+  // Master switch, off by default like memberDiscountEnabled above: the
+  // reporting ships inert and the shop turns it on once the rate is agreed.
+  // Turning it off stops NEW referrals being recorded and blanks the report;
+  // it does not erase who referred whom, so switching back on resumes.
+  referralEnabled: 'referral_enabled',
+  // % of post-discount food (never delivery) that an agent earns on a
+  // downline's paid order, and how many months the agent keeps earning it.
+  // The plan states 5% / 6 months as an assumption to confirm, which is
+  // exactly why they are settings rather than constants.
+  referralPercent: 'referral_percent',
+  referralMonths: 'referral_months',
+  // Cap on how many people one agent may recruit. 0 = no cap, which is where
+  // the plan left it: "ยังไม่จำกัดจำนวนลูกทีมต่อตัวแทน ... แต่เตรียมช่องไว้ให้
+  // เปิดใช้ทีหลังได้". This is that provision.
+  referralMaxDownline: 'referral_max_downline',
   // ── In-store (Love Pier ID QR scanned at the counter — /admin/scan) ──
   // Deliberately separate from the delivery rates above: the shop wanted a
   // different, more generous rate for walk-ins, and coupling them would mean
@@ -139,6 +156,18 @@ export async function getShopSettings() {
     // for an existing shop this map has the same keys and the same numbers it
     // had before — which is what makes the move price-neutral.
     tierDiscountPercent: percentByTier(tiers),
+    referralEnabled: m[SETTING_KEYS.referralEnabled] === 'true',
+    referralPercent: m[SETTING_KEYS.referralPercent]
+      ? num(m[SETTING_KEYS.referralPercent])
+      : DEFAULT_REFERRAL_PERCENT,
+    referralMonths: m[SETTING_KEYS.referralMonths]
+      ? num(m[SETTING_KEYS.referralMonths])
+      : DEFAULT_REFERRAL_MONTHS,
+    // 0 is meaningful (no cap) and is also the default, so `||` would be
+    // harmless here — spelled out anyway to match the keys above.
+    referralMaxDownline: m[SETTING_KEYS.referralMaxDownline]
+      ? num(m[SETTING_KEYS.referralMaxDownline])
+      : 0,
     inStorePointsPerBaht: m[SETTING_KEYS.inStorePointsPerBaht]
       ? num(m[SETTING_KEYS.inStorePointsPerBaht])
       : 1,

@@ -3,6 +3,7 @@ import { db } from '../../lib/db'
 import { customers, orders } from '../../lib/db/schema'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
 import { loadInviteContext, publicInvite } from '../../lib/inviteLookup'
+import { getShopSettings } from '../../lib/settings'
 import { tierLabel } from '../../lib/tiers'
 
 // Redeem an invite link (0016).
@@ -70,19 +71,28 @@ export default async function handler(req, res) {
   if (!verifiedLine) return res.status(401).json({ error: 'auth', message: 'เซสชัน LINE หมดอายุ' })
   const lineUserId = verifiedLine.userId
 
+  const settings = await getShopSettings()
+
   try {
     const result = await db.transaction(async (tx) => {
       // 1. Find-or-create this LINE user's customer row. Same find-or-attach
       //    shape as /api/member: check lineUserId first so a returning
       //    customer is never split across two rows.
       const [byLine] = await tx
-        .select({ id: customers.id, tier: customers.tier, name: customers.name })
+        .select({
+          id: customers.id,
+          tier: customers.tier,
+          name: customers.name,
+          referredByCustomerId: customers.referredByCustomerId,
+        })
         .from(customers)
         .where(eq(customers.lineUserId, lineUserId))
         .limit(1)
 
       let customerId = byLine?.id
       let previousTier = byLine?.tier || 'general'
+      // Undefined for a brand-new row, which is the same as "no referrer yet".
+      const existingReferrer = byLine?.referredByCustomerId || null
 
       if (!customerId) {
         // No row yet. Reuse a phone this LINE account has already ordered
@@ -176,7 +186,44 @@ export default async function handler(req, res) {
         `)
       }
 
-      return { customerId, previousTier, locked }
+      // 4. WHO INVITED THEM (0017, plan ผัง 3). The invite's owner becomes
+      //    this customer's agent — but only if they do not already have one:
+      //    "ใครชวนก็เป็นคนนั้นตลอด เข้าลิงก์ตัวแทนคนอื่นทีหลังไม่เปลี่ยนเจ้าของ
+      //    เพื่อกันการแย่งลูกทีม". So this is an UPDATE ... WHERE
+      //    referred_by_customer_id IS NULL, not an assignment.
+      //
+      //    Nothing here can fail the join. A customer who got their discount
+      //    must keep it even if the attribution could not be written, so every
+      //    guard below simply skips the write.
+      let referralRecorded = false
+      const agentId = invite.owner_customer_id
+      if (settings.referralEnabled && agentId && !existingReferrer && agentId !== customerId) {
+        // The cap the plan left open ("ยังไม่จำกัดจำนวนลูกทีมต่อตัวแทน ... แต่
+        // เตรียมช่องไว้"). 0 means no cap, which is the default.
+        const cap = Math.max(0, Number(settings.referralMaxDownline) || 0)
+        let underCap = true
+        if (cap > 0) {
+          const [row] = await tx.execute(sql`
+            select count(*)::int as n from customers
+            where referred_by_customer_id = ${agentId}::uuid
+          `)
+          underCap = Number(row?.n ?? 0) < cap
+        }
+        if (underCap) {
+          // WHERE ... IS NULL is the guard, not the `if` above: two links
+          // opened at once would both pass the read, and only one may win.
+          const claimed = await tx.execute(sql`
+            update customers
+            set referred_by_customer_id = ${agentId}::uuid, referred_at = now(),
+              updated_at = now()
+            where id = ${customerId}::uuid and referred_by_customer_id is null
+            returning id
+          `)
+          referralRecorded = claimed.length > 0
+        }
+      }
+
+      return { customerId, previousTier, locked, referralRecorded }
     })
 
     if (result.raced) {
