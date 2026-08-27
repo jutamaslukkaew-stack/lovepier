@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import Image from 'next/image'
 import Link from 'next/link'
 import Footer from '../components/Footer'
 import PageHero from '../components/PageHero'
@@ -29,15 +30,18 @@ export default function About() {
         quoteMiddle:'ไม่ใช่แค่คาเฟ่ แต่คือ',
         quoteHighlight:'คาเฟ่ติดทะเลที่สวยที่สุดในบางแสน',
         values:'สิ่งที่เราให้ความสำคัญ',
-        standardsEyebrow:'OUR STANDARDS',
-        standardsTitle:'มาตรฐานที่เราใส่ใจในทุกวัน',
-        standardsIntro:'เพราะมื้อที่ดีไม่ได้มีแค่รสชาติ เราจึงดูแลทุกขั้นตอนตั้งแต่วัตถุดิบ ครัว พื้นที่ร้าน ไปจนถึงการบริการ',
+        standardsEyebrow:'LOVE PIER PROMISE',
+        standardsTitle:'สดใหม่ทุกวัน ใส่ใจทุกคำ',
+        standardsIntro:'เพราะอาหารที่ดีเริ่มต้นจากวัตถุดิบที่ดีและความใส่ใจ เราจึงดูแลทุกเมนูด้วยมาตรฐานเดียวกันในทุกวัน',
         standardsItems:[
-          { title:'วัตถุดิบสดใหม่', text:'คัดเลือกวัตถุดิบอย่างใส่ใจ ตรวจสอบคุณภาพก่อนนำมาปรุง และจัดเก็บอย่างเหมาะสม' },
-          { title:'สะอาดทุกขั้นตอน', text:'ดูแลความสะอาดของครัว อุปกรณ์ โต๊ะอาหาร และพื้นที่ส่วนกลางอย่างสม่ำเสมอ' },
-          { title:'ปรุงสดอย่างตั้งใจ', text:'เตรียมอาหารตามมาตรฐานของร้าน ควบคุมรสชาติและคุณภาพให้สม่ำเสมอในทุกจาน' },
-          { title:'บริการและพื้นที่ปลอดภัย', text:'ทีมงานพร้อมดูแลด้วยความสุภาพ รับฟังความต้องการพิเศษ และตรวจพื้นที่ให้พร้อมต้อนรับอยู่เสมอ' },
+          { title:'ไก่ต้มใหม่ทุกวัน', text:'ไก่ทุกตัวปรุงสดใหม่ในแต่ละวัน และไม่เก็บไก่ปรุงสุกข้ามคืน เพื่อให้ทุกจานสด อร่อย และได้คุณภาพตามมาตรฐานของเรา' },
+          { title:'คัดสรรไก่จากสุพรรณบุรี', text:'เราเลือกใช้ไก่จากแหล่งที่ไว้วางใจในจังหวัดสุพรรณบุรี และจัดเก็บแบบแช่แข็งไม่เกิน 3 วันก่อนนำมาปรุง' },
+          { title:'ไม่เติมผงชูรส', text:'ทุกเมนูปรุงอย่างพิถีพิถันโดยไม่เติมผงชูรส ให้รสชาติความอร่อยมาจากวัตถุดิบและสูตรเฉพาะของเรา' },
+          { title:'เค้กสดใหม่ภายใน 3 วัน', text:'เค้กทุกชิ้นจำหน่ายไม่เกิน 3 วันนับจากวันที่ทำ เพื่อรักษารสชาติ เนื้อสัมผัส และคุณภาพที่เราตั้งใจส่งมอบ' },
+          { title:'เบเกอรี่อบใหม่ทุกวัน', text:'ขนมปังและเบเกอรี่อบสดใหม่ในแต่ละวัน ไม่นำสินค้าจากวันก่อนกลับมาวางจำหน่าย' },
         ],
+        standardsClosing:'ทุกคำที่เสิร์ฟ คือความใส่ใจจาก Love Pier Café',
+        standardsSignature:'Made Fresh. Served with Love.',
         contactTitle:'ติดต่อเรา',
         addressLabel:'ที่อยู่',
         addressValue:'800 108 แสนสุข อำเภอเมือง จังหวัดชลบุรี 20130',
@@ -71,15 +75,18 @@ export default function About() {
           quoteMiddle:'不只是咖啡馆，更是',
           quoteHighlight:'邦盛最美的海边咖啡馆',
           values:'我们的坚持',
-          standardsEyebrow:'OUR STANDARDS',
-          standardsTitle:'我们每天坚持的标准',
-          standardsIntro:'一顿好餐不只有味道。我们从食材、厨房、店内环境到服务，认真照顾每一个环节。',
+          standardsEyebrow:'LOVE PIER PROMISE',
+          standardsTitle:'每日新鲜，每一口都用心',
+          standardsIntro:'好食物始于优质食材与细致用心。我们每天都以同一标准认真对待每一道餐点。',
           standardsItems:[
-            { title:'新鲜食材', text:'用心挑选食材，烹调前检查品质，并采用合适的方式储存。' },
-            { title:'全程洁净', text:'定期清洁厨房、器具、餐桌与公共区域。' },
-            { title:'用心现做', text:'依照本店标准制作餐点，让每一份的味道与品质保持稳定。' },
-            { title:'安心服务与空间', text:'团队礼貌服务、倾听特别需求，并持续检查空间，为每位客人做好准备。' },
+            { title:'每日新鲜煮鸡', text:'鸡肉每天新鲜烹制，熟鸡绝不过夜，确保每一份都鲜美并符合我们的品质标准。' },
+            { title:'严选素攀武里鸡肉', text:'我们选用来自素攀武里府可信赖供应源的鸡肉，烹调前冷冻储存不超过 3 天。' },
+            { title:'不添加味精', text:'每道餐点都用心制作，不额外添加味精，让美味来自食材本身与我们的独家配方。' },
+            { title:'蛋糕三日内新鲜供应', text:'所有蛋糕自制作日起不超过 3 天，以保持我们希望呈现的风味、口感与品质。' },
+            { title:'每日新鲜烘焙', text:'面包与烘焙食品每日新鲜出炉，不会将前一天的产品重新上架销售。' },
           ],
+          standardsClosing:'每一口，都是 Love Pier Café 的用心。',
+          standardsSignature:'Made Fresh. Served with Love.',
           contactTitle:'联系我们',
           addressLabel:'地址',
           addressValue:'800 108 Saensuk, Mueang Chonburi, Chonburi 20130',
@@ -112,15 +119,18 @@ export default function About() {
           quoteMiddle:'is not just a cafe, but',
           quoteHighlight:'the most beautiful seaside cafe in Bangsaen',
           values:'What we care about',
-          standardsEyebrow:'OUR STANDARDS',
-          standardsTitle:'The standards we care for every day',
-          standardsIntro:'A good meal is more than taste. We look after every detail, from ingredients and the kitchen to our space and service.',
+          standardsEyebrow:'LOVE PIER PROMISE',
+          standardsTitle:'Fresh every day. Care in every bite.',
+          standardsIntro:'Good food begins with good ingredients and genuine care. Every dish is prepared to the same standard, every day.',
           standardsItems:[
-            { title:'Fresh ingredients', text:'Ingredients are selected with care, checked before preparation, and stored appropriately.' },
-            { title:'Clean at every step', text:'Our kitchen, equipment, tables, and shared spaces are cleaned consistently.' },
-            { title:'Prepared with care', text:'Food is prepared to our house standards for consistent taste and quality in every serving.' },
-            { title:'Thoughtful, safe service', text:'Our team listens to special requests and keeps the space ready and welcoming for every guest.' },
+            { title:'Chicken cooked fresh daily', text:'Every chicken is freshly prepared each day, and cooked chicken is never kept overnight, so every plate is fresh, delicious, and up to our standards.' },
+            { title:'Chicken sourced from Suphan Buri', text:'We select chicken from a trusted source in Suphan Buri and keep it frozen for no more than three days before cooking.' },
+            { title:'No added MSG', text:'Every dish is prepared with care and no added MSG, letting its flavour come from quality ingredients and our own recipes.' },
+            { title:'Cakes served within three days', text:'Every cake is sold within three days of being made to preserve the flavour, texture, and quality we intend to serve.' },
+            { title:'Baked fresh every day', text:'Our breads and baked goods are made fresh daily. Products from the previous day are never returned to the display.' },
           ],
+          standardsClosing:'Every bite we serve carries the care of Love Pier Café.',
+          standardsSignature:'Made Fresh. Served with Love.',
           contactTitle:'Contact Us',
           addressLabel:'Address',
           addressValue:'800 108 Saensuk, Mueang Chonburi, Chonburi 20130',
@@ -159,10 +169,10 @@ export default function About() {
         </div>
       </section>
 
-      {/* Everyday store standards — factual operating commitments, not certification claims. */}
-      <section className="border-b border-black/10 bg-[#f5f3ef] px-4 py-16 reveal sm:px-6 sm:py-20 lg:px-10 lg:py-24">
+      {/* Love Pier Promise — the shop's own daily operating commitments. */}
+      <section className="overflow-hidden border-b border-black/10 bg-[#f5f3ef] px-4 py-16 reveal sm:px-6 sm:py-20 lg:px-10 lg:py-24">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
             <div>
               <p className="mb-3 text-[10px] font-semibold tracking-[0.32em] text-gold-deep">{t.standardsEyebrow}</p>
               <h2 className="font-display text-[clamp(34px,4.5vw,58px)] font-light leading-[1.05] tracking-[-0.02em] text-ink">{t.standardsTitle}</h2>
@@ -170,17 +180,41 @@ export default function About() {
             <p className="max-w-2xl self-end text-[14px] font-light leading-[1.9] text-[#666] sm:text-[15px]">{t.standardsIntro}</p>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:mt-14 lg:grid-cols-4">
+          <div className="mt-10 grid h-[520px] grid-cols-2 grid-rows-2 gap-3 sm:h-[620px] sm:gap-4 lg:mt-14 lg:h-[560px] lg:grid-cols-[1.35fr_0.65fr]">
+            <figure className="group relative row-span-2 overflow-hidden rounded-[1.75rem] bg-[#ddd6ce]">
+              <Image src="/uploads/gallery-chicken-rice-plate.webp" alt={t.standardsItems[0].title} fill sizes="(min-width: 1024px) 63vw, 50vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+              <figcaption className="absolute bottom-0 left-0 right-0 p-5 text-white sm:p-7">
+                <span className="text-[9px] font-semibold tracking-[0.28em] text-white/65">LOVE PIER KITCHEN</span>
+                <p className="mt-1.5 font-display text-[25px] font-light leading-tight sm:text-[34px]">{t.standardsItems[0].title}</p>
+              </figcaption>
+            </figure>
+            <figure className="group relative overflow-hidden rounded-[1.5rem] bg-[#ddd6ce]">
+              <Image src="/uploads/promotion-matcha-tart.webp" alt={t.standardsItems[3].title} fill sizes="(min-width: 1024px) 30vw, 50vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
+            </figure>
+            <figure className="group relative overflow-hidden rounded-[1.5rem] bg-[#ddd6ce]">
+              <Image src="/uploads/gallery-latte-table.webp" alt="Love Pier Café" fill sizes="(min-width: 1024px) 30vw, 50vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
+            </figure>
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-2 lg:grid-cols-3">
             {t.standardsItems.map((item, index) => (
-              <article key={item.title} className="group rounded-2xl border border-black/10 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#b18a54]/35 hover:shadow-[0_14px_36px_rgba(74,53,32,0.07)] sm:p-7">
-                <div className="mb-8 flex items-center justify-between">
+              <article key={item.title} className={`group rounded-2xl border border-black/10 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#b18a54]/35 hover:shadow-[0_14px_36px_rgba(74,53,32,0.07)] sm:p-7 ${index >= 3 ? 'lg:col-span-1' : ''}`}>
+                <div className="mb-7 flex items-center justify-between">
                   <span className="text-[10px] font-semibold tracking-[0.2em] text-gold-deep">0{index + 1}</span>
-                  <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#b18a54]/25 text-sm text-gold-deep">{['◇', '✦', '◎', '⌁'][index]}</span>
+                  <span aria-hidden="true" className="h-px w-8 bg-[#b18a54]/35 transition-all duration-300 group-hover:w-12" />
                 </div>
                 <h3 className="font-display text-[23px] font-normal leading-tight text-ink">{item.title}</h3>
                 <p className="mt-3 text-[13px] font-light leading-[1.75] text-[#666]">{item.text}</p>
               </article>
             ))}
+          </div>
+
+          <div className="relative mt-5 overflow-hidden rounded-[1.75rem] bg-[#4a3520] px-6 py-9 text-center text-white sm:mt-6 sm:px-10 sm:py-12">
+            <span aria-hidden="true" className="absolute -left-10 -top-16 h-40 w-40 rounded-full border border-white/10" />
+            <span aria-hidden="true" className="absolute -bottom-20 -right-8 h-48 w-48 rounded-full border border-white/10" />
+            <p className="font-display text-[clamp(27px,4vw,43px)] font-light italic leading-tight text-[#e4c89d]">{t.standardsSignature}</p>
+            <p className="mx-auto mt-3 max-w-xl text-[13px] font-light leading-relaxed text-white/70 sm:text-[14px]">{t.standardsClosing}</p>
           </div>
         </div>
       </section>
