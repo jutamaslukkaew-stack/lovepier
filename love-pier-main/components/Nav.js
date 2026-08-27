@@ -9,7 +9,6 @@ const COPY = {
     navItems: [
       { href: '/', label: 'Home' },
       { href: '/menu', label: 'Menu' },
-      { href: '/preorder', label: 'Pre-order' },
       { href: '/gallery', label: 'Gallery' },
       { href: '/events', label: 'Events' },
       { href: '/activities', label: 'Activities' },
@@ -22,7 +21,6 @@ const COPY = {
     navItems: [
       { href: '/', label: 'หน้าหลัก' },
       { href: '/menu', label: 'เมนู' },
-      { href: '/preorder', label: 'พรีออเดอร์' },
       { href: '/gallery', label: 'แกลเลอรี' },
       { href: '/events', label: 'อีเวนต์' },
       { href: '/activities', label: 'กิจกรรม' },
@@ -35,7 +33,6 @@ const COPY = {
     navItems: [
       { href: '/', label: '首页' },
       { href: '/menu', label: '菜单' },
-      { href: '/preorder', label: '预约点餐' },
       { href: '/gallery', label: '图库' },
       { href: '/events', label: '活动' },
       { href: '/activities', label: '水上活动' },

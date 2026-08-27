@@ -1002,7 +1002,11 @@ export default function OrderFlow({
   // not to gate a returning customer we could greet immediately. ──────────
   useEffect(() => {
     if (editingInfo || contactMode) return
-    if (step !== 'contact') return
+    if (step !== 'welcome' && step !== 'contact') return
+    // Welcome runs before the silent LIFF effect on the first render. Waiting
+    // here prevents that initial profile=null frame from permanently choosing
+    // the new-customer form before LINE has had a chance to identify them.
+    if (step === 'welcome' && (!profile || lineLookupStatus !== 'done')) return
 
     // A recognized customer with an address on file is asked whether to reuse
     // it — the one question worth a screen of its own, because answering
@@ -1013,7 +1017,12 @@ export default function OrderFlow({
     else if (!profile || lineLookupStatus === 'done') nextMode = 'form'
     if (!nextMode) return // still checking (or hasn't started)
 
-    const timer = setTimeout(() => setContactMode(nextMode), 0)
+    const timer = setTimeout(() => {
+      setContactMode(nextMode)
+      // A returning LINE customer should be welcomed by name as the first
+      // meaningful screen, before the explanatory landing page or menu.
+      if (step === 'welcome' && nextMode === 'popup') setStep('contact')
+    }, 0)
     return () => clearTimeout(timer)
   }, [step, profile, lineLookupStatus, customerRecognized, editingInfo, contactMode, form.address])
 
@@ -1025,10 +1034,13 @@ export default function OrderFlow({
       // Address but no recorded distance — keep the address, still need a
       // fresh reading, so fall through to the form (which starts GPS itself).
       setContactMode('form')
+      if (deliveryMethod == null) setStep('menu')
       return
     }
     await fetchDistanceFromCache(cachedDistanceKm)
-    setStep('summary')
+    // When the greeting is the entry screen there is no cart to summarize
+    // yet. Remember the address/distance, then let them choose their food.
+    setStep(deliveryMethod == null ? 'menu' : 'summary')
   }
 
   // "ใช้ที่อยู่ใหม่" — same identity (name/phone kept), fresh address to be
@@ -1038,7 +1050,11 @@ export default function OrderFlow({
     setForm((f) => ({ ...f, address: '' }))
     setContactMode('form')
     setCachedDistanceKm(null)
-    if (deliveryMethod === 'delivery') startLocating()
+    if (deliveryMethod == null) {
+      setStep('menu')
+    } else if (deliveryMethod === 'delivery') {
+      startLocating()
+    }
   }
 
   // ── Step 1: welcome + LINE login ─────────────────────────────────────
@@ -1546,6 +1562,21 @@ export default function OrderFlow({
   // Step 1 — Welcome
   // ═══════════════════════════════════════════════════════════════════
   if (step === 'welcome') {
+    // Do not flash the long explanatory landing page while the automatic LINE
+    // login/customer lookup is deciding whether this is someone we can greet.
+    // Failed login and genuinely new customers still receive the explanation
+    // and its manual recovery button below.
+    const recognizingCustomer = loginPhase === 'logging-in' || Boolean(profile && lineLookupStatus !== 'done')
+    if (recognizingCustomer) {
+      return (
+        <div className="min-h-[calc(100dvh-var(--nav-h,64px))] bg-[#f5f2ee] flex items-center justify-center px-6">
+          <div className="text-center">
+            <span className="mx-auto block h-8 w-8 animate-spin rounded-full border-2 border-[#4a3520]/20 border-t-[#4a3520]" />
+            <p className="mt-4 text-[13px] text-black/50">{t.loggingIn}</p>
+          </div>
+        </div>
+      )
+    }
     // The CTA deliberately sits BELOW the hero rather than inside it. Tapping
     // it starts a LINE login, and customers were meeting that prompt with no
     // idea why — so the radius and what the button does have to be readable
@@ -1648,7 +1679,7 @@ export default function OrderFlow({
 
     return (
       <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
-        <StepHeader t={t} step={step} onBack={() => setStep('method')} />
+        <StepHeader t={t} step={step} onBack={() => setStep(deliveryMethod == null ? 'welcome' : 'method')} />
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
           <div className={`w-full ${CONTENT_WIDTH}`}>
             {contactMode === 'popup' ? (

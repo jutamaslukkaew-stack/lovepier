@@ -65,7 +65,7 @@ const PROMOTION_COPY = {
     reserve: 'จองที่นั่ง',
     view: 'ดูเมนู',
     month: 'คอมโบแนะนำ',
-    dealsHeading: 'โปรจาก\nเมนู Love Pier',
+    dealsHeading: 'โปรโมชั่นจาก\nLove Pier',
     dealsNote: 'ราคาอ้างอิงจากเมนูปัจจุบัน · ใช้ทานที่ร้าน · ไม่รวมกับโปรอื่น',
     loyalty: 'The Pier Loyalty',
     loyaltyDesc: 'สะสมทุกครั้งที่สั่ง — รวมข้าวมันไก่ กาแฟ และมัทฉะจากเมนู ถึงระดับใหม่แล้วปลดล็อกสิทธิพิเศษ',
@@ -295,7 +295,11 @@ const ADD_LABEL = { th: 'เพิ่มลงตะกร้า', en: 'Add to c
 export default function Promotion({ dbPromotions = [] }) {
   const { lang } = useLanguage()
   const t = PROMOTION_COPY[lang] || PROMOTION_COPY.en
-  const deals = dbPromotions.length ? dealsFromDB(dbPromotions, lang) : t.dealList
+  // The admin catalog is the only source of public promotion cards. An empty
+  // result is meaningful: staff have switched every promotion off. Do not
+  // fall back to the old hard-coded sample cards or disabled offers reappear.
+  const deals = dealsFromDB(dbPromotions, lang)
+  const hasDeals = deals.length > 0
   const dealsHeading = t.dealsHeading
   const [lbIdx, setLbIdx] = useState(null)
   const lbDeal = lbIdx !== null ? deals[lbIdx] : null
@@ -327,9 +331,12 @@ export default function Promotion({ dbPromotions = [] }) {
         <meta name="twitter:image" content="https://www.lovepier.cafe/og-promotion.png" />
       </Head>
 
-      <PageHero title={t.hero.replace('\n', ' ')} />
+      <PageHero title={(hasDeals
+        ? t.hero
+        : lang === 'th' ? 'โปรโมชั่น' : lang === 'zh' ? '优惠' : 'Promotions'
+      ).replace('\n', ' ')} />
 
-      <section className="px-4 pt-8 pb-14 border-b border-black/10 reveal sm:px-6 sm:pt-10 sm:pb-14 lg:px-10 lg:pt-12 lg:pb-20">
+      {hasDeals && <section className="px-4 pt-8 pb-14 border-b border-black/10 reveal sm:px-6 sm:pt-10 sm:pb-14 lg:px-10 lg:pt-12 lg:pb-20">
         <div className="flex justify-between items-end mb-7 gap-8 flex-wrap">
           <div>
             <span className="block text-[10px] tracking-[0.4em] uppercase text-gold mb-3">{t.month}</span>
@@ -340,7 +347,7 @@ export default function Promotion({ dbPromotions = [] }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {deals.map((deal) => (
-            <div key={deal.title} className="flex flex-col bg-white overflow-hidden border border-black/10 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300 cursor-pointer" onClick={() => setLbDeal(deal)}>
+            <div key={deal.title} className="flex flex-col rounded-2xl bg-white overflow-hidden border border-black/10 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(0,0,0,0.06)] transition-all duration-300 cursor-pointer" onClick={() => setLbDeal(deal)}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <div className="relative">
                 <img className="w-full aspect-[4/3] object-cover [filter:saturate(0.7)]" src={deal.img} alt={deal.title} />
@@ -363,7 +370,7 @@ export default function Promotion({ dbPromotions = [] }) {
             </div>
           ))}
         </div>
-      </section>
+      </section>}
 
       {/* ── Water Activity Promos ────────────────────────────────────── */}
       <section className="px-4 py-14 border-b border-black/10 reveal sm:px-6 sm:py-14 lg:px-10 lg:py-20 bg-[#f5f1eb]">
@@ -463,9 +470,9 @@ export default function Promotion({ dbPromotions = [] }) {
         </div>
       </section>
 
-      <section className="bg-bg px-4 py-10 text-center sm:px-6 sm:py-8 lg:px-10 lg:py-12">
+      {hasDeals && <section className="bg-bg px-4 py-10 text-center sm:px-6 sm:py-8 lg:px-10 lg:py-12">
         <p className="text-[11px] text-[#aaa] leading-[1.8] tracking-[0.05em] max-w-[760px] mx-auto">{t.finePrint}</p>
-      </section>
+      </section>}
 
       <Footer tagline={FOOTER_TAGLINES.promotion} />
 

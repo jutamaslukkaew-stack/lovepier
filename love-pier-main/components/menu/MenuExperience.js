@@ -64,6 +64,7 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
   const [activeAnchor, setActiveAnchor] = useState(visibleTabs[0]?.id ?? 'signature')
   const [globalLbIndex, setGlobalLbIndex] = useState(-1)
   const tabScrollRef = useRef(null)
+  const stickyTabRef = useRef(null)
   const [tabDotIndex, setTabDotIndex] = useState(0)
   const TAB_DOT_COUNT = visibleTabs.length
 
@@ -144,9 +145,14 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
   function scrollTo(id) {
     const el = document.getElementById(`menu-section-${id}`)
     if (!el) return
-    const navH = document.querySelector('nav')?.offsetHeight ?? 0
-    const barH = 52
+    // Highlight immediately on tap; IntersectionObserver will keep it in sync
+    // once scrolling settles. In the order wizard the visible top header is
+    // StepHeader, not <nav>, and its measured height is exposed as --nav-h.
+    const cssNavH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h'))
+    const navH = Number.isFinite(cssNavH) ? cssNavH : (document.querySelector('nav')?.offsetHeight ?? 0)
+    const barH = stickyTabRef.current?.offsetHeight ?? 52
     const y = el.getBoundingClientRect().top + window.scrollY - navH - barH - 8
+    setActiveAnchor(id)
     window.scrollTo({ top: y, behavior: 'smooth' })
   }
 
@@ -157,28 +163,29 @@ export default function MenuExperience({ dbMenuData, dbPromotions = [], showAddT
       <MenuHero title={heroTitle} />
 
       {/* Sticky anchor shortcut bar */}
-      <div className="sticky top-[var(--nav-h,64px)] z-50 w-full bg-[#f5f2ee] border-b border-black/10">
+      <div ref={stickyTabRef} className="sticky top-[var(--nav-h,64px)] z-50 w-full bg-[#f5f2ee] border-b border-black/10">
         <div className="relative">
-          {/* Auto margins on the end items, NOT justify-center: they centre the
-              row while it fits and collapse to 0 once it overflows. With
-              justify-center the leading tabs overflow past scrollLeft:0 and
-              become unreachable. */}
-          <div ref={tabScrollRef} className="flex overflow-x-auto gap-2 px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>:first-child]:ml-auto [&>:last-child]:mr-auto">
-            {visibleTabs.map(({ id, label }) => (
-              <button
-                key={id}
-                type="button"
-                data-tab={id}
-                onClick={() => scrollTo(id)}
-                className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer ${
-                  activeAnchor === id
-                    ? 'bg-[#4a3520] text-white shadow-sm shadow-[#4a3520]/20'
-                    : 'bg-[#4a3520]/[0.07] text-[#4a3520]/70 hover:bg-[#4a3520]/15 hover:text-[#4a3520]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+          {/* The outer element owns horizontal scrolling; the inner max-width
+              row owns layout. This remains swipeable on iOS/LINE webviews,
+              unlike auto margins on children of the overflow element. */}
+          <div ref={tabScrollRef} className="overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex w-max min-w-full justify-center gap-2 px-4 py-3">
+              {visibleTabs.map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  data-tab={id}
+                  onClick={() => scrollTo(id)}
+                  className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] sm:text-xs tracking-[0.1em] uppercase font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer ${
+                    activeAnchor === id
+                      ? 'bg-[#4a3520] text-white shadow-sm shadow-[#4a3520]/20'
+                      : 'bg-[#4a3520]/[0.07] text-[#4a3520]/70 hover:bg-[#4a3520]/15 hover:text-[#4a3520]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="lg:hidden pointer-events-none absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-l from-[#f5f2ee] to-transparent" />
         </div>
