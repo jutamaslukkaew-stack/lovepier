@@ -207,6 +207,25 @@ export async function deleteTier(key: string) {
       error: `ยังมีลูกค้า ${count} คนอยู่ในกลุ่มนี้ — ปิดการใช้งานแทนการลบ เพื่อไม่ให้ราคาของพวกเขาเปลี่ยนเอง`,
     }
   }
+  // Invites carry an FK to this row with ON DELETE RESTRICT (0016), so a
+  // group with links in circulation cannot be deleted anyway — catch it here
+  // to say why, rather than surfacing a raw foreign-key violation. Wrapped
+  // because the table does not exist until 0016 has been applied.
+  try {
+    const [inv] = (await db.execute(sql`
+      select count(*)::int as n from group_invites where tier_key = ${key}
+    `)) as unknown as Array<Record<string, unknown>>
+    const invites = Number(inv?.n ?? 0)
+    if (invites > 0) {
+      return {
+        ok: false as const,
+        error: `ยังมีลิงก์เชิญ ${invites} ลิงก์ที่ชี้มากลุ่มนี้ — ลบหรือปิดลิงก์ก่อน`,
+      }
+    }
+  } catch {
+    // 0016 not applied yet: there are no invites to protect.
+  }
+
   const deleted = await db.execute(sql`delete from customer_tiers where key = ${key} returning key`)
   if ((deleted as unknown as unknown[]).length === 0) {
     return { ok: false as const, error: 'ไม่พบกลุ่มนี้' }

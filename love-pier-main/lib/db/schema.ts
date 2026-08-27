@@ -407,6 +407,67 @@ export const customerTiers = pgTable(
 export type CustomerTier = typeof customerTiers.$inferSelect
 export type NewCustomerTier = typeof customerTiers.$inferInsert
 
+// Invite links (0016) — the second way into a customer group, alongside an
+// admin setting it by hand in /admin/customers. Both end at the same write to
+// customers.tier, so the discount cannot depend on how the customer got in.
+export const groupInvites = pgTable(
+  'group_invites',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    // The unguessable part of the URL (/join?code=…). See lib/invites.js.
+    code: text('code').notNull().unique(),
+    // FK to the catalog, unlike customers.tier: an invite pointing at a group
+    // that no longer exists can only fail when a customer taps it.
+    tierKey: text('tier_key')
+      .notNull()
+      .references(() => customerTiers.key, { onDelete: 'restrict' }),
+    label: text('label').notNull().default(''),
+    // NULL = unlimited uses / never expires.
+    maxUses: integer('max_uses'),
+    useCount: integer('use_count').notNull().default(0),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    // How long the customer's DISCOUNT lasts — not how long the link works.
+    tierExpiresAt: date('tier_expires_at'),
+    // Phase 3 (agents). Nothing reads it yet.
+    ownerCustomerId: uuid('owner_customer_id').references(() => customers.id, {
+      onDelete: 'set null',
+    }),
+    isActive: boolean('is_active').notNull().default(true),
+    createdBy: text('created_by').notNull().default(''),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    tierIdx: index('group_invites_tier_idx').on(t.tierKey),
+  })
+)
+
+export const groupInviteRedemptions = pgTable(
+  'group_invite_redemptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    inviteId: uuid('invite_id')
+      .notNull()
+      .references(() => groupInvites.id, { onDelete: 'cascade' }),
+    customerId: uuid('customer_id')
+      .notNull()
+      .references(() => customers.id, { onDelete: 'cascade' }),
+    previousTier: text('previous_tier').notNull(),
+    newTier: text('new_tier').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    inviteIdx: index('group_invite_redemptions_invite_idx').on(t.inviteId, t.createdAt),
+    // One redemption per person per link — tapping twice must not burn a
+    // second use off a limited link.
+    oncePerCustomer: uniqueIndex('group_invite_redemptions_once_idx').on(t.inviteId, t.customerId),
+  })
+)
+
+export type GroupInvite = typeof groupInvites.$inferSelect
+export type NewGroupInvite = typeof groupInvites.$inferInsert
+export type GroupInviteRedemption = typeof groupInviteRedemptions.$inferSelect
+
 export const settings = pgTable('settings', {
   key: text('key').primaryKey(),
   value: text('value'),

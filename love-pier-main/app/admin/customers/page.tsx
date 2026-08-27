@@ -12,6 +12,8 @@ import {
 import { CopyPhonesButton } from '@/components/admin/copy-phones-button'
 import Link from 'next/link'
 import { SyncLineFriendsButton } from '@/components/admin/sync-line-friends-button'
+import { QuickTierAssign } from '@/components/admin/quick-tier-assign'
+import { getTierCatalog, pickableTiers } from '@/lib/tierCatalog'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +32,10 @@ const FILTERS = [
 export default async function AdminCustomersPage({ searchParams }: { searchParams: Promise<{ group?: string }> }) {
   const customers = await listCustomers()
   const { group = '' } = await searchParams
+  // Active groups only — retiring a group should stop it being handed out
+  // here, while pickableTiers keeps a retired one visible on the detail page
+  // of a customer who is already in it.
+  const tierOptions = pickableTiers(await getTierCatalog())
   const countFor = (key: string) => customers.filter((c) =>
     key === 'expired' ? c.tierExpired
     : key === 'no-line' ? !c.lineFriend
@@ -60,6 +66,21 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
           <SyncLineFriendsButton />
           <CopyPhonesButton phones={customers.map((c) => c.phone)} />
         </div>
+      </div>
+
+      <div>
+        {/* Only the fields the picker searches and shows — not the whole row
+            set a second time. */}
+        <QuickTierAssign
+          tiers={tierOptions}
+          customers={customers.map((c) => ({
+            id: c.id,
+            name: c.name,
+            phone: c.phone,
+            tier: c.assignedTier,
+            tierLabelTh: c.tierLabelTh,
+          }))}
+        />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

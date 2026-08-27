@@ -4,9 +4,35 @@
     {
       "name": "love-pier-main",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "cwd": "love-pier-main",
       "autoPort": true
+    },
+    {
+      "name": "lovepier-scaffold",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "cwd": "lovepier",
+      "autoPort": true
+    },
+    {
+      "name": "love-pier-prod",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "start",
+        "--",
+        "-p",
+        "3210"
+      ],
+      "cwd": "love-pier-main",
+      "port": 3210
     }
   ]
 }

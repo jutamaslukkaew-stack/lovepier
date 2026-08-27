@@ -18,6 +18,13 @@ export const MEMBER_LIFF_ID = process.env.NEXT_PUBLIC_MEMBER_LIFF_ID || ''
 // which is what stranded customers on a blank bridge screen. Optional: when
 // it is unset the bridge path still works.
 export const PREORDER_LIFF_ID = process.env.NEXT_PUBLIC_PREORDER_LIFF_ID || ''
+// The invite-link page's own LIFF app, Endpoint URL /join (0016). Its own app
+// for the same reason /preorder got one: a LIFF app's Endpoint URL is fixed to
+// one path, and borrowing another app's means bouncing through that endpoint
+// to log in — the bridge that stranded customers on a blank screen. An invite
+// is the customer's FIRST contact with the shop, so it is the worst place to
+// risk that. When unset the page says so instead of hanging.
+export const JOIN_LIFF_ID = process.env.NEXT_PUBLIC_JOIN_LIFF_ID || ''
 // Google Apps Script Web App that logs LINE customers into a Google Sheet.
 const SHEETS_WEBHOOK = process.env.NEXT_PUBLIC_SHEETS_WEBHOOK_URL || ''
 

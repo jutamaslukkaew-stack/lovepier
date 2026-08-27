@@ -21,6 +21,8 @@ import { DEFAULT_TIERS, TIER_GENERAL } from './tiers'
  * stay priceable when the catalog read breaks, and those four are what the
  * table was seeded with, so the fallback prices are the pre-0015 ones rather
  * than zero for everybody.
+ *
+ * @returns {Promise<import('./tiers').TierEntry[]>}
  */
 export async function getTierCatalog() {
   let rows = []
@@ -56,7 +58,11 @@ export async function getTierCatalog() {
     : [DEFAULT_TIERS[0], ...tiers]
 }
 
-/** The map lib/tiers.js#tierDiscountPercent reads. */
+/**
+ * The map lib/tiers.js#tierDiscountPercent reads.
+ * @param {import('./tiers').TierEntry[]} tiers
+ * @returns {Record<string, number>}
+ */
 export function percentByTier(tiers) {
   return Object.fromEntries(tiers.map((t) => [t.key, t.percent]))
 }
@@ -69,6 +75,10 @@ export function percentByTier(tiers) {
  * its options and would render blank — making a retired group look like "no
  * group" and inviting an admin to "fix" it by moving the customer out, which
  * silently changes what they pay.
+ *
+ * @param {import('./tiers').TierEntry[]} tiers
+ * @param {string} [currentKey]
+ * @returns {import('./tiers').TierEntry[]}
  */
 export function pickableTiers(tiers, currentKey) {
   const active = tiers.filter((t) => t.isActive !== false)
