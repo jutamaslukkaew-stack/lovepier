@@ -60,7 +60,10 @@ function makePaymentRef() {
 // 'distance' is gone as a step of its own: the GPS check now runs inside
 // `contact`, which is the screen that asks where to deliver, so choosing
 // "ให้ร้านจัดส่ง" lands on ONE screen instead of two.
-const STEP_ORDER = ['welcome', 'menu', 'method', 'contact', 'summary', 'payment', 'success']
+// The customer introduction/contact screen is the first real step. `welcome`
+// remains only as a LINE-login recovery page and is deliberately absent from
+// the progress rail.
+const STEP_ORDER = ['contact', 'menu', 'method', 'summary', 'payment', 'success']
 
 const COPY = {
   th: {
@@ -1008,20 +1011,20 @@ export default function OrderFlow({
     // the new-customer form before LINE has had a chance to identify them.
     if (step === 'welcome' && (!profile || lineLookupStatus !== 'done')) return
 
-    // A recognized customer with an address on file is asked whether to reuse
-    // it — the one question worth a screen of its own, because answering
-    // "ใช้ที่อยู่เดิม" also replays their last order's distance and skips the
-    // GPS prompt entirely.
+    // On entry, every LINE customer starts with the personalized contact card
+    // the shop wants as its welcome. Address reuse remains available when the
+    // contact step is reached after choosing delivery.
     let nextMode = null
-    if (customerRecognized && form.address.trim()) nextMode = 'popup'
+    if (step === 'welcome' && profile && lineLookupStatus === 'done') nextMode = 'form'
+    else if (customerRecognized && form.address.trim()) nextMode = 'popup'
     else if (!profile || lineLookupStatus === 'done') nextMode = 'form'
     if (!nextMode) return // still checking (or hasn't started)
 
     const timer = setTimeout(() => {
       setContactMode(nextMode)
-      // A returning LINE customer should be welcomed by name as the first
+      // Every authenticated LINE customer is welcomed by name as the first
       // meaningful screen, before the explanatory landing page or menu.
-      if (step === 'welcome' && nextMode === 'popup') setStep('contact')
+      if (step === 'welcome') setStep('contact')
     }, 0)
     return () => clearTimeout(timer)
   }, [step, profile, lineLookupStatus, customerRecognized, editingInfo, contactMode, form.address])
@@ -1071,7 +1074,7 @@ export default function OrderFlow({
           setProfile(p)
           setDeliverySessionProfile(p)
           setLoginPhase('idle')
-          setStep('menu')
+          setStep('contact')
         }
         // else: liff.login() redirected the page away — nothing else to do.
       } catch {
@@ -1079,7 +1082,7 @@ export default function OrderFlow({
       }
       return
     }
-    setStep('menu')
+    setStep('contact')
   }
 
   // ── Step 2: GPS + distance ────────────────────────────────────────────
@@ -1217,9 +1220,14 @@ export default function OrderFlow({
     startLocating()
   }
 
-  // ── Step 3 → 4: whichever method was chosen, the next screen asks who this
-  // order is for, and for delivery it works out the distance while they type.
+  // Contact details were collected on entry. Pickup can therefore continue
+  // straight to the summary; delivery returns to contact only when it needs
+  // the address/distance portion of that form.
   function goToContactFromMethod() {
+    if (deliveryMethod === 'pickup' && form.name.trim() && form.phone.trim()) {
+      setStep('summary')
+      return
+    }
     setStep('contact')
     maybeStartLocating()
   }
@@ -1251,7 +1259,9 @@ export default function OrderFlow({
       return
     }
     setEditingInfo(false)
-    setStep('summary')
+    // First visit: collect who the order is for, then let them browse. The
+    // same screen is reused later only when delivery still needs an address.
+    setStep(deliveryMethod == null ? 'menu' : 'summary')
   }
 
   // ── Step 4 → 5: build the PromptPay QR for the current total ────────────
@@ -1950,15 +1960,14 @@ export default function OrderFlow({
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // Step 2 — Menu
+  // Step 2 — Menu (after the opening greeting/contact step)
   // ═══════════════════════════════════════════════════════════════════
-  // The first thing a customer sees after logging in. Promotions render above
-  // the food categories (components/menu/MenuExperience.js), which is the
-  // order the journey document fixes as standard.
+  // Promotions render above the food categories
+  // (components/menu/MenuExperience.js).
   if (step === 'menu') {
     return (
       <div className="min-h-[100dvh]">
-        <StepHeader t={t} step={step} onBack={() => setStep('welcome')} />
+        <StepHeader t={t} step={step} onBack={() => setStep('contact')} />
         <p className="text-center text-[12px] text-black/45 py-2 bg-[#f5f2ee]">{t.menuHint}</p>
         {preOrderOnly ? <PreorderCatalog
           preorderItems={preorderItems}
