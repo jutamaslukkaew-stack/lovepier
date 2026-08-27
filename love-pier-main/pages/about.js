@@ -31,7 +31,7 @@ export default function About() {
         quoteHighlight:'คาเฟ่ติดทะเลที่สวยที่สุดในบางแสน',
         values:'สิ่งที่เราให้ความสำคัญ',
         standardsEyebrow:'LOVE PIER PROMISE',
-        standardsTitle:'สดใหม่ทุกวัน ใส่ใจทุกคำ',
+        standardsTitle:'สดใหม่ทุกวัน\nใส่ใจทุกคำ',
         standardsIntro:'เพราะอาหารที่ดีเริ่มต้นจากวัตถุดิบที่ดีและความใส่ใจ เราจึงดูแลทุกเมนูด้วยมาตรฐานเดียวกันในทุกวัน',
         standardsItems:[
           { title:'ไก่ต้มใหม่ทุกวัน', text:'ไก่ทุกตัวปรุงสดใหม่ในแต่ละวัน และไม่เก็บไก่ปรุงสุกข้ามคืน เพื่อให้ทุกจานสด อร่อย และได้คุณภาพตามมาตรฐานของเรา' },
@@ -76,7 +76,7 @@ export default function About() {
           quoteHighlight:'邦盛最美的海边咖啡馆',
           values:'我们的坚持',
           standardsEyebrow:'LOVE PIER PROMISE',
-          standardsTitle:'每日新鲜，每一口都用心',
+          standardsTitle:'每日新鲜\n每一口都用心',
           standardsIntro:'好食物始于优质食材与细致用心。我们每天都以同一标准认真对待每一道餐点。',
           standardsItems:[
             { title:'每日新鲜煮鸡', text:'鸡肉每天新鲜烹制，熟鸡绝不过夜，确保每一份都鲜美并符合我们的品质标准。' },
@@ -120,7 +120,7 @@ export default function About() {
           quoteHighlight:'the most beautiful seaside cafe in Bangsaen',
           values:'What we care about',
           standardsEyebrow:'LOVE PIER PROMISE',
-          standardsTitle:'Fresh every day. Care in every bite.',
+          standardsTitle:'Fresh every day.\nCare in every bite.',
           standardsIntro:'Good food begins with good ingredients and genuine care. Every dish is prepared to the same standard, every day.',
           standardsItems:[
             { title:'Chicken cooked fresh daily', text:'Every chicken is freshly prepared each day, and cooked chicken is never kept overnight, so every plate is fresh, delicious, and up to our standards.' },
@@ -172,40 +172,36 @@ export default function About() {
       {/* Love Pier Promise — the shop's own daily operating commitments. */}
       <section className="overflow-hidden border-b border-black/10 bg-[#f5f3ef] px-4 py-16 reveal sm:px-6 sm:py-20 lg:px-10 lg:py-24">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+          <div className="grid items-end gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
             <div>
               <p className="mb-3 text-[10px] font-semibold tracking-[0.32em] text-gold-deep">{t.standardsEyebrow}</p>
-              <h2 className="font-display text-[clamp(34px,4.5vw,58px)] font-light leading-[1.05] tracking-[-0.02em] text-ink">{t.standardsTitle}</h2>
+              <h2 className="max-w-[13ch] whitespace-pre-line font-display text-[clamp(38px,4.4vw,64px)] font-light leading-[1.08] tracking-[-0.025em] text-ink">{t.standardsTitle}</h2>
             </div>
-            <p className="max-w-2xl self-end text-[14px] font-light leading-[1.9] text-[#666] sm:text-[15px]">{t.standardsIntro}</p>
+            <p className="max-w-xl border-l border-[#b18a54]/35 pl-5 text-[14px] font-light leading-[1.9] text-[#666] sm:pl-7 sm:text-[15px]">{t.standardsIntro}</p>
           </div>
 
-          <div className="mt-10 grid h-[520px] grid-cols-2 grid-rows-2 gap-3 sm:h-[620px] sm:gap-4 lg:mt-14 lg:h-[560px] lg:grid-cols-[1.35fr_0.65fr]">
-            <figure className="group relative row-span-2 overflow-hidden rounded-[1.75rem] bg-[#ddd6ce]">
-              <Image src="/uploads/gallery-chicken-rice-plate.webp" alt={t.standardsItems[0].title} fill sizes="(min-width: 1024px) 63vw, 50vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
-              <figcaption className="absolute bottom-0 left-0 right-0 p-5 text-white sm:p-7">
-                <span className="text-[9px] font-semibold tracking-[0.28em] text-white/65">LOVE PIER KITCHEN</span>
-                <p className="mt-1.5 font-display text-[25px] font-light leading-tight sm:text-[34px]">{t.standardsItems[0].title}</p>
-              </figcaption>
-            </figure>
-            <figure className="group relative overflow-hidden rounded-[1.5rem] bg-[#ddd6ce]">
-              <Image src="/uploads/promotion-matcha-tart.webp" alt={t.standardsItems[3].title} fill sizes="(min-width: 1024px) 30vw, 50vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
-            </figure>
-            <figure className="group relative overflow-hidden rounded-[1.5rem] bg-[#ddd6ce]">
-              <Image src="/uploads/gallery-latte-table.webp" alt="Love Pier Café" fill sizes="(min-width: 1024px) 30vw, 50vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
-            </figure>
-          </div>
+          <figure className="group relative mt-10 aspect-[4/3] overflow-hidden rounded-[1.75rem] bg-[#ddd6ce] shadow-[0_24px_70px_rgba(74,53,32,0.12)] sm:aspect-[16/9] lg:mt-14 lg:aspect-[2/1]">
+            <Image src="/uploads/love-pier-promise-hero.png" alt={t.standardsTitle.replace('\n', ' ')} fill priority sizes="(min-width: 1280px) 1152px, 100vw" className="object-cover transition-transform duration-1000 group-hover:scale-[1.015]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#2d1f13]/60 via-transparent to-transparent" />
+            <figcaption className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-5 p-5 text-white sm:p-8 lg:p-10">
+              <div>
+                <span className="text-[9px] font-semibold tracking-[0.3em] text-white/65">LOVE PIER KITCHEN</span>
+                <p className="mt-1.5 max-w-xl font-display text-[clamp(24px,3vw,40px)] font-light italic leading-tight text-white">{t.standardsSignature}</p>
+              </div>
+              <span aria-hidden="true" className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-full border border-white/35 font-display text-xl text-white/80 sm:flex">LP</span>
+            </figcaption>
+          </figure>
 
-          <div className="mt-5 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-5 grid grid-cols-1 overflow-hidden rounded-[1.75rem] border border-black/10 bg-white sm:mt-6 sm:grid-cols-2">
             {t.standardsItems.map((item, index) => (
-              <article key={item.title} className={`group rounded-2xl border border-black/10 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#b18a54]/35 hover:shadow-[0_14px_36px_rgba(74,53,32,0.07)] sm:p-7 ${index >= 3 ? 'lg:col-span-1' : ''}`}>
-                <div className="mb-7 flex items-center justify-between">
-                  <span className="text-[10px] font-semibold tracking-[0.2em] text-gold-deep">0{index + 1}</span>
-                  <span aria-hidden="true" className="h-px w-8 bg-[#b18a54]/35 transition-all duration-300 group-hover:w-12" />
+              <article key={item.title} className={`group min-h-[220px] border-black/10 p-6 transition-colors duration-300 hover:bg-[#faf7f2] sm:p-8 ${index % 2 === 0 ? 'sm:border-r' : ''} ${index < 3 ? 'border-b' : ''} ${index === 3 ? 'border-b sm:border-b-0' : ''} ${index === 4 ? 'sm:col-span-2 sm:min-h-0' : ''}`}>
+                <div className={`flex gap-5 ${index === 4 ? 'sm:items-center' : 'items-start'}`}>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#b18a54]/35 text-[10px] font-semibold tracking-[0.12em] text-gold-deep">0{index + 1}</span>
+                  <div className={index === 4 ? 'sm:grid sm:flex-1 sm:grid-cols-[0.8fr_1.2fr] sm:items-center sm:gap-8' : ''}>
+                    <h3 className="font-display text-[23px] font-normal leading-tight text-ink sm:text-[25px]">{item.title}</h3>
+                    <p className="mt-3 text-[13px] font-light leading-[1.8] text-[#666] sm:text-[14px]">{item.text}</p>
+                  </div>
                 </div>
-                <h3 className="font-display text-[23px] font-normal leading-tight text-ink">{item.title}</h3>
-                <p className="mt-3 text-[13px] font-light leading-[1.75] text-[#666]">{item.text}</p>
               </article>
             ))}
           </div>
@@ -213,8 +209,8 @@ export default function About() {
           <div className="relative mt-5 overflow-hidden rounded-[1.75rem] bg-[#4a3520] px-6 py-9 text-center text-white sm:mt-6 sm:px-10 sm:py-12">
             <span aria-hidden="true" className="absolute -left-10 -top-16 h-40 w-40 rounded-full border border-white/10" />
             <span aria-hidden="true" className="absolute -bottom-20 -right-8 h-48 w-48 rounded-full border border-white/10" />
-            <p className="font-display text-[clamp(27px,4vw,43px)] font-light italic leading-tight text-[#e4c89d]">{t.standardsSignature}</p>
-            <p className="mx-auto mt-3 max-w-xl text-[13px] font-light leading-relaxed text-white/70 sm:text-[14px]">{t.standardsClosing}</p>
+            <p className="text-[10px] font-semibold tracking-[0.3em] text-[#e4c89d]">OUR DAILY COMMITMENT</p>
+            <p className="mx-auto mt-3 max-w-xl font-display text-[clamp(22px,3vw,34px)] font-light leading-relaxed text-white/85">{t.standardsClosing}</p>
           </div>
         </div>
       </section>
