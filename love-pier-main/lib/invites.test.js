@@ -3,11 +3,13 @@ import {
   INVITE_ALPHABET,
   INVITE_CODE_LENGTH,
   inviteStatus,
-  inviteUrl,
+  inviteLiffUrl,
   isInviteCode,
   isInviteUsable,
   isSelfServiceTier,
   normalizeInviteCode,
+  shareableInviteUrl,
+  webInviteUrl,
 } from './invites'
 
 describe('invite codes', () => {
@@ -81,10 +83,27 @@ describe('isSelfServiceTier', () => {
   })
 })
 
-describe('inviteUrl', () => {
-  it('builds a link that survives a trailing slash on the origin', () => {
-    expect(inviteUrl('https://lovepier.cafe/', 'ABCDEFGHJK')).toBe(
+describe('the link an admin sends', () => {
+  it('builds a web link that survives a trailing slash on the origin', () => {
+    expect(webInviteUrl('https://lovepier.cafe/', 'ABCDEFGHJK')).toBe(
       'https://lovepier.cafe/join?code=ABCDEFGHJK'
     )
+  })
+
+  it('prefers the liff.line.me URL, which is the only one that works in LINE', () => {
+    // A plain site URL opened inside LINE is the in-app browser, not a LIFF
+    // context, so liff.init() fails and the customer is told to open it from
+    // LINE while already in LINE.
+    expect(shareableInviteUrl({ liffId: '2010-abc', origin: 'https://lovepier.cafe', code: 'ABCDEFGHJK' }))
+      .toBe('https://liff.line.me/2010-abc?code=ABCDEFGHJK')
+    expect(inviteLiffUrl('2010-abc', 'ABCDEFGHJK'))
+      .toBe('https://liff.line.me/2010-abc?code=ABCDEFGHJK')
+  })
+
+  it('falls back to the web URL when no LIFF app is configured yet', () => {
+    // Still useful for testing in a desktop browser; the admin screen warns
+    // that this form will not work inside LINE.
+    expect(shareableInviteUrl({ liffId: '', origin: 'https://lovepier.cafe', code: 'ABCDEFGHJK' }))
+      .toBe('https://lovepier.cafe/join?code=ABCDEFGHJK')
   })
 })

@@ -19,7 +19,7 @@ import {
   setInviteActive,
   type InviteRow,
 } from '@/app/admin/actions/invites'
-import { inviteUrl } from '@/lib/invites'
+import { shareableInviteUrl, webInviteUrl } from '@/lib/invites'
 
 // Minting and managing invite links. The QR and the copyable URL are the
 // actual product here — everything else is bookkeeping around them.
@@ -32,6 +32,9 @@ export type AgentOption = { id: string; name: string; phone: string }
 // an admin working on localhost would otherwise generate a QR pointing at
 // localhost, print it, and discover the problem from a customer.
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://lovepier.cafe'
+// The /join LIFF app. Without it the only link we can offer is the plain web
+// URL, which does NOT work inside LINE — see the banner below.
+const JOIN_LIFF_ID = process.env.NEXT_PUBLIC_JOIN_LIFF_ID || ''
 
 const STATUS_LABEL: Record<InviteRow['status'], string> = {
   ok: 'ใช้งานได้',
@@ -126,12 +129,26 @@ export function InviteManager({
 
   return (
     <div className="space-y-3">
+      {/* The single most likely way to waste an afternoon here: printing QR
+          codes that cannot work in the app they are meant to be scanned in. */}
+      {!JOIN_LIFF_ID && (
+        <div className="rounded-lg border border-amber-500/50 bg-amber-50 p-4 text-sm">
+          <p className="font-medium text-amber-900">ลิงก์ยังใช้ใน LINE ไม่ได้</p>
+          <p className="mt-1 text-amber-800">
+            ยังไม่ได้ตั้งค่า LIFF app ของหน้า /join ลิงก์ข้างล่างจึงเป็น URL เว็บธรรมดา
+            ซึ่งเปิดในแอป LINE แล้วจะเข้าสู่ระบบไม่ได้ — ใช้ทดสอบในเบราว์เซอร์คอมพิวเตอร์ได้เท่านั้น
+            อย่าเพิ่งพิมพ์ QR แจก
+          </p>
+        </div>
+      )}
       {initial.length === 0 && !creating && (
         <p className="py-6 text-center text-sm text-muted-foreground">ยังไม่มีลิงก์เชิญ</p>
       )}
 
       {initial.map((inv) => {
-        const url = inviteUrl(SITE_URL, inv.code)
+        // What to send a customer: the liff.line.me form when the LIFF app
+        // exists, the site URL otherwise.
+        const url = shareableInviteUrl({ liffId: JOIN_LIFF_ID, origin: SITE_URL, code: inv.code })
         return (
           <div key={inv.id} className={`rounded-lg border p-4 ${inv.status === 'ok' ? '' : 'bg-muted/40'}`}>
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -158,6 +175,11 @@ export function InviteManager({
                   {inv.tierExpiresAt && ` · สิทธิ์ถึง ${inv.tierExpiresAt}`}
                 </p>
                 <p className="mt-2 break-all font-mono text-[11px] text-muted-foreground">{url}</p>
+                {JOIN_LIFF_ID && (
+                  <p className="mt-1 break-all font-mono text-[11px] text-muted-foreground/70">
+                    ทดสอบบนคอม: {webInviteUrl(SITE_URL, inv.code)}
+                  </p>
+                )}
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => copy(url)}>คัดลอกลิงก์</Button>

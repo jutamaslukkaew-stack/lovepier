@@ -80,7 +80,28 @@ export function isSelfServiceTier(tier) {
   return Boolean(tier) && tier.staffOnly !== true
 }
 
-/** Absolute URL an admin copies, or encodes into a QR. */
-export function inviteUrl(origin, code) {
+/** The page's own URL. Works in an ordinary browser; see below for LINE. */
+export function webInviteUrl(origin, code) {
   return `${String(origin || '').replace(/\/+$/, '')}/join?code=${encodeURIComponent(code)}`
+}
+
+/**
+ * The URL to actually send a customer.
+ *
+ * A plain https://lovepier.cafe/join?code=… opened inside LINE lands in the
+ * in-app browser, which is NOT a LIFF context: liff.init() fails and the
+ * customer gets "please open this from LINE" while they are already in LINE.
+ * A liff.line.me URL launches the LIFF app properly, and LINE forwards the
+ * query string on to the Endpoint URL, so ?code= survives the hop.
+ *
+ * Falls back to the web URL when no LIFF app is configured yet — still the
+ * right thing for testing in a desktop browser, and the admin screen says
+ * plainly that such a link will not work inside LINE.
+ */
+export function inviteLiffUrl(liffId, code) {
+  return `https://liff.line.me/${encodeURIComponent(liffId)}?code=${encodeURIComponent(code)}`
+}
+
+export function shareableInviteUrl({ liffId, origin, code }) {
+  return liffId ? inviteLiffUrl(liffId, code) : webInviteUrl(origin, code)
 }
