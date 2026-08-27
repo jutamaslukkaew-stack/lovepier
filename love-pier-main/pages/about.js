@@ -192,16 +192,16 @@ export default function About() {
             </figcaption>
           </figure>
 
-          <div className="mt-5 grid grid-cols-1 overflow-hidden rounded-[1.75rem] border border-black/10 bg-white sm:mt-6 sm:grid-cols-2">
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-2 lg:grid-cols-6 lg:gap-4">
             {t.standardsItems.map((item, index) => (
-              <article key={item.title} className={`group min-h-[220px] border-black/10 p-6 transition-colors duration-300 hover:bg-[#faf7f2] sm:p-8 ${index % 2 === 0 ? 'sm:border-r' : ''} ${index < 3 ? 'border-b' : ''} ${index === 3 ? 'border-b sm:border-b-0' : ''} ${index === 4 ? 'sm:col-span-2 sm:min-h-0' : ''}`}>
-                <div className={`flex gap-5 ${index === 4 ? 'sm:items-center' : 'items-start'}`}>
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#b18a54]/35 text-[10px] font-semibold tracking-[0.12em] text-gold-deep">0{index + 1}</span>
-                  <div className={index === 4 ? 'sm:grid sm:flex-1 sm:grid-cols-[0.8fr_1.2fr] sm:items-center sm:gap-8' : ''}>
-                    <h3 className="font-display text-[23px] font-normal leading-tight text-ink sm:text-[25px]">{item.title}</h3>
-                    <p className="mt-3 text-[13px] font-light leading-[1.8] text-[#666] sm:text-[14px]">{item.text}</p>
-                  </div>
+              <article key={item.title} className={`group relative overflow-hidden rounded-2xl border border-black/10 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#b18a54]/35 hover:shadow-[0_14px_34px_rgba(74,53,32,0.07)] sm:min-h-[230px] sm:p-7 lg:col-span-2 ${index === 3 ? 'lg:col-start-2' : ''}`}>
+                <div className="flex items-center justify-between">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#b18a54]/35 text-[10px] font-semibold tracking-[0.12em] text-gold-deep">0{index + 1}</span>
+                  <span aria-hidden="true" className="h-px w-10 bg-[#b18a54]/30 transition-all duration-300 group-hover:w-16" />
                 </div>
+                <h3 className="mt-7 font-display text-[23px] font-normal leading-tight text-ink sm:text-[25px]">{item.title}</h3>
+                <p className="mt-3 text-[13px] font-light leading-[1.8] text-[#666] sm:text-[14px]">{item.text}</p>
+                <span aria-hidden="true" className="pointer-events-none absolute -bottom-12 -right-12 h-28 w-28 rounded-full border border-[#b18a54]/[0.08]" />
               </article>
             ))}
           </div>
