@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/table'
 import { CopyPhonesButton } from '@/components/admin/copy-phones-button'
 import Link from 'next/link'
-import { tierLabel } from '@/lib/tiers'
 import { SyncLineFriendsButton } from '@/components/admin/sync-line-friends-button'
 
 export const dynamic = 'force-dynamic'
@@ -112,7 +111,7 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
                         {c.memberNo != null ? <Badge>LP{String(c.memberNo).padStart(3, '0')}</Badge> : <span className="text-muted-foreground">—</span>}
                         {c.tierExpired
                           ? <Badge variant="outline" className="text-red-600">หมดอายุ</Badge>
-                          : c.tier !== 'general' ? <Badge className="bg-amber-600">{tierLabel(c.tier)}</Badge> : null}
+                          : c.tier !== 'general' ? <Badge className="bg-amber-600">{c.tierLabelTh}</Badge> : null}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{c.pointsBalance.toLocaleString()}</TableCell>
                       <TableCell className="max-w-[280px] truncate text-muted-foreground">

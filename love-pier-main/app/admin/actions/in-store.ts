@@ -11,7 +11,7 @@ import { awardPoints } from '@/lib/pointsAward'
 import { pushToUser } from '@/lib/lineMessaging'
 import { buildInStoreVisitFlex } from '@/lib/orderFlex'
 import { IN_STORE_METHOD, inStoreDiscountFor, type ScannedMember } from '@/lib/inStore'
-import { effectiveTier } from '@/lib/tiers'
+import { effectiveTier, tierLabel } from '@/lib/tiers'
 
 // Staff-side counter flow for Love Pier ID (see /admin/scan). Both actions are
 // behind requireUser(), the same admin session that guards /admin/orders.
@@ -81,7 +81,7 @@ export async function lookupMember(raw: string) {
   }
 
   const settings = await getShopSettings()
-  const { percent, tier, tierApplied } = inStoreDiscountFor(effectiveTier(c.tier, c.tierExpiresAt), settings)
+  const { percent, tier, tierApplied } = inStoreDiscountFor(effectiveTier(c.tier, c.tierExpiresAt, undefined, settings.tiers), settings)
 
   return {
     ok: true as const,
@@ -94,6 +94,7 @@ export async function lookupMember(raw: string) {
       discountPercent: percent,
       pointsPerBaht: settings.inStorePointsPerBaht,
       tier,
+      tierLabel: tierLabel(tier, 'th', settings.tiers),
       tierApplied,
     } satisfies ScannedMember,
   }
@@ -125,7 +126,7 @@ export async function recordInStoreVisit(customerId: string, grossAmount: number
   // Re-resolved from the row, not from the scan tab that opened minutes ago —
   // same reasoning as the rates themselves: a tier changed in another window
   // must not be applied at yesterday's value.
-  const { percent: discountPercent } = inStoreDiscountFor(effectiveTier(c.tier, c.tierExpiresAt), settings)
+  const { percent: discountPercent } = inStoreDiscountFor(effectiveTier(c.tier, c.tierExpiresAt, undefined, settings.tiers), settings)
   const pointsToRedeem = Math.min(Math.max(0, Math.floor(Number(requestedPoints) || 0)), c.pointsBalance || 0)
   const { discountAmount, pointsRedeemed, netAmount, pointsEarned } = calcInStoreVisit(gross, {
     discountPercent,

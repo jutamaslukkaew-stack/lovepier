@@ -1,5 +1,6 @@
 import { db } from './db'
 import { settings } from './db/schema'
+import { getTierCatalog, percentByTier } from './tierCatalog'
 import { DEFAULT_DELIVERY_FEE_TIERS } from './deliveryFee'
 // Safe to import here: lib/preorder.js is pure and imports nothing at all.
 import { DEFAULT_CLOSE_TIME, DEFAULT_OPEN_TIME, parseClosedDays } from './preorder'
@@ -33,9 +34,17 @@ export const SETTING_KEYS = {
   // back off is the rollback with no deploy. This matters more here than
   // usual — turning it on takes 10% off every delivery order.
   memberDiscountEnabled: 'member_discount_enabled',
-  // % off itemsSubtotal per customer tier (lib/tiers.js), never off the
-  // delivery fee. An unset key falls back to that tier's own default, so a
-  // shop that never opens this form still gets the documented 10/15/50/100.
+  // LEGACY as of 0015 — READ BY NOTHING ON THE PRICING PATH.
+  //
+  // These four held the % off itemsSubtotal per tier while the set of tiers
+  // was fixed at four. The rates now live on the `customer_tiers` rows
+  // themselves, edited at /admin/tiers, because a fifth group cannot be
+  // expressed as a fifth fixed key here.
+  //
+  // Kept, not deleted: migration 0015 seeded the table FROM these rows, and
+  // they are the rollback — restoring the old build with the values intact
+  // reproduces today's prices exactly. /admin/settings no longer writes them,
+  // so they are a frozen snapshot of the rates at migration time.
   tierDiscountGeneral: 'tier_discount_general',
   tierDiscountCondo: 'tier_discount_condo',
   tierDiscountScc: 'tier_discount_scc',
@@ -94,6 +103,9 @@ export async function getShopSettings() {
     rows = []
   }
   const m = Object.fromEntries(rows.map((r) => [r.key, r.value]))
+  // Two reads, not one: the tier catalog is its own table since 0015. Both
+  // are small and every caller of this function needed the tier rates anyway.
+  const tiers = await getTierCatalog()
 
   return {
     distanceMethod: m[SETTING_KEYS.distanceMethod] || 'straight',
@@ -117,22 +129,16 @@ export async function getShopSettings() {
     })),
     pointsPerBaht: m[SETTING_KEYS.pointsPerBaht] ? num(m[SETTING_KEYS.pointsPerBaht]) : 20,
     memberDiscountEnabled: m[SETTING_KEYS.memberDiscountEnabled] === 'true',
-    // Only the keys the shop has actually set. Absent tiers are filled in by
-    // lib/tiers.js#tierDiscountPercent from each tier's own default, so a
-    // blank settings table still hands out the documented rates rather than
-    // silently zeroing a tier. NaN is dropped for the same reason.
-    tierDiscountPercent: Object.fromEntries(
-      [
-        ['general', m[SETTING_KEYS.tierDiscountGeneral]],
-        ['condo', m[SETTING_KEYS.tierDiscountCondo]],
-        ['scc', m[SETTING_KEYS.tierDiscountScc]],
-        ['staff', m[SETTING_KEYS.tierDiscountStaff]],
-      ]
-        // `!= null` not a truthiness check: '0' is a meaningful value the
-        // shop can set to switch one tier off without touching the others.
-        .filter(([, v]) => v != null && v !== '' && Number.isFinite(num(v)))
-        .map(([k, v]) => [k, num(v)])
-    ),
+    // The full catalog, including retired groups — a customer still carrying a
+    // retired key must price at that key's rate, not at general's. Pass this
+    // to lib/tiers.js wherever a tier is resolved; with it missing, a
+    // shop-created group normalizes to general and is charged the wrong price.
+    tiers,
+    // Built from the catalog rather than from the four `tier_discount_*` rows
+    // it replaced. Migration 0015 seeded those rows' values into the table, so
+    // for an existing shop this map has the same keys and the same numbers it
+    // had before — which is what makes the move price-neutral.
+    tierDiscountPercent: percentByTier(tiers),
     inStorePointsPerBaht: m[SETTING_KEYS.inStorePointsPerBaht]
       ? num(m[SETTING_KEYS.inStorePointsPerBaht])
       : 1,

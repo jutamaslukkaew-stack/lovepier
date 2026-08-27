@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 import { useState, useTransition } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
@@ -162,46 +164,18 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
             onCheckedChange={(v) => set('memberDiscountEnabled', v)}
           />
         </div>
-        {/* Rates stay editable while the switch is off so the shop can agree
-            the numbers before anything goes live. */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label>ลูกค้าทั่วไป (%)</Label>
-            <Input
-              value={form.tierDiscountGeneral}
-              onChange={(e) => set('tierDiscountGeneral', e.target.value)}
-              placeholder="10"
-              inputMode="decimal"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>คอนโด / แนะนำพิเศษ (%)</Label>
-            <Input
-              value={form.tierDiscountCondo}
-              onChange={(e) => set('tierDiscountCondo', e.target.value)}
-              placeholder="15"
-              inputMode="decimal"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>พนักงานในเครือ SCC (%)</Label>
-            <Input
-              value={form.tierDiscountScc}
-              onChange={(e) => set('tierDiscountScc', e.target.value)}
-              placeholder="50"
-              inputMode="decimal"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>ทีมงาน (%)</Label>
-            <Input
-              value={form.tierDiscountStaff}
-              onChange={(e) => set('tierDiscountStaff', e.target.value)}
-              placeholder="100"
-              inputMode="decimal"
-            />
-          </div>
-        </div>
+        {/* The four rate boxes that used to be here are gone (0015). They
+            could only ever describe four groups; the rates now live on the
+            group rows themselves at /admin/tiers, which is also where a fifth
+            group gets created. Two places to edit one number would be a bug
+            waiting to happen, so this form no longer writes them at all. */}
+        <p className="text-xs text-muted-foreground">
+          ตั้งอัตราส่วนลดของแต่ละกลุ่มได้ที่หน้า{' '}
+          <Link href="/admin/tiers" className="font-medium underline underline-offset-2">
+            กลุ่มลูกค้า
+          </Link>{' '}
+          · สวิตช์นี้เป็นตัวเปิด/ปิดรวมของทุกกลุ่ม
+        </p>
         <p className="-mt-1 text-xs text-muted-foreground">
           {form.memberDiscountEnabled
             ? 'เปิดอยู่ — ลูกค้าที่ล็อกอิน LINE ทุกคนได้ส่วนลดตามกลุ่มของตัวเองทันที ปิดสวิตช์นี้เพื่อกลับไปเป็นแต้มสะสมอย่างเดียว'

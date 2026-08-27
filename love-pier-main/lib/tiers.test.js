@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { TIERS, effectiveTier, isTierExpired, isTierKey, normalizeTier, tierDiscountPercent, tierLabel } from './tiers'
+import { DEFAULT_TIERS, effectiveTier, isTierExpired, isTierKey, normalizeTier, tierDiscountPercent, tierLabel } from './tiers'
 
 const ON = { enabled: true }
 
 describe('normalizeTier', () => {
-  it('accepts the four defined tiers', () => {
-    for (const t of TIERS) expect(normalizeTier(t.key)).toBe(t.key)
+  it('accepts the four built-in tiers', () => {
+    for (const t of DEFAULT_TIERS) expect(normalizeTier(t.key)).toBe(t.key)
   })
 
   it('reads anything unrecognized as general rather than throwing', () => {
@@ -26,7 +26,7 @@ describe('tierDiscountPercent', () => {
   it('gives everyone 0% while the master switch is off', () => {
     // The default, and the rollback lever: no deploy needed to restore the
     // 2026-08-17 no-discount behaviour.
-    for (const t of TIERS) expect(tierDiscountPercent(t.key)).toBe(0)
+    for (const t of DEFAULT_TIERS) expect(tierDiscountPercent(t.key)).toBe(0)
   })
 
   it('uses each tier default from the journey document when unconfigured', () => {
@@ -65,7 +65,7 @@ describe('tierDiscountPercent', () => {
 
 describe('tierLabel', () => {
   it('labels every tier in both languages', () => {
-    for (const t of TIERS) {
+    for (const t of DEFAULT_TIERS) {
       expect(tierLabel(t.key, 'th')).toBe(t.labelTh)
       expect(tierLabel(t.key, 'en')).toBe(t.labelEn)
     }
@@ -80,7 +80,7 @@ describe('tier policy', () => {
   it('keeps the 50% and 100% tiers staff-assignable only', () => {
     // The document requires affiliated-staff status to be verified by a
     // person; nothing customer-facing may put someone in these.
-    expect(TIERS.filter((t) => t.staffOnly).map((t) => t.key)).toEqual(['scc', 'staff'])
+    expect(DEFAULT_TIERS.filter((t) => t.staffOnly).map((t) => t.key)).toEqual(['scc', 'staff'])
   })
 })
 
@@ -99,5 +99,71 @@ describe('tier expiry', () => {
 
   it('never marks the general tier expired', () => {
     expect(isTierExpired('general', '2020-01-01', now)).toBe(false)
+  })
+})
+
+// ── The catalog (migration 0015) ────────────────────────────────────────────
+//
+// The shop can now create groups. Everything above still describes the
+// behaviour with no catalog passed, which is what the four built-in groups
+// get; these describe what changes when one is.
+
+const CATALOG = [
+  { key: 'general', percent: 10, labelTh: 'ลูกค้าทั่วไป', labelEn: 'General', staffOnly: false, isActive: true },
+  { key: 'condo', percent: 15, labelTh: 'คอนโด', labelEn: 'Condo', staffOnly: false, isActive: true },
+  { key: 'agent', percent: 5, labelTh: 'ตัวแทน', labelEn: 'Agent', staffOnly: true, isActive: true },
+  { key: 'oldclub', percent: 25, labelTh: 'สมาชิกเก่า', labelEn: 'Old club', staffOnly: true, isActive: false },
+]
+
+describe('shop-created groups', () => {
+  it('recognises a group that exists only in the catalog', () => {
+    // Without the catalog 'agent' is not a tier at all, and every function
+    // below would quietly answer as if the customer were general.
+    expect(isTierKey('agent')).toBe(false)
+    expect(isTierKey('agent', CATALOG)).toBe(true)
+    expect(normalizeTier('agent', CATALOG)).toBe('agent')
+  })
+
+  it('prices a shop-created group at its own rate, not general\'s', () => {
+    const opts = { enabled: true, percentByTier: { general: 10, agent: 5 }, tiers: CATALOG }
+    expect(tierDiscountPercent('agent', opts)).toBe(5)
+    // The bug this guards: drop `tiers` and the 5% group silently bills at 10%.
+    expect(tierDiscountPercent('agent', { enabled: true, percentByTier: { general: 10, agent: 5 } })).toBe(10)
+  })
+
+  it('lets a shop-created group expire like any other special group', () => {
+    const now = new Date('2026-08-25T05:00:00.000Z')
+    expect(isTierExpired('agent', '2026-08-24', now, CATALOG)).toBe(true)
+    expect(effectiveTier('agent', '2026-08-24', now, CATALOG)).toBe('general')
+    // Unknown to the built-in list, so it reads as general and general never
+    // expires — an agent whose access ran out would keep it forever.
+    expect(isTierExpired('agent', '2026-08-24', now)).toBe(false)
+  })
+
+  it('keeps pricing a retired group for customers still in it', () => {
+    // Retiring a group must not move anyone's price; it only stops the group
+    // being offered. lib/tierCatalog.js therefore returns inactive rows too.
+    const opts = { enabled: true, percentByTier: { oldclub: 25 }, tiers: CATALOG }
+    expect(tierDiscountPercent('oldclub', opts)).toBe(25)
+  })
+
+  it('labels a shop-created group with its own name', () => {
+    expect(tierLabel('agent', 'th', CATALOG)).toBe('ตัวแทน')
+    expect(tierLabel('agent', 'th')).toBe('ลูกค้าทั่วไป')
+  })
+
+  it('falls back to the built-in groups when the catalog is unusable', () => {
+    // An empty array means the read failed, not that the shop deleted every
+    // group — 'general' is not deletable. Answering 0% for everyone here
+    // would be a silent, shop-wide price change.
+    for (const tiers of [[], null, undefined]) {
+      expect(tierDiscountPercent('condo', { enabled: true, tiers })).toBe(15)
+    }
+  })
+
+  it('survives a catalog with no general row', () => {
+    const odd = [{ key: 'condo', percent: 15, labelTh: 'คอนโด', labelEn: 'Condo', staffOnly: false }]
+    expect(normalizeTier('nope', odd)).toBe('general')
+    expect(() => tierDiscountPercent('nope', { enabled: true, tiers: odd })).not.toThrow()
   })
 })

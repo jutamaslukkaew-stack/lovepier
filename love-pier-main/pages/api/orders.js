@@ -211,11 +211,15 @@ export default async function handler(req, res) {
       .where(eq(customers.lineUserId, lineUserId))
       .limit(1)
     pointsBalance = Math.max(0, customer?.pointsBalance || 0)
-    customerTier = effectiveTier(customer?.tier || TIER_GENERAL, customer?.tierExpiresAt)
+    // s.tiers is the shop's catalog (0015). Without it a customer in a
+    // shop-created group is an unknown key here and normalizes to general —
+    // charging them the wrong price and ignoring their expiry date.
+    customerTier = effectiveTier(customer?.tier || TIER_GENERAL, customer?.tierExpiresAt, undefined, s.tiers)
   }
   const discountPercentForOrder = tierDiscountPercent(customerTier, {
     enabled: s.memberDiscountEnabled,
     percentByTier: s.tierDiscountPercent,
+    tiers: s.tiers,
   })
   // Ceiling mirrors lib/points.js: points are spent against the POST-discount
   // amount, so a 50% member cannot "redeem" points the discount already paid

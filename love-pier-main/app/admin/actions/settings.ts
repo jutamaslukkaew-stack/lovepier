@@ -21,10 +21,6 @@ const SETTING_KEYS = {
   deliveryFeeTier5km: 'delivery_fee_tier_5km',
   pointsPerBaht: 'loyalty_baht_per_point_v2',
   memberDiscountEnabled: 'member_discount_enabled',
-  tierDiscountGeneral: 'tier_discount_general',
-  tierDiscountCondo: 'tier_discount_condo',
-  tierDiscountScc: 'tier_discount_scc',
-  tierDiscountStaff: 'tier_discount_staff',
   inStorePointsPerBaht: 'in_store_baht_per_point',
   inStoreDiscountPercent: 'in_store_discount_percent',
   menuOptionsEnabled: 'menu_customization_enabled',
@@ -55,10 +51,6 @@ export type ShopSettingsForm = {
   deliveryFeeTier5km: string
   pointsPerBaht: string
   memberDiscountEnabled: boolean
-  tierDiscountGeneral: string
-  tierDiscountCondo: string
-  tierDiscountScc: string
-  tierDiscountStaff: string
   inStorePointsPerBaht: string
   inStoreDiscountPercent: string
   menuOptionsEnabled: boolean
@@ -91,14 +83,6 @@ export async function getSettings(): Promise<ShopSettingsForm> {
     deliveryFeeTier5km: m[SETTING_KEYS.deliveryFeeTier5km] || '50',
     pointsPerBaht: m[SETTING_KEYS.pointsPerBaht] || '20',
     memberDiscountEnabled: m[SETTING_KEYS.memberDiscountEnabled] === 'true',
-    // Defaults mirror lib/tiers.js#TIERS. `||` is fine here (unlike
-    // shopClosedDays below) because '0' saved by the shop round-trips as '0'
-    // — it is the empty string that falls back, and a blank field should
-    // show the documented rate rather than an empty box.
-    tierDiscountGeneral: m[SETTING_KEYS.tierDiscountGeneral] || '10',
-    tierDiscountCondo: m[SETTING_KEYS.tierDiscountCondo] || '15',
-    tierDiscountScc: m[SETTING_KEYS.tierDiscountScc] || '50',
-    tierDiscountStaff: m[SETTING_KEYS.tierDiscountStaff] || '100',
     inStorePointsPerBaht: m[SETTING_KEYS.inStorePointsPerBaht] || '1',
     inStoreDiscountPercent: m[SETTING_KEYS.inStoreDiscountPercent] || '10',
     menuOptionsEnabled: m[SETTING_KEYS.menuOptionsEnabled] === 'true',
@@ -137,10 +121,10 @@ export async function saveSettings(data: ShopSettingsForm) {
   await put(SETTING_KEYS.deliveryFeeTier5km, (data.deliveryFeeTier5km || '50').trim())
   await put(SETTING_KEYS.pointsPerBaht, (data.pointsPerBaht || '20').trim())
   await put(SETTING_KEYS.memberDiscountEnabled, String(Boolean(data.memberDiscountEnabled)))
-  await put(SETTING_KEYS.tierDiscountGeneral, (data.tierDiscountGeneral || '10').trim())
-  await put(SETTING_KEYS.tierDiscountCondo, (data.tierDiscountCondo || '15').trim())
-  await put(SETTING_KEYS.tierDiscountScc, (data.tierDiscountScc || '50').trim())
-  await put(SETTING_KEYS.tierDiscountStaff, (data.tierDiscountStaff || '100').trim())
+  // The four `tier_discount_*` rows are NOT written here any more (0015) —
+  // the rates live on the customer_tiers rows and are edited at /admin/tiers.
+  // Leaving the old rows untouched keeps them as the rollback snapshot the
+  // migration seeded from; rewriting them from a stale form would destroy it.
   await put(SETTING_KEYS.inStorePointsPerBaht, (data.inStorePointsPerBaht || '1').trim())
   await put(SETTING_KEYS.inStoreDiscountPercent, (data.inStoreDiscountPercent || '10').trim())
   await put(SETTING_KEYS.menuOptionsEnabled, String(Boolean(data.menuOptionsEnabled)))

@@ -65,12 +65,13 @@ export default async function handler(req, res) {
         // /api/orders re-derives both from this same row when the order is
         // actually priced, so a stale or edited value here cannot change what
         // the customer is charged.
-        tier: effectiveTier(c.tier, c.tierExpiresAt),
+        tier: effectiveTier(c.tier, c.tierExpiresAt, undefined, s.tiers),
         tierExpiresAt: c.tierExpiresAt || null,
-        tierExpired: isTierExpired(c.tier, c.tierExpiresAt),
-        discountPercent: tierDiscountPercent(effectiveTier(c.tier, c.tierExpiresAt), {
+        tierExpired: isTierExpired(c.tier, c.tierExpiresAt, undefined, s.tiers),
+        discountPercent: tierDiscountPercent(effectiveTier(c.tier, c.tierExpiresAt, undefined, s.tiers), {
           enabled: s.memberDiscountEnabled,
           percentByTier: s.tierDiscountPercent,
+          tiers: s.tiers,
         }),
       },
     })

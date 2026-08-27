@@ -4,6 +4,7 @@ import { db } from '../../lib/db'
 import { customers, orders } from '../../lib/db/schema'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
 import { effectiveTier, isTierExpired, tierLabel } from '../../lib/tiers'
+import { getTierCatalog } from '../../lib/tierCatalog'
 
 // Love Pier ID — the membership card.
 //
@@ -43,7 +44,12 @@ function toQrPayload(memberCode) {
   return `LPID1:${memberCode}`
 }
 
-function toMemberView(c) {
+// `tiers` is the shop's group catalog (0015). It is a parameter rather than a
+// fetch inside here because this runs twice per POST and the card is pure
+// presentation — the caller reads the catalog once. Omitting it degrades to
+// the four built-in groups, which is wrong for a shop-created group: the card
+// would show "ลูกค้าทั่วไป" to someone who is not.
+function toMemberView(c, tiers) {
   if (!c || c.memberNo == null || !c.memberCode) return null
   return {
     memberNo: formatMemberNo(c.memberNo),
@@ -53,10 +59,10 @@ function toMemberView(c) {
     phone: c.phone || '',
     birthday: c.birthday || null,
     joinedAt: c.createdAt || null,
-    tier: effectiveTier(c.tier, c.tierExpiresAt),
-    tierLabel: tierLabel(effectiveTier(c.tier, c.tierExpiresAt)),
+    tier: effectiveTier(c.tier, c.tierExpiresAt, undefined, tiers),
+    tierLabel: tierLabel(effectiveTier(c.tier, c.tierExpiresAt, undefined, tiers), 'th', tiers),
     tierExpiresAt: c.tierExpiresAt || null,
-    tierExpired: isTierExpired(c.tier, c.tierExpiresAt),
+    tierExpired: isTierExpired(c.tier, c.tierExpiresAt, undefined, tiers),
   }
 }
 
@@ -85,7 +91,7 @@ export default async function handler(req, res) {
 
       // null means "no card yet" — POST issues one. Read-only on purpose:
       // nothing here should be able to consume a member number.
-      return res.status(200).json({ member: c ? toMemberView(c) : null })
+      return res.status(200).json({ member: c ? toMemberView(c, await getTierCatalog()) : null })
     } catch (err) {
       console.error('Fetch member failed:', err)
       return res.status(200).json({ member: null })
@@ -210,7 +216,7 @@ export default async function handler(req, res) {
       }
 
       const [final] = await db.select().from(customers).where(eq(customers.id, customerId)).limit(1)
-      const member = toMemberView(final)
+      const member = toMemberView(final, await getTierCatalog())
       if (!member) {
         console.error('Member registration: row has no member fields after assignment')
         return res.status(500).json({ member: null, error: 'Registration failed' })

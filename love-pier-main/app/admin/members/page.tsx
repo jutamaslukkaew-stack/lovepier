@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { tierLabel } from '@/lib/tiers'
 import { listMembers } from '@/app/admin/actions/customers'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -49,7 +48,7 @@ export default async function AdminMembersPage() {
                   <TableCell>{m.birthday ? formatDate(m.birthday) : '—'}</TableCell>
                   {/* Only the tiers worth flagging get a badge — 'general' is
                       almost every row and would just add colour to the table. */}
-                  <TableCell>{m.tierExpired ? <Badge variant="outline" className="text-red-600">สิทธิ์หมดอายุ</Badge> : m.tier === 'general' ? <span className="text-muted-foreground">สมาชิกทั่วไป</span> : <Badge className="bg-amber-600">{tierLabel(m.tier)}</Badge>}</TableCell>
+                  <TableCell>{m.tierExpired ? <Badge variant="outline" className="text-red-600">สิทธิ์หมดอายุ</Badge> : m.tier === 'general' ? <span className="text-muted-foreground">สมาชิกทั่วไป</span> : <Badge className="bg-amber-600">{m.tierLabelTh}</Badge>}</TableCell>
                   <TableCell className="text-right font-medium tabular-nums">{m.pointsBalance.toLocaleString()}</TableCell>
                   <TableCell className="text-center tabular-nums">{m.orderCount}</TableCell>
                   <TableCell className="text-muted-foreground">{formatDate(m.lastOrderAt)}</TableCell>

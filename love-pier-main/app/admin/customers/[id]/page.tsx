@@ -5,7 +5,7 @@ import { DELIVERY_METHOD_LABELS, STATUS_LABELS, STATUS_VARIANT } from '@/app/adm
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CustomerTierSelect } from '@/components/admin/customer-tier-select'
-import { tierLabel } from '@/lib/tiers'
+import { getTierCatalog, pickableTiers } from '@/lib/tierCatalog'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,6 +41,10 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const { id } = await params
   const customer = await getCustomerDetail(id)
   if (!customer) notFound()
+  // Active groups, plus this customer's own group if it has been retired —
+  // see pickableTiers: a select whose value is missing from its options
+  // renders blank, which reads as "no group".
+  const tierOptions = pickableTiers(await getTierCatalog(), customer.assignedTier)
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-6">
@@ -54,7 +58,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
               {/* Only when it says something: every customer is 'general', so
                   a badge on all of them would be noise on the one screen
                   where a 50% or 100% rate needs to be obvious. */}
-              {customer.tier !== 'general' && <Badge className="bg-amber-600">{tierLabel(customer.tier)}</Badge>}
+              {customer.tier !== 'general' && <Badge className="bg-amber-600">{customer.tierLabelTh}</Badge>}
               {customer.lineLinked && <Badge variant="secondary">เชื่อม LINE แล้ว</Badge>}
             </div>
             {customer.lineDisplayName && customer.lineDisplayName !== customer.name && <p className="mt-1 text-sm text-muted-foreground">LINE: {customer.lineDisplayName}</p>}
@@ -78,7 +82,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             <div><p className="text-xs text-muted-foreground">วันเกิด</p><p className="mt-1">{dateOnly(customer.birthday)}</p></div>
             <div><p className="text-xs text-muted-foreground">เบอร์โทร</p><a href={`tel:${customer.phone}`} className="mt-1 block hover:underline">{customer.phone || '—'}</a></div>
             <div><p className="text-xs text-muted-foreground">LINE</p><p className="mt-1">{customer.lineLinked ? customer.lineDisplayName || 'เชื่อมแล้ว' : 'ยังไม่เชื่อม'}</p></div>
-            <CustomerTierSelect id={customer.id} tier={customer.assignedTier} expiresAt={customer.tierExpiresAt} />
+            <CustomerTierSelect id={customer.id} tier={customer.assignedTier} expiresAt={customer.tierExpiresAt} tiers={tierOptions} />
             <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">ที่อยู่ล่าสุด</p><p className="mt-1 whitespace-pre-line">{customer.address || '—'}</p></div>
           </CardContent>
         </Card>

@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireUser } from '@/lib/auth'
-import { effectiveTier, isTierExpired, isTierKey, normalizeTier } from '@/lib/tiers'
+import { effectiveTier, isTierExpired, isTierKey, normalizeTier, tierLabel } from '@/lib/tiers'
+import { getTierCatalog } from '@/lib/tierCatalog'
 
 export type CustomerRow = {
   id: string; name: string; phone: string; address: string
@@ -12,6 +13,11 @@ export type CustomerRow = {
   lineFriend: boolean; lineFollowedAt: string | null
   memberNo: number | null; birthday: string | null; pointsBalance: number
   tier: string; assignedTier: string; tierExpiresAt: string | null; tierExpired: boolean
+  // Resolved here rather than in the page because the label of a shop-created
+  // group only exists in the catalog, and the catalog is a server read. A
+  // client component calling tierLabel() would fall back to the four built-in
+  // names and quietly print "ลูกค้าทั่วไป" over someone's real group.
+  tierLabelTh: string
   orderCount: number; lastOrderAt: string | null; createdAt: string
 }
 
@@ -48,6 +54,8 @@ export async function listCustomers(): Promise<CustomerRow[]> {
     ) o on o.phone = c.phone
     order by o.last_order_at desc nulls last, c.created_at desc
   `)
+  // Once for the whole page, not per row — the catalog is the same for all.
+  const tiers = await getTierCatalog()
   return (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
     id: String(r.id), name: String(r.name ?? ''), phone: String(r.phone ?? ''),
     address: String(r.address ?? ''), lineLinked: Boolean(r.line_linked),
@@ -57,10 +65,11 @@ export async function listCustomers(): Promise<CustomerRow[]> {
     memberNo: r.member_no == null ? null : Number(r.member_no),
     birthday: r.birthday ? String(r.birthday) : null,
     pointsBalance: Number(r.points_balance ?? 0),
-    assignedTier: normalizeTier(r.tier as string),
-    tier: effectiveTier(r.tier as string, r.tier_expires_at),
+    assignedTier: normalizeTier(r.tier as string, tiers),
+    tier: effectiveTier(r.tier as string, r.tier_expires_at, undefined, tiers),
     tierExpiresAt: r.tier_expires_at ? String(r.tier_expires_at).slice(0, 10) : null,
-    tierExpired: isTierExpired(r.tier as string, r.tier_expires_at),
+    tierExpired: isTierExpired(r.tier as string, r.tier_expires_at, undefined, tiers),
+    tierLabelTh: tierLabel(effectiveTier(r.tier as string, r.tier_expires_at, undefined, tiers), 'th', tiers),
     orderCount: Number(r.order_count ?? 0),
     lastOrderAt: r.last_order_at ? new Date(r.last_order_at as string).toISOString() : null,
     createdAt: new Date(r.created_at as string).toISOString(),
@@ -81,6 +90,7 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetail | nu
   `)
   const c = (customerRows as unknown as Array<Record<string, unknown>>)[0]
   if (!c) return null
+  const tiers = await getTierCatalog()
   const phone = String(c.phone ?? '')
   const lineUserId = c.line_user_id ? String(c.line_user_id) : ''
 
@@ -133,10 +143,11 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetail | nu
     memberNo: c.member_no == null ? null : Number(c.member_no),
     birthday: c.birthday ? String(c.birthday) : null,
     pointsBalance: Number(c.points_balance ?? 0),
-    assignedTier: normalizeTier(c.tier as string),
-    tier: effectiveTier(c.tier as string, c.tier_expires_at),
+    assignedTier: normalizeTier(c.tier as string, tiers),
+    tier: effectiveTier(c.tier as string, c.tier_expires_at, undefined, tiers),
     tierExpiresAt: c.tier_expires_at ? String(c.tier_expires_at).slice(0, 10) : null,
-    tierExpired: isTierExpired(c.tier as string, c.tier_expires_at),
+    tierExpired: isTierExpired(c.tier as string, c.tier_expires_at, undefined, tiers),
+    tierLabelTh: tierLabel(effectiveTier(c.tier as string, c.tier_expires_at, undefined, tiers), 'th', tiers),
     orderCount: customerOrders.length,
     lastOrderAt: customerOrders[0]?.createdAt ?? null,
     createdAt: new Date(c.created_at as string).toISOString(),
@@ -169,7 +180,13 @@ export async function getCustomerDetail(id: string): Promise<CustomerDetail | nu
  */
 export async function setCustomerTier(id: string, tier: string, expiresAt?: string | null) {
   const user = await requireUser()
-  if (!isTierKey(tier)) return { ok: false as const, error: 'กลุ่มลูกค้าไม่ถูกต้อง' }
+  // Validated against the LIVE catalog, not a hard-coded list — since 0015 the
+  // shop can create groups, and this is the write path that would otherwise
+  // reject every one of them. Retired groups are in the catalog too, so an
+  // admin can still move someone back into one deliberately; what stops a
+  // retired group being picked by accident is the picker not offering it.
+  const tiers = await getTierCatalog()
+  if (!isTierKey(tier, tiers)) return { ok: false as const, error: 'กลุ่มลูกค้าไม่ถูกต้อง' }
   const expiry = tier === 'general' || !expiresAt ? null : expiresAt
   if (expiry && !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) {
     return { ok: false as const, error: 'วันหมดอายุไม่ถูกต้อง' }

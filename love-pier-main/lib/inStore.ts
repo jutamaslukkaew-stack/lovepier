@@ -20,6 +20,9 @@ export type ScannedMember = {
   discountPercent: number
   pointsPerBaht: number
   tier: string
+  /** Thai label, resolved server-side — a shop-created group's name only
+   *  exists in the catalog, which the counter screen cannot read. */
+  tierLabel: string
   /** True when discountPercent came from the tier rather than the counter rate. */
   tierApplied: boolean
 }
@@ -37,20 +40,36 @@ export type ScannedMember = {
  * counter and online. With the master switch off, the legacy counter rate is
  * the rollback behaviour.
  */
+export type TierCatalogEntry = {
+  key: string
+  percent: number
+  labelTh: string
+  labelEn: string
+  staffOnly: boolean
+  isActive?: boolean
+  sortOrder?: number
+}
+
 export function inStoreDiscountFor(
   tier: string | null | undefined,
   settings: {
     inStoreDiscountPercent?: number
     memberDiscountEnabled?: boolean
     tierDiscountPercent?: Record<string, number>
+    /** The shop's group catalog (0015) — getShopSettings().tiers. */
+    tiers?: TierCatalogEntry[]
   }
 ): { percent: number; tier: string; tierApplied: boolean } {
-  const key = normalizeTier(tier)
+  // Passing the catalog matters as much here as online: without it a member
+  // in a shop-created group reads as 'general' and is handed the wrong rate
+  // at the counter, where nobody is looking at an itemised discount line.
+  const key = normalizeTier(tier, settings.tiers)
   const useTier = Boolean(settings.memberDiscountEnabled)
   const percent = useTier
     ? tierDiscountPercent(key, {
         enabled: true,
         percentByTier: settings.tierDiscountPercent || {},
+        tiers: settings.tiers,
       })
     : Math.max(0, Number(settings.inStoreDiscountPercent) || 0)
   return { percent, tier: key, tierApplied: useTier }

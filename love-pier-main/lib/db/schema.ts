@@ -221,12 +221,13 @@ export const customers = pgTable(
     memberCode: text('member_code'),
     // Optional, for a future birthday promo. Never required at signup.
     birthday: date('birthday'),
-    // Discount tier (0010) — 'general' | 'condo' | 'scc' | 'staff', see
-    // lib/tiers.js. The KEY lives here; the percentage each key is worth is a
-    // setting (/admin/settings), because the rates are policy and change
-    // while a customer's group does not. Only staff can move a customer
-    // between tiers — the 50% and 100% tiers exist for verified affiliated
-    // staff and the shop's own team, so nothing customer-facing may write it.
+    // Discount tier (0010) — a key into the customerTiers catalog below.
+    // NOT a fixed set any more (0015): the shop adds groups from /admin/tiers
+    // without a deploy, so this deliberately has no FK and no CHECK. A key
+    // whose row was deleted reads as 'general' at pricing time rather than
+    // failing the order — same forgiving rule 0010 set, and the reason
+    // retiring a group is is_active=false rather than DELETE.
+    // Who may write it is per-group: customerTiers.staffOnly.
     tier: text('tier').notNull().default('general'),
     // Optional end date for a special tier. Expired tiers are treated as
     // general at pricing time; the original tier remains for admin reporting.
@@ -368,6 +369,44 @@ export type MenuImport = typeof menuImports.$inferSelect
 export type NewMenuImport = typeof menuImports.$inferInsert
 
 // Simple key/value store for shop settings editable from /admin/settings.
+// The set of customer discount groups (0015), replacing the hard-coded list
+// that used to live in lib/tiers.js#TIERS and the four fixed
+// `tier_discount_*` rows in `settings`. One row per group; the shop creates
+// and prices them at /admin/tiers with no deploy.
+//
+// Read on the pricing path via lib/tierCatalog.js, which falls back to the
+// code defaults if this table is unreadable — an order must still be priceable
+// if the catalog query fails.
+export const customerTiers = pgTable(
+  'customer_tiers',
+  {
+    // Written verbatim into customers.tier. Immutable once customers carry it:
+    // renaming a key would strand every customer holding the old one, so the
+    // admin form edits the LABEL and leaves this alone after creation.
+    key: text('key').primaryKey(),
+    labelTh: text('label_th').notNull(),
+    labelEn: text('label_en').notNull().default(''),
+    // Whole percent off the item subtotal only — never the delivery fee.
+    // Bounded 0–100 by a CHECK in the migration as well as in the form.
+    discountPercent: integer('discount_percent').notNull().default(0),
+    // True = an admin must place the customer in this group by hand. Defaults
+    // true so a newly created group is closed until deliberately opened.
+    staffOnly: boolean('staff_only').notNull().default(true),
+    sortOrder: integer('sort_order').notNull().default(100),
+    // Retire without deleting: customers already holding the key keep their
+    // rate, the group just stops being offered.
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    orderIdx: index('customer_tiers_order_idx').on(t.isActive, t.sortOrder, t.key),
+  })
+)
+
+export type CustomerTier = typeof customerTiers.$inferSelect
+export type NewCustomerTier = typeof customerTiers.$inferInsert
+
 export const settings = pgTable('settings', {
   key: text('key').primaryKey(),
   value: text('value'),
