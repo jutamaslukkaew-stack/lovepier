@@ -73,5 +73,10 @@
     "eslint-config-next": "16.2.6",
     "tsx": "^4.22.4",
     "vitest": "^4.1.10"
+  },
+  "//optionalDependencies": "sharp ships its prebuilt binaries as its own optionalDependencies keyed by os/cpu. Vercel builds with `npm install --no-package-lock`, which does not reliably pull those transitive optional platform packages — so the linux-x64 binary was missing and `import sharp` in /api/admin/upload 500'd at module load (a non-JSON error the client could only show as \"Upload failed\"). Declaring the linux glibc x64 pair directly makes them first-class installs. Versions must track `sharp` (see node_modules/sharp/package.json optionalDependencies).",
+  "optionalDependencies": {
+    "@img/sharp-libvips-linux-x64": "1.3.1",
+    "@img/sharp-linux-x64": "0.35.2"
   }
 }
