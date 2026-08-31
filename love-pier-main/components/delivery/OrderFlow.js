@@ -2476,12 +2476,14 @@ export default function OrderFlow({
         <div className="w-full rounded-2xl border border-black/[0.07] bg-white/60 px-5 py-4">
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0">
-              <span className="block text-[10.5px] tracking-[0.12em] uppercase text-black/45">{t.orderNo}</span>
+              {/* No uppercase / letter-spacing here: WebKit (LINE's webview)
+                  clips the leading Thai vowel of a letter-spaced label. */}
+              <span className="block text-[11px] font-medium text-black/45">{t.orderNo}</span>
               <p className="mt-0.5 font-display text-[22px] leading-none text-ink">{orderNo}</p>
             </div>
             {completed && (
               <div className="shrink-0 text-right">
-                <span className="block text-[10.5px] tracking-[0.12em] uppercase text-black/45">{t.total}</span>
+                <span className="block text-[11px] font-medium text-black/45">{t.total}</span>
                 <p className="mt-0.5 font-display text-[22px] leading-none text-ink tabular-nums"><span className="baht">฿</span>{completed.total}</p>
               </div>
             )}
@@ -2534,8 +2536,8 @@ export default function OrderFlow({
           <>
             {/* Payment is the one thing still owed, so it leads — the
                 fulfilment note is context underneath it, not competition. */}
-            <div className="w-full rounded-2xl border border-[#4a3520]/15 bg-[#faf3e4] px-4 py-4">
-              <span className="block text-[10.5px] tracking-[0.12em] uppercase text-[#8a6a3a]">{t.nextStepLabel}</span>
+            <div className="w-full rounded-2xl border border-[#4a3520]/15 bg-[#faf3e4] px-4 py-4 text-center">
+              <span className="block text-[11px] font-semibold text-[#8a6a3a]">{t.nextStepLabel}</span>
               <p className="mt-1 text-[13.5px] leading-[1.8] text-[#6b5326]">{t.payNow}</p>
               <label className={`mt-3.5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#4a3520] py-3.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#3a2818] ${slipStatus === 'verifying' ? 'pointer-events-none opacity-60' : ''}`}>
                 {slipStatus === 'verifying' ? t.verifyingSlip : slipStatus === 'fail' ? t.slipRetry : t.attachSlip}
