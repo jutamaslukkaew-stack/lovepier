@@ -2,8 +2,10 @@
 // verified (slipStatus === 'ok') — reassures the customer their order is
 // actually moving: paid -> shop preparing -> heading out to them (delivery)
 // or ready to collect (pickup). Purely presentational / client-derived, no
-// real-time backend status; keyframes live in styles/globals.css.
-import { CheckCircle2, ChefHat, Bike, ShoppingBag } from 'lucide-react'
+// real-time backend status — so the hint line under it tells the customer the
+// step updates land on LINE, not on this screen. Keyframes live in
+// styles/globals.css.
+import { CheckCircle2, ChefHat, Bike, ShoppingBag, MessageCircle } from 'lucide-react'
 
 export default function OrderJourney({ method, status = 'paid', t }) {
   const isPickup = method === 'pickup'
@@ -14,12 +16,25 @@ export default function OrderJourney({ method, status = 'paid', t }) {
   const finalState = status === 'done' ? 'active' : 'upcoming'
 
   return (
-    <div className="w-full flex items-start justify-center gap-0">
-      <JourneyStep icon={CheckCircle2} label={t.journeyPaid} state={paidState} />
-      <Connector active={status === 'preparing' || status === 'done'} />
-      <JourneyStep icon={ChefHat} label={t.journeyPrep} state={prepState} />
-      <Connector active={status === 'done'} />
-      <JourneyStep icon={ThirdIcon} label={thirdLabel} state={finalState} />
+    <div className="w-full">
+      {t.journeyTitle && (
+        <p className="mb-3 px-0.5 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8c682c]">
+          {t.journeyTitle}
+        </p>
+      )}
+      <div className="flex items-start justify-center gap-0">
+        <JourneyStep icon={CheckCircle2} label={t.journeyPaid} state={paidState} />
+        <Connector active={status === 'preparing' || status === 'done'} />
+        <JourneyStep icon={ChefHat} label={t.journeyPrep} state={prepState} />
+        <Connector active={status === 'done'} />
+        <JourneyStep icon={ThirdIcon} label={thirdLabel} state={finalState} />
+      </div>
+      {t.journeyHint && (
+        <p className="mt-3.5 flex items-start justify-center gap-1.5 px-1 text-center text-[11.5px] leading-[1.6] text-[#4a3520]/75">
+          <MessageCircle size={13} strokeWidth={2.5} className="mt-[2px] shrink-0 text-[#06C755]" />
+          <span>{t.journeyHint}</span>
+        </p>
+      )}
     </div>
   )
 }

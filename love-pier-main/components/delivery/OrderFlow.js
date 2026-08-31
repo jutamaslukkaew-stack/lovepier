@@ -26,10 +26,9 @@ import { calcOrderDiscountAndPoints } from '../../lib/points'
 import { buildOrderFlex, buildPaymentConfirmedFlex } from '../../lib/orderFlex'
 import { normalizeItemOptions, optionGroupsFor } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
-import OrderJourney from './OrderJourney'
 import MenuExperience from '../menu/MenuExperience'
 import PreorderCatalog from '../preorder/PreorderCatalog'
-import { Check, CheckCircle2, Clock, Receipt, User, StickyNote } from 'lucide-react'
+import { Check, CheckCircle2, Clock, Receipt, User, StickyNote, MapPin, Download } from 'lucide-react'
 import { availableDates, bangkokDateParts, formatDayThai, formatSlotThai } from '../../lib/preorder'
 
 // Leaflet touches `window` at import time — must never be pulled into the
@@ -131,7 +130,7 @@ const COPY = {
     total: 'รวมทั้งหมด',
     pointsPreview: (n) => `จะได้รับ ${n} แต้มสะสม`,
     pointsEarnedBanner: (n) => `+${n} แต้มสะสม`,
-    pointsRule: 'ทุก ฿100 รับ 5 คะแนน • 1 คะแนน = ส่วนลด ฿1',
+    pointsRule: 'ทุก ฿100 รับ 5 คะแนน • 1 คะแนน = ส่วนลด ฿1',
     pointsBalance: (n) => `มี ${n} คะแนน`,
     usePoints: (n) => `ใช้ ${n} คะแนน ลดเพิ่ม ฿${n}`,
     pointsDiscountLabel: 'ส่วนลดจากคะแนน',
@@ -180,7 +179,7 @@ const COPY = {
     promptpayLabel: 'QR โค้ดของร้าน',
     payHint: 'สแกน QR ของร้านด้วยแอปธนาคาร แล้วติ๊กยืนยันด้านล่าง',
     saveQr: 'บันทึกรูป QR',
-    saveQrHint: 'กดค้างที่รูป QR แล้วเลือกบันทึกรูปภาพ',
+    saveQrHint: 'กดค้างที่รูป QR เพื่อบันทึก หรือแคปหน้าจอไว้ก็ได้',
     amount: 'ยอดชำระ',
     noPromptpay: 'ยังไม่ได้ตั้งค่า QR รับเงินของร้าน กรุณาแจ้งร้านทาง LINE',
     confirmCheckbox: 'ฉันตรวจสอบรายการและยอดเงินถูกต้องแล้ว ยืนยันสั่งซื้อ',
@@ -206,10 +205,7 @@ const COPY = {
     verifyHint: 'ระบบตรวจสลิปอัตโนมัติ (จับสลิปปลอมได้)',
     done: 'เสร็จสิ้น',
     orderAgain: 'สั่งใหม่',
-    journeyPaid: 'ชำระเงิน',
-    journeyPrep: 'ร้านกำลังเตรียม',
-    journeyDeliver: 'กำลังจัดส่ง',
-    journeyPickup: 'พร้อมให้รับ',
+    trackOrder: 'ติดตามสถานะออเดอร์',
   },
   en: {
     back: 'Back',
@@ -271,7 +267,7 @@ const COPY = {
     total: 'Total',
     pointsPreview: (n) => `You'll earn ${n} points`,
     pointsEarnedBanner: (n) => `+${n} points earned`,
-    pointsRule: 'Earn 5 points per ฿100 • 1 point = ฿1 off',
+    pointsRule: 'Earn 5 points per ฿100 • 1 point = ฿1 off',
     pointsBalance: (n) => `${n} points available`,
     usePoints: (n) => `Use ${n} points for ฿${n} off`,
     pointsDiscountLabel: 'Points discount',
@@ -318,7 +314,7 @@ const COPY = {
     promptpayLabel: "The shop's QR code",
     payHint: "Scan the shop's QR with your banking app, then tick confirm below",
     saveQr: 'Save QR image',
-    saveQrHint: 'Press and hold the QR, then choose Save Image',
+    saveQrHint: 'Press and hold the QR to save it, or just take a screenshot',
     amount: 'Amount',
     noPromptpay: 'The shop payment QR is not set up yet — please contact us on LINE',
     confirmCheckbox: "I've checked the order and total — confirm purchase",
@@ -343,10 +339,7 @@ const COPY = {
     verifyHint: 'Automatic slip check (detects fakes)',
     done: 'Done',
     orderAgain: 'Order again',
-    journeyPaid: 'Paid',
-    journeyPrep: 'Shop is preparing',
-    journeyDeliver: 'Out for delivery',
-    journeyPickup: 'Ready for pickup',
+    trackOrder: 'Track order status',
   },
   zh: {
     back: '返回',
@@ -408,7 +401,7 @@ const COPY = {
     total: '总计',
     pointsPreview: (n) => `将获得 ${n} 积分`,
     pointsEarnedBanner: (n) => `+${n} 积分`,
-    pointsRule: '每 ฿100 获得 5 积分 • 1 积分抵 ฿1',
+    pointsRule: '每 ฿100 获得 5 积分 • 1 积分抵 ฿1',
     pointsBalance: (n) => `可用 ${n} 积分`,
     usePoints: (n) => `使用 ${n} 积分抵扣 ฿${n}`,
     pointsDiscountLabel: '积分抵扣',
@@ -455,7 +448,7 @@ const COPY = {
     promptpayLabel: '本店二维码',
     payHint: '用银行 App 扫描二维码，然后在下方勾选确认',
     saveQr: '保存二维码',
-    saveQrHint: '长按二维码，选择保存图片',
+    saveQrHint: '长按二维码保存，或直接截图也可以',
     amount: '金额',
     noPromptpay: '本店收款二维码尚未设置 — 请通过 LINE 联系我们',
     confirmCheckbox: '我已核对订单和金额，确认下单',
@@ -480,10 +473,7 @@ const COPY = {
     verifyHint: '自动核验凭证（可识别伪造）',
     done: '完成',
     orderAgain: '再次下单',
-    journeyPaid: '已付款',
-    journeyPrep: '店家备餐中',
-    journeyDeliver: '配送中',
-    journeyPickup: '可以取餐',
+    trackOrder: '追踪订单状态',
   },
 }
 
@@ -1536,8 +1526,18 @@ export default function OrderFlow({
     try {
       const blob = await (await fetch(qrDataUrl)).blob()
       const file = new File([blob], `lovepier-promptpay-${paymentRef || 'qr'}.png`, { type: 'image/png' })
+      // Web Share (the OS "Save Image" sheet) is the only save path that
+      // in-app browsers like LINE's actually honour.
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file] })
+        return
+      }
+      // LINE / Facebook / IG webviews silently ignore <a download> — the tap
+      // would do nothing and throw nothing. Show the long-press hint straight
+      // away instead of a dead click.
+      const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+      if (/\bLine\b|FBAN|FBAV|Instagram|MicroMessenger/i.test(ua)) {
+        setQrSaveHint(true)
         return
       }
       objectUrl = URL.createObjectURL(blob)
@@ -2085,20 +2085,18 @@ export default function OrderFlow({
                     </div>
                   )}
                   {hasLineId && pointsBalance > 0 && (
-                    <div className="my-2 rounded-xl border border-[#b06d2b]/20 bg-[#fff8ef] p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-[13px] font-medium text-[#8b5423]">{t.pointsBalance(pointsBalance)}</p>
-                          <p className="mt-0.5 text-[11px] leading-relaxed text-[#8b5423]/70">{t.pointsRule}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setUsePoints((v) => !v)}
-                          className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors ${usePoints ? 'bg-[#b06d2b] text-white' : 'border border-[#b06d2b]/30 text-[#8b5423]'}`}
-                        >
-                          {usePoints ? '✓' : '+'} {t.usePoints(maxPointsUsable)}
-                        </button>
-                      </div>
+                    <div className="my-2 rounded-2xl border border-[#b06d2b]/20 bg-[#fff8ef] p-4 text-center">
+                      <p className="text-[13px] font-semibold text-[#8b5423]">{t.pointsBalance(pointsBalance)}</p>
+                      <p className="mx-auto mt-1 max-w-[16rem] text-[11px] leading-relaxed text-[#8b5423]/70">{t.pointsRule}</p>
+                      <button
+                        type="button"
+                        onClick={() => setUsePoints((v) => !v)}
+                        aria-pressed={usePoints}
+                        className={`mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl px-4 py-3 text-[13px] font-semibold shadow-sm transition-all active:scale-[0.98] ${usePoints ? 'bg-[#8b5423] text-white ring-2 ring-[#b06d2b]/25' : 'bg-[#b06d2b] text-white hover:bg-[#9a5d23]'}`}
+                      >
+                        <span aria-hidden="true">{usePoints ? '✓' : '+'}</span>
+                        {t.usePoints(maxPointsUsable)}
+                      </button>
                     </div>
                   )}
                   {pointsRedeemed > 0 && (
@@ -2352,18 +2350,25 @@ export default function OrderFlow({
                 </div>
                 {/* Outlined rather than filled: saving the QR is genuinely
                     useful (see saveQrImage) but it is not the step's action —
-                    the confirm checkbox and pay button below are. */}
+                    the confirm checkbox and pay button below are. Still a
+                    firm border + icon so it reads unmistakably as a button. */}
                 {qrDataUrl && (
                   <button
                     type="button"
                     onClick={saveQrImage}
-                    className="rounded-full border border-[#4a3520]/25 px-4 py-2 text-[12px] font-semibold text-[#4a3520] transition-colors hover:bg-[#4a3520]/[0.06]"
+                    className="flex min-h-[44px] items-center gap-1.5 rounded-full border border-[#4a3520]/40 bg-[#4a3520]/[0.04] px-5 py-2.5 text-[13px] font-semibold text-[#4a3520] transition-colors hover:bg-[#4a3520]/[0.1] active:scale-[0.98]"
                   >
+                    <Download size={14} strokeWidth={2.5} className="shrink-0" />
                     {t.saveQr}
                   </button>
                 )}
-                {qrSaveHint && (
-                  <p className="text-[12px] leading-[1.7] text-black/50">{t.saveQrHint}</p>
+                {/* Always shown, not just after a failed save: inside LINE the
+                    long-press / screenshot is the only reliable way and the
+                    button can't do it for them. */}
+                {qrDataUrl && (
+                  <p className={`max-w-[16rem] text-[11px] leading-[1.7] ${qrSaveHint ? 'font-medium text-[#8a6a3a]' : 'text-black/45'}`}>
+                    {t.saveQrHint}
+                  </p>
                 )}
               </>
             ) : (
@@ -2390,14 +2395,14 @@ export default function OrderFlow({
           </div>
         </div>
         <StickyActionBar>
-          <label className="flex items-start gap-2 px-1 mb-3 cursor-pointer select-none">
+          <label className="flex items-center gap-2.5 mb-3 cursor-pointer select-none rounded-xl border border-[#4a3520]/20 bg-[#faf6f0] px-3 py-3">
             <input
               type="checkbox"
               checked={confirmPay}
               onChange={(e) => setConfirmPay(e.target.checked)}
-              className="mt-0.5 w-4 h-4 accent-[#4a3520] shrink-0"
+              className="w-5 h-5 accent-[#4a3520] shrink-0"
             />
-            <span className="text-[13px] text-[#4a3520] leading-snug">{t.confirmCheckbox}</span>
+            <span className="text-[13px] font-semibold text-[#4a3520] leading-snug">{t.confirmCheckbox}</span>
           </label>
 
           {submitError && <p className="mb-2 text-[12px] text-red-600">{submitError}</p>}
@@ -2452,12 +2457,14 @@ export default function OrderFlow({
         <div className="w-full rounded-2xl border border-black/[0.07] bg-white/60 px-5 py-4">
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0">
-              <span className="block text-[10.5px] tracking-[0.12em] uppercase text-black/45">{t.orderNo}</span>
+              {/* No uppercase / letter-spacing here: WebKit (LINE's webview)
+                  clips the leading Thai vowel of a letter-spaced label. */}
+              <span className="block text-[11px] font-medium text-black/45">{t.orderNo}</span>
               <p className="mt-0.5 font-display text-[22px] leading-none text-ink">{orderNo}</p>
             </div>
             {completed && (
               <div className="shrink-0 text-right">
-                <span className="block text-[10.5px] tracking-[0.12em] uppercase text-black/45">{t.total}</span>
+                <span className="block text-[11px] font-medium text-black/45">{t.total}</span>
                 <p className="mt-0.5 font-display text-[22px] leading-none text-ink tabular-nums"><span className="baht">฿</span>{completed.total}</p>
               </div>
             )}
@@ -2487,12 +2494,12 @@ export default function OrderFlow({
                 </span>
               )}
             </div>
-            <div className="w-full rounded-2xl border border-black/[0.06] bg-white/60 px-3 pb-3 pt-4">
-              <OrderJourney method={completed?.deliveryMethod} status={completed?.status} t={t} />
-              <p className="mt-3 border-t border-black/[0.06] pt-3 text-[12.5px] leading-[1.8] text-black/55">
-                {fulfilment}
-              </p>
-            </div>
+            {/* The step-by-step tracker lives on /order/{orderNo} only — the
+                "ติดตามสถานะออเดอร์" button below opens it. This screen stays a
+                receipt: confirmed, paid, here's what to do next. */}
+            <p className="w-full rounded-xl bg-black/[0.03] px-4 py-3.5 text-[13px] leading-[1.85] text-black/60">
+              {fulfilment}
+            </p>
           </>
         ) : slipStatus === 'stored' ? (
           <>
@@ -2510,8 +2517,8 @@ export default function OrderFlow({
           <>
             {/* Payment is the one thing still owed, so it leads — the
                 fulfilment note is context underneath it, not competition. */}
-            <div className="w-full rounded-2xl border border-[#4a3520]/15 bg-[#faf3e4] px-4 py-4">
-              <span className="block text-[10.5px] tracking-[0.12em] uppercase text-[#8a6a3a]">{t.nextStepLabel}</span>
+            <div className="w-full rounded-2xl border border-[#4a3520]/15 bg-[#faf3e4] px-4 py-4 text-center">
+              <span className="block text-[11px] font-semibold text-[#8a6a3a]">{t.nextStepLabel}</span>
               <p className="mt-1 text-[13.5px] leading-[1.8] text-[#6b5326]">{t.payNow}</p>
               <label className={`mt-3.5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#4a3520] py-3.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#3a2818] ${slipStatus === 'verifying' ? 'pointer-events-none opacity-60' : ''}`}>
                 {slipStatus === 'verifying' ? t.verifyingSlip : slipStatus === 'fail' ? t.slipRetry : t.attachSlip}
@@ -2529,6 +2536,22 @@ export default function OrderFlow({
               {fulfilment}
             </p>
           </>
+        )}
+
+        {/* The live tracker above only advances while this screen stays open.
+            This opens the full /order/{orderNo} page — the same one the LINE
+            status card points to, polling every 10s — in a NEW view so the
+            customer can close it straight back to this confirmation. */}
+        {orderNo && (
+          <a
+            href={`/order/${encodeURIComponent(orderNo)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6f5230] py-3.5 text-center text-[14px] font-semibold text-white shadow-sm transition-all hover:bg-[#5a4227] active:scale-[0.98]"
+          >
+            <MapPin size={16} strokeWidth={2.4} className="shrink-0" />
+            {t.trackOrder}
+          </a>
         )}
 
         {/* Two separate actions, not one "Done — order again" label: they do

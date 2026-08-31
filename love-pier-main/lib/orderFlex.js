@@ -56,6 +56,31 @@ function cardHeader(title, dotColor, backgroundColor = '#3a2818') {
   }
 }
 
+// Forward-only kitchen buttons for the cards that land in the STAFF chat only
+// (never a customer's copy — gated by the withStaffActions flag at the call
+// site). Each is a postback to /api/line-webhook, which re-checks that the
+// tapper is a configured staff destination before it changes anything.
+function staffActionButtons(orderNo) {
+  const postback = (label, status) => ({
+    type: 'postback',
+    label,
+    data: `act=status&status=${status}&orderNo=${encodeURIComponent(orderNo)}`,
+    displayText: `${label} · ${orderNo}`,
+  })
+  return [
+    {
+      type: 'box',
+      layout: 'horizontal',
+      spacing: 'sm',
+      contents: [
+        { type: 'button', style: 'secondary', height: 'sm', action: postback('กำลังทำ', 'preparing') },
+        { type: 'button', style: 'primary', color: '#3a2818', height: 'sm', action: postback('พร้อมแล้ว', 'done') },
+      ],
+    },
+    { type: 'button', style: 'link', height: 'sm', color: '#b34a3a', action: postback('ยกเลิกออเดอร์', 'cancelled') },
+  ]
+}
+
 function checkRow(label, value, action) {
   return {
     type: 'box',
@@ -98,7 +123,7 @@ function plainRow(label, value) {
 // customer's own inbound copy via sendMessagesToChat). Passing a new field at
 // only one of them half-ships it silently: one copy shows the time and the
 // other doesn't.
-export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel }) {
+export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel, withStaffActions = false }) {
   const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
 
   const itemRows = items.flatMap((i) => {
@@ -187,21 +212,24 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
       layout: 'vertical',
       spacing: 'sm',
       contents: [
+        ...(withStaffActions ? staffActionButtons(orderNo) : []),
         {
           type: 'button',
-          style: 'primary',
+          style: withStaffActions ? 'link' : 'primary',
           color: '#3a2818',
           height: 'sm',
           action: { type: 'uri', label: 'ตรวจสอบออเดอร์', uri: orderUrl },
         },
-        {
-          type: 'text',
-          text: 'กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
-          size: 'xxs',
-          color: '#aaaaaa',
-          wrap: true,
-          align: 'center',
-        },
+        ...(withStaffActions
+          ? []
+          : [{
+              type: 'text',
+              text: 'กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
+              size: 'xxs',
+              color: '#aaaaaa',
+              wrap: true,
+              align: 'center',
+            }]),
       ],
     },
   }
@@ -217,7 +245,7 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
 // Sent right after SlipOK auto-verifies a payment (pages/api/verify-slip.js),
 // so the customer sees a Love Pier-branded confirmation alongside SlipOK's own
 // reply card in the LINE chat.
-export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned }) {
+export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned, withStaffActions = false }) {
   const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
 
   const bubble = {
@@ -270,9 +298,10 @@ export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned }) {
       layout: 'vertical',
       spacing: 'sm',
       contents: [
+        ...(withStaffActions ? staffActionButtons(orderNo) : []),
         {
           type: 'button',
-          style: 'primary',
+          style: withStaffActions ? 'link' : 'primary',
           color: '#3a2818',
           height: 'sm',
           action: { type: 'uri', label: 'ตรวจสอบออเดอร์', uri: orderUrl },
