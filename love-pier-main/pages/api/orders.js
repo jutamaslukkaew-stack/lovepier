@@ -370,10 +370,13 @@ export default async function handler(req, res) {
       console.error('Customer upsert failed (non-fatal):', err)
     }
 
-    // Same Flex card, sent to two destinations: the customer's own chat,
+    // Same Flex card design, sent to two destinations: the customer's own chat,
     // and the shop's own staff LINE (LINE_ORDER_NOTIFY_TO). Both best-effort
-    // — a push failure never fails the order itself.
-    const flex = buildOrderFlex({ orderNo, name, phone, address, items, total: totalAmount, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel: scheduledFor ? formatSlotThai(scheduledDate, scheduledSlot) : '' })
+    // — a push failure never fails the order itself. The staff copy carries the
+    // กำลังทำ / พร้อมแล้ว / ยกเลิก quick-action buttons; the customer's must not.
+    const cardFields = { orderNo, name, phone, address, items, total: totalAmount, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel: scheduledFor ? formatSlotThai(scheduledDate, scheduledSlot) : '' }
+    const flex = buildOrderFlex(cardFields)
+    const staffFlex = buildOrderFlex({ ...cardFields, withStaffActions: true })
 
     // Alert staff with the branded card (not a plain-text summary) the
     // moment the order is created — doesn't depend on the customer tapping
@@ -384,7 +387,7 @@ export default async function handler(req, res) {
     // from some LINE entry points. When staff and customer are the same test
     // account, send this staff copy once and skip only the second customer
     // copy below.
-    const staffPush = await pushOrderCardToStaff(flex)
+    const staffPush = await pushOrderCardToStaff(staffFlex)
 
     // Send the order card "from the shop" to the customer too (Messaging
     // API push). Complements the customer-side liff.sendMessages(); skips

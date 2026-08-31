@@ -32,7 +32,8 @@ import { db } from '../../lib/db'
 import { customers, orders } from '../../lib/db/schema'
 import { processSlipForOrder } from '../../lib/slipVerification'
 import { buildPaymentConfirmedFlex, buildSlipReceivedFlex } from '../../lib/orderFlex'
-import { pushOrderCardToStaff } from '../../lib/lineMessaging'
+import { NOTIFY_TARGETS, pushOrderCardToStaff } from '../../lib/lineMessaging'
+import { applyOrderStatusChange, STAFF_BUTTON_STATUSES } from '../../lib/orderStatusUpdate'
 
 const TOKEN = process.env.LINE_MESSAGING_TOKEN || ''
 const SECRET = process.env.LINE_MESSAGING_CHANNEL_SECRET || ''
@@ -218,12 +219,64 @@ async function handleSlipImage(event, userId) {
 
   // Same staff card as the website upload path (pages/api/verify-slip.js) —
   // gated on !alreadyPaid there too, so a customer re-sending a slip for an
-  // order that already cleared doesn't re-alert staff for nothing.
+  // order that already cleared doesn't re-alert staff for nothing. The staff
+  // copy carries the กำลังทำ / พร้อมแล้ว quick-action buttons; the customer's
+  // reply (`card`) must not.
   if (result.verified && !result.alreadyPaid) {
-    await pushOrderCardToStaff(card)
+    await pushOrderCardToStaff(
+      buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount, pointsEarned: order.pointsEarned, withStaffActions: true })
+    )
   }
 
   await replyMessages(event.replyToken, [card])
+}
+
+// A staff member tapped one of the กำลังทำ / พร้อมแล้ว / ยกเลิก buttons on an
+// order card. The buttons only exist on the staff copy of a card, but a
+// forwarded card must never let a customer move their own order — so this
+// re-checks that the tap came from a configured LINE_ORDER_NOTIFY_TO
+// destination (a staff 1:1 chat, or the staff group any member can act from)
+// before it changes anything. Never throws; the handler still returns 200.
+const STATUS_LABEL_TH = { preparing: 'กำลังทำ', done: 'พร้อมแล้ว', cancelled: 'ยกเลิก' }
+
+async function handleStatusPostback(event) {
+  const senderId = event.source?.userId
+  const chatId = chatIdOf(event.source).id
+  const fromStaff =
+    (senderId && NOTIFY_TARGETS.includes(senderId)) ||
+    (chatId && NOTIFY_TARGETS.includes(chatId))
+  if (!fromStaff) return
+
+  const data = new URLSearchParams(String(event.postback?.data || ''))
+  if (data.get('act') !== 'status') return
+  const status = data.get('status')
+  const orderNo = data.get('orderNo')
+  if (!orderNo || !STAFF_BUTTON_STATUSES.includes(status)) return
+
+  const label = STATUS_LABEL_TH[status] || status
+  let result
+  try {
+    result = await applyOrderStatusChange({ orderNo, status })
+  } catch (err) {
+    console.error('staff status postback failed:', orderNo, status, err)
+    await reply(event.replyToken, `อัปเดตออเดอร์ ${orderNo} ไม่สำเร็จ รบกวนลองใหม่อีกครั้งนะคะ`)
+    return
+  }
+
+  if (!result.ok) {
+    await reply(event.replyToken, `ไม่พบออเดอร์ ${orderNo}`)
+    return
+  }
+  if (result.unchanged) {
+    await reply(event.replyToken, `ออเดอร์ ${orderNo} อยู่สถานะ "${label}" อยู่แล้ว`)
+    return
+  }
+  await reply(
+    event.replyToken,
+    result.sentToLine
+      ? `ออเดอร์ ${orderNo} → ${label}\nแจ้งลูกค้าทาง LINE แล้ว`
+      : `ออเดอร์ ${orderNo} → ${label}\n(ออเดอร์นี้ไม่มีบัญชี LINE จึงไม่ได้แจ้งลูกค้า)`
+  )
 }
 
 // A group id starts with C, a multi-person room with R, a 1:1 user with U.
@@ -258,6 +311,12 @@ export default async function handler(req, res) {
   for (const event of events) {
     const { kind, id } = chatIdOf(event.source)
     if (!id) continue
+
+    // Staff tapped a กำลังทำ / พร้อมแล้ว / ยกเลิก button on an order card.
+    if (event.type === 'postback') {
+      await handleStatusPostback(event)
+      continue
+    }
 
     if (event.type === 'follow' && event.source?.type === 'user') {
       await handleFollow(event.source.userId)

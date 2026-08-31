@@ -47,11 +47,13 @@ export default async function handler(req, res) {
   // to LINE_ORDER_NOTIFY_TO regardless of whether the customer has a LINE
   // session, same as the order-received card in pages/api/orders.js.
   if (result.verified && !result.alreadyPaid) {
-    const flex = buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount, pointsEarned: order.pointsEarned })
+    const cardFields = { orderNo: order.orderNo, total: order.totalAmount, pointsEarned: order.pointsEarned }
+    const flex = buildPaymentConfirmedFlex(cardFields)
     const targetIsCustomer = isStaffNotifyTarget(order.lineUserId)
     // Always alert the configured shop destination from the server. If it is
     // also the customer's test account, skip only the duplicate customer push.
-    const staffPush = await pushOrderCardToStaff(flex)
+    // The staff copy carries the กำลังทำ / พร้อมแล้ว quick-action buttons.
+    const staffPush = await pushOrderCardToStaff(buildPaymentConfirmedFlex({ ...cardFields, withStaffActions: true }))
     if (order.lineUserId && !targetIsCustomer) {
       await pushToUser(order.lineUserId, [flex])
     }

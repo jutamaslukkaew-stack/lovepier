@@ -1,15 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { desc, eq, isNotNull, sql } from 'drizzle-orm'
+import { desc, isNotNull, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { orders } from '@/lib/db/schema'
 import { requireUser } from '@/lib/auth'
 import { ORDER_STATUSES, type OrderStatus } from '@/app/admin/orders/status'
-import { pushToUser } from '@/lib/lineMessaging'
-import { buildOrderStatusFlex } from '@/lib/orderFlex'
-import { awardPoints } from '@/lib/pointsAward'
-import { IN_STORE_METHOD } from '@/lib/inStore'
+import { applyOrderStatusChange } from '@/lib/orderStatusUpdate'
 
 export async function listOrders() {
   await requireUser()
@@ -58,63 +55,13 @@ export async function setOrderStatus(id: string, status: string) {
   if (!ORDER_STATUSES.includes(status as OrderStatus)) {
     return { ok: false as const, error: 'สถานะไม่ถูกต้อง' }
   }
-  const [order] = await db
-    .select({
-      orderNo: orders.orderNo,
-      lineUserId: orders.lineUserId,
-      deliveryMethod: orders.deliveryMethod,
-      status: orders.status,
-      phone: orders.phone,
-      pointsEarned: orders.pointsEarned,
-    })
-    .from(orders)
-    .where(eq(orders.id, id))
-    .limit(1)
+  // Shared with the staff LINE quick-action buttons (pages/api/line-webhook.js)
+  // so the dropdown and a button tap do exactly the same thing: update the
+  // row, credit points on pending→paid, push the customer their status card.
+  const result = await applyOrderStatusChange({ id, status })
+  if (!result.ok) return { ok: false as const, error: result.error || 'อัปเดตสถานะไม่สำเร็จ' }
 
-  if (!order) return { ok: false as const, error: 'ไม่พบออเดอร์' }
-  if (order.status === status) return { ok: true as const, sentToLine: false, unchanged: true }
-
-  await db.update(orders).set({ status }).where(eq(orders.id, id))
-
-  // Manual payment confirmation must have the same loyalty outcome as an
-  // automatically verified slip. awardPoints is idempotent by order id, so a
-  // later retry or status change cannot credit the customer twice.
-  if (status === 'paid' && order.status === 'pending' && order.pointsEarned > 0) {
-    try {
-      await awardPoints({
-        orderId: id,
-        lineUserId: order.lineUserId,
-        phone: order.phone,
-        points: order.pointsEarned,
-      })
-    } catch (error) {
-      console.error('manual payment points failed (non-fatal):', order.orderNo, error)
-    }
-  }
-
-  let sentToLine = false
-  // In-store sales (from /admin/scan) already sent the customer their receipt
-  // card at the counter. buildOrderStatusFlex only speaks in delivery/pickup
-  // terms ("ออเดอร์พร้อมจัดส่งแล้ว"), so pushing it for a walk-in would be
-  // actively wrong — skip it and just record the status change.
-  if (order.lineUserId && order.deliveryMethod !== IN_STORE_METHOD) {
-    const message = buildOrderStatusFlex({
-      orderNo: order.orderNo,
-      status,
-      deliveryMethod: order.deliveryMethod,
-    })
-    if (message) {
-      const pushed = await pushToUser(order.lineUserId, [message])
-      sentToLine = Boolean(pushed.ok)
-      console.log('Admin order status notification:', {
-        orderNo: order.orderNo,
-        from: order.status,
-        to: status,
-        sentToLine,
-      })
-    }
-  }
   revalidatePath('/admin/orders')
   revalidatePath('/admin/preorders')
-  return { ok: true as const, sentToLine }
+  return { ok: true as const, sentToLine: result.sentToLine ?? false, unchanged: result.unchanged }
 }
