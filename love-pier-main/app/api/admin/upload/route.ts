@@ -3,6 +3,11 @@ import sharp from 'sharp'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
+// The client (lib/upload-image.ts) downscales images before posting, so the
+// three sharp resizes here are cheap — but give the function real headroom
+// anyway so a slow Supabase round-trip can't 504 into an opaque failure.
+export const maxDuration = 30
+
 const BUCKET = 'uploads'
 const WIDTHS = [480, 960, 1440]
 const MAX_INPUT_MB = 20

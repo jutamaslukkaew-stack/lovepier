@@ -8,11 +8,18 @@ async function normalizeHeic(file: File): Promise<File> {
   const isHeic =
     file.type === 'image/heic' || file.type === 'image/heif' || HEIC_RE.test(file.name)
   if (!isHeic) return file
-  const heic2any = (await import('heic2any')).default
-  const out = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 })
-  const blob = Array.isArray(out) ? out[0] : out
-  const name = file.name.replace(HEIC_RE, '') + '.jpg'
-  return new File([blob], name, { type: 'image/jpeg' })
+  try {
+    const heic2any = (await import('heic2any')).default
+    const out = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 })
+    const blob = Array.isArray(out) ? out[0] : out
+    const name = file.name.replace(HEIC_RE, '') + '.jpg'
+    return new File([blob], name, { type: 'image/jpeg' })
+  } catch {
+    // heic2any (v0.0.4) chokes on some HEICs. Fall through with the original —
+    // shrinkForUpload decodes via a <canvas>, which Safari (the iPad admin's
+    // browser) can do for HEIC natively, so this often still recovers.
+    return file
+  }
 }
 
 // Shrink in the browser BEFORE the POST. /api/admin/upload runs on a Vercel
