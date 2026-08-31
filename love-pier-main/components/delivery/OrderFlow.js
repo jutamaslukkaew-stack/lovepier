@@ -180,7 +180,7 @@ const COPY = {
     promptpayLabel: 'QR โค้ดของร้าน',
     payHint: 'สแกน QR ของร้านด้วยแอปธนาคาร แล้วติ๊กยืนยันด้านล่าง',
     saveQr: 'บันทึกรูป QR',
-    saveQrHint: 'กดค้างที่รูป QR แล้วเลือกบันทึกรูปภาพ',
+    saveQrHint: 'กดค้างที่รูป QR เพื่อบันทึก หรือแคปหน้าจอไว้ก็ได้',
     amount: 'ยอดชำระ',
     noPromptpay: 'ยังไม่ได้ตั้งค่า QR รับเงินของร้าน กรุณาแจ้งร้านทาง LINE',
     confirmCheckbox: 'ฉันตรวจสอบรายการและยอดเงินถูกต้องแล้ว ยืนยันสั่งซื้อ',
@@ -321,7 +321,7 @@ const COPY = {
     promptpayLabel: "The shop's QR code",
     payHint: "Scan the shop's QR with your banking app, then tick confirm below",
     saveQr: 'Save QR image',
-    saveQrHint: 'Press and hold the QR, then choose Save Image',
+    saveQrHint: 'Press and hold the QR to save it, or just take a screenshot',
     amount: 'Amount',
     noPromptpay: 'The shop payment QR is not set up yet — please contact us on LINE',
     confirmCheckbox: "I've checked the order and total — confirm purchase",
@@ -461,7 +461,7 @@ const COPY = {
     promptpayLabel: '本店二维码',
     payHint: '用银行 App 扫描二维码，然后在下方勾选确认',
     saveQr: '保存二维码',
-    saveQrHint: '长按二维码，选择保存图片',
+    saveQrHint: '长按二维码保存，或直接截图也可以',
     amount: '金额',
     noPromptpay: '本店收款二维码尚未设置 — 请通过 LINE 联系我们',
     confirmCheckbox: '我已核对订单和金额，确认下单',
@@ -1545,8 +1545,18 @@ export default function OrderFlow({
     try {
       const blob = await (await fetch(qrDataUrl)).blob()
       const file = new File([blob], `lovepier-promptpay-${paymentRef || 'qr'}.png`, { type: 'image/png' })
+      // Web Share (the OS "Save Image" sheet) is the only save path that
+      // in-app browsers like LINE's actually honour.
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file] })
+        return
+      }
+      // LINE / Facebook / IG webviews silently ignore <a download> — the tap
+      // would do nothing and throw nothing. Show the long-press hint straight
+      // away instead of a dead click.
+      const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+      if (/\bLine\b|FBAN|FBAV|Instagram|MicroMessenger/i.test(ua)) {
+        setQrSaveHint(true)
         return
       }
       objectUrl = URL.createObjectURL(blob)
@@ -2365,14 +2375,19 @@ export default function OrderFlow({
                   <button
                     type="button"
                     onClick={saveQrImage}
-                    className="flex items-center gap-1.5 rounded-full border border-[#4a3520]/40 bg-[#4a3520]/[0.04] px-4 py-2 text-[12px] font-semibold text-[#4a3520] transition-colors hover:bg-[#4a3520]/[0.1] active:scale-[0.98]"
+                    className="flex min-h-[44px] items-center gap-1.5 rounded-full border border-[#4a3520]/40 bg-[#4a3520]/[0.04] px-5 py-2.5 text-[13px] font-semibold text-[#4a3520] transition-colors hover:bg-[#4a3520]/[0.1] active:scale-[0.98]"
                   >
-                    <Download size={13} strokeWidth={2.5} className="shrink-0" />
+                    <Download size={14} strokeWidth={2.5} className="shrink-0" />
                     {t.saveQr}
                   </button>
                 )}
-                {qrSaveHint && (
-                  <p className="text-[12px] leading-[1.7] text-black/50">{t.saveQrHint}</p>
+                {/* Always shown, not just after a failed save: inside LINE the
+                    long-press / screenshot is the only reliable way and the
+                    button can't do it for them. */}
+                {qrDataUrl && (
+                  <p className={`max-w-[16rem] text-[11px] leading-[1.7] ${qrSaveHint ? 'font-medium text-[#8a6a3a]' : 'text-black/45'}`}>
+                    {t.saveQrHint}
+                  </p>
                 )}
               </>
             ) : (
