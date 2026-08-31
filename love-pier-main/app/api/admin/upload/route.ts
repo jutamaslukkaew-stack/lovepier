@@ -28,6 +28,22 @@ async function requireAuth() {
   return user
 }
 
+// TEMP health check — no auth, no data access. Confirms the sharp native
+// binary actually loads on the deployed function. Remove once the image
+// upload is verified working in production.
+export async function GET() {
+  try {
+    const sharp = await loadSharp()
+    const png = await sharp({ create: { width: 2, height: 2, channels: 3, background: { r: 255, g: 255, b: 255 } } }).png().toBuffer()
+    return NextResponse.json({ sharp: 'ok', bytes: png.length })
+  } catch (err) {
+    return NextResponse.json(
+      { sharp: 'FAILED', error: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    )
+  }
+}
+
 function serviceSupabase() {
   return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
