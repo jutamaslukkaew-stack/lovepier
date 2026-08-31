@@ -26,7 +26,6 @@ import { calcOrderDiscountAndPoints } from '../../lib/points'
 import { buildOrderFlex, buildPaymentConfirmedFlex } from '../../lib/orderFlex'
 import { normalizeItemOptions, optionGroupsFor } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
-import OrderJourney from './OrderJourney'
 import MenuExperience from '../menu/MenuExperience'
 import PreorderCatalog from '../preorder/PreorderCatalog'
 import { Check, CheckCircle2, Clock, Receipt, User, StickyNote, MapPin, Download } from 'lucide-react'
@@ -207,12 +206,6 @@ const COPY = {
     done: 'เสร็จสิ้น',
     orderAgain: 'สั่งใหม่',
     trackOrder: 'ติดตามสถานะออเดอร์',
-    journeyPaid: 'ชำระเงิน',
-    journeyPrep: 'ร้านกำลังเตรียม',
-    journeyDeliver: 'กำลังจัดส่ง',
-    journeyPickup: 'พร้อมให้รับ',
-    journeyTitle: 'สถานะออเดอร์',
-    journeyHint: 'ร้านจะอัปเดตแต่ละขั้นตอน และแจ้งเตือนคุณทาง LINE เมื่ออาหารพร้อม',
   },
   en: {
     back: 'Back',
@@ -347,12 +340,6 @@ const COPY = {
     done: 'Done',
     orderAgain: 'Order again',
     trackOrder: 'Track order status',
-    journeyPaid: 'Paid',
-    journeyPrep: 'Shop is preparing',
-    journeyDeliver: 'Out for delivery',
-    journeyPickup: 'Ready for pickup',
-    journeyTitle: 'Order status',
-    journeyHint: 'The shop updates each step and notifies you on LINE when your order is ready.',
   },
   zh: {
     back: '返回',
@@ -487,12 +474,6 @@ const COPY = {
     done: '完成',
     orderAgain: '再次下单',
     trackOrder: '追踪订单状态',
-    journeyPaid: '已付款',
-    journeyPrep: '店家备餐中',
-    journeyDeliver: '配送中',
-    journeyPickup: '可以取餐',
-    journeyTitle: '订单状态',
-    journeyHint: '店家会更新各阶段状态，餐点备好后通过 LINE 通知您。',
   },
 }
 
@@ -2513,12 +2494,12 @@ export default function OrderFlow({
                 </span>
               )}
             </div>
-            <div className="w-full rounded-2xl border border-black/[0.06] bg-white/60 px-3 pb-3 pt-4">
-              <OrderJourney method={completed?.deliveryMethod} status={completed?.status} t={t} />
-              <p className="mt-3 border-t border-black/[0.06] pt-3 text-[12.5px] leading-[1.8] text-black/55">
-                {fulfilment}
-              </p>
-            </div>
+            {/* The step-by-step tracker lives on /order/{orderNo} only — the
+                "ติดตามสถานะออเดอร์" button below opens it. This screen stays a
+                receipt: confirmed, paid, here's what to do next. */}
+            <p className="w-full rounded-xl bg-black/[0.03] px-4 py-3.5 text-[13px] leading-[1.85] text-black/60">
+              {fulfilment}
+            </p>
           </>
         ) : slipStatus === 'stored' ? (
           <>
