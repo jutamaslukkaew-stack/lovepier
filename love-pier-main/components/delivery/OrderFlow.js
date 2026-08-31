@@ -29,7 +29,7 @@ import LocatingAnimation from './LocatingAnimation'
 import OrderJourney from './OrderJourney'
 import MenuExperience from '../menu/MenuExperience'
 import PreorderCatalog from '../preorder/PreorderCatalog'
-import { Check, CheckCircle2, Clock, Receipt, User, StickyNote } from 'lucide-react'
+import { Check, CheckCircle2, Clock, Receipt, User, StickyNote, MapPin, Download } from 'lucide-react'
 import { availableDates, bangkokDateParts, formatDayThai, formatSlotThai } from '../../lib/preorder'
 
 // Leaflet touches `window` at import time — must never be pulled into the
@@ -131,7 +131,7 @@ const COPY = {
     total: 'รวมทั้งหมด',
     pointsPreview: (n) => `จะได้รับ ${n} แต้มสะสม`,
     pointsEarnedBanner: (n) => `+${n} แต้มสะสม`,
-    pointsRule: 'ทุก ฿100 รับ 5 คะแนน • 1 คะแนน = ส่วนลด ฿1',
+    pointsRule: 'ทุก ฿100 รับ 5 คะแนน • 1 คะแนน = ส่วนลด ฿1',
     pointsBalance: (n) => `มี ${n} คะแนน`,
     usePoints: (n) => `ใช้ ${n} คะแนน ลดเพิ่ม ฿${n}`,
     pointsDiscountLabel: 'ส่วนลดจากคะแนน',
@@ -206,10 +206,13 @@ const COPY = {
     verifyHint: 'ระบบตรวจสลิปอัตโนมัติ (จับสลิปปลอมได้)',
     done: 'เสร็จสิ้น',
     orderAgain: 'สั่งใหม่',
+    trackOrder: 'ติดตามสถานะออเดอร์',
     journeyPaid: 'ชำระเงิน',
     journeyPrep: 'ร้านกำลังเตรียม',
     journeyDeliver: 'กำลังจัดส่ง',
     journeyPickup: 'พร้อมให้รับ',
+    journeyTitle: 'สถานะออเดอร์',
+    journeyHint: 'ร้านจะอัปเดตแต่ละขั้นตอน และแจ้งเตือนคุณทาง LINE เมื่ออาหารพร้อม',
   },
   en: {
     back: 'Back',
@@ -271,7 +274,7 @@ const COPY = {
     total: 'Total',
     pointsPreview: (n) => `You'll earn ${n} points`,
     pointsEarnedBanner: (n) => `+${n} points earned`,
-    pointsRule: 'Earn 5 points per ฿100 • 1 point = ฿1 off',
+    pointsRule: 'Earn 5 points per ฿100 • 1 point = ฿1 off',
     pointsBalance: (n) => `${n} points available`,
     usePoints: (n) => `Use ${n} points for ฿${n} off`,
     pointsDiscountLabel: 'Points discount',
@@ -343,10 +346,13 @@ const COPY = {
     verifyHint: 'Automatic slip check (detects fakes)',
     done: 'Done',
     orderAgain: 'Order again',
+    trackOrder: 'Track order status',
     journeyPaid: 'Paid',
     journeyPrep: 'Shop is preparing',
     journeyDeliver: 'Out for delivery',
     journeyPickup: 'Ready for pickup',
+    journeyTitle: 'Order status',
+    journeyHint: 'The shop updates each step and notifies you on LINE when your order is ready.',
   },
   zh: {
     back: '返回',
@@ -408,7 +414,7 @@ const COPY = {
     total: '总计',
     pointsPreview: (n) => `将获得 ${n} 积分`,
     pointsEarnedBanner: (n) => `+${n} 积分`,
-    pointsRule: '每 ฿100 获得 5 积分 • 1 积分抵 ฿1',
+    pointsRule: '每 ฿100 获得 5 积分 • 1 积分抵 ฿1',
     pointsBalance: (n) => `可用 ${n} 积分`,
     usePoints: (n) => `使用 ${n} 积分抵扣 ฿${n}`,
     pointsDiscountLabel: '积分抵扣',
@@ -480,10 +486,13 @@ const COPY = {
     verifyHint: '自动核验凭证（可识别伪造）',
     done: '完成',
     orderAgain: '再次下单',
+    trackOrder: '追踪订单状态',
     journeyPaid: '已付款',
     journeyPrep: '店家备餐中',
     journeyDeliver: '配送中',
     journeyPickup: '可以取餐',
+    journeyTitle: '订单状态',
+    journeyHint: '店家会更新各阶段状态，餐点备好后通过 LINE 通知您。',
   },
 }
 
@@ -2085,20 +2094,18 @@ export default function OrderFlow({
                     </div>
                   )}
                   {hasLineId && pointsBalance > 0 && (
-                    <div className="my-2 rounded-xl border border-[#b06d2b]/20 bg-[#fff8ef] p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-[13px] font-medium text-[#8b5423]">{t.pointsBalance(pointsBalance)}</p>
-                          <p className="mt-0.5 text-[11px] leading-relaxed text-[#8b5423]/70">{t.pointsRule}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setUsePoints((v) => !v)}
-                          className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors ${usePoints ? 'bg-[#b06d2b] text-white' : 'border border-[#b06d2b]/30 text-[#8b5423]'}`}
-                        >
-                          {usePoints ? '✓' : '+'} {t.usePoints(maxPointsUsable)}
-                        </button>
-                      </div>
+                    <div className="my-2 rounded-2xl border border-[#b06d2b]/20 bg-[#fff8ef] p-4 text-center">
+                      <p className="text-[13px] font-semibold text-[#8b5423]">{t.pointsBalance(pointsBalance)}</p>
+                      <p className="mx-auto mt-1 max-w-[16rem] text-[11px] leading-relaxed text-[#8b5423]/70">{t.pointsRule}</p>
+                      <button
+                        type="button"
+                        onClick={() => setUsePoints((v) => !v)}
+                        aria-pressed={usePoints}
+                        className={`mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl px-4 py-3 text-[13px] font-semibold shadow-sm transition-all active:scale-[0.98] ${usePoints ? 'bg-[#8b5423] text-white ring-2 ring-[#b06d2b]/25' : 'bg-[#b06d2b] text-white hover:bg-[#9a5d23]'}`}
+                      >
+                        <span aria-hidden="true">{usePoints ? '✓' : '+'}</span>
+                        {t.usePoints(maxPointsUsable)}
+                      </button>
                     </div>
                   )}
                   {pointsRedeemed > 0 && (
@@ -2352,13 +2359,15 @@ export default function OrderFlow({
                 </div>
                 {/* Outlined rather than filled: saving the QR is genuinely
                     useful (see saveQrImage) but it is not the step's action —
-                    the confirm checkbox and pay button below are. */}
+                    the confirm checkbox and pay button below are. Still a
+                    firm border + icon so it reads unmistakably as a button. */}
                 {qrDataUrl && (
                   <button
                     type="button"
                     onClick={saveQrImage}
-                    className="rounded-full border border-[#4a3520]/25 px-4 py-2 text-[12px] font-semibold text-[#4a3520] transition-colors hover:bg-[#4a3520]/[0.06]"
+                    className="flex items-center gap-1.5 rounded-full border border-[#4a3520]/40 bg-[#4a3520]/[0.04] px-4 py-2 text-[12px] font-semibold text-[#4a3520] transition-colors hover:bg-[#4a3520]/[0.1] active:scale-[0.98]"
                   >
+                    <Download size={13} strokeWidth={2.5} className="shrink-0" />
                     {t.saveQr}
                   </button>
                 )}
@@ -2390,14 +2399,14 @@ export default function OrderFlow({
           </div>
         </div>
         <StickyActionBar>
-          <label className="flex items-start gap-2 px-1 mb-3 cursor-pointer select-none">
+          <label className="flex items-center gap-2.5 mb-3 cursor-pointer select-none rounded-xl border border-[#4a3520]/20 bg-[#faf6f0] px-3 py-3">
             <input
               type="checkbox"
               checked={confirmPay}
               onChange={(e) => setConfirmPay(e.target.checked)}
-              className="mt-0.5 w-4 h-4 accent-[#4a3520] shrink-0"
+              className="w-5 h-5 accent-[#4a3520] shrink-0"
             />
-            <span className="text-[13px] text-[#4a3520] leading-snug">{t.confirmCheckbox}</span>
+            <span className="text-[13px] font-semibold text-[#4a3520] leading-snug">{t.confirmCheckbox}</span>
           </label>
 
           {submitError && <p className="mb-2 text-[12px] text-red-600">{submitError}</p>}
@@ -2529,6 +2538,22 @@ export default function OrderFlow({
               {fulfilment}
             </p>
           </>
+        )}
+
+        {/* The live tracker above only advances while this screen stays open.
+            This opens the full /order/{orderNo} page — the same one the LINE
+            status card points to, polling every 10s — in a NEW view so the
+            customer can close it straight back to this confirmation. */}
+        {orderNo && (
+          <a
+            href={`/order/${encodeURIComponent(orderNo)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6f5230] py-3.5 text-center text-[14px] font-semibold text-white shadow-sm transition-all hover:bg-[#5a4227] active:scale-[0.98]"
+          >
+            <MapPin size={16} strokeWidth={2.4} className="shrink-0" />
+            {t.trackOrder}
+          </a>
         )}
 
         {/* Two separate actions, not one "Done — order again" label: they do
