@@ -29,16 +29,31 @@ async function requireAuth() {
 }
 
 // TEMP health check — no auth, no data access. Confirms the sharp native
-// binary actually loads on the deployed function. Remove once the image
-// upload is verified working in production.
+// binary actually loads on the deployed function, and (on failure) reports
+// what @img/* packages the function actually shipped with. Remove once the
+// image upload is verified working in production.
 export async function GET() {
+  const diag: Record<string, unknown> = {}
+  try {
+    const { readdirSync, existsSync } = await import('node:fs')
+    const { createRequire } = await import('node:module')
+    const req = createRequire(import.meta.url)
+    for (const cand of ['sharp/package.json', '@img/sharp-linux-x64/package.json', '@img/sharp-libvips-linux-x64/package.json', '@img/sharp-linuxmusl-x64/package.json']) {
+      try { diag[cand] = req(cand).version } catch (e) { diag[cand] = 'NOT RESOLVED: ' + (e instanceof Error ? e.message : String(e)) }
+    }
+    for (const dir of [req.resolve('sharp/package.json').replace(/sharp\/package\.json$/, '@img'), process.cwd() + '/node_modules/@img']) {
+      try { diag['ls ' + dir] = existsSync(dir) ? readdirSync(dir) : 'MISSING' } catch (e) { diag['ls ' + dir] = String(e) }
+    }
+  } catch (e) {
+    diag.introspectError = String(e)
+  }
   try {
     const sharp = await loadSharp()
     const png = await sharp({ create: { width: 2, height: 2, channels: 3, background: { r: 255, g: 255, b: 255 } } }).png().toBuffer()
-    return NextResponse.json({ sharp: 'ok', bytes: png.length })
+    return NextResponse.json({ sharp: 'ok', bytes: png.length, diag })
   } catch (err) {
     return NextResponse.json(
-      { sharp: 'FAILED', error: err instanceof Error ? err.message : String(err) },
+      { sharp: 'FAILED', error: err instanceof Error ? err.message : String(err), diag },
       { status: 500 }
     )
   }
