@@ -22,30 +22,24 @@ async function normalizeHeic(file: File): Promise<File> {
   }
 }
 
-// Shrink in the browser BEFORE the POST. /api/admin/upload runs on a Vercel
-// serverless function, which rejects a request body over ~4.5MB before the
-// route ever sees it — and even under that, a full-res phone photo (a 12MP
-// 3:4 shot is often 4-8MB) makes the three sharp resizes time out. Either
-// failure comes back as a non-JSON response, which the caller can only
-// surface as a generic "Upload failed". Downscaling here keeps the upload a
-// few hundred KB; the server still generates the 480/960/1440 srcset from it.
-async function shrinkForUpload(file: File): Promise<File> {
-  // Leave GIFs alone — re-encoding flattens the animation.
-  if (file.type === 'image/gif') return file
-  try {
-    const imageCompression = (await import('browser-image-compression')).default
-    const out = await imageCompression(file, {
-      maxSizeMB: 1.5,
-      maxWidthOrHeight: 1600,
-      useWebWorker: true,
-      fileType: 'image/jpeg',
-    })
-    if (out instanceof File) return out
-    return new File([out], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' })
-  } catch {
-    // Best effort: if compression fails, let the server try the original.
-    return file
-  }
+// The 480/960/1440 responsive widths, generated HERE in the browser. The
+// server route does no image processing any more (its sharp binary kept
+// failing to load on Vercel) — it just stores whatever webp variants we
+// send. browser-image-compression decodes via <canvas>, so it also handles
+// a HEIC that heic2any couldn't (Safari decodes HEIC natively).
+const VARIANT_WIDTHS = [480, 960, 1440] as const
+
+async function toWebpVariant(file: File, maxWidthOrHeight: number): Promise<File> {
+  const imageCompression = (await import('browser-image-compression')).default
+  const out = await imageCompression(file, {
+    maxWidthOrHeight,
+    maxSizeMB: 1.5,
+    useWebWorker: true,
+    fileType: 'image/webp',
+    initialQuality: 0.82,
+  })
+  const blob = out instanceof Blob ? out : new Blob([out], { type: 'image/webp' })
+  return new File([blob], `variant-${maxWidthOrHeight}.webp`, { type: 'image/webp' })
 }
 
 export async function uploadImage(file: File): Promise<UploadResult> {
@@ -53,15 +47,32 @@ export async function uploadImage(file: File): Promise<UploadResult> {
   if (!file.type.startsWith('image/') && !HEIC_RE.test(file.name)) {
     throw new Error('ไฟล์ต้องเป็นรูปภาพเท่านั้น')
   }
-  const uploadFile = await shrinkForUpload(await normalizeHeic(file))
-  // Compression should land well under this; if it threw and we're still
-  // holding a big original, say so clearly instead of letting Vercel reject
-  // the body with an opaque non-JSON error.
-  if (uploadFile.size > 4 * 1024 * 1024) {
-    throw new Error('รูปนี้ใหญ่เกินไป ลองถ่าย/บันทึกใหม่ให้เล็กลง หรือเลือกรูปอื่น')
-  }
+  const source = await normalizeHeic(file)
+
   const fd = new FormData()
-  fd.append('file', uploadFile)
+  let madeVariant = false
+  try {
+    const variants = await Promise.all(
+      VARIANT_WIDTHS.map((w) => toWebpVariant(source, w))
+    )
+    variants.forEach((v, i) => fd.append(`variant-${VARIANT_WIDTHS[i]}`, v))
+    madeVariant = true
+  } catch {
+    // Compression unavailable (very old browser, blocked worker) — send the
+    // original and let the server store it as a single size.
+    fd.append('file', source)
+  }
+  // If a variant somehow came back huge, still guard the request size.
+  if (madeVariant) {
+    const total = VARIANT_WIDTHS.reduce((n, w) => {
+      const v = fd.get(`variant-${w}`)
+      return n + (v instanceof File ? v.size : 0)
+    }, 0)
+    if (total > 10 * 1024 * 1024) {
+      throw new Error('รูปนี้ใหญ่เกินไป ลองรูปอื่นหรือย่อขนาดก่อน')
+    }
+  }
+
   const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
   if (!res.ok) {
     const { error } = await res.json().catch(() => ({ error: 'อัปโหลดไม่สำเร็จ ลองใหม่อีกครั้ง' }))
