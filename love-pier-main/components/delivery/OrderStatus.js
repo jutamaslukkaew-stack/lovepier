@@ -359,7 +359,9 @@ export default function OrderStatus({ orderNo }) {
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8c682c]">
                 สถานะออเดอร์
               </p>
-              <span className="flex items-center gap-1.5 text-[10.5px] text-[#8c682c]">
+              {/* 10px, a step below the heading beside it — the liveness chip
+                  is reassurance, not a second title competing with it. */}
+              <span className="flex items-center gap-1.5 text-[10px] text-[#8c682c]">
               {stale ? (
                 <>
                   <span
