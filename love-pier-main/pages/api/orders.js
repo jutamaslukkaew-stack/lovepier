@@ -3,6 +3,8 @@ import { db } from '../../lib/db'
 import { orders, customers, pointTransactions, preorderItems } from '../../lib/db/schema'
 import { isStaffNotifyTarget, pushOrderCardToStaff, pushToUser } from '../../lib/lineMessaging'
 import { buildOrderFlex } from '../../lib/orderFlex'
+import { noticeFor } from '../../lib/orderStatusUpdate'
+import { markUnfriended } from '../../lib/lineFriendship'
 import { getShopSettings } from '../../lib/settings'
 import { calcDeliveryFee } from '../../lib/deliveryFee'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
@@ -412,6 +414,21 @@ export default async function handler(req, res) {
       })
     }
 
+    // WHY the customer was or wasn't told, reusing the same vocabulary the
+    // status-change path and the admin toast already speak. A LIFF login does
+    // not make someone an OA friend, so "the order saved but they'll never
+    // hear from us again" is a normal outcome that nobody used to be told about.
+    const customerNotice = noticeFor({
+      lineUserId,
+      deliveryMethod,
+      message: flex,
+      pushed: customerPush,
+    })
+    // 403 is LINE's "blocked or not a friend". Stamp it so /admin/customers
+    // lists someone to phone — and ONLY on 403: a transient 500 must never
+    // demote a customer who was reachable all along. Best-effort by design.
+    if (customerNotice === 'blocked') await markUnfriended(lineUserId)
+
     const slipVerify = Boolean(s.slipokApiKey && s.slipokBranchId)
 
     // staffAlerted is reported separately from sentToLine: the customer
@@ -420,7 +437,7 @@ export default async function handler(req, res) {
     // response. Still a 200 — the order is saved and paid for either way, so
     // failing the request here would tell the customer their order didn't go
     // through, which is worse and untrue.
-    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify, scheduledFor: scheduledFor ? scheduledFor.toISOString() : null, sentToLine: Boolean(customerPush.ok), staffAlerted: Boolean(staffPush.ok) })
+    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify, scheduledFor: scheduledFor ? scheduledFor.toISOString() : null, sentToLine: Boolean(customerPush.ok), customerNotice, staffAlerted: Boolean(staffPush.ok) })
   } catch (err) {
     if (err?.message === 'POINTS_BALANCE_CHANGED') {
       return res.status(409).json({ error: 'ยอดคะแนนมีการเปลี่ยนแปลง กรุณาลองใหม่อีกครั้ง' })

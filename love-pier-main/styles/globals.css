@@ -88,6 +88,21 @@ body.menu-open {
     min-height: 0;
     box-shadow: none !important;
   }
+
+  /* The order* animations are applied inline (style={{animation:…}}) so a
+     class rule cannot reach them, and every one of them is `infinite` on a
+     page a hungry customer may sit on for twenty minutes. Redefining the
+     keyframes as no-ops leaves each element at a sensible RESTING position —
+     `animation: none` would drop orderTravelDot back to `left: auto`, parking
+     the dot at the connector's left edge instead of centred.
+     animate-spin is left alone on purpose: on the tracker's loading card the
+     spinner IS the affordance, and a frozen ring reads as a broken image. */
+  @keyframes orderStepBob   { 0%, 100% { transform: none } }
+  @keyframes orderStepRing  { 0%, 100% { transform: scale(1); opacity: 0 } }
+  @keyframes orderTravelDot { 0%, 100% { left: 50%; opacity: 1 } }
+  @keyframes orderSparkle   { 0%, 100% { transform: none; opacity: 1 } }
+  @keyframes orderBadgePop  { 0%, 100% { transform: none; opacity: 1 } }
+  @keyframes pinDrop        { 0%, 100% { transform: none; opacity: 1 } }
 }
 
 .reveal { opacity: 0; transform: translateY(40px); transition: opacity 1.2s cubic-bezier(0.25,0.1,0.25,1), transform 1.2s cubic-bezier(0.25,0.1,0.25,1); will-change: opacity, transform; }

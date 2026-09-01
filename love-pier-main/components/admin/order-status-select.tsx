@@ -13,6 +13,19 @@ import {
 import { setOrderStatus } from '@/app/admin/actions/orders'
 import { ORDER_STATUSES, STATUS_LABELS } from '@/app/admin/orders/status'
 
+// Mirrors NOTICE_LINE_TH in pages/api/line-webhook.js — staff get the same
+// answer whether they changed the status here or from a LINE button. `warning`
+// is reserved for the two outcomes that need a human to follow up; the rest
+// are `info` because there was simply nothing to send.
+const NOTICE_TOAST: Record<string, { level: 'success' | 'info' | 'warning'; text: string }> = {
+  sent: { level: 'success', text: 'และแจ้งลูกค้าทาง LINE แล้ว' },
+  'no-line': { level: 'info', text: '— ออเดอร์นี้ไม่มีบัญชี LINE' },
+  'in-store': { level: 'info', text: '— ออเดอร์หน้าร้าน ไม่ต้องแจ้งลูกค้า' },
+  'no-card': { level: 'info', text: '— สถานะนี้ไม่มีการ์ดแจ้งลูกค้า' },
+  blocked: { level: 'warning', text: '— ลูกค้าบล็อก LINE ของร้านอยู่ รบกวนโทรแจ้ง' },
+  failed: { level: 'warning', text: '— แต่ส่ง LINE ให้ลูกค้าไม่สำเร็จ' },
+}
+
 export function OrderStatusSelect({ id, status }: { id: string; status: string }) {
   const [pending, startTransition] = useTransition()
   const router = useRouter()
@@ -24,10 +37,9 @@ export function OrderStatusSelect({ id, status }: { id: string; status: string }
         toast.error(res.error ?? 'อัปเดตไม่สำเร็จ')
       } else if (res.unchanged) {
         toast.info('สถานะนี้ถูกเลือกอยู่แล้ว')
-      } else if (res.sentToLine) {
-        toast.success(`อัปเดตเป็น "${STATUS_LABELS[next] ?? next}" และแจ้งลูกค้าทาง LINE แล้ว`)
       } else {
-        toast.warning(`อัปเดตสถานะแล้ว แต่ส่ง LINE ไม่สำเร็จ`)
+        const notice = NOTICE_TOAST[res.customerNotice ?? ''] ?? NOTICE_TOAST.failed
+        toast[notice.level](`อัปเดตเป็น "${STATUS_LABELS[next] ?? next}" ${notice.text}`)
       }
       if (res.ok && !res.unchanged) router.refresh()
     })

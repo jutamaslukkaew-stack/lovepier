@@ -3,6 +3,7 @@ import { useLanguage } from '../lib/language'
 import Footer from '../components/Footer'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import OrderFlow from '../components/delivery/OrderFlow'
+import OrderStatus from '../components/delivery/OrderStatus'
 import { useChrome } from '../lib/chrome'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
@@ -38,7 +39,13 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
   // Where the customer was going before LINE login interrupted them; the
   // holding screen offers it as a link the moment it gives up waiting.
   const bridgeTarget = safePath(router.query.__liff_return_to)
-  const bridging = checkingLiffReturn || (router.isReady && Boolean(router.query.__liff_return_to))
+  // ?order=<orderNo> turns this page into the order tracker. It shares the
+  // delivery LIFF app's Endpoint URL, so the tracker inits LIFF and reuses the
+  // cached profile in place — it never bridges, so it also never shows the
+  // login holding screen below.
+  const rawOrder = router.query.order
+  const trackOrderNo = Array.isArray(rawOrder) ? rawOrder[0] : (typeof rawOrder === 'string' ? rawOrder : '')
+  const bridging = !trackOrderNo && (checkingLiffReturn || (router.isReady && Boolean(router.query.__liff_return_to)))
   // The holding screen is a redirect step, not a page: showing the site nav
   // around it makes a stalled login look like a broken web page.
   useEffect(() => {
@@ -128,6 +135,17 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
           </a>
         ) : null}
       </main>
+    )
+  }
+
+  if (trackOrderNo) {
+    return (
+      <>
+        <Head>
+          <meta name="robots" content="noindex" />
+        </Head>
+        <OrderStatus orderNo={trackOrderNo} />
+      </>
     )
   }
 

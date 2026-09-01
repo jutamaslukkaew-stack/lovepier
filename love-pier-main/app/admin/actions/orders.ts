@@ -63,5 +63,12 @@ export async function setOrderStatus(id: string, status: string) {
 
   revalidatePath('/admin/orders')
   revalidatePath('/admin/preorders')
-  return { ok: true as const, sentToLine: result.sentToLine ?? false, unchanged: result.unchanged }
+  return {
+    ok: true as const,
+    // customerNotice says WHY the customer was or wasn't told, so the toast
+    // can distinguish "nothing to do" from "go call them".
+    customerNotice: result.customerNotice,
+    sentToLine: result.sentToLine ?? false,
+    unchanged: result.unchanged,
+  }
 }

@@ -28,7 +28,11 @@ import { normalizeItemOptions, optionGroupsFor } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
 import MenuExperience from '../menu/MenuExperience'
 import PreorderCatalog from '../preorder/PreorderCatalog'
-import { Check, CheckCircle2, Clock, Receipt, User, StickyNote, MapPin, Download } from 'lucide-react'
+import { Check, CheckCircle2, Clock, Receipt, User, StickyNote, MapPin, Download, MessageCircle } from 'lucide-react'
+
+// Same constant as components/CartDrawer.js — the add-friend deep link needs
+// the leading @, it is part of the path.
+const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@lovepier.cafe'
 import { availableDates, bangkokDateParts, formatDayThai, formatSlotThai } from '../../lib/preorder'
 
 // Leaflet touches `window` at import time — must never be pulled into the
@@ -189,6 +193,12 @@ const COPY = {
     successTitle: 'สั่งซื้อสำเร็จ!',
     orderNo: 'เลขที่ออเดอร์',
     sentToShop: 'ส่งออเดอร์ให้ร้านทาง LINE แล้ว',
+    // Shown when the customer's LINE copy could NOT be delivered. Leads with
+    // the reassurance because it is true and it is what they care about — the
+    // shop has the order either way.
+    notSentToLine: 'ร้านได้รับออเดอร์แล้ว แต่ยังส่งอัปเดตทาง LINE ให้ไม่ได้',
+    notSentToLineHint: 'เพิ่ม Love Pier เป็นเพื่อนใน LINE เพื่อรับใบเสร็จ ยืนยันการชำระเงิน และแจ้งเมื่ออาหารพร้อม',
+    addFriendCta: 'เพิ่มเพื่อนใน LINE',
     processingTitle: 'ร้านกำลังรับออเดอร์ของคุณ',
     processingMessage: 'กรุณารอสักครู่',
     waitingDelivery: 'ร้านกำลังเตรียมอาหารและจะจัดส่งให้ภายในรัศมีบริการ',
@@ -323,6 +333,9 @@ const COPY = {
     successTitle: 'Order placed!',
     orderNo: 'Order no.',
     sentToShop: 'Order sent to the shop on LINE',
+    notSentToLine: 'The shop has your order, but we can’t send LINE updates yet',
+    notSentToLineHint: 'Add Love Pier on LINE to get your receipt, payment confirmation, and a message when your food is ready.',
+    addFriendCta: 'Add Love Pier on LINE',
     processingTitle: 'Processing your order',
     processingMessage: "We're sending your order to the shop. Please keep this page open and don't submit again.",
     waitingDelivery: "We're preparing your order and will deliver within our service radius.",
@@ -457,6 +470,9 @@ const COPY = {
     successTitle: '下单成功！',
     orderNo: '订单号',
     sentToShop: '订单已通过 LINE 发送给店家',
+    notSentToLine: '店家已收到订单，但暂时无法通过 LINE 发送更新',
+    notSentToLineHint: '请加 Love Pier 为 LINE 好友，以接收收据、付款确认和出餐通知。',
+    addFriendCta: '加 Love Pier 为好友',
     processingTitle: '正在处理，请稍候',
     processingMessage: '系统正在将订单发送给店家，请勿关闭页面或重复提交。',
     waitingDelivery: '我们正在备餐，将在配送范围内为您送达。',
@@ -757,6 +773,11 @@ export default function OrderFlow({
   const [orderNo, setOrderNo] = useState('')
   const [completed, setCompleted] = useState(null)
   const [sentToLine, setSentToLine] = useState(false)
+  // WHY the customer's LINE copy did or didn't arrive — 'sent' | 'no-line' |
+  // 'in-store' | 'no-card' | 'blocked' | 'failed', from lib/orderStatusUpdate.js.
+  // Only used to suppress the "add us on LINE" prompt for an in-store sale,
+  // where the customer already has a paper receipt.
+  const [customerNotice, setCustomerNotice] = useState('')
   const [slipVerify, setSlipVerify] = useState(false)
   const [slipStatus, setSlipStatus] = useState('idle')
 
@@ -1375,6 +1396,9 @@ export default function OrderFlow({
       })
       const customerSentOrder = await sendMessagesToChat([orderFlex], liffId)
       setSentToLine(customerSentOrder || Boolean(data.sentToLine))
+      // If the in-chat send worked, the customer HAS their copy regardless of
+      // what the server's push did — don't then tell them to add the OA.
+      setCustomerNotice(customerSentOrder ? 'sent' : (data.customerNotice || ''))
 
       setCompleted({
         total: finalTotal,
@@ -1483,6 +1507,7 @@ export default function OrderFlow({
     setOrderNo('')
     setCompleted(null)
     setSentToLine(false)
+    setCustomerNotice('')
     setSlipVerify(false)
     setSlipStatus('idle')
     setSlipError('')
@@ -2469,12 +2494,33 @@ export default function OrderFlow({
               </div>
             )}
           </div>
-          {sentToLine && (
+          {sentToLine ? (
             <p className="mt-3.5 flex items-center gap-1.5 border-t border-black/[0.06] pt-3 text-[12px] text-[#4a3520]/80">
               <Check size={13} strokeWidth={3} className="shrink-0" />
               {t.sentToShop}
             </p>
-          )}
+          ) : customerNotice !== 'in-store' ? (
+            // A LINE login does not make someone an OA friend, so a customer
+            // who arrived from the website orders fine and then never hears
+            // from us again. This used to render as an ABSENT line — nobody
+            // was told. Deliberately not styled as an error: from the
+            // customer's side nothing went wrong, the shop really does have
+            // the order. One sentence that is true for no-line, blocked and
+            // failed alike.
+            <div className="mt-3.5 border-t border-black/[0.06] pt-3">
+              <p className="text-[12px] font-medium text-[#7a4f14]">{t.notSentToLine}</p>
+              <p className="mt-1 text-[11.5px] leading-[1.7] text-black/50">{t.notSentToLineHint}</p>
+              <a
+                href={`https://line.me/R/ti/p/${LINE_OA_ID}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-[#06C755] px-3 py-2 text-[12.5px] font-semibold text-white transition-opacity hover:opacity-90 active:scale-[0.98]"
+              >
+                <MessageCircle size={13} strokeWidth={2.5} className="shrink-0" />
+                {t.addFriendCta}
+              </a>
+            </div>
+          ) : null}
         </div>
 
         {paid ? (
@@ -2494,7 +2540,7 @@ export default function OrderFlow({
                 </span>
               )}
             </div>
-            {/* The step-by-step tracker lives on /order/{orderNo} only — the
+            {/* The step-by-step tracker lives on /delivery?order={orderNo} — the
                 "ติดตามสถานะออเดอร์" button below opens it. This screen stays a
                 receipt: confirmed, paid, here's what to do next. */}
             <p className="w-full rounded-xl bg-black/[0.03] px-4 py-3.5 text-[13px] leading-[1.85] text-black/60">
@@ -2539,12 +2585,12 @@ export default function OrderFlow({
         )}
 
         {/* The live tracker above only advances while this screen stays open.
-            This opens the full /order/{orderNo} page — the same one the LINE
-            status card points to, polling every 10s — in a NEW view so the
-            customer can close it straight back to this confirmation. */}
+            This opens the full /delivery?order={orderNo} tracker — the same one
+            the LINE status card points to, polling every 10s — in a NEW view so
+            the customer can close it straight back to this confirmation. */}
         {orderNo && (
           <a
-            href={`/order/${encodeURIComponent(orderNo)}`}
+            href={`/delivery?order=${encodeURIComponent(orderNo)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6f5230] py-3.5 text-center text-[14px] font-semibold text-white shadow-sm transition-all hover:bg-[#5a4227] active:scale-[0.98]"

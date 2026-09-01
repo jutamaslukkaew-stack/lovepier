@@ -40,17 +40,26 @@ export function isStaffNotifyTarget(userId) {
 }
 
 /**
- * Push any LINE messages from the OA to a specific user (Messaging API).
- * Used to send the order card "from the shop" to the customer. Best-effort.
- * @param {string} userId  the customer's LINE userId
+ * Push any LINE messages from the OA to one destination (Messaging API).
+ * `to` is any LINE destination id — a customer's userId, a group, or a room;
+ * the push endpoint treats all three the same. Best-effort, never throws.
+ *
+ * The returned `status` matters to callers that have to TELL somebody what
+ * happened: 403 means the customer blocked the OA (a human should follow up),
+ * while `skipped` means we never even tried. Collapsing those into one false
+ * is what made staff read "this order has no LINE account" for a customer who
+ * had one — see noticeFor() in lib/orderStatusUpdate.js.
+ *
+ * @param {string} to  LINE destination id (U… user, C… group, R… room)
  * @param {object[]} messages  LINE message objects (e.g. a Flex message)
+ * @returns {Promise<{ok: boolean, skipped?: boolean, status?: number}>}
  */
-export async function pushToUser(userId, messages) {
-  if (!TOKEN || !userId || !Array.isArray(messages) || messages.length === 0) {
+export async function pushMessages(to, messages) {
+  if (!TOKEN || !to || !Array.isArray(messages) || messages.length === 0) {
     // Was previously silent — indistinguishable in the logs from a genuine
     // send, which cost real debugging time tracing a "notification didn't
     // arrive" report back to a missing env var. Log which precondition failed.
-    console.warn('LINE push to user skipped:', { hasToken: Boolean(TOKEN), hasUserId: Boolean(userId), messageCount: messages?.length ?? 0 })
+    console.warn('LINE push skipped:', { hasToken: Boolean(TOKEN), hasTo: Boolean(to), messageCount: messages?.length ?? 0 })
     return { ok: false, skipped: true }
   }
   try {
@@ -60,18 +69,83 @@ export async function pushToUser(userId, messages) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${TOKEN}`,
       },
-      body: JSON.stringify({ to: userId, messages }),
+      body: JSON.stringify({ to, messages }),
     })
     if (!res.ok) {
-      console.error('LINE push to user failed:', res.status, await res.text())
-      return { ok: false }
+      console.error('LINE push failed:', res.status, await res.text())
+      return { ok: false, status: res.status }
     }
-    console.log('LINE push to user ok:', userId.slice(0, 6) + '…')
+    console.log('LINE push ok:', to.slice(0, 6) + '…')
     return { ok: true }
   } catch (err) {
-    console.error('LINE push to user error:', err)
+    console.error('LINE push error:', err)
     return { ok: false }
   }
+}
+
+/**
+ * Push to a customer. Thin alias for pushMessages — kept because "push to the
+ * customer" and "push to whatever chat this is" read very differently at the
+ * call sites even though LINE's endpoint doesn't distinguish them.
+ */
+export function pushToUser(userId, messages) {
+  return pushMessages(userId, messages)
+}
+
+/**
+ * Reply to an inbound event using its replyToken. Free (a reply does not count
+ * against the OA's monthly push quota) but single-use and short-lived.
+ * Best-effort, never throws — but unlike the old version it REPORTS failure so
+ * replyOrPush can fall back instead of the message silently vanishing.
+ *
+ * @returns {Promise<{ok: boolean, skipped?: boolean, status?: number}>}
+ */
+export async function replyMessages(replyToken, messages) {
+  if (!TOKEN || !replyToken || !Array.isArray(messages) || messages.length === 0) {
+    console.warn('LINE reply skipped:', { hasToken: Boolean(TOKEN), hasReplyToken: Boolean(replyToken), messageCount: messages?.length ?? 0 })
+    return { ok: false, skipped: true }
+  }
+  try {
+    const res = await fetch('https://api.line.me/v2/bot/message/reply', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${TOKEN}`,
+      },
+      body: JSON.stringify({ replyToken, messages }),
+    })
+    if (!res.ok) {
+      console.error('LINE reply failed:', res.status, await res.text())
+      return { ok: false, status: res.status }
+    }
+    return { ok: true }
+  } catch (err) {
+    console.error('LINE reply error:', err)
+    return { ok: false }
+  }
+}
+
+/**
+ * Answer an inbound event: reply if we can, push if the reply didn't land.
+ *
+ * A reply token is single-use and expires, so a slow handler (a cold start
+ * plus a couple of DB round trips) can find itself holding a dead token — and
+ * the old code's answer to that was to log and move on, which is exactly the
+ * "I tapped the button and nothing happened" report this exists to prevent.
+ *
+ * The push is a genuine fallback, never speculative: a reply is free and a
+ * push is billed, so we only pay when the free path actually failed.
+ *
+ * @param {{replyToken?: string, to?: string, messages: object[]}} args
+ * @returns {Promise<{ok: boolean, via: 'reply' | 'push' | 'none'}>}
+ */
+export async function replyOrPush({ replyToken, to, messages }) {
+  const replied = await replyMessages(replyToken, messages)
+  if (replied.ok) return { ok: true, via: 'reply' }
+  if (!to) return { ok: false, via: 'none' }
+  console.warn('LINE reply did not land, falling back to push:', to.slice(0, 6) + '…')
+  const pushed = await pushMessages(to, messages)
+  return { ok: Boolean(pushed.ok), via: pushed.ok ? 'push' : 'none' }
 }
 
 /**

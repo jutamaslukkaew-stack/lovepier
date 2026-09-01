@@ -1,19 +1,23 @@
-// Animated 3-step tracker shown on the order success screen once payment is
-// verified (slipStatus === 'ok') — reassures the customer their order is
-// actually moving: paid -> shop preparing -> heading out to them (delivery)
-// or ready to collect (pickup). Purely presentational / client-derived, no
-// real-time backend status — so the hint line under it tells the customer the
-// step updates land on LINE, not on this screen. Keyframes live in
-// styles/globals.css.
+// Animated 3-step tracker: paid -> shop preparing -> heading out to them
+// (delivery) or ready to collect (pickup). Driven by the real order status
+// from /api/order-status via components/delivery/OrderStatus.js, which polls
+// while the page is open — so `justChanged` marks the step the shop moved the
+// order to WHILE the customer was watching, and that step alone gets the
+// arrival animation. Keyframes live in styles/globals.css.
 import { CheckCircle2, ChefHat, Bike, ShoppingBag, MessageCircle } from 'lucide-react'
 
-export default function OrderJourney({ method, status = 'paid', t }) {
+// Which step each status lights up — so `justChanged` can be matched against
+// the step being rendered rather than every step popping on any change.
+const STEP_OF = { paid: 0, preparing: 1, done: 2 }
+
+export default function OrderJourney({ method, status = 'paid', t, justChanged = null }) {
   const isPickup = method === 'pickup'
   const ThirdIcon = isPickup ? ShoppingBag : Bike
   const thirdLabel = isPickup ? t.journeyPickup : t.journeyDeliver
   const paidState = status === 'paid' ? 'active' : 'done'
   const prepState = status === 'preparing' ? 'active' : status === 'done' ? 'done' : 'upcoming'
   const finalState = status === 'done' ? 'active' : 'upcoming'
+  const changedStep = justChanged != null ? STEP_OF[justChanged] : null
 
   return (
     <div className="w-full">
@@ -23,11 +27,11 @@ export default function OrderJourney({ method, status = 'paid', t }) {
         </p>
       )}
       <div className="flex items-start justify-center gap-0">
-        <JourneyStep icon={CheckCircle2} label={t.journeyPaid} state={paidState} />
+        <JourneyStep icon={CheckCircle2} label={t.journeyPaid} state={paidState} changed={changedStep === 0} />
         <Connector active={status === 'preparing' || status === 'done'} />
-        <JourneyStep icon={ChefHat} label={t.journeyPrep} state={prepState} />
+        <JourneyStep icon={ChefHat} label={t.journeyPrep} state={prepState} changed={changedStep === 1} />
         <Connector active={status === 'done'} />
-        <JourneyStep icon={ThirdIcon} label={thirdLabel} state={finalState} />
+        <JourneyStep icon={ThirdIcon} label={thirdLabel} state={finalState} changed={changedStep === 2} />
       </div>
       {t.journeyHint && (
         <p className="mt-3.5 flex items-start justify-center gap-1.5 px-1 text-center text-[11.5px] leading-[1.6] text-[#4a3520]/75">
@@ -39,7 +43,7 @@ export default function OrderJourney({ method, status = 'paid', t }) {
   )
 }
 
-function JourneyStep({ icon: Icon, label, state }) {
+function JourneyStep({ icon: Icon, label, state, changed = false }) {
   const circleClass =
     state === 'done'
       ? 'bg-[#3a2818] text-white'
@@ -59,7 +63,16 @@ function JourneyStep({ icon: Icon, label, state }) {
             style={{ animation: 'orderStepRing 1.8s ease-out infinite' }}
           />
         )}
-        <div className={`relative w-9 h-9 rounded-full flex items-center justify-center ${circleClass}`}>
+        <div
+          // A CSS keyframe does not replay on re-render, so the arrival pop
+          // would never be seen without remounting this node — hence the key.
+          key={`${state}-${changed}`}
+          className={`relative w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-300 ${circleClass}`}
+          // orderBadgePop's own keyframe already overshoots (0.4 → 1.12 →
+          // 0.94 → 1), so the easing only has to decelerate — a springy
+          // timing function on top of it would bounce the step twice.
+          style={changed ? { animation: 'orderBadgePop 520ms cubic-bezier(0.22, 1, 0.36, 1) both' } : undefined}
+        >
           <Icon
             size={17}
             strokeWidth={2.25}
