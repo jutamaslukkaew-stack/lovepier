@@ -97,6 +97,10 @@ export const SETTING_KEYS = {
   // (Wednesday). A BLANK value means "open every day" and is meaningful —
   // see parseClosedDays, and the note on the read below.
   shopClosedDays: 'shop_closed_days',
+  // How many minutes before closing to stop taking orders, so the kitchen
+  // isn't handed a ticket it can't finish. '0' (the default) means take them
+  // right up to closing time.
+  shopLastOrderMinutes: 'shop_last_order_minutes',
   // How far ahead of the chosen slot the order must be placed, and how many
   // days ahead the picker offers. Both are policy rather than trading hours.
   preorderLeadMinutes: 'preorder_lead_minutes',
@@ -183,6 +187,9 @@ export async function getShopSettings() {
     // that idiom would silently reinstate the Wednesday closure the moment
     // the shop turned it off. parseClosedDays distinguishes unset from blank.
     shopClosedDays: parseClosedDays(m[SETTING_KEYS.shopClosedDays]),
+    shopLastOrderMinutes: m[SETTING_KEYS.shopLastOrderMinutes]
+      ? num(m[SETTING_KEYS.shopLastOrderMinutes])
+      : 0,
     preorderLeadMinutes: m[SETTING_KEYS.preorderLeadMinutes]
       ? num(m[SETTING_KEYS.preorderLeadMinutes])
       : 60,

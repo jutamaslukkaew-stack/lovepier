@@ -366,6 +366,7 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
           <div className="space-y-1.5">
             <Label>เวลาเปิดร้าน</Label>
             <Input
+              type="time"
               value={form.shopOpenTime}
               onChange={(e) => set('shopOpenTime', e.target.value)}
               placeholder="09:00"
@@ -374,11 +375,26 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
           <div className="space-y-1.5">
             <Label>เวลาปิดร้าน</Label>
             <Input
+              type="time"
               value={form.shopCloseTime}
               onChange={(e) => set('shopCloseTime', e.target.value)}
               placeholder="18:00"
             />
           </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>หยุดรับออเดอร์ก่อนปิดร้าน (นาที)</Label>
+          <Input
+            type="number"
+            min={0}
+            className="w-40"
+            value={form.shopLastOrderMinutes}
+            onChange={(e) => set('shopLastOrderMinutes', e.target.value)}
+            placeholder="0"
+          />
+          <p className="text-xs text-muted-foreground">
+            0 = รับถึงเวลาปิด · เช่น 30 = ปิด 18:00 จะหยุดรับออเดอร์ 17:30
+          </p>
         </div>
         <p className="text-xs text-muted-foreground">
           ช่องเวลาที่ลูกค้าเลือกได้เป็นรายชั่วโมง และช่องสุดท้ายจะอยู่ก่อนเวลาปิดหนึ่งชั่วโมง — 09:00–18:00 จะได้ 09:00 ถึง 17:00

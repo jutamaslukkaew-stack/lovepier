@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm'
 import { db } from './db'
 import { orders } from './db/schema'
 import { pushToUser } from './lineMessaging'
+import { markUnfriended } from './lineFriendship'
 import { buildOrderStatusFlex } from './orderFlex'
 import { awardPoints } from './pointsAward'
 import { IN_STORE_METHOD } from './inStore'
@@ -16,11 +17,34 @@ import { IN_STORE_METHOD } from './inStore'
 // imported) to keep this runtime module free of an app/ dependency.
 const ALL_STATUSES = ['pending', 'paid', 'preparing', 'done', 'cancelled']
 
-// The subset a LINE quick-action button may set: forward-only kitchen steps
-// plus cancel. 'paid' is deliberately excluded — payment is confirmed by slip
-// verification, never a button — and so is 'pending' (a card can't un-do a
-// step).
-export const STAFF_BUTTON_STATUSES = ['preparing', 'done', 'cancelled']
+// Owned by lib/staffPostback.js (which has no db dependency, so it can be
+// unit-tested); re-exported here because this is where callers expect to find
+// the status vocabulary.
+export { STAFF_BUTTON_STATUSES } from './staffPostback'
+
+/**
+ * Why the customer was or wasn't told. The old code collapsed all of this into
+ * one `sentToLine` boolean, so staff were shown "this order has no LINE
+ * account" for a customer who had one and whose push had simply failed — and
+ * therefore didn't follow up. Whoever is being informed needs the difference
+ * between "nothing to do" and "go call them".
+ *
+ * @param {{lineUserId?: string, deliveryMethod?: string, message?: object|null, pushed?: {ok?: boolean, status?: number}}} args
+ * @returns {'sent'|'no-line'|'in-store'|'no-card'|'blocked'|'failed'}
+ */
+export function noticeFor({ lineUserId, deliveryMethod, message, pushed }) {
+  if (!lineUserId) return 'no-line'
+  // In-store sales (from /admin/scan) already handed the customer their
+  // receipt at the counter, and buildOrderStatusFlex only speaks
+  // delivery/pickup — pushing it for a walk-in would be actively wrong.
+  if (deliveryMethod === IN_STORE_METHOD) return 'in-store'
+  if (!message) return 'no-card'
+  if (pushed?.ok) return 'sent'
+  // 403 is LINE's answer for "this user has blocked the OA" — the one failure
+  // a human has to act on, so it must not read the same as a transient 500.
+  if (pushed?.status === 403) return 'blocked'
+  return 'failed'
+}
 
 /**
  * Locate an order by id OR orderNo, move it to `status`, and fan out the same
@@ -31,7 +55,8 @@ export const STAFF_BUTTON_STATUSES = ['preparing', 'done', 'cancelled']
  *
  * @param {{ id?: string, orderNo?: string, status: string }} args
  * @returns {Promise<{ ok: boolean, error?: string, unchanged?: boolean,
- *   orderNo?: string, from?: string, to?: string, sentToLine?: boolean }>}
+ *   orderNo?: string, from?: string, to?: string, sentToLine?: boolean,
+ *   customerNotice?: 'sent'|'no-line'|'in-store'|'no-card'|'blocked'|'failed'|'unchanged' }>}
  */
 export async function applyOrderStatusChange({ id, orderNo, status }) {
   if (!ALL_STATUSES.includes(status)) {
@@ -60,7 +85,7 @@ export async function applyOrderStatusChange({ id, orderNo, status }) {
 
   if (!order) return { ok: false, error: 'ไม่พบออเดอร์' }
   if (order.status === status) {
-    return { ok: true, unchanged: true, orderNo: order.orderNo, from: order.status, to: status, sentToLine: false }
+    return { ok: true, unchanged: true, orderNo: order.orderNo, from: order.status, to: status, sentToLine: false, customerNotice: 'unchanged' }
   }
 
   await db.update(orders).set({ status }).where(eq(orders.id, order.id))
@@ -81,31 +106,48 @@ export async function applyOrderStatusChange({ id, orderNo, status }) {
     }
   }
 
-  let sentToLine = false
-  // In-store sales (from /admin/scan) already handed the customer their
-  // receipt at the counter, and buildOrderStatusFlex only speaks
-  // delivery/pickup — pushing it for a walk-in would be actively wrong.
-  if (order.lineUserId && order.deliveryMethod !== IN_STORE_METHOD) {
-    const message = buildOrderStatusFlex({
-      orderNo: order.orderNo,
-      status,
-      deliveryMethod: order.deliveryMethod,
-    })
-    if (message) {
-      try {
-        const pushed = await pushToUser(order.lineUserId, [message])
-        sentToLine = Boolean(pushed.ok)
-      } catch (err) {
-        console.error('status-change customer push failed (non-fatal):', order.orderNo, err)
-      }
+  // noticeFor() decides whether the customer SHOULD be told and, afterwards,
+  // whether they actually were — so build the card first and let it judge.
+  const shouldPush = Boolean(order.lineUserId) && order.deliveryMethod !== IN_STORE_METHOD
+  const message = shouldPush
+    ? buildOrderStatusFlex({ orderNo: order.orderNo, status, deliveryMethod: order.deliveryMethod })
+    : null
+
+  let pushed = null
+  if (message) {
+    try {
+      pushed = await pushToUser(order.lineUserId, [message])
+    } catch (err) {
+      console.error('status-change customer push failed (non-fatal):', order.orderNo, err)
+      pushed = { ok: false }
     }
   }
+
+  const customerNotice = noticeFor({
+    lineUserId: order.lineUserId,
+    deliveryMethod: order.deliveryMethod,
+    message,
+    pushed,
+  })
+
+  // Same stamp as the order-creation path: a 403 means blocked / not a friend,
+  // so record it for /admin/customers. Only on 403 — never on a transient
+  // failure. Best-effort; it must not affect the status change itself.
+  if (customerNotice === 'blocked') await markUnfriended(order.lineUserId)
 
   console.log('order status change:', {
     orderNo: order.orderNo,
     from: order.status,
     to: status,
-    sentToLine,
+    customerNotice,
   })
-  return { ok: true, orderNo: order.orderNo, from: order.status, to: status, sentToLine }
+  return {
+    ok: true,
+    orderNo: order.orderNo,
+    from: order.status,
+    to: status,
+    customerNotice,
+    // Kept for callers that only care whether the customer heard anything.
+    sentToLine: customerNotice === 'sent',
+  }
 }

@@ -36,6 +36,7 @@ const SETTING_KEYS = {
   shopOpenTime: 'shop_open_time',
   shopCloseTime: 'shop_close_time',
   shopClosedDays: 'shop_closed_days',
+  shopLastOrderMinutes: 'shop_last_order_minutes',
   preorderLeadMinutes: 'preorder_lead_minutes',
   preorderMaxDaysAhead: 'preorder_max_days_ahead',
 } as const
@@ -68,6 +69,7 @@ export type ShopSettingsForm = {
   // Kept as the raw comma-separated string so the form round-trips whatever
   // the shop typed, blank included.
   shopClosedDays: string
+  shopLastOrderMinutes: string
   preorderLeadMinutes: string
   preorderMaxDaysAhead: string
 }
@@ -106,6 +108,7 @@ export async function getSettings(): Promise<ShopSettingsForm> {
     // `?? '3'` rather than `|| '3'`: once the shop has saved a blank (open
     // every day) that blank must survive a reload, and '' is falsy.
     shopClosedDays: m[SETTING_KEYS.shopClosedDays] ?? '3',
+    shopLastOrderMinutes: m[SETTING_KEYS.shopLastOrderMinutes] || '0',
     preorderLeadMinutes: m[SETTING_KEYS.preorderLeadMinutes] || '60',
     preorderMaxDaysAhead: m[SETTING_KEYS.preorderMaxDaysAhead] || '7',
   }
@@ -152,6 +155,7 @@ export async function saveSettings(data: ShopSettingsForm) {
   // Deliberately no `|| '3'` fallback — a blank here means "open every day"
   // and must be storable as a blank.
   await put(SETTING_KEYS.shopClosedDays, (data.shopClosedDays ?? '').trim())
+  await put(SETTING_KEYS.shopLastOrderMinutes, (data.shopLastOrderMinutes || '0').trim())
   await put(SETTING_KEYS.preorderLeadMinutes, (data.preorderLeadMinutes || '60').trim())
   await put(SETTING_KEYS.preorderMaxDaysAhead, (data.preorderMaxDaysAhead || '7').trim())
   revalidatePath('/admin/settings')

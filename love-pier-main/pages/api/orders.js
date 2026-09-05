@@ -3,13 +3,15 @@ import { db } from '../../lib/db'
 import { orders, customers, pointTransactions, preorderItems } from '../../lib/db/schema'
 import { isStaffNotifyTarget, pushOrderCardToStaff, pushToUser } from '../../lib/lineMessaging'
 import { buildOrderFlex } from '../../lib/orderFlex'
+import { noticeFor } from '../../lib/orderStatusUpdate'
+import { markUnfriended } from '../../lib/lineFriendship'
 import { getShopSettings } from '../../lib/settings'
 import { calcDeliveryFee } from '../../lib/deliveryFee'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
 import { TIER_GENERAL, effectiveTier, tierDiscountPercent } from '../../lib/tiers'
 import { normalizeItemOptions } from '../../lib/menuOptions'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
-import { formatSlotThai, validateScheduleRequest } from '../../lib/preorder'
+import { formatSlotThai, shopOpenState, validateScheduleRequest } from '../../lib/preorder'
 
 function pickString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -143,6 +145,36 @@ export default async function handler(req, res) {
   // trust that alone.
   if (s.minDeliveryOrder > 0 && itemsSubtotal < s.minDeliveryOrder) {
     return res.status(400).json({ error: `ยอดสั่งซื้อไม่ถึงขั้นต่ำ (฿${s.minDeliveryOrder})` })
+  }
+
+  // The shop's opening hours, enforced. This gate is the reason the setting
+  // exists at all: until now nothing stopped a 2am order, which took the
+  // customer's money by PromptPay, became a real `pending` row, and woke three
+  // staff phones for something nobody could cook.
+  //
+  // ASAP orders only. An order carrying a slot is a deliberate pre-order and
+  // is checked against the same hours by validateScheduleRequest below —
+  // running this on it would reject "order Friday lunch" placed on Thursday
+  // night, which is exactly what pre-ordering is for.
+  //
+  // The client blocks this too, but a stale bundle or a hand-crafted POST
+  // must not get through — same reasoning as the minimum above.
+  if (!scheduledDate && !scheduledSlot) {
+    const shop = shopOpenState({
+      openTime: s.shopOpenTime,
+      closeTime: s.shopCloseTime,
+      closedDays: s.shopClosedDays,
+      lastOrderMinutes: s.shopLastOrderMinutes,
+    })
+    if (!shop.accepting) {
+      // Name the time they can come back — a bare "we're closed" leaves the
+      // customer with a full cart and nothing to do about it.
+      const when = shop.nextOpenLabel ? ` เปิดอีกครั้ง ${shop.nextOpenLabel}` : ''
+      const error = shop.reason === 'last-order-passed'
+        ? `วันนี้ปิดรับออเดอร์แล้ว (รับถึง ${shop.lastOrderAt} น.)${when}`
+        : `ขณะนี้ร้านปิดอยู่${when}`
+      return res.status(400).json({ error })
+    }
   }
 
   // Pre-order time — never trust the client's slot list. The same pure module
@@ -412,6 +444,21 @@ export default async function handler(req, res) {
       })
     }
 
+    // WHY the customer was or wasn't told, reusing the same vocabulary the
+    // status-change path and the admin toast already speak. A LIFF login does
+    // not make someone an OA friend, so "the order saved but they'll never
+    // hear from us again" is a normal outcome that nobody used to be told about.
+    const customerNotice = noticeFor({
+      lineUserId,
+      deliveryMethod,
+      message: flex,
+      pushed: customerPush,
+    })
+    // 403 is LINE's "blocked or not a friend". Stamp it so /admin/customers
+    // lists someone to phone — and ONLY on 403: a transient 500 must never
+    // demote a customer who was reachable all along. Best-effort by design.
+    if (customerNotice === 'blocked') await markUnfriended(lineUserId)
+
     const slipVerify = Boolean(s.slipokApiKey && s.slipokBranchId)
 
     // staffAlerted is reported separately from sentToLine: the customer
@@ -420,7 +467,7 @@ export default async function handler(req, res) {
     // response. Still a 200 — the order is saved and paid for either way, so
     // failing the request here would tell the customer their order didn't go
     // through, which is worse and untrue.
-    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify, scheduledFor: scheduledFor ? scheduledFor.toISOString() : null, sentToLine: Boolean(customerPush.ok), staffAlerted: Boolean(staffPush.ok) })
+    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify, scheduledFor: scheduledFor ? scheduledFor.toISOString() : null, sentToLine: Boolean(customerPush.ok), customerNotice, staffAlerted: Boolean(staffPush.ok) })
   } catch (err) {
     if (err?.message === 'POINTS_BALANCE_CHANGED') {
       return res.status(409).json({ error: 'ยอดคะแนนมีการเปลี่ยนแปลง กรุณาลองใหม่อีกครั้ง' })

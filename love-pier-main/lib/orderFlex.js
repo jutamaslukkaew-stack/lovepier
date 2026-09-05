@@ -5,6 +5,17 @@ import { OPTION_GROUPS } from './menuOptions'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://lovepier.cafe'
 
+// Where "ดูคะแนนสะสม" sends the customer. A liff.line.me link opens inside
+// LINE already authenticated, so the balance is simply on screen — tapping
+// through from a chat card and then being asked to log in to LINE again is
+// the tap this avoids. The plain URL is the fallback for a shop that has not
+// created the /rewards LIFF app yet: it still works, it just bridges through
+// /delivery to pick up the login first.
+const REWARDS_LIFF_ID = process.env.NEXT_PUBLIC_REWARDS_LIFF_ID || ''
+const REWARDS_URL = REWARDS_LIFF_ID
+  ? `https://liff.line.me/${REWARDS_LIFF_ID}`
+  : `${SITE_URL}/rewards`
+
 function money(n) {
   return `${(Number(n) || 0).toLocaleString('th-TH')}`
 }
@@ -124,7 +135,7 @@ function plainRow(label, value) {
 // only one of them half-ships it silently: one copy shows the time and the
 // other doesn't.
 export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel, withStaffActions = false }) {
-  const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
+  const orderUrl = `${SITE_URL}/delivery?order=${encodeURIComponent(orderNo)}`
 
   const itemRows = items.flatMap((i) => {
     const row = {
@@ -246,7 +257,7 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
 // so the customer sees a Love Pier-branded confirmation alongside SlipOK's own
 // reply card in the LINE chat.
 export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned, withStaffActions = false }) {
-  const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
+  const orderUrl = `${SITE_URL}/delivery?order=${encodeURIComponent(orderNo)}`
 
   const bubble = {
     type: 'bubble',
@@ -306,6 +317,19 @@ export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned, withSt
           height: 'sm',
           action: { type: 'uri', label: 'ตรวจสอบออเดอร์', uri: orderUrl },
         },
+        // The customer's only route to their balance. /rewards is linked from
+        // nowhere else in the app, so before this the points banked one line
+        // above were unreachable unless someone typed the URL. Staff copy
+        // excluded — it is not their balance, and the card is already three
+        // buttons deep.
+        ...(!withStaffActions && pointsEarned
+          ? [{
+              type: 'button',
+              style: 'link',
+              height: 'sm',
+              action: { type: 'uri', label: 'ดูคะแนนสะสม', uri: REWARDS_URL },
+            }]
+          : []),
       ],
     },
   }
@@ -324,7 +348,7 @@ export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned, withSt
  * paid and done their part; the shop simply hasn't confirmed yet.
  */
 export function buildSlipReceivedFlex({ orderNo, total, reason }) {
-  const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
+  const orderUrl = `${SITE_URL}/delivery?order=${encodeURIComponent(orderNo)}`
 
   const bubble = {
     type: 'bubble',
@@ -385,9 +409,17 @@ export function buildSlipReceivedFlex({ orderNo, total, reason }) {
 // operational loop: changing the dropdown is not merely an internal database
 // update; the customer immediately receives the same status in their LINE chat.
 export function buildOrderStatusFlex({ orderNo, status, deliveryMethod }) {
-  const orderUrl = `${SITE_URL}/order/${encodeURIComponent(orderNo)}`
+  const orderUrl = `${SITE_URL}/delivery?order=${encodeURIComponent(orderNo)}`
   const pickup = deliveryMethod === 'pickup'
   const copy = {
+    // Never pushed on a status CHANGE (nothing moves an order back to
+    // pending), but the "เช็กสถานะออเดอร์" reply in pages/api/line-webhook.js
+    // needs it — an unpaid order is the most likely thing a customer asks
+    // about, and returning null there would answer their question with silence.
+    pending: {
+      title: 'รอชำระเงิน',
+      detail: 'กรุณาแนบสลิปการโอนในแชทนี้ เพื่อยืนยันการชำระเงินค่ะ',
+    },
     paid: {
       title: 'ยืนยันการชำระเงินแล้ว',
       detail: 'ร้านได้รับยอดชำระของคุณเรียบร้อยแล้ว',
@@ -419,7 +451,7 @@ export function buildOrderStatusFlex({ orderNo, status, deliveryMethod }) {
         copy.title,
         status === 'cancelled'
           ? STATUS_DOT.alert
-          : status === 'preparing'
+          : status === 'preparing' || status === 'pending'
             ? STATUS_DOT.waiting
             : STATUS_DOT.done,
         status === 'cancelled' ? '#7a3030' : '#3a2818'
@@ -444,6 +476,213 @@ export function buildOrderStatusFlex({ orderNo, status, deliveryMethod }) {
           color: '#3a2818',
           height: 'sm',
           action: { type: 'uri', label: 'ตรวจสอบออเดอร์', uri: orderUrl },
+        }],
+      },
+    },
+  }
+}
+
+/**
+ * Answer for "เช็กสถานะออเดอร์" when the customer has nothing in flight.
+ *
+ * A plain "you have no orders" would be a dead end, and the customer asked
+ * precisely because they were thinking about their food — so the card ends
+ * where they were already headed. `orderUrl` is the LIFF link when one is
+ * configured (opens inside LINE, already logged in) and the plain site URL
+ * otherwise.
+ */
+export function buildNoActiveOrderFlex({ orderUrl }) {
+  return {
+    type: 'flex',
+    altText: 'ตอนนี้ยังไม่มีออเดอร์ที่กำลังดำเนินการ',
+    contents: {
+      type: 'bubble',
+      header: cardHeader('ไม่มีออเดอร์ที่กำลังดำเนินการ', STATUS_DOT.done),
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [{
+          type: 'text',
+          text: 'ตอนนี้คุณยังไม่มีออเดอร์ที่กำลังดำเนินการค่ะ\nสั่งเลยได้ที่ปุ่มด้านล่างนะคะ',
+          size: 'sm',
+          color: '#555555',
+          wrap: true,
+          align: 'center',
+        }],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [{
+          type: 'button',
+          style: 'primary',
+          color: '#3a2818',
+          height: 'sm',
+          action: { type: 'uri', label: 'สั่งเลย', uri: orderUrl },
+        }],
+      },
+    },
+  }
+}
+
+// The one promise both entry cards make, and the reason a customer should not
+// mute this OA. Naming the three specific messages is what turns it from
+// boilerplate into something checkable. The explicit \n is load-bearing: Thai
+// gives LINE's auto-wrap no word boundary and it will break mid-word without
+// one (same treatment as the confirmed/received cards above).
+const UPDATES_PROMISE = 'ใบเสร็จ ยืนยันการชำระเงิน และแจ้งเมื่ออาหารพร้อม\nจะส่งเข้าแชทนี้ทั้งหมด'
+
+/**
+ * Answer to the rich menu's "ขอสั่งเดลิเวอรี" button.
+ *
+ * The button is a TEXT action, not a LIFF link, on purpose: the tap posts the
+ * customer's own message into the chat, which proves this userId is a live,
+ * unblocked friend of the OA before we promise to send them anything. A LIFF
+ * link would open the order flow with nothing entering the chat and no such
+ * proof — and LINE Login is a different channel from the Messaging API, so a
+ * logged-in customer is NOT necessarily someone we can push to.
+ */
+export function buildOrderEntryFlex({ orderUrl, shopState = null }) {
+  // Answering "พร้อมรับออเดอร์แล้ว" at 2am is how the shop ends up with an
+  // order nobody can cook, so the card has to know the hours. `null` keeps the
+  // always-open behaviour for any caller that hasn't got the settings.
+  const closed = Boolean(shopState) && !shopState.accepting
+  const lastOrderPassed = closed && shopState.reason === 'last-order-passed'
+
+  const title = lastOrderPassed
+    ? 'วันนี้ปิดรับออเดอร์แล้ว'
+    : closed ? 'ตอนนี้ร้านปิดอยู่' : 'พร้อมรับออเดอร์แล้ว'
+
+  const lead = lastOrderPassed
+    ? `วันนี้รับออเดอร์ถึง ${shopState.lastOrderAt} น. ค่ะ${shopState.nextOpenLabel ? `\nเปิดรับอีกครั้ง ${shopState.nextOpenLabel} น.` : ''}`
+    : closed
+      ? (shopState.nextOpenLabel
+          ? `เปิดอีกครั้ง ${shopState.nextOpenLabel} น. ค่ะ\nกดดูเมนูไว้ก่อนได้เลยนะคะ`
+          : 'ตอนนี้ยังไม่เปิดรับออเดอร์ค่ะ')
+      : 'กดปุ่มด้านล่างเพื่อเลือกเมนูและสั่งได้เลยค่ะ'
+
+  return {
+    type: 'flex',
+    altText: closed ? `${title} — ${shopState.nextOpenLabel ? `เปิดอีกครั้ง ${shopState.nextOpenLabel} น.` : 'ดูเมนูได้'}` : 'พร้อมรับออเดอร์แล้ว — เลือกเมนูและสั่งได้เลย',
+    contents: {
+      type: 'bubble',
+      // cardHeader already prints "Love Pier Beach Cafe" underneath, so the
+      // title must not repeat the shop name.
+      header: cardHeader(title, closed ? STATUS_DOT.waiting : STATUS_DOT.done),
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+          {
+            type: 'text',
+            text: lead,
+            size: 'sm',
+            color: '#555555',
+            wrap: true,
+            align: 'center',
+          },
+          {
+            type: 'text',
+            text: `${UPDATES_PROMISE}ค่ะ`,
+            size: 'xs',
+            color: '#8c8c8c',
+            wrap: true,
+            align: 'center',
+          },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [{
+          type: 'button',
+          style: 'primary',
+          color: '#3a2818',
+          height: 'sm',
+          // When closed, send them to the menu rather than an order flow that
+          // will only refuse them — the tap should go somewhere that works.
+          action: closed
+            ? { type: 'uri', label: 'ดูเมนู', uri: `${SITE_URL}/menu` }
+            // Same label as buildNoActiveOrderFlex — one button to learn.
+            : { type: 'uri', label: 'สั่งเลย', uri: orderUrl },
+        }],
+      },
+    },
+  }
+}
+
+/**
+ * Sent on the `follow` event — the one moment a customer is guaranteed to be
+ * looking at this chat. It used to be a silent DB write with the replyToken
+ * thrown away.
+ *
+ * This is also the ONLY way to reach someone who added the OA from a QR code
+ * or a poster and will never tap a rich menu.
+ *
+ * NOTE: LINE OA Manager has its own built-in greeting that fires on the same
+ * event. It must be turned OFF or the customer gets two welcomes — see
+ * ORDER_SETUP.md.
+ */
+export function buildWelcomeFlex({ orderUrl, displayName }) {
+  // Long display names are common and would wrap the greeting to three lines
+  // on a card that must not scroll; drop the line entirely rather than truncate
+  // someone's name mid-word.
+  const name = typeof displayName === 'string' ? displayName.trim() : ''
+  const greeting = name && name.length <= 20 ? `สวัสดีค่ะ คุณ${name}` : ''
+
+  return {
+    type: 'flex',
+    altText: 'ยินดีต้อนรับสู่ Love Pier Beach Cafe — สั่งเดลิเวอรีได้จากแชทนี้เลยค่ะ',
+    contents: {
+      type: 'bubble',
+      header: cardHeader('ยินดีต้อนรับค่ะ', STATUS_DOT.done),
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+          ...(greeting
+            ? [{ type: 'text', text: greeting, size: 'sm', color: '#4a3520', weight: 'bold', wrap: true, align: 'center' }]
+            : []),
+          {
+            type: 'text',
+            text: 'สั่งเดลิเวอรีและสั่งล่วงหน้าได้จากแชทนี้เลยค่ะ',
+            size: 'sm',
+            color: '#555555',
+            wrap: true,
+            align: 'center',
+          },
+          {
+            type: 'text',
+            text: UPDATES_PROMISE,
+            size: 'xs',
+            color: '#8c8c8c',
+            wrap: true,
+            align: 'center',
+          },
+          // Teaches the typed fallback for customers who lose the rich menu
+          // or arrive here from a QR code.
+          {
+            type: 'text',
+            text: 'พิมพ์ "เช็กสถานะออเดอร์" เพื่อดูออเดอร์ล่าสุดได้ตลอดค่ะ',
+            size: 'xxs',
+            color: '#aaaaaa',
+            wrap: true,
+            align: 'center',
+          },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [{
+          type: 'button',
+          style: 'primary',
+          color: '#3a2818',
+          height: 'sm',
+          action: { type: 'uri', label: 'สั่งเลย', uri: orderUrl },
         }],
       },
     },
@@ -520,6 +759,69 @@ export function buildInStoreVisitFlex({ memberNo, grossAmount, discountAmount, n
   return {
     type: 'flex',
     altText: `ขอบคุณที่ใช้บริการ — ได้รับ ${money(pointsEarned)} แต้ม`,
+    contents: bubble,
+  }
+}
+
+/**
+ * Staff-only alert: a slip arrived but SlipOK did not clear it, so the order
+ * is still `pending` and only a human can settle it.
+ *
+ * Added 2026-09-05. Until now this was the silent case in the whole payment
+ * path — the customer was told "ทางร้านจะตรวจสอบให้เองนะคะ" and nobody told
+ * the shop, so the order (and the loyalty points it earns on payment, which
+ * are only banked once it turns `paid`) waited for a review that was never
+ * triggered.
+ *
+ * No status buttons: confirming payment stays a deliberate look at the slip in
+ * /admin/orders, the same rule lib/staffPostback.js keeps for the LINE
+ * quick-actions. The button is the way there.
+ */
+export function buildSlipNeedsReviewFlex({ orderNo, total, reason }) {
+  const bubble = {
+    type: 'bubble',
+    header: cardHeader('สลิปรอตรวจสอบ', STATUS_DOT.alert),
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: 'เลขที่ออเดอร์', size: 'xs', color: '#aaaaaa', align: 'center' },
+        { type: 'text', text: String(orderNo), weight: 'bold', size: 'xl', align: 'center', color: '#4a3520' },
+        { type: 'separator', margin: 'lg' },
+        plainRow('ยอดที่ต้องได้รับ', `฿${money(total)}`),
+        ...(reason
+          ? [{ type: 'text', text: String(reason), size: 'xs', color: '#b06d2b', wrap: true, margin: 'md', align: 'center' }]
+          : []),
+        {
+          type: 'text',
+          text: 'ลูกค้าแนบสลิปแล้ว แต่ระบบยืนยันอัตโนมัติไม่ได้\nรบกวนเปิดดูสลิปแล้วกดยืนยันชำระเงิน',
+          size: 'xs',
+          color: '#8c8c8c',
+          wrap: true,
+          margin: 'md',
+          align: 'center',
+        },
+      ],
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      contents: [
+        {
+          type: 'button',
+          style: 'primary',
+          color: '#3a2818',
+          height: 'sm',
+          action: { type: 'uri', label: 'เปิดหน้าออเดอร์', uri: `${SITE_URL}/admin/orders` },
+        },
+      ],
+    },
+  }
+
+  return {
+    type: 'flex',
+    altText: `สลิปรอตรวจสอบ — ออเดอร์ ${orderNo}`,
     contents: bubble,
   }
 }

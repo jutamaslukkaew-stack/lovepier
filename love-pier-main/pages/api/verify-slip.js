@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { orders } from '../../lib/db/schema'
 import { processSlipForOrder } from '../../lib/slipVerification'
-import { buildPaymentConfirmedFlex } from '../../lib/orderFlex'
+import { buildPaymentConfirmedFlex, buildSlipNeedsReviewFlex } from '../../lib/orderFlex'
 import { isStaffNotifyTarget, pushToUser, pushOrderCardToStaff } from '../../lib/lineMessaging'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
 
@@ -68,6 +68,25 @@ export default async function handler(req, res) {
         reason: staffPush.skipped
           ? 'LINE_MESSAGING_TOKEN or LINE_ORDER_NOTIFY_TO is not configured'
           : 'LINE rejected the push (see the LINE push to staff line above for the status)',
+      })
+    }
+  }
+
+  // The slip is on file but nothing cleared it, so the order is still pending
+  // and only a human can settle it. The customer has already been told the
+  // shop will check — this is the message that makes that true.
+  if (result.stored && !result.verified) {
+    const alert = await pushOrderCardToStaff(
+      buildSlipNeedsReviewFlex({
+        orderNo: order.orderNo,
+        total: order.totalAmount,
+        reason: result.rawError || null,
+      })
+    )
+    if (!alert.ok) {
+      console.error('SLIP_REVIEW_NOT_ALERTED — a slip is waiting on manual review:', {
+        orderNo: order.orderNo,
+        reason: result.rawError || null,
       })
     }
   }

@@ -106,3 +106,64 @@ describe('pushOrderCardToStaff', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })
+
+describe('pushMessages', () => {
+  const msgs = [{ type: 'text', text: 'hi' }]
+
+  it('reports the HTTP status so callers can tell "blocked" from "broken"', async () => {
+    const { pushMessages } = await loadWith('Uadmin1')
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 403, text: async () => 'blocked' }))
+
+    // 403 is the one failure a human has to act on — see noticeFor().
+    await expect(pushMessages('Ucustomer', msgs)).resolves.toEqual({ ok: false, status: 403 })
+  })
+
+  it('has no status when the request never reached LINE', async () => {
+    const { pushMessages } = await loadWith('Uadmin1')
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')))
+
+    await expect(pushMessages('Ucustomer', msgs)).resolves.toEqual({ ok: false })
+  })
+})
+
+describe('replyOrPush', () => {
+  const msgs = [{ type: 'text', text: 'ออเดอร์ LP1 → พร้อมแล้ว' }]
+
+  it('replies and does NOT push — a reply is free, a push is billed', async () => {
+    const { replyOrPush } = await loadWith('Cstaff')
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(replyOrPush({ replyToken: 'tok', to: 'Cstaff', messages: msgs }))
+      .resolves.toEqual({ ok: true, via: 'reply' })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock.mock.calls[0][0]).toContain('/message/reply')
+  })
+
+  it('falls back to a push when the reply token has expired', async () => {
+    // The failure this exists for: a cold start plus two DB round trips can
+    // outlive the token, and the old code just logged and moved on — which
+    // the tapper experiences as a button that does nothing.
+    const { replyOrPush } = await loadWith('Cstaff')
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 400, text: async () => 'Invalid reply token' })
+      .mockResolvedValueOnce({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(replyOrPush({ replyToken: 'stale', to: 'Cstaff', messages: msgs }))
+      .resolves.toEqual({ ok: true, via: 'push' })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[1][0]).toContain('/message/push')
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).to).toBe('Cstaff')
+  })
+
+  it('gives up quietly when the reply fails and there is nowhere to push', async () => {
+    const { replyOrPush } = await loadWith('Cstaff')
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 400, text: async () => 'bad' })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(replyOrPush({ replyToken: 'stale', to: undefined, messages: msgs }))
+      .resolves.toEqual({ ok: false, via: 'none' })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+})

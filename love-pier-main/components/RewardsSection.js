@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useLanguage } from '../lib/language'
 import {
   clearLiffBridgeAttempt,
@@ -7,6 +7,7 @@ import {
   hasTriedLiffBridge,
   isLiffConfigured,
   loginAndGetProfile,
+  REWARDS_LIFF_ID,
 } from '../lib/liff'
 
 const COPY = {
@@ -39,6 +40,18 @@ const COPY = {
   },
 }
 
+// Distinguishes "the handshake ran out of time" from "it finished with no
+// profile" in the race below — the two need opposite answers on screen.
+const TIMED_OUT = Symbol('liff-handshake-timeout')
+
+// This page's own LIFF app when the shop has created one (its Endpoint URL is
+// /rewards, so the SDK initialises right here and a customer arriving from
+// LINE is already authenticated — no button, no bounce). Otherwise the page
+// borrows the delivery app, whose endpoint is /delivery, and has to bridge
+// through it.
+const OWN_LIFF_ID = REWARDS_LIFF_ID
+const LIFF_ENDPOINT_PATH = OWN_LIFF_ID ? '/rewards' : '/delivery'
+
 export default function RewardsSection() {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
@@ -47,8 +60,7 @@ export default function RewardsSection() {
   // loading → ready | signin | error. 'signin' is a dead end the customer can
   // act on (button), not a spinner — reached once the silent LINE handshake
   // and its one endpoint bridge have both had their turn without a profile.
-  const [accountStatus, setAccountStatus] = useState(() => (isLiffConfigured() ? 'loading' : 'signin'))
-  const timeoutRef = useRef(null)
+  const [accountStatus, setAccountStatus] = useState(() => (isLiffConfigured(OWN_LIFF_ID || undefined) ? 'loading' : 'signin'))
 
   const loadBalance = useCallback(async (lineProfile) => {
     if (!lineProfile?.userId) {
@@ -83,44 +95,59 @@ export default function RewardsSection() {
   const resolveProfile = useCallback(async () => {
     const cached = getCachedLiffProfile()
     if (cached) return cached
-    const existing = await getProfileIfLoggedIn()
-    if (existing) return existing
-    return loginAndGetProfile()
+    // getProfileIfLoggedIn() calls liff.init(), and a LIFF app only initialises
+    // on its own registered Endpoint URL. Calling it anywhere else is the
+    // "liff.init() was called with a current URL that is not related to the
+    // endpoint URL" case, and it does not fail, it HANGS: measured on
+    // production 2026-09-05, /rewards sat on "กำลังตรวจสอบคะแนน…" for 27s+ and
+    // never started the login, so nobody could read their balance at all.
+    //
+    // With this page's own LIFF app the endpoint IS /rewards, so the init runs
+    // here and a customer who opened the LIFF link from LINE is already
+    // authenticated — the balance appears with nothing to press. Without it,
+    // skip the init entirely and let loginAndGetProfile() bridge through
+    // /delivery; it comes back with the profile cached, which the branch above
+    // then answers instantly.
+    if (window.location.pathname === LIFF_ENDPOINT_PATH) {
+      const existing = await getProfileIfLoggedIn(OWN_LIFF_ID || undefined)
+      if (existing) return existing
+    }
+    return OWN_LIFF_ID
+      ? loginAndGetProfile({ liffId: OWN_LIFF_ID, ownEndpointPath: '/rewards' })
+      : loginAndGetProfile()
   }, [])
 
   const runSilentLogin = useCallback(() => {
-    if (!isLiffConfigured()) return
-    if (timeoutRef.current) window.clearTimeout(timeoutRef.current)
-    // liff.init()/login() can hang inside a blocked webview. Give LINE a
-    // window, then surface a button the customer can actually press.
-    timeoutRef.current = window.setTimeout(() => {
-      setAccountStatus((s) => (s === 'loading' ? 'error' : s))
-    }, 12000)
-    resolveProfile()
+    if (!isLiffConfigured(OWN_LIFF_ID || undefined)) return
+    // liff.init()/login() can hang inside a blocked webview, so the handshake
+    // needs a ceiling. It RACES the handshake rather than living in a timer
+    // held by a ref: the effect's cleanup cancelled that timer, so any
+    // remount — React's own double-mount in development is enough — left the
+    // customer on "กำลังตรวจสอบคะแนน…" with nothing left to end it. Observed
+    // 2026-09-05: still spinning after 23s. A race cannot be dropped.
+    const ceiling = new Promise((resolve) => {
+      window.setTimeout(() => resolve(TIMED_OUT), 12000)
+    })
+    Promise.race([resolveProfile(), ceiling])
       .then((p) => {
-        if (p) {
-          window.clearTimeout(timeoutRef.current)
-          return loadBalance(p)
+        if (p === TIMED_OUT) {
+          // Only a spinner is worth replacing — a handshake that already
+          // finished has the truer answer on screen.
+          setAccountStatus((s) => (s === 'loading' ? 'error' : s))
+          return undefined
         }
+        if (p) return loadBalance(p)
         // No profile: either loginAndGetProfile() is navigating away to LINE /
         // the bridge (leave the spinner up for the redirect), or the bridge has
         // already been spent this session and no navigation is coming.
-        if (hasTriedLiffBridge()) {
-          window.clearTimeout(timeoutRef.current)
-          setAccountStatus('signin')
-        }
+        if (hasTriedLiffBridge()) setAccountStatus('signin')
+        return undefined
       })
-      .catch(() => {
-        window.clearTimeout(timeoutRef.current)
-        setAccountStatus('error')
-      })
+      .catch(() => setAccountStatus('error'))
   }, [loadBalance, resolveProfile])
 
   useEffect(() => {
     runSilentLogin()
-    return () => {
-      if (timeoutRef.current) window.clearTimeout(timeoutRef.current)
-    }
   }, [runSilentLogin])
 
   // Manual retry from the button: forget the spent bridge so the endpoint hop

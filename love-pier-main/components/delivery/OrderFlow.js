@@ -22,13 +22,18 @@ import { useChrome } from '../../lib/chrome'
 import { getCachedLiffProfile, hasTriedLiffBridge, isLiffConfigured, loginAndGetProfile, getProfileIfLoggedIn, sendMessagesToChat, closeLiffWindow, PREORDER_LIFF_ID } from '../../lib/liff'
 import { setDeliverySessionProfile, setDeliverySessionDistance } from '../../lib/deliverySession'
 import { buildPaymentPayload } from '../../lib/promptpay'
+import { prepareSlipDataUrl, submitSlip } from '../../lib/slipImage'
 import { calcOrderDiscountAndPoints } from '../../lib/points'
 import { buildOrderFlex, buildPaymentConfirmedFlex } from '../../lib/orderFlex'
 import { normalizeItemOptions, optionGroupsFor } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
 import MenuExperience from '../menu/MenuExperience'
 import PreorderCatalog from '../preorder/PreorderCatalog'
-import { Check, CheckCircle2, Clock, Receipt, User, StickyNote, MapPin, Download } from 'lucide-react'
+import { Check, CheckCircle2, Clock, Receipt, User, StickyNote, MapPin, Download, MessageCircle } from 'lucide-react'
+
+// Same constant as components/CartDrawer.js — the add-friend deep link needs
+// the leading @, it is part of the path.
+const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@lovepier.cafe'
 import { availableDates, bangkokDateParts, formatDayThai, formatSlotThai } from '../../lib/preorder'
 
 // Leaflet touches `window` at import time — must never be pulled into the
@@ -188,7 +193,19 @@ const COPY = {
     // step 6 — success
     successTitle: 'สั่งซื้อสำเร็จ!',
     orderNo: 'เลขที่ออเดอร์',
+    shopClosedTitle: 'ตอนนี้ร้านปิดอยู่',
+    shopClosedNote: (opensAt) => opensAt
+      ? `ดูเมนูได้ตามสบายค่ะ กลับมาสั่งได้อีกครั้ง ${opensAt} น.`
+      : 'ดูเมนูได้ตามสบายค่ะ กลับมาสั่งได้อีกครั้งเมื่อร้านเปิด',
+    lastOrderTitle: 'วันนี้ปิดรับออเดอร์แล้ว',
+    lastOrderNote: (lastOrderAt) => `วันนี้รับออเดอร์ถึง ${lastOrderAt} น. ไว้พรุ่งนี้เจอกันนะคะ`,
     sentToShop: 'ส่งออเดอร์ให้ร้านทาง LINE แล้ว',
+    // Shown when the customer's LINE copy could NOT be delivered. Leads with
+    // the reassurance because it is true and it is what they care about — the
+    // shop has the order either way.
+    notSentToLine: 'ร้านได้รับออเดอร์แล้ว แต่ยังส่งอัปเดตทาง LINE ให้ไม่ได้',
+    notSentToLineHint: 'เพิ่ม Love Pier เป็นเพื่อนใน LINE เพื่อรับใบเสร็จ ยืนยันการชำระเงิน และแจ้งเมื่ออาหารพร้อม',
+    addFriendCta: 'เพิ่มเพื่อนใน LINE',
     processingTitle: 'ร้านกำลังรับออเดอร์ของคุณ',
     processingMessage: 'กรุณารอสักครู่',
     waitingDelivery: 'ร้านกำลังเตรียมอาหารและจะจัดส่งให้ภายในรัศมีบริการ',
@@ -322,7 +339,16 @@ const COPY = {
     submitting: 'Sending...',
     successTitle: 'Order placed!',
     orderNo: 'Order no.',
+    shopClosedTitle: 'The shop is closed right now',
+    shopClosedNote: (opensAt) => opensAt
+      ? `Browse the menu all you like — ordering reopens at ${opensAt}.`
+      : 'Browse the menu all you like — ordering reopens when the shop does.',
+    lastOrderTitle: 'We’ve stopped taking orders for today',
+    lastOrderNote: (lastOrderAt) => `Today’s last order was ${lastOrderAt}. See you tomorrow!`,
     sentToShop: 'Order sent to the shop on LINE',
+    notSentToLine: 'The shop has your order, but we can’t send LINE updates yet',
+    notSentToLineHint: 'Add Love Pier on LINE to get your receipt, payment confirmation, and a message when your food is ready.',
+    addFriendCta: 'Add Love Pier on LINE',
     processingTitle: 'Processing your order',
     processingMessage: "We're sending your order to the shop. Please keep this page open and don't submit again.",
     waitingDelivery: "We're preparing your order and will deliver within our service radius.",
@@ -456,7 +482,16 @@ const COPY = {
     submitting: '发送中...',
     successTitle: '下单成功！',
     orderNo: '订单号',
+    shopClosedTitle: '本店目前休息中',
+    shopClosedNote: (opensAt) => opensAt
+      ? `菜单可以随意浏览，${opensAt} 起可再次下单。`
+      : '菜单可以随意浏览，开店后即可下单。',
+    lastOrderTitle: '今天已停止接单',
+    lastOrderNote: (lastOrderAt) => `今日最后接单时间为 ${lastOrderAt}，明天见！`,
     sentToShop: '订单已通过 LINE 发送给店家',
+    notSentToLine: '店家已收到订单，但暂时无法通过 LINE 发送更新',
+    notSentToLineHint: '请加 Love Pier 为 LINE 好友，以接收收据、付款确认和出餐通知。',
+    addFriendCta: '加 Love Pier 为好友',
     processingTitle: '正在处理，请稍候',
     processingMessage: '系统正在将订单发送给店家，请勿关闭页面或重复提交。',
     waitingDelivery: '我们正在备餐，将在配送范围内为您送达。',
@@ -629,6 +664,11 @@ export default function OrderFlow({
   // if this component is ever rendered without them.
   preorderEnabled = false, shopOpenTime = '09:00', shopCloseTime = '18:00',
   shopClosedDays = [3], preorderLeadMinutes = 60, preorderMaxDaysAhead = 7,
+  // Whether the shop is taking orders right now, resolved SERVER-side in
+  // pages/delivery.js (see shopOpenState in lib/preorder.js) because a
+  // customer's device clock can be wrong. Null = ungated, so /preorder and
+  // any other caller behaves exactly as before.
+  shopState = null,
 }) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
@@ -757,6 +797,11 @@ export default function OrderFlow({
   const [orderNo, setOrderNo] = useState('')
   const [completed, setCompleted] = useState(null)
   const [sentToLine, setSentToLine] = useState(false)
+  // WHY the customer's LINE copy did or didn't arrive — 'sent' | 'no-line' |
+  // 'in-store' | 'no-card' | 'blocked' | 'failed', from lib/orderStatusUpdate.js.
+  // Only used to suppress the "add us on LINE" prompt for an in-store sale,
+  // where the customer already has a paper receipt.
+  const [customerNotice, setCustomerNotice] = useState('')
   const [slipVerify, setSlipVerify] = useState(false)
   const [slipStatus, setSlipStatus] = useState('idle')
 
@@ -777,6 +822,12 @@ export default function OrderFlow({
   // method is selected. minDeliveryOrder<=0 disables the requirement
   // entirely.
   const belowMinOrder = minDeliveryOrder > 0 && itemsSubtotal < minDeliveryOrder
+  // Outside trading hours the customer may browse the whole menu but not
+  // check out. /api/orders enforces the same rule; this just says so before
+  // they fill a cart. Never gates /preorder — scheduling ahead is the point
+  // there, and validateScheduleRequest checks those slots against the same
+  // hours.
+  const shopClosed = !preOrderOnly && Boolean(shopState) && !shopState.accepting
   // 'pickup' is always free, the shop never delivers outside its radius
   // regardless of what the fee settings say, and while belowMinOrder nothing
   // can be ordered yet (checkout itself is blocked below), so no delivery
@@ -1194,7 +1245,7 @@ export default function OrderFlow({
   // needed) depends on that answer. Blocked below the shop's minimum, which
   // is stated on the bar itself — see the menu step's render. ─────────────
   function goToMethodFromMenu() {
-    if (items.length === 0 || belowMinOrder) return
+    if (items.length === 0 || belowMinOrder || shopClosed) return
     setStep('method')
   }
 
@@ -1259,7 +1310,7 @@ export default function OrderFlow({
     setSummaryError('')
     // Belt-and-suspenders — the continue button is already disabled while
     // belowMinOrder, this just stops a stray call from slipping through.
-    if (belowMinOrder) return
+    if (belowMinOrder || shopClosed) return
     if (!form.name.trim() || !form.phone.trim()) {
       setSummaryError(t.fillRequired)
       return
@@ -1375,6 +1426,9 @@ export default function OrderFlow({
       })
       const customerSentOrder = await sendMessagesToChat([orderFlex], liffId)
       setSentToLine(customerSentOrder || Boolean(data.sentToLine))
+      // If the in-chat send worked, the customer HAS their copy regardless of
+      // what the server's push did — don't then tell them to add the OA.
+      setCustomerNotice(customerSentOrder ? 'sent' : (data.customerNotice || ''))
 
       setCompleted({
         total: finalTotal,
@@ -1398,53 +1452,46 @@ export default function OrderFlow({
     }
   }
 
-  function handleSlipFile(e) {
+  // Shared with the order tracker (components/delivery/OrderStatus.js) via
+  // lib/slipImage.js: a HEIC or a full-resolution photo has to be converted
+  // and shrunk here, or the upload dies on the way to SlipOK and the order —
+  // and the points it earned — stays at `pending`.
+  async function handleSlipFile(e) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
     setSlipError('')
     setSlipStatus('verifying')
-    const reader = new FileReader()
-    reader.onload = async () => {
-      try {
-        const res = await fetch('/api/verify-slip', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${profile?.accessToken || ''}`,
-          },
-          body: JSON.stringify({ orderNo, imageBase64: reader.result }),
-        })
-        const data = await res.json()
-        if (data.ok && data.verified) {
-          setSlipStatus('ok')
-          setCompleted((current) => current ? { ...current, status: 'paid' } : current)
-          // Same inbound path for payment confirmation, so the shop receives
-          // a real OA notification instead of only seeing its own outgoing
-          // message in the customer's history.
-          await sendMessagesToChat([
-            buildPaymentConfirmedFlex({
-              orderNo,
-              total: completed?.total || data.amount || 0,
-              pointsEarned: data.pointsEarned || completed?.pointsEarned || 0,
-            }),
-          ], liffId)
-        } else if (data.ok && data.stored && !data.error) {
-          setSlipStatus('stored')
-        } else {
-          setSlipStatus('fail')
-          setSlipError(data.error || 'ตรวจสอบสลิปไม่สำเร็จ')
-        }
-      } catch {
-        setSlipStatus('fail')
-        setSlipError('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง')
-      }
-    }
-    reader.onerror = () => {
+
+    let dataUrl
+    try {
+      dataUrl = await prepareSlipDataUrl(file)
+    } catch (err) {
       setSlipStatus('fail')
-      setSlipError('อ่านไฟล์รูปไม่ได้')
+      setSlipError(err.message || 'อ่านไฟล์รูปไม่ได้')
+      return
     }
-    reader.readAsDataURL(file)
+
+    const result = await submitSlip({ orderNo, accessToken: profile?.accessToken, dataUrl })
+    if (result.state === 'ok') {
+      setSlipStatus('ok')
+      setCompleted((current) => current ? { ...current, status: 'paid' } : current)
+      // Same inbound path for payment confirmation, so the shop receives
+      // a real OA notification instead of only seeing its own outgoing
+      // message in the customer's history.
+      await sendMessagesToChat([
+        buildPaymentConfirmedFlex({
+          orderNo,
+          total: completed?.total || result.amount || 0,
+          pointsEarned: result.pointsEarned || completed?.pointsEarned || 0,
+        }),
+      ], liffId)
+    } else if (result.state === 'stored') {
+      setSlipStatus('stored')
+    } else {
+      setSlipStatus('fail')
+      setSlipError(result.error)
+    }
   }
 
   // Keep the success screen in sync with the order status changed by staff.
@@ -1483,6 +1530,7 @@ export default function OrderFlow({
     setOrderNo('')
     setCompleted(null)
     setSentToLine(false)
+    setCustomerNotice('')
     setSlipVerify(false)
     setSlipStatus('idle')
     setSlipError('')
@@ -1972,7 +2020,7 @@ export default function OrderFlow({
         {preOrderOnly ? <PreorderCatalog
           preorderItems={preorderItems}
           onCartClick={goToMethodFromMenu}
-          cartBlockedNote={belowMinOrder ? t.minOrderNotice(minDeliveryOrder - itemsSubtotal, minDeliveryOrder) : ''}
+          cartBlockedNote={shopClosed ? t.shopClosedNote(shopState.nextOpenLabel) : belowMinOrder ? t.minOrderNotice(minDeliveryOrder - itemsSubtotal, minDeliveryOrder) : ''}
         /> : <MenuExperience
           dbMenuData={dbMenuData}
           dbPromotions={dbPromotions}
@@ -1982,7 +2030,7 @@ export default function OrderFlow({
           // Stated on the cart button rather than only at checkout: with the
           // menu first, this is the screen where the customer can actually do
           // something about it.
-          cartBlockedNote={belowMinOrder ? t.minOrderNotice(minDeliveryOrder - itemsSubtotal, minDeliveryOrder) : ''}
+          cartBlockedNote={shopClosed ? t.shopClosedNote(shopState.nextOpenLabel) : belowMinOrder ? t.minOrderNotice(minDeliveryOrder - itemsSubtotal, minDeliveryOrder) : ''}
         />}
       </div>
     )
@@ -2138,6 +2186,19 @@ export default function OrderFlow({
                   No method-switch action here (unlike an earlier version of
                   this notice): switching wouldn't unblock anything, since
                   neither method is checkout-eligible below the minimum. */}
+              {shopClosed && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] leading-[1.8] text-amber-800">
+                  <p className="font-semibold">
+                    {shopState.reason === 'last-order-passed' ? t.lastOrderTitle : t.shopClosedTitle}
+                  </p>
+                  <p className="mt-0.5">
+                    {shopState.reason === 'last-order-passed'
+                      ? t.lastOrderNote(shopState.lastOrderAt)
+                      : t.shopClosedNote(shopState.nextOpenLabel)}
+                  </p>
+                </div>
+              )}
+
               {belowMinOrder && (
                 <div className="px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-[13px] text-amber-800 leading-relaxed">
                   <p>{t.minOrderNotice(minDeliveryOrder - itemsSubtotal, minDeliveryOrder)}</p>
@@ -2259,7 +2320,7 @@ export default function OrderFlow({
           <StickyActionBar>
             <button
               onClick={goToPayment}
-              disabled={belowMinOrder}
+              disabled={belowMinOrder || shopClosed}
               className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-between px-5"
             >
               <span>{t.next}</span>
@@ -2469,12 +2530,33 @@ export default function OrderFlow({
               </div>
             )}
           </div>
-          {sentToLine && (
+          {sentToLine ? (
             <p className="mt-3.5 flex items-center gap-1.5 border-t border-black/[0.06] pt-3 text-[12px] text-[#4a3520]/80">
               <Check size={13} strokeWidth={3} className="shrink-0" />
               {t.sentToShop}
             </p>
-          )}
+          ) : customerNotice !== 'in-store' ? (
+            // A LINE login does not make someone an OA friend, so a customer
+            // who arrived from the website orders fine and then never hears
+            // from us again. This used to render as an ABSENT line — nobody
+            // was told. Deliberately not styled as an error: from the
+            // customer's side nothing went wrong, the shop really does have
+            // the order. One sentence that is true for no-line, blocked and
+            // failed alike.
+            <div className="mt-3.5 border-t border-black/[0.06] pt-3">
+              <p className="text-[12px] font-medium text-[#7a4f14]">{t.notSentToLine}</p>
+              <p className="mt-1 text-[11.5px] leading-[1.7] text-black/50">{t.notSentToLineHint}</p>
+              <a
+                href={`https://line.me/R/ti/p/${LINE_OA_ID}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-[#06C755] px-3 py-2 text-[12.5px] font-semibold text-white transition-opacity hover:opacity-90 active:scale-[0.98]"
+              >
+                <MessageCircle size={13} strokeWidth={2.5} className="shrink-0" />
+                {t.addFriendCta}
+              </a>
+            </div>
+          ) : null}
         </div>
 
         {paid ? (
@@ -2494,7 +2576,7 @@ export default function OrderFlow({
                 </span>
               )}
             </div>
-            {/* The step-by-step tracker lives on /order/{orderNo} only — the
+            {/* The step-by-step tracker lives on /delivery?order={orderNo} — the
                 "ติดตามสถานะออเดอร์" button below opens it. This screen stays a
                 receipt: confirmed, paid, here's what to do next. */}
             <p className="w-full rounded-xl bg-black/[0.03] px-4 py-3.5 text-[13px] leading-[1.85] text-black/60">
@@ -2539,12 +2621,12 @@ export default function OrderFlow({
         )}
 
         {/* The live tracker above only advances while this screen stays open.
-            This opens the full /order/{orderNo} page — the same one the LINE
-            status card points to, polling every 10s — in a NEW view so the
-            customer can close it straight back to this confirmation. */}
+            This opens the full /delivery?order={orderNo} tracker — the same one
+            the LINE status card points to, polling every 10s — in a NEW view so
+            the customer can close it straight back to this confirmation. */}
         {orderNo && (
           <a
-            href={`/order/${encodeURIComponent(orderNo)}`}
+            href={`/delivery?order=${encodeURIComponent(orderNo)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6f5230] py-3.5 text-center text-[14px] font-semibold text-white shadow-sm transition-all hover:bg-[#5a4227] active:scale-[0.98]"

@@ -25,6 +25,14 @@ export const PREORDER_LIFF_ID = process.env.NEXT_PUBLIC_PREORDER_LIFF_ID || ''
 // is the customer's FIRST contact with the shop, so it is the worst place to
 // risk that. When unset the page says so instead of hanging.
 export const JOIN_LIFF_ID = process.env.NEXT_PUBLIC_JOIN_LIFF_ID || ''
+// The rewards page's own LIFF app, Endpoint URL /rewards. Same reason as the
+// two above, and the sharpest case of it: a customer arriving from the Rich
+// Menu or the payment card has ALREADY authenticated with LINE, so asking
+// them to press "เข้าสู่ระบบ LINE" to read their own balance is a tap that
+// should not exist. With this set the page initialises in place and the
+// balance is simply there; unset, it falls back to bridging through
+// /delivery, which works but bounces through another screen first.
+export const REWARDS_LIFF_ID = process.env.NEXT_PUBLIC_REWARDS_LIFF_ID || ''
 // Google Apps Script Web App that logs LINE customers into a Google Sheet.
 const SHEETS_WEBHOOK = process.env.NEXT_PUBLIC_SHEETS_WEBHOOK_URL || ''
 
