@@ -21,19 +21,22 @@ import { customers, pointTransactions } from './db/schema'
 export async function awardPoints({ orderId, lineUserId, phone, points }) {
   if (!(points > 0)) return
 
-  const where = lineUserId
-    ? eq(customers.lineUserId, lineUserId)
-    : phone
-      ? eq(customers.phone, phone)
-      : null
-  if (!where) return
+  if (!lineUserId && !phone) return
 
-  const [customer] = await db.select().from(customers).where(where).limit(1)
+  const customer = await resolveCustomer({ lineUserId, phone })
+  if (!customer) {
+    // Nothing to credit and nothing we could create — recording the ledger
+    // row anyway would bank the points against nobody, which is how one +10
+    // award went missing in 2026-08. Loud, because it means a paying customer
+    // is owed points: grep Vercel for POINTS_UNCREDITED.
+    console.error('POINTS_UNCREDITED — no customer row to credit:', { orderId, lineUserId, phone, points })
+    return
+  }
 
   try {
     await db.insert(pointTransactions).values({
       orderId,
-      customerId: customer?.id || null,
+      customerId: customer.id,
       phone: phone || '',
       points,
       type: 'earn',
@@ -51,10 +54,52 @@ export async function awardPoints({ orderId, lineUserId, phone, points }) {
     throw err
   }
 
-  if (customer) {
-    await db
-      .update(customers)
-      .set({ pointsBalance: sql`${customers.pointsBalance} + ${points}`, updatedAt: sql`now()` })
-      .where(eq(customers.id, customer.id))
+  await db
+    .update(customers)
+    .set({ pointsBalance: sql`${customers.pointsBalance} + ${points}`, updatedAt: sql`now()` })
+    .where(eq(customers.id, customer.id))
+}
+
+/**
+ * The row this order's points belong to: the LINE account first, then the
+ * phone number, then a row created for it.
+ *
+ * The phone fallback is not redundant with the lineUserId lookup — an order
+ * carrying a LINE id whose customer row was never written (the upsert in
+ * pages/api/orders.js is best-effort and swallows its own failures) still has
+ * a phone that usually does have one. Creating the row as a last resort is
+ * what keeps the points attached to a person: they are the customer's, earned
+ * on money the shop has already received.
+ */
+async function resolveCustomer({ lineUserId, phone }) {
+  if (lineUserId) {
+    const [byLine] = await db.select().from(customers).where(eq(customers.lineUserId, lineUserId)).limit(1)
+    if (byLine) return byLine
   }
+  if (phone) {
+    const [byPhone] = await db.select().from(customers).where(eq(customers.phone, phone)).limit(1)
+    if (byPhone) return byPhone
+  }
+
+  try {
+    // onConflictDoNothing rather than an upsert: another writer (the customer
+    // upsert on a concurrent order) may create the same row first, and the
+    // re-select below picks up whichever of us won.
+    await db
+      .insert(customers)
+      .values({ lineUserId: lineUserId || null, phone: phone || '' })
+      .onConflictDoNothing()
+  } catch (err) {
+    console.error('Customer create for points failed (non-fatal):', err)
+  }
+
+  if (lineUserId) {
+    const [created] = await db.select().from(customers).where(eq(customers.lineUserId, lineUserId)).limit(1)
+    if (created) return created
+  }
+  if (phone) {
+    const [created] = await db.select().from(customers).where(eq(customers.phone, phone)).limit(1)
+    if (created) return created
+  }
+  return null
 }

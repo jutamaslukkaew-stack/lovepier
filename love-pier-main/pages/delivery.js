@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react'
 import { cacheLiffProfile, initLiff, LIFF_RETURN_TO_KEY } from '../lib/liff'
 import { getMenuPageData } from '../lib/db/menuPageData'
 import { getShopSettings } from '../lib/settings'
+import { shopOpenState } from '../lib/preorder'
 
 // Only a local absolute path is accepted. This parameter crosses an OAuth
 // redirect and is therefore untrusted even though we generated it.
@@ -28,7 +29,7 @@ const PAGE_COPY = {
 // payment → success) — see components/delivery/OrderFlow.js. The menu step
 // reuses components/menu/MenuExperience, the same shared menu layout as
 // /menu, so section/layout edits there apply to both pages.
-export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDeliveryOrder, pointsPerBaht, menuOptionsEnabled }) {
+export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDeliveryOrder, pointsPerBaht, menuOptionsEnabled, shopState }) {
   const { lang } = useLanguage()
   const t = PAGE_COPY[lang] || PAGE_COPY.en
   const { hidden, setHidden } = useChrome()
@@ -168,6 +169,7 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
         minDeliveryOrder={minDeliveryOrder}
         pointsPerBaht={pointsPerBaht}
         menuOptionsEnabled={menuOptionsEnabled}
+        shopState={shopState}
       />
 
       {!hidden && <Footer tagline={FOOTER_TAGLINES.menu} />}
@@ -182,7 +184,16 @@ export async function getServerSideProps() {
   // only reports it after the GPS check.
   const {
     radiusKm, minDeliveryOrder, pointsPerBaht, menuOptionsEnabled,
+    shopOpenTime, shopCloseTime, shopClosedDays, shopLastOrderMinutes,
   } = await getShopSettings()
+  // Resolved on the server: a customer's device clock can be wrong or
+  // deliberately set, and /api/orders enforces the same answer anyway.
+  const shopState = shopOpenState({
+    openTime: shopOpenTime,
+    closeTime: shopCloseTime,
+    closedDays: shopClosedDays,
+    lastOrderMinutes: shopLastOrderMinutes,
+  })
   return {
     props: {
       dbMenuData,
@@ -191,6 +202,7 @@ export async function getServerSideProps() {
       minDeliveryOrder: minDeliveryOrder ?? 300,
       pointsPerBaht: pointsPerBaht ?? 20,
       menuOptionsEnabled: menuOptionsEnabled ?? false,
+      shopState,
     },
   }
 }

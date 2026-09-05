@@ -59,6 +59,59 @@ describe('buildOrderEntryFlex', () => {
   })
 })
 
+describe('buildOrderEntryFlex — outside opening hours', () => {
+  const CLOSED = {
+    open: false, accepting: false, reason: 'after-close',
+    opensAt: '09:00', closesAt: '18:00', lastOrderAt: '18:00',
+    nextOpenYmd: '2026-09-05', nextOpenLabel: 'ส. 5 ก.ย. 09:00',
+  }
+
+  it('does not claim to be ready for orders when the shop is shut', () => {
+    // The whole reason the card reads the hours: answering "พร้อมรับออเดอร์
+    // แล้ว" at 2am is how the shop gets an order nobody can cook.
+    const texts = textsOf(buildOrderEntryFlex({ orderUrl: URL, shopState: CLOSED }))
+    expect(texts).toContain('ตอนนี้ร้านปิดอยู่')
+    expect(texts).not.toContain('พร้อมรับออเดอร์แล้ว')
+  })
+
+  it('says when it opens again', () => {
+    const promise = textsOf(buildOrderEntryFlex({ orderUrl: URL, shopState: CLOSED }))
+      .find((t) => t.includes('เปิดอีกครั้ง'))
+    expect(promise).toContain('ส. 5 ก.ย. 09:00')
+  })
+
+  it('sends the tap somewhere that works instead of a flow that will refuse it', () => {
+    const [button] = buttonsOf(buildOrderEntryFlex({ orderUrl: URL, shopState: CLOSED }))
+    expect(button.label).toBe('ดูเมนู')
+    expect(button.uri).not.toBe(URL)
+    expect(button.uri).toMatch(/\/menu$/)
+  })
+
+  it('distinguishes "closed" from "we stopped taking orders for today"', () => {
+    const lastOrder = { ...CLOSED, open: true, reason: 'last-order-passed', lastOrderAt: '17:30' }
+    const texts = textsOf(buildOrderEntryFlex({ orderUrl: URL, shopState: lastOrder }))
+    expect(texts).toContain('วันนี้ปิดรับออเดอร์แล้ว')
+    expect(texts.some((t) => t.includes('17:30'))).toBe(true)
+  })
+
+  it('still promises the in-chat updates while closed', () => {
+    expect(textsOf(buildOrderEntryFlex({ orderUrl: URL, shopState: CLOSED })).some((t) => t.includes('ใบเสร็จ')))
+      .toBe(true)
+  })
+
+  it('behaves exactly as before when no shop state is supplied', () => {
+    // Any caller without the settings must keep working, not fall shut.
+    const card = buildOrderEntryFlex({ orderUrl: URL })
+    expect(textsOf(card)).toContain('พร้อมรับออเดอร์แล้ว')
+    expect(buttonsOf(card)[0].label).toBe('สั่งเลย')
+  })
+
+  it('is open for business when the state says accepting', () => {
+    const open = { ...CLOSED, open: true, accepting: true, reason: 'open' }
+    expect(textsOf(buildOrderEntryFlex({ orderUrl: URL, shopState: open }))).toContain('พร้อมรับออเดอร์แล้ว')
+  })
+})
+
 describe('buildWelcomeFlex', () => {
   it('greets the customer by name when there is one', () => {
     expect(textsOf(buildWelcomeFlex({ orderUrl: URL, displayName: 'แก้ว' })))
@@ -102,5 +155,55 @@ describe('the two cards agree with lib/orderIntent.js and ORDER_SETUP.md', () =>
     // Pull the quoted phrase out of the hint and check the bot would answer it.
     const quoted = hint.match(/"([^"]+)"/)[1]
     expect(classifyCustomerText(quoted)).toBe('status')
+  })
+})
+
+describe('buildSlipNeedsReviewFlex', () => {
+  it('names the order and the amount the shop should have received', async () => {
+    const { buildSlipNeedsReviewFlex } = await import('./orderFlex')
+    const texts = textsOf(buildSlipNeedsReviewFlex({ orderNo: 'LP260905-1234', total: 285 }))
+    expect(texts).toContain('LP260905-1234')
+    expect(texts.some((t) => t.includes('285'))).toBe(true)
+  })
+
+  it('carries the machine reason when there is one', async () => {
+    const { buildSlipNeedsReviewFlex } = await import('./orderFlex')
+    const texts = textsOf(buildSlipNeedsReviewFlex({ orderNo: 'LP1', total: 100, reason: 'amount mismatch: slip 90 vs order 100' }))
+    expect(texts.some((t) => t.includes('amount mismatch'))).toBe(true)
+  })
+
+  it('sends staff to the admin orders page and offers no one-tap paid button', async () => {
+    const { buildSlipNeedsReviewFlex } = await import('./orderFlex')
+    const actions = buttonsOf(buildSlipNeedsReviewFlex({ orderNo: 'LP1', total: 100 }))
+    // Confirming payment stays a deliberate look at the slip — the same rule
+    // lib/staffPostback.js keeps for the LINE quick-actions.
+    expect(actions.every((a) => a.type === 'uri')).toBe(true)
+    expect(actions[0].uri).toMatch(/\/admin\/orders$/)
+  })
+})
+
+describe('buildPaymentConfirmedFlex — the customer’s route to their points', () => {
+  it('offers the rewards page when points were actually banked', async () => {
+    const { buildPaymentConfirmedFlex } = await import('./orderFlex')
+    const uris = buttonsOf(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 300, pointsEarned: 15 }))
+      .filter((a) => a.type === 'uri')
+      .map((a) => a.uri)
+    expect(uris.some((u) => u.endsWith('/rewards'))).toBe(true)
+  })
+
+  it('leaves it off when the order earned nothing', async () => {
+    const { buildPaymentConfirmedFlex } = await import('./orderFlex')
+    const uris = buttonsOf(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 15, pointsEarned: 0 }))
+      .filter((a) => a.type === 'uri')
+      .map((a) => a.uri)
+    expect(uris.some((u) => u.endsWith('/rewards'))).toBe(false)
+  })
+
+  it('keeps the staff copy free of it', async () => {
+    const { buildPaymentConfirmedFlex } = await import('./orderFlex')
+    const uris = buttonsOf(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 300, pointsEarned: 15, withStaffActions: true }))
+      .filter((a) => a.type === 'uri')
+      .map((a) => a.uri)
+    expect(uris.some((u) => u.endsWith('/rewards'))).toBe(false)
   })
 })

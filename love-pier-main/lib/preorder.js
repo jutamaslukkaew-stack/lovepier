@@ -162,6 +162,105 @@ export function addDaysYmd(ymd, n) {
 }
 
 /**
+ * Is the shop open RIGHT NOW, and is it still taking orders?
+ *
+ * The shop's hours have been stored since the pre-order work but were only
+ * ever used for slot maths, so nothing stopped a customer ordering at 2am —
+ * the order saved, PromptPay took the money, and three staff phones lit up.
+ * This is the single answer every surface asks: /api/orders (the one that
+ * actually blocks), /delivery, and the LINE entry card.
+ *
+ * `open` is whether the door is open; `accepting` is whether an ASAP order may
+ * be placed, which stops `lastOrderMinutes` before closing so the kitchen is
+ * not handed a ticket it cannot finish.
+ *
+ * Overnight hours (close <= open, e.g. 18:00–02:00) are handled: without this
+ * the naive `mins >= open && mins < close` reads as "closed all day", a silent
+ * bug the moment the shop extends its hours. For those, the small hours belong
+ * to the PREVIOUS day's session, so that is the weekday the closed-day check
+ * uses — otherwise a Wednesday closure would wrongly shut Tuesday's late trade.
+ *
+ * Pure: pass `now` to test it, same convention as the rest of this module.
+ *
+ * @returns {{open: boolean, accepting: boolean, reason: string,
+ *   opensAt: string, closesAt: string, lastOrderAt: string,
+ *   nextOpenYmd: string|null, nextOpenLabel: string}}
+ */
+export function shopOpenState({
+  now = new Date(),
+  openTime,
+  closeTime,
+  closedDays,
+  lastOrderMinutes = 0,
+} = {}) {
+  const open = resolveTime(openTime, DEFAULT_OPEN_TIME)
+  const close = resolveTime(closeTime, DEFAULT_CLOSE_TIME)
+  const closedList = resolveClosedDays(closedDays)
+  const lastOrder = Math.max(0, Number(lastOrderMinutes) || 0)
+  const overnight = close <= open
+
+  const opensAt = minutesToHhmm(open)
+  const closesAt = minutesToHhmm(close)
+  const lastOrderAt = minutesToHhmm(((close - lastOrder) % 1440 + 1440) % 1440)
+
+  const parts = bangkokNowParts(now)
+  // An unparseable clock must not silently hold the shutters open.
+  if (!parts) {
+    return {
+      open: false, accepting: false, reason: 'unknown',
+      opensAt, closesAt, lastOrderAt, nextOpenYmd: null, nextOpenLabel: '',
+    }
+  }
+
+  const mins = parts.minutesOfDay
+  const inHours = overnight ? (mins >= open || mins < close) : (mins >= open && mins < close)
+
+  // Which calendar day's session are we in? Only differs before `close` on an
+  // overnight schedule, where 01:00 still belongs to yesterday evening.
+  const sessionYmd = overnight && mins < close ? addDaysYmd(parts.ymd, -1) : parts.ymd
+  const sessionWeekday = weekdayOfYmd(sessionYmd)
+  const onClosedDay = closedList.includes(sessionWeekday)
+
+  // The next day the shop opens — today if opening is still ahead, otherwise
+  // the first following day that isn't a closure. Null when every day is
+  // closed, which is a misconfiguration rather than a schedule.
+  let nextOpenYmd = null
+  // `mins < open` covers both schedules: on an overnight one, being outside
+  // hours always means we are before that same day's opening.
+  const startsToday = mins < open && !closedList.includes(parts.weekday)
+  if (startsToday) {
+    nextOpenYmd = parts.ymd
+  } else {
+    for (let i = 1; i <= 7; i += 1) {
+      const ymd = addDaysYmd(parts.ymd, i)
+      if (!closedList.includes(weekdayOfYmd(ymd))) { nextOpenYmd = ymd; break }
+    }
+  }
+  const nextOpenLabel = nextOpenYmd
+    ? (nextOpenYmd === parts.ymd ? opensAt : `${formatDayThai(nextOpenYmd)} ${opensAt}`)
+    : ''
+
+  const base = { opensAt, closesAt, lastOrderAt, nextOpenYmd, nextOpenLabel }
+
+  if (onClosedDay) return { ...base, open: false, accepting: false, reason: 'closed-day' }
+  if (!inHours) {
+    // Distinguished so each surface can say something useful: "opens at 09:00"
+    // versus "opens tomorrow". On an overnight schedule the gap is always
+    // before the same day's opening.
+    const reason = overnight || mins < open ? 'before-open' : 'after-close'
+    return { ...base, open: false, accepting: false, reason }
+  }
+
+  // Minutes left until the door shuts, crossing midnight when it has to.
+  const minutesUntilClose = overnight && mins >= open ? close + 1440 - mins : close - mins
+  if (minutesUntilClose <= lastOrder) {
+    return { ...base, open: true, accepting: false, reason: 'last-order-passed' }
+  }
+
+  return { ...base, open: true, accepting: true, reason: 'open' }
+}
+
+/**
  * The hourly slots still bookable on one date. Always an array, never throws.
  *
  * opts: { openTime, closeTime, closedDays, leadMinutes, now }

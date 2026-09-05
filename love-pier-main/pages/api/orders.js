@@ -11,7 +11,7 @@ import { calcOrderDiscountAndPoints } from '../../lib/points'
 import { TIER_GENERAL, effectiveTier, tierDiscountPercent } from '../../lib/tiers'
 import { normalizeItemOptions } from '../../lib/menuOptions'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
-import { formatSlotThai, validateScheduleRequest } from '../../lib/preorder'
+import { formatSlotThai, shopOpenState, validateScheduleRequest } from '../../lib/preorder'
 
 function pickString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -145,6 +145,36 @@ export default async function handler(req, res) {
   // trust that alone.
   if (s.minDeliveryOrder > 0 && itemsSubtotal < s.minDeliveryOrder) {
     return res.status(400).json({ error: `ยอดสั่งซื้อไม่ถึงขั้นต่ำ (฿${s.minDeliveryOrder})` })
+  }
+
+  // The shop's opening hours, enforced. This gate is the reason the setting
+  // exists at all: until now nothing stopped a 2am order, which took the
+  // customer's money by PromptPay, became a real `pending` row, and woke three
+  // staff phones for something nobody could cook.
+  //
+  // ASAP orders only. An order carrying a slot is a deliberate pre-order and
+  // is checked against the same hours by validateScheduleRequest below —
+  // running this on it would reject "order Friday lunch" placed on Thursday
+  // night, which is exactly what pre-ordering is for.
+  //
+  // The client blocks this too, but a stale bundle or a hand-crafted POST
+  // must not get through — same reasoning as the minimum above.
+  if (!scheduledDate && !scheduledSlot) {
+    const shop = shopOpenState({
+      openTime: s.shopOpenTime,
+      closeTime: s.shopCloseTime,
+      closedDays: s.shopClosedDays,
+      lastOrderMinutes: s.shopLastOrderMinutes,
+    })
+    if (!shop.accepting) {
+      // Name the time they can come back — a bare "we're closed" leaves the
+      // customer with a full cart and nothing to do about it.
+      const when = shop.nextOpenLabel ? ` เปิดอีกครั้ง ${shop.nextOpenLabel}` : ''
+      const error = shop.reason === 'last-order-passed'
+        ? `วันนี้ปิดรับออเดอร์แล้ว (รับถึง ${shop.lastOrderAt} น.)${when}`
+        : `ขณะนี้ร้านปิดอยู่${when}`
+      return res.status(400).json({ error })
+    }
   }
 
   // Pre-order time — never trust the client's slot list. The same pure module

@@ -32,6 +32,11 @@ export default async function handler(req, res) {
       scheduledFor: orders.scheduledFor,
       items: orders.items,
       totalAmount: orders.totalAmount,
+      // Banked into the customer's balance the moment this order turns paid
+      // (lib/pointsAward.js). Sent so the tracker can show what the payment
+      // is worth in points — before, the only place a customer ever saw that
+      // was the success screen they had already navigated away from.
+      pointsEarned: orders.pointsEarned,
     })
     .from(orders)
     .where(and(eq(orders.orderNo, orderNo), eq(orders.lineUserId, profile.userId)))

@@ -31,12 +31,14 @@ import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { db } from '../../lib/db'
 import { customers, orders } from '../../lib/db/schema'
 import { processSlipForOrder } from '../../lib/slipVerification'
-import { buildNoActiveOrderFlex, buildOrderEntryFlex, buildOrderStatusFlex, buildPaymentConfirmedFlex, buildSlipReceivedFlex, buildWelcomeFlex } from '../../lib/orderFlex'
+import { buildNoActiveOrderFlex, buildOrderEntryFlex, buildOrderStatusFlex, buildPaymentConfirmedFlex, buildSlipNeedsReviewFlex, buildSlipReceivedFlex, buildWelcomeFlex } from '../../lib/orderFlex'
 import { classifyCustomerText } from '../../lib/orderIntent'
 import { markFriended, markUnfriended } from '../../lib/lineFriendship'
 import { NOTIFY_TARGETS, pushOrderCardToStaff, replyMessages, replyOrPush } from '../../lib/lineMessaging'
 import { applyOrderStatusChange } from '../../lib/orderStatusUpdate'
 import { decodeStaffPostback } from '../../lib/staffPostback'
+import { getShopSettings } from '../../lib/settings'
+import { shopOpenState } from '../../lib/preorder'
 
 const TOKEN = process.env.LINE_MESSAGING_TOKEN || ''
 const SECRET = process.env.LINE_MESSAGING_CHANNEL_SECRET || ''
@@ -232,6 +234,18 @@ async function handleSlipImage(event, userId) {
     await pushOrderCardToStaff(
       buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount, pointsEarned: order.pointsEarned, withStaffActions: true })
     )
+  } else if (result.stored && !result.verified) {
+    // The customer's card above promises the shop will check the slip by
+    // hand. Nothing used to make that promise reach the shop, so the order
+    // stayed pending — and the points it earns, which are only banked on
+    // payment, never reached the customer.
+    await pushOrderCardToStaff(
+      buildSlipNeedsReviewFlex({
+        orderNo: order.orderNo,
+        total: order.totalAmount,
+        reason: result.rawError || null,
+      })
+    )
   }
 
   await replyMessages(event.replyToken, [card])
@@ -291,6 +305,27 @@ async function handleOrderStatusRequest(event, userId) {
 }
 
 /**
+ * Is the shop taking orders right now? Best-effort: if settings can't be read
+ * we return null, which every card treats as "assume open" — a card that
+ * wrongly says "we're open" is a smaller failure than one that wrongly turns a
+ * paying customer away.
+ */
+async function currentShopState() {
+  try {
+    const s = await getShopSettings()
+    return shopOpenState({
+      openTime: s.shopOpenTime,
+      closeTime: s.shopCloseTime,
+      closedDays: s.shopClosedDays,
+      lastOrderMinutes: s.shopLastOrderMinutes,
+    })
+  } catch (err) {
+    console.error('shop hours lookup failed (non-fatal):', err)
+    return null
+  }
+}
+
+/**
  * The customer tapped the rich menu's "ขอสั่งเดลิเวอรี" button (a Text action,
  * so it arrives as an ordinary message) or typed one of its variants.
  *
@@ -303,10 +338,17 @@ async function handleOrderStatusRequest(event, userId) {
  * Never throws — the handler must still return 200.
  */
 async function handleOrderEntryRequest(event, userId) {
-  // Reply FIRST. The card is static, so nothing needs the database before it
-  // goes out, and a reply token is single-use and short-lived — a cold start
-  // plus a DB round trip is exactly what kills one.
-  await replyMessages(event.replyToken, [buildOrderEntryFlex({ orderUrl: ORDER_ENTRY_URL })])
+  // The card has to know the hours or it will cheerfully say "พร้อมรับออเดอร์
+  // แล้ว" at 2am. That read sits in front of a single-use, short-lived reply
+  // token, so send via replyOrPush: a cold start plus a settings read is
+  // exactly the case that outlives a token, and a lost card reads to the
+  // customer as a button that does nothing.
+  const shopState = await currentShopState()
+  await replyOrPush({
+    replyToken: event.replyToken,
+    to: chatIdOf(event.source).id,
+    messages: [buildOrderEntryFlex({ orderUrl: ORDER_ENTRY_URL, shopState })],
+  })
   await markFriended(userId)
 }
 

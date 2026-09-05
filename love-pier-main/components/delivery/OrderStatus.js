@@ -2,7 +2,19 @@ import Head from 'next/head'
 import { Check } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getCachedLiffProfile, getProfileIfLoggedIn, loginAndGetProfile } from '../../lib/liff'
+import { buildPaymentPayload } from '../../lib/promptpay'
+import { prepareSlipDataUrl, submitSlip } from '../../lib/slipImage'
 import OrderJourney from './OrderJourney'
+
+// Same values the order flow builds its QR from (components/delivery/
+// OrderFlow.js). Nothing per-order goes into the payload — our own payment
+// ref is display-only — so the tracker can rebuild an identical QR from the
+// order's total alone.
+const PROMPTPAY_ID = process.env.NEXT_PUBLIC_PROMPTPAY_ID || ''
+const PROMPTPAY_TYPE = process.env.NEXT_PUBLIC_PROMPTPAY_TYPE || ''
+const PROMPTPAY_REF = process.env.NEXT_PUBLIC_PROMPTPAY_REF || ''
+const PROMPTPAY_REF2 = process.env.NEXT_PUBLIC_PROMPTPAY_REF2 || ''
+const PROMPTPAY_TERMINAL_LABEL = process.env.NEXT_PUBLIC_PROMPTPAY_TERMINAL_LABEL || ''
 
 // The order tracker, rendered inside /delivery (?order=<orderNo>) so it runs on
 // the delivery LIFF app's own Endpoint URL — same init, same session, same
@@ -86,6 +98,13 @@ export default function OrderStatus({ orderNo }) {
   const [lastOkAt, setLastOkAt] = useState(0)
   const [justChanged, setJustChanged] = useState(null)
   const [now, setNow] = useState(() => Date.now())
+  // Paying from here, rather than being told to go back to a screen that no
+  // longer exists. A customer who left for their banking app and came back
+  // through the tracker link used to have no way to finish — the order sat at
+  // `pending` for good, and the points it earned were never banked.
+  const [qrDataUrl, setQrDataUrl] = useState('')
+  const [slipStatus, setSlipStatus] = useState('idle') // idle | verifying | ok | stored | fail
+  const [slipError, setSlipError] = useState('')
 
   const profileRef = useRef(null)
   const prevStatusRef = useRef(null)
@@ -181,6 +200,78 @@ export default function OrderStatus({ orderNo }) {
     await loadOrder()
     scheduleNext()
   }, [clearPending, loadOrder, scheduleNext])
+
+  // Build the PromptPay QR only while there is something left to pay. qrcode
+  // is imported lazily for the same reason the order flow does it — it is
+  // dead weight on the far more common paid/preparing/done visit.
+  const payableAmount = order?.status === 'pending' ? Number(order.totalAmount) || 0 : 0
+  useEffect(() => {
+    // Nothing to render a QR for. No state to clear either — the QR is only
+    // ever read while payableAmount > 0, and an order's total never changes
+    // under it.
+    if (!PROMPTPAY_ID || payableAmount <= 0) return undefined
+    let cancelled = false
+    ;(async () => {
+      try {
+        const QRCode = (await import('qrcode')).default
+        const payload = buildPaymentPayload({
+          type: PROMPTPAY_TYPE,
+          target: PROMPTPAY_ID,
+          amount: payableAmount,
+          ref1: PROMPTPAY_REF,
+          ref2: PROMPTPAY_REF2,
+          terminalLabel: PROMPTPAY_TERMINAL_LABEL,
+        })
+        const url = await QRCode.toDataURL(payload, { margin: 1, width: 320 })
+        if (!cancelled) setQrDataUrl(url)
+      } catch {
+        // The amount and the shop's LINE are still on screen — a missing QR
+        // is a degraded payment screen, not a broken one.
+        if (!cancelled) setQrDataUrl('')
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [payableAmount])
+
+  const handleSlipFile = useCallback(async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setSlipError('')
+    setSlipStatus('verifying')
+
+    let dataUrl
+    try {
+      dataUrl = await prepareSlipDataUrl(file)
+    } catch (err) {
+      setSlipStatus('fail')
+      setSlipError(err.message || 'อ่านไฟล์รูปไม่ได้')
+      return
+    }
+
+    const result = await submitSlip({
+      orderNo,
+      accessToken: profileRef.current?.accessToken,
+      dataUrl,
+    })
+    if (result.state === 'ok') {
+      setSlipStatus('ok')
+      // The server has already marked the order paid and banked the points;
+      // pull the new status straight away so the stepper moves under the
+      // customer instead of waiting out the poll interval.
+      await runNow()
+    } else if (result.state === 'stored') {
+      setSlipStatus('stored')
+    } else {
+      setSlipStatus('fail')
+      setSlipError(result.error)
+      // The expired card owns the re-login button, so hand the customer over
+      // to it rather than growing a second one here.
+      if (result.needsLogin) setPhase('expired')
+    }
+  }, [orderNo, runNow])
 
   useEffect(() => {
     cancelledRef.current = false
@@ -396,9 +487,68 @@ export default function OrderStatus({ orderNo }) {
           <div className="rounded-2xl border border-[#a5352f]/20 bg-[#fbeae9] px-4 py-4 text-center text-[13px] leading-[1.8] text-[#7a2a26]">
             ออเดอร์นี้ถูกยกเลิก หากมีข้อสงสัยกรุณาติดต่อร้านทาง LINE
           </div>
-        ) : (
+        ) : slipStatus === 'stored' ? (
           <div className="rounded-2xl border border-[#8a5a00]/20 bg-[#fdf1dd] px-4 py-4 text-center text-[13px] leading-[1.8] text-[#7a4f14]">
-            รอชำระเงิน — กรุณาแนบสลิปการโอนในหน้าสั่งซื้อเพื่อยืนยัน
+            แนบสลิปแล้ว รอร้านตรวจสอบ — ร้านจะแจ้งกลับทาง LINE
+          </div>
+        ) : (
+          /* Pay here, not "in the order page": the success screen lives in the
+             browser tab the customer left when they opened their banking app,
+             and coming back through the tracker link used to be a dead end. */
+          <div className="rounded-2xl border border-[#8a5a00]/20 bg-[#fdf1dd] px-4 py-4">
+            <p className="text-center text-[13px] font-semibold text-[#7a4f14]">
+              รอชำระเงิน ฿{order.totalAmount}
+            </p>
+            {PROMPTPAY_ID && payableAmount > 0 ? (
+              <>
+                <div className="mt-3 flex flex-col items-center">
+                  {qrDataUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={qrDataUrl}
+                      alt="QR พร้อมเพย์ของร้าน"
+                      className="h-48 w-48 rounded-xl bg-white p-2"
+                    />
+                  ) : (
+                    <div className="flex h-48 w-48 items-center justify-center rounded-xl bg-white/70">
+                      <span className="h-7 w-7 animate-spin rounded-full border-2 border-[#7a4f14]/20 border-t-[#7a4f14]" />
+                    </div>
+                  )}
+                  <p className="mt-2 text-center text-[11px] leading-[1.7] text-[#7a4f14]/80">
+                    สแกนด้วยแอปธนาคาร แล้วแนบสลิปด้านล่างเพื่อยืนยัน
+                  </p>
+                </div>
+                <label
+                  className={`mt-3 flex w-full cursor-pointer items-center justify-center rounded-xl bg-[#3a2818] py-3 text-[14px] font-semibold text-white transition-colors hover:bg-[#4a3520] ${
+                    slipStatus === 'verifying' ? 'pointer-events-none opacity-60' : ''
+                  }`}
+                >
+                  {slipStatus === 'verifying'
+                    ? 'กำลังตรวจสอบสลิป…'
+                    : slipStatus === 'fail'
+                      ? 'แนบสลิปใหม่อีกครั้ง'
+                      : 'แนบสลิปเพื่อยืนยันการโอน'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleSlipFile}
+                    disabled={slipStatus === 'verifying'}
+                  />
+                </label>
+                {/* whitespace-pre-line: a slip error may carry a second line
+                    pointing the customer at the LINE chat. */}
+                {slipStatus === 'fail' && slipError && (
+                  <p className="mt-2 whitespace-pre-line text-center text-[12px] leading-[1.7] text-red-600">
+                    {slipError}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="mt-2 text-center text-[13px] leading-[1.8] text-[#7a4f14]">
+                กรุณาส่งสลิปการโอนเข้าแชท LINE ของร้านเพื่อยืนยัน
+              </p>
+            )}
           </div>
         )}
 
@@ -423,6 +573,15 @@ export default function OrderStatus({ orderNo }) {
             <span className="text-[13px] font-semibold text-ink">ยอดชำระ</span>
             <span className="font-display text-[18px] tabular-nums text-[#4a3520]">฿{order.totalAmount}</span>
           </div>
+          {/* Points are credited on payment, so the line reads as a promise
+              while the order is pending and as a receipt once it is paid. */}
+          {order.pointsEarned > 0 && (
+            <p className="mt-1.5 text-right text-[12px] text-[#b06d2b]">
+              {order.status === 'pending'
+                ? `ชำระแล้วรับ +${order.pointsEarned} แต้มสะสม`
+                : `+${order.pointsEarned} แต้มสะสม`}
+            </p>
+          )}
         </div>
 
         {/* Customer / delivery details */}

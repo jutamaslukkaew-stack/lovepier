@@ -7,6 +7,7 @@ import {
   formatDayThai,
   formatSlotThai,
   parseClosedDays,
+  shopOpenState,
   slotsForDate,
   validateScheduleRequest,
   weekdayOfYmd,
@@ -294,5 +295,127 @@ describe('formatSlotThai', () => {
   it('returns an empty string rather than a broken label', () => {
     expect(formatSlotThai('2026-02-31', '14:00')).toBe('')
     expect(formatSlotThai(FRI, 'nope')).toBe('')
+  })
+})
+
+// A Bangkok wall-clock time -> the instant to feed shopOpenState as `now`.
+const at = (ymd, hhmm) => new Date(`${ymd}T${hhmm}:00+07:00`)
+
+describe('shopOpenState', () => {
+  it('is open and accepting during opening hours', () => {
+    const s = shopOpenState({ now: at(THU, '12:00'), ...HOURS })
+    expect(s).toMatchObject({ open: true, accepting: true, reason: 'open' })
+    expect(s.opensAt).toBe('09:00')
+    expect(s.closesAt).toBe('18:00')
+  })
+
+  it('is shut before opening, and says when it opens today', () => {
+    const s = shopOpenState({ now: at(THU, '08:59'), ...HOURS })
+    expect(s).toMatchObject({ open: false, accepting: false, reason: 'before-open' })
+    expect(s.nextOpenYmd).toBe(THU)
+    expect(s.nextOpenLabel).toBe('09:00')
+  })
+
+  it('opens exactly on the minute and shuts exactly on the minute', () => {
+    expect(shopOpenState({ now: at(THU, '09:00'), ...HOURS }).open).toBe(true)
+    // 18:00 is closing time, not the last minute of trade.
+    expect(shopOpenState({ now: at(THU, '18:00'), ...HOURS }).open).toBe(false)
+    expect(shopOpenState({ now: at(THU, '17:59'), ...HOURS }).open).toBe(true)
+  })
+
+  it('after closing, points at the next day with the Thai date', () => {
+    const s = shopOpenState({ now: at(THU, '19:00'), ...HOURS })
+    expect(s).toMatchObject({ open: false, accepting: false, reason: 'after-close' })
+    expect(s.nextOpenYmd).toBe(FRI)
+    expect(s.nextOpenLabel).toBe('ศ. 21 ส.ค. 09:00')
+  })
+
+  it('is shut all day on a closed day and skips it when looking ahead', () => {
+    const s = shopOpenState({ now: at(WED, '12:00'), ...HOURS })
+    expect(s).toMatchObject({ open: false, accepting: false, reason: 'closed-day' })
+    expect(s.nextOpenYmd).toBe(NEXT_THU)
+  })
+
+  it('from the day before a closure, skips to the day after it', () => {
+    expect(shopOpenState({ now: at(TUE, '19:00'), ...HOURS }).nextOpenYmd).toBe(NEXT_THU)
+  })
+
+  it('treats an empty closed-days list as open every day', () => {
+    // '' is meaningful — see parseClosedDays.
+    expect(shopOpenState({ now: at(WED, '12:00'), ...HOURS, closedDays: '' }).open).toBe(true)
+  })
+})
+
+describe('shopOpenState — last-order cutoff', () => {
+  const WITH_CUTOFF = { ...HOURS, lastOrderMinutes: 30 }
+
+  it('stops accepting before the door shuts, while still reading as open', () => {
+    // The kitchen must not be handed a ticket it cannot finish.
+    const s = shopOpenState({ now: at(THU, '17:40'), ...WITH_CUTOFF })
+    expect(s).toMatchObject({ open: true, accepting: false, reason: 'last-order-passed' })
+    expect(s.lastOrderAt).toBe('17:30')
+  })
+
+  it('accepts right up to the cutoff', () => {
+    expect(shopOpenState({ now: at(THU, '17:29'), ...WITH_CUTOFF }).accepting).toBe(true)
+    expect(shopOpenState({ now: at(THU, '17:30'), ...WITH_CUTOFF }).accepting).toBe(false)
+  })
+
+  it('defaults to accepting right up to closing time', () => {
+    expect(shopOpenState({ now: at(THU, '17:59'), ...HOURS }).accepting).toBe(true)
+    expect(shopOpenState({ now: at(THU, '17:59'), ...HOURS }).lastOrderAt).toBe('18:00')
+  })
+})
+
+describe('shopOpenState — overnight hours', () => {
+  // 18:00 -> 02:00. Without the wrap-around branch this reads as "closed all
+  // day", which is the silent bug the moment the shop extends its hours.
+  const LATE = { openTime: '18:00', closeTime: '02:00', closedDays: [] }
+
+  it('is open late in the evening and in the small hours', () => {
+    expect(shopOpenState({ now: at(THU, '23:00'), ...LATE }).open).toBe(true)
+    expect(shopOpenState({ now: at(FRI, '01:00'), ...LATE }).open).toBe(true)
+  })
+
+  it('is shut between closing and the next opening', () => {
+    expect(shopOpenState({ now: at(FRI, '02:00'), ...LATE }).open).toBe(false)
+    const s = shopOpenState({ now: at(FRI, '10:00'), ...LATE })
+    expect(s).toMatchObject({ open: false, reason: 'before-open' })
+    expect(s.nextOpenLabel).toBe('18:00')
+  })
+
+  it('counts the small hours as the PREVIOUS day for the closed-day check', () => {
+    // Wednesday is closed. 01:00 Thursday is still Wednesday night's trade,
+    // so it must be shut — while 01:00 Wednesday belongs to Tuesday and is open.
+    const closedWed = { ...LATE, closedDays: [3] }
+    expect(shopOpenState({ now: at(NEXT_THU, '01:00'), ...closedWed }).open).toBe(false)
+    expect(shopOpenState({ now: at(WED, '01:00'), ...closedWed }).open).toBe(true)
+  })
+
+  it('applies the cutoff across midnight', () => {
+    const s = shopOpenState({ now: at(FRI, '01:45'), ...LATE, lastOrderMinutes: 30 })
+    expect(s).toMatchObject({ open: true, accepting: false })
+    expect(s.lastOrderAt).toBe('01:30')
+  })
+})
+
+describe('shopOpenState — bad input never silently opens the shop', () => {
+  it('falls back to the documented defaults for an unparseable time', () => {
+    // The admin form takes free text, so '9am' is storable. Falling back is
+    // fine; pretending to be open at 03:00 would not be.
+    const s = shopOpenState({ now: at(THU, '03:00'), openTime: '9am', closeTime: 'nope', closedDays: [] })
+    expect(s.opensAt).toBe('09:00')
+    expect(s.closesAt).toBe('18:00')
+    expect(s.open).toBe(false)
+  })
+
+  it('is shut when the clock itself is unreadable', () => {
+    expect(shopOpenState({ now: new Date('nonsense'), ...HOURS }))
+      .toMatchObject({ open: false, accepting: false, reason: 'unknown' })
+  })
+
+  it('is shut, not crashed, when every day is a closed day', () => {
+    const s = shopOpenState({ now: at(THU, '12:00'), ...HOURS, closedDays: [0, 1, 2, 3, 4, 5, 6] })
+    expect(s).toMatchObject({ open: false, reason: 'closed-day', nextOpenYmd: null, nextOpenLabel: '' })
   })
 })
