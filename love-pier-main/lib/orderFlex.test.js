@@ -183,27 +183,25 @@ describe('buildSlipNeedsReviewFlex', () => {
 })
 
 describe('buildPaymentConfirmedFlex — the customer’s route to their points', () => {
+  // Asserted on the label, not the URL: the destination is a liff.line.me
+  // link when the shop has a /rewards LIFF app and the plain page when it
+  // does not, and both are correct.
+  const rewardsButton = (card) => buttonsOf(card).find((a) => a.label === 'ดูคะแนนสะสม')
+
   it('offers the rewards page when points were actually banked', async () => {
     const { buildPaymentConfirmedFlex } = await import('./orderFlex')
-    const uris = buttonsOf(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 300, pointsEarned: 15 }))
-      .filter((a) => a.type === 'uri')
-      .map((a) => a.uri)
-    expect(uris.some((u) => u.endsWith('/rewards'))).toBe(true)
+    const action = rewardsButton(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 300, pointsEarned: 15 }))
+    expect(action?.type).toBe('uri')
+    expect(action.uri).toMatch(/\/rewards$|^https:\/\/liff\.line\.me\//)
   })
 
   it('leaves it off when the order earned nothing', async () => {
     const { buildPaymentConfirmedFlex } = await import('./orderFlex')
-    const uris = buttonsOf(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 15, pointsEarned: 0 }))
-      .filter((a) => a.type === 'uri')
-      .map((a) => a.uri)
-    expect(uris.some((u) => u.endsWith('/rewards'))).toBe(false)
+    expect(rewardsButton(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 15, pointsEarned: 0 }))).toBeUndefined()
   })
 
   it('keeps the staff copy free of it', async () => {
     const { buildPaymentConfirmedFlex } = await import('./orderFlex')
-    const uris = buttonsOf(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 300, pointsEarned: 15, withStaffActions: true }))
-      .filter((a) => a.type === 'uri')
-      .map((a) => a.uri)
-    expect(uris.some((u) => u.endsWith('/rewards'))).toBe(false)
+    expect(rewardsButton(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 300, pointsEarned: 15, withStaffActions: true }))).toBeUndefined()
   })
 })

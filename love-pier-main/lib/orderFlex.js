@@ -5,6 +5,17 @@ import { OPTION_GROUPS } from './menuOptions'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://lovepier.cafe'
 
+// Where "ดูคะแนนสะสม" sends the customer. A liff.line.me link opens inside
+// LINE already authenticated, so the balance is simply on screen — tapping
+// through from a chat card and then being asked to log in to LINE again is
+// the tap this avoids. The plain URL is the fallback for a shop that has not
+// created the /rewards LIFF app yet: it still works, it just bridges through
+// /delivery to pick up the login first.
+const REWARDS_LIFF_ID = process.env.NEXT_PUBLIC_REWARDS_LIFF_ID || ''
+const REWARDS_URL = REWARDS_LIFF_ID
+  ? `https://liff.line.me/${REWARDS_LIFF_ID}`
+  : `${SITE_URL}/rewards`
+
 function money(n) {
   return `${(Number(n) || 0).toLocaleString('th-TH')}`
 }
@@ -316,7 +327,7 @@ export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned, withSt
               type: 'button',
               style: 'link',
               height: 'sm',
-              action: { type: 'uri', label: 'ดูคะแนนสะสม', uri: `${SITE_URL}/rewards` },
+              action: { type: 'uri', label: 'ดูคะแนนสะสม', uri: REWARDS_URL },
             }]
           : []),
       ],

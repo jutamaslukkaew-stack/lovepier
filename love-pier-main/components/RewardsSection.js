@@ -7,6 +7,7 @@ import {
   hasTriedLiffBridge,
   isLiffConfigured,
   loginAndGetProfile,
+  REWARDS_LIFF_ID,
 } from '../lib/liff'
 
 const COPY = {
@@ -43,10 +44,13 @@ const COPY = {
 // profile" in the race below — the two need opposite answers on screen.
 const TIMED_OUT = Symbol('liff-handshake-timeout')
 
-// The delivery LIFF app's registered Endpoint URL — the one path where the
-// SDK may be initialised directly. Same default lib/liff.js#loginAndGetProfile
-// bridges to; kept in step with it.
-const LIFF_ENDPOINT_PATH = '/delivery'
+// This page's own LIFF app when the shop has created one (its Endpoint URL is
+// /rewards, so the SDK initialises right here and a customer arriving from
+// LINE is already authenticated — no button, no bounce). Otherwise the page
+// borrows the delivery app, whose endpoint is /delivery, and has to bridge
+// through it.
+const OWN_LIFF_ID = REWARDS_LIFF_ID
+const LIFF_ENDPOINT_PATH = OWN_LIFF_ID ? '/rewards' : '/delivery'
 
 export default function RewardsSection() {
   const { lang } = useLanguage()
@@ -56,7 +60,7 @@ export default function RewardsSection() {
   // loading → ready | signin | error. 'signin' is a dead end the customer can
   // act on (button), not a spinner — reached once the silent LINE handshake
   // and its one endpoint bridge have both had their turn without a profile.
-  const [accountStatus, setAccountStatus] = useState(() => (isLiffConfigured() ? 'loading' : 'signin'))
+  const [accountStatus, setAccountStatus] = useState(() => (isLiffConfigured(OWN_LIFF_ID || undefined) ? 'loading' : 'signin'))
 
   const loadBalance = useCallback(async (lineProfile) => {
     if (!lineProfile?.userId) {
@@ -92,23 +96,29 @@ export default function RewardsSection() {
     const cached = getCachedLiffProfile()
     if (cached) return cached
     // getProfileIfLoggedIn() calls liff.init(), and a LIFF app only initialises
-    // on its own registered Endpoint URL — /delivery, not this page. Asking it
-    // here is the "liff.init() was called with a current URL that is not
-    // related to the endpoint URL" case, and it does not fail, it HANGS:
-    // measured on production 2026-09-05, /rewards sat on "กำลังตรวจสอบคะแนน…"
-    // for 27s+ and never started the login, so nobody could read their balance
-    // from a direct visit. Skip it and hand straight to loginAndGetProfile(),
-    // which bridges through /delivery and comes back with the profile cached —
-    // the branch above then answers instantly on the return trip.
+    // on its own registered Endpoint URL. Calling it anywhere else is the
+    // "liff.init() was called with a current URL that is not related to the
+    // endpoint URL" case, and it does not fail, it HANGS: measured on
+    // production 2026-09-05, /rewards sat on "กำลังตรวจสอบคะแนน…" for 27s+ and
+    // never started the login, so nobody could read their balance at all.
+    //
+    // With this page's own LIFF app the endpoint IS /rewards, so the init runs
+    // here and a customer who opened the LIFF link from LINE is already
+    // authenticated — the balance appears with nothing to press. Without it,
+    // skip the init entirely and let loginAndGetProfile() bridge through
+    // /delivery; it comes back with the profile cached, which the branch above
+    // then answers instantly.
     if (window.location.pathname === LIFF_ENDPOINT_PATH) {
-      const existing = await getProfileIfLoggedIn()
+      const existing = await getProfileIfLoggedIn(OWN_LIFF_ID || undefined)
       if (existing) return existing
     }
-    return loginAndGetProfile()
+    return OWN_LIFF_ID
+      ? loginAndGetProfile({ liffId: OWN_LIFF_ID, ownEndpointPath: '/rewards' })
+      : loginAndGetProfile()
   }, [])
 
   const runSilentLogin = useCallback(() => {
-    if (!isLiffConfigured()) return
+    if (!isLiffConfigured(OWN_LIFF_ID || undefined)) return
     // liff.init()/login() can hang inside a blocked webview, so the handshake
     // needs a ceiling. It RACES the handshake rather than living in a timer
     // held by a ref: the effect's cleanup cancelled that timer, so any
