@@ -177,7 +177,29 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
   )
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps({ query }) {
+  // Acting as the LINE login bridge, not as the delivery page: the holding
+  // screen is all this render can produce (`bridging` stays true for as long
+  // as the parameter is in the URL), and the customer is on their way to
+  // somewhere else entirely. Reading the menu and the shop settings here cost
+  // a measured 2.2–2.9s of TTFB on the way to a screen that shows one line of
+  // text. Skip both; the props below are never read on this path, and the
+  // trip back from LINE arrives without the parameter and renders normally.
+  const bridging = Boolean(Array.isArray(query?.__liff_return_to) ? query.__liff_return_to[0] : query?.__liff_return_to)
+  if (bridging) {
+    return {
+      props: {
+        dbMenuData: null,
+        dbPromotions: [],
+        radiusKm: 5,
+        minDeliveryOrder: 300,
+        pointsPerBaht: 20,
+        menuOptionsEnabled: false,
+        shopState: null,
+      },
+    }
+  }
+
   const { dbMenuData, dbPromotions } = await getMenuPageData()
   // The welcome screen states the delivery radius before the customer commits
   // to a LINE login, so it has to know it up front — /api/delivery-distance

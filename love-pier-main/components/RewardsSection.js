@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useLanguage } from '../lib/language'
 import {
   clearLiffBridgeAttempt,
   getCachedLiffProfile,
   getProfileIfLoggedIn,
+  forgetLiffProfile,
   hasTriedLiffBridge,
   isLiffConfigured,
   loginAndGetProfile,
+  recallLiffProfile,
   REWARDS_LIFF_ID,
 } from '../lib/liff'
 
@@ -128,6 +130,11 @@ export default function RewardsSection() {
   // refresh comes back for a different LINE account.
   const storedBalance = useSyncExternalStore(subscribeToNothing, balanceSnapshot, noBalanceSnapshot)
   const [storedBalanceRejected, setStoredBalanceRejected] = useState(false)
+  // Bumped to re-run the handshake once, after a remembered LINE session turns
+  // out to be stale. Once only — `staleSessionRetried` is the guard that keeps
+  // a token the server keeps rejecting from looping the page.
+  const [handshakeNonce, setHandshakeNonce] = useState(0)
+  const staleSessionRetried = useRef(false)
   const stored = storedBalanceRejected ? null : storedBalance
 
   // What is actually on screen: the fetched balance the moment there is one,
@@ -168,6 +175,18 @@ export default function RewardsSection() {
         signal: controller.signal,
       })
       const data = await res.json()
+      // 401 means the token was rejected by LINE itself, which for this page
+      // almost always means a REMEMBERED session that has aged out. Drop it and
+      // run the handshake again from scratch — that path can log in properly.
+      // The customer sees nothing: any stored balance stays on screen.
+      if (res.status === 401) {
+        forgetLiffProfile()
+        if (!staleSessionRetried.current) {
+          staleSessionRetried.current = true
+          setHandshakeNonce((n) => n + 1)
+          return
+        }
+      }
       if (!res.ok) throw new Error(data?.error || 'Could not load points')
       const balance = Math.max(0, Number(data.pointsBalance) || 0)
       setPointsBalance(balance)
@@ -190,6 +209,14 @@ export default function RewardsSection() {
   const resolveProfile = useCallback(async () => {
     const cached = getCachedLiffProfile()
     if (cached) return cached
+    // The LINE session this device logged in with earlier — from ordering, the
+    // membership card, anywhere. sessionStorage above only survives inside one
+    // LIFF window; this survives closing it, which is exactly the case that
+    // used to cost a full bounce through /delivery just to read a number.
+    // If the server rejects the token, the 401 path above forgets it and comes
+    // back through here with the real handshake.
+    const remembered = recallLiffProfile()
+    if (remembered) return remembered
     // getProfileIfLoggedIn() calls liff.init(), and a LIFF app only initialises
     // on its own registered Endpoint URL. Calling it anywhere else is the
     // "liff.init() was called with a current URL that is not related to the
@@ -243,12 +270,17 @@ export default function RewardsSection() {
 
   useEffect(() => {
     runSilentLogin()
-  }, [runSilentLogin])
+    // handshakeNonce is the retry signal, not a value this reads.
+  }, [runSilentLogin, handshakeNonce])
 
   // Manual retry from the button: forget the spent bridge so the endpoint hop
   // is allowed to run once more, then re-enter the same handshake.
   const handleRetry = useCallback(() => {
     setAccountStatus('loading')
+    // A customer pressing this has already been told something went wrong, so
+    // start clean: forget any remembered session and let the spent bridge run
+    // once more.
+    forgetLiffProfile()
     clearLiffBridgeAttempt()
     runSilentLogin()
   }, [runSilentLogin])

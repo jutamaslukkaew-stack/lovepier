@@ -47,6 +47,21 @@ let _sheetLogged = false
 
 export const LIFF_RETURN_TO_KEY = 'love-pier:liff-return-to'
 export const LIFF_PROFILE_KEY = 'love-pier:liff-profile'
+// The same profile, kept across LIFF windows rather than only within one.
+//
+// sessionStorage dies when the customer closes the LINE webview, so someone
+// who ordered an hour ago and now taps "สะสมแต้ม" arrives with no identity and
+// has to be sent through the whole login bounce again to read a number. This
+// copy lets a page try the LINE session it already has before it sends anyone
+// anywhere. It is a FIRST ATTEMPT, never an authority: the token still goes to
+// the server, which re-verifies it with LINE (lib/lineIdentity.js), and a
+// rejected one is dropped and the normal handshake runs.
+//
+// Deliberately short-lived. A LIFF access token is good for about 12 hours, so
+// six is comfortably inside the window and keeps a token that IS on disk from
+// being there longer than it can be used.
+const LIFF_PROFILE_PERSIST_KEY = 'love-pier:liff-profile-remembered'
+const LIFF_PROFILE_PERSIST_MAX_AGE_MS = 6 * 60 * 60 * 1000
 // One bridge attempt per browser session. Without this, a page that needs a
 // profile redirects to the /delivery endpoint, and an endpoint that cannot
 // authenticate sends the customer back — a ping-pong that shows as a blank
@@ -78,6 +93,45 @@ export function cacheLiffProfile(profile) {
     window.sessionStorage.setItem(LIFF_PROFILE_KEY, JSON.stringify(profile))
     // Authentication worked, so a later page in this session may bridge again.
     window.sessionStorage.removeItem(LIFF_BRIDGE_TRIED_KEY)
+  } catch {}
+  // Every successful login on any page feeds the cross-window copy — which is
+  // what makes "order now, check points later" work without a second bounce.
+  rememberLiffProfile(profile)
+}
+
+export function rememberLiffProfile(profile) {
+  if (typeof window === 'undefined' || !profile?.userId || !profile?.accessToken) return
+  try {
+    window.localStorage.setItem(
+      LIFF_PROFILE_PERSIST_KEY,
+      JSON.stringify({ profile, savedAt: Date.now() })
+    )
+  } catch {}
+}
+
+// Null once the token is old enough that spending a round trip on it is a
+// worse bet than logging in properly.
+export function recallLiffProfile() {
+  if (typeof window === 'undefined') return null
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(LIFF_PROFILE_PERSIST_KEY) || 'null')
+    if (!stored?.profile?.userId || !stored.profile.accessToken) return null
+    if (Date.now() - Number(stored.savedAt || 0) > LIFF_PROFILE_PERSIST_MAX_AGE_MS) {
+      forgetLiffProfile()
+      return null
+    }
+    return stored.profile
+  } catch {
+    return null
+  }
+}
+
+// Called when the server rejects the token — the one authority on whether it
+// is still good.
+export function forgetLiffProfile() {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.removeItem(LIFF_PROFILE_PERSIST_KEY)
   } catch {}
 }
 
