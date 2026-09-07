@@ -29,7 +29,7 @@ import { normalizeItemOptions, optionGroupsFor } from '../../lib/menuOptions'
 import LocatingAnimation from './LocatingAnimation'
 import MenuExperience from '../menu/MenuExperience'
 import PreorderCatalog from '../preorder/PreorderCatalog'
-import { Check, CheckCircle2, Clock, Receipt, User, StickyNote, MapPin, Download, MessageCircle } from 'lucide-react'
+import { Check, CheckCircle2, Clock, Receipt, User, StickyNote, Download, MessageCircle } from 'lucide-react'
 
 // Same constant as components/CartDrawer.js — the add-friend deep link needs
 // the leading @, it is part of the path.
@@ -222,7 +222,6 @@ const COPY = {
     verifyHint: 'ระบบตรวจสลิปอัตโนมัติ (จับสลิปปลอมได้)',
     done: 'เสร็จสิ้น',
     orderAgain: 'สั่งใหม่',
-    trackOrder: 'ติดตามสถานะออเดอร์',
   },
   en: {
     back: 'Back',
@@ -365,7 +364,6 @@ const COPY = {
     verifyHint: 'Automatic slip check (detects fakes)',
     done: 'Done',
     orderAgain: 'Order again',
-    trackOrder: 'Track order status',
   },
   zh: {
     back: '返回',
@@ -508,7 +506,6 @@ const COPY = {
     verifyHint: '自动核验凭证（可识别伪造）',
     done: '完成',
     orderAgain: '再次下单',
-    trackOrder: '追踪订单状态',
   },
 }
 
@@ -2044,7 +2041,7 @@ export default function OrderFlow({
       <div className="min-h-[100dvh] flex flex-col bg-[#f5f2ee]">
         <StepHeader t={t} step={step} onBack={() => setStep('contact')} />
         <div className={`flex-1 ${CONTENT_WIDTH} w-full mx-auto px-5 py-5 flex flex-col gap-4`}>
-          <h1 className="font-display text-[22px] text-ink flex items-center gap-2">
+          <h1 className="font-display text-[22px] text-ink flex items-center justify-center gap-2">
             <Receipt size={20} strokeWidth={1.75} className="text-[#8c682c] shrink-0" />
             {t.summaryTitle}
           </h1>
@@ -2061,19 +2058,25 @@ export default function OrderFlow({
               <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 flex flex-col gap-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex flex-col gap-2">
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
+                    {/* Name above, stepper and line total on the row below,
+                        the whole thing centred. They used to share one row
+                        spread edge to edge, which put the item at one side of
+                        the phone and its price at the other. */}
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <div className="w-full min-w-0">
                         <p className="text-[13px] font-medium text-ink leading-snug truncate">{item.name}</p>
                         <p className="text-[12px] text-black/50 tabular-nums">฿{Math.round(parseFloat(item.price))} × {item.qty}</p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => removeItem(item.id)} className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-ink font-semibold text-sm hover:bg-black/10">−</button>
-                        <span className="text-[13px] font-semibold w-4 text-center">{item.qty}</span>
-                        <button onClick={() => addItem(item)} className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-ink font-semibold text-sm hover:bg-black/10">+</button>
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => removeItem(item.id)} className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-ink font-semibold text-sm hover:bg-black/10">−</button>
+                          <span className="text-[13px] font-semibold w-4 text-center">{item.qty}</span>
+                          <button onClick={() => addItem(item)} className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-ink font-semibold text-sm hover:bg-black/10">+</button>
+                        </div>
+                        <p className="text-[13px] font-semibold tabular-nums text-ink">
+                          ฿{Math.round(parseFloat(item.price) * item.qty)}
+                        </p>
                       </div>
-                      <p className="text-[13px] font-semibold tabular-nums text-ink shrink-0 w-14 text-right">
-                        ฿{Math.round(parseFloat(item.price) * item.qty)}
-                      </p>
                     </div>
                     {/* Structured options (lib/menuOptions.js), applying to
                         the whole qty, same as the note below. First option
@@ -2087,8 +2090,8 @@ export default function OrderFlow({
                     {menuOptionsEnabled && (
                       <div className="flex flex-col gap-1.5">
                         {optionGroupsFor(item.id).map((group) => (
-                          <div key={group.field} className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] tracking-[0.08em] uppercase text-black/40 w-full">{t[group.labelKey]}</span>
+                          <div key={group.field} className="flex items-center justify-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] tracking-[0.08em] uppercase text-black/40 w-full text-center">{t[group.labelKey]}</span>
                             {group.options.map((opt) => {
                               const selected = (item[group.field] || group.options[0]) === opt
                               return (
@@ -2117,13 +2120,18 @@ export default function OrderFlow({
                   </div>
                 ))}
 
+                {/* Every price row is centred rather than pushed to opposite
+                    edges: on a phone the label and its number ended up a screen
+                    apart, and the totals on the confirmation and in the LINE
+                    receipt are centred too, so this is the same column all the
+                    way through the flow. */}
                 <div className="border-t border-black/10 pt-3 flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between text-[13px] text-black/60">
+                  <div className="flex items-center justify-center gap-3 text-[13px] text-black/60">
                     <span>{t.itemsSubtotalLabel}</span>
                     <span className="tabular-nums">฿{itemsSubtotal}</span>
                   </div>
                   {discountAmount > 0 && (
-                    <div className="flex items-center justify-between text-[13px] text-emerald-700">
+                    <div className="flex items-center justify-center gap-3 text-[13px] text-emerald-700">
                       {/* The percentage is on the label, not folded into the
                           amount: "ตัวเลขสับสน" was the journey document's
                           complaint about this screen, and a bare "-฿90" does
@@ -2148,12 +2156,12 @@ export default function OrderFlow({
                     </div>
                   )}
                   {pointsRedeemed > 0 && (
-                    <div className="flex items-center justify-between text-[13px] text-emerald-700">
+                    <div className="flex items-center justify-center gap-3 text-[13px] text-emerald-700">
                       <span>{t.pointsDiscountLabel}</span>
                       <span className="tabular-nums">-฿{pointsRedeemed}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between text-[13px]">
+                  <div className="flex items-center justify-center gap-3 text-[13px]">
                     <span className="text-black/60">{t.deliveryFeeLabel}</span>
                     {deliveryMethod === 'delivery' ? (
                       belowMinOrder ? (
@@ -2168,12 +2176,12 @@ export default function OrderFlow({
                       <span className="text-amber-700 font-medium">{t.selfArranged}</span>
                     )}
                   </div>
-                  <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-baseline justify-center gap-3 pt-1">
                     <span className="text-[13px] font-semibold text-ink">{t.total}</span>
                     <span className="font-display text-[20px] text-ink tabular-nums"><span className="baht">฿</span>{amount}</span>
                   </div>
                   {hasLineId && pointsPreview > 0 && !belowMinOrder && (
-                    <div className="text-right">
+                    <div className="text-center">
                       <p className="text-[12px] text-[#b06d2b]">{t.pointsPreview(pointsPreview)}</p>
                       <p className="text-[10px] text-[#b06d2b]/65">{t.pointsRule}</p>
                     </div>
@@ -2280,32 +2288,35 @@ export default function OrderFlow({
                     `contact` step (right after login) — this is a read-only
                     recap, not another form. "แก้ไข" jumps back there with
                     the plain form open, e.g. their address changed. */}
-                <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/45">
-                      <User size={13} strokeWidth={2} className="text-[#8c682c]" />
-                      {t.confirmInfoTitle}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingInfo(true)
-                        setContactMode('form')
-                        setStep('contact')
-                      }}
-                      className="text-[12px] font-medium text-[#4a3520] underline underline-offset-2"
-                    >
-                      {t.editInfo}
-                    </button>
-                  </div>
+                <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 flex flex-col gap-3 text-center">
+                  <span className="flex items-center justify-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/45">
+                    <User size={13} strokeWidth={2} className="text-[#8c682c]" />
+                    {t.confirmInfoTitle}
+                  </span>
                   <div className="flex flex-col gap-1 text-[13px] text-ink">
                     <p className="font-medium">{form.name}</p>
                     <p className="text-black/60 tabular-nums">{form.phone}</p>
                     {form.address.trim() && <p className="text-black/60 whitespace-pre-line">{form.address}</p>}
                   </div>
+                  {/* Under the details rather than beside the heading: it acts
+                      on what is written above it, so it belongs after the
+                      customer has read that — and full width across the foot of
+                      the card it is a real tap target instead of a link
+                      squeezed against the title. */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingInfo(true)
+                      setContactMode('form')
+                      setStep('contact')
+                    }}
+                    className="border-t border-black/[0.06] pt-3 text-[12px] font-medium text-[#4a3520] underline underline-offset-2"
+                  >
+                    {t.editInfo}
+                  </button>
                 </div>
                 <label className="block">
-                  <span className="flex items-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/45">
+                  <span className="flex items-center justify-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/45">
                     <StickyNote size={13} strokeWidth={2} className="text-[#8c682c]" />
                     {t.note}
                   </span>
@@ -2321,7 +2332,7 @@ export default function OrderFlow({
             <button
               onClick={goToPayment}
               disabled={belowMinOrder || shopClosed}
-              className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-between px-5"
+              className="w-full py-3.5 rounded-xl bg-[#4a3520] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3a2818] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-3 px-5"
             >
               <span>{t.next}</span>
               <span className="tabular-nums">฿{amount}</span>
@@ -2437,10 +2448,10 @@ export default function OrderFlow({
             )}
 
             <div className="w-full rounded-xl bg-white border border-black/10 p-4 flex flex-col gap-1">
-              <div className="flex items-center justify-between text-[13px] text-black/60">
+              <div className="flex items-center justify-center gap-3 text-[13px] text-black/60">
                 <span>{t.itemsSubtotalLabel}</span><span className="tabular-nums">฿{itemsSubtotal}</span>
               </div>
-              <div className="flex items-center justify-between text-[13px]">
+              <div className="flex items-center justify-center gap-3 text-[13px]">
                 <span className="text-black/60">{t.deliveryFeeLabel}</span>
                 {deliveryMethod === 'delivery' ? (
                   <span className="tabular-nums text-black/60">฿{deliveryFee}</span>
@@ -2448,7 +2459,7 @@ export default function OrderFlow({
                   <span className="text-amber-700 font-medium">{t.selfArranged}</span>
                 )}
               </div>
-              <div className="flex items-baseline justify-between pt-1.5 mt-1 border-t border-black/10">
+              <div className="flex items-baseline justify-center gap-3 pt-1.5 mt-1 border-t border-black/10">
                 <span className="text-[11px] tracking-[0.12em] uppercase text-black/50">{t.amount}</span>
                 <span className="font-display text-[26px] text-ink tabular-nums leading-none"><span className="baht">฿</span>{amount}</span>
               </div>
@@ -2514,24 +2525,25 @@ export default function OrderFlow({
 
         {/* Order number and total belong together — they are the two things a
             customer reads back to staff. Splitting the label off its value also
-            stops the ฿ sign colliding with the digits. */}
-        <div className="w-full rounded-2xl border border-black/[0.07] bg-white/60 px-5 py-4">
-          <div className="flex items-end justify-between gap-4">
-            <div className="min-w-0">
-              {/* No uppercase / letter-spacing here: WebKit (LINE's webview)
-                  clips the leading Thai vowel of a letter-spaced label. */}
-              <span className="block text-[11px] font-medium text-black/45">{t.orderNo}</span>
-              <p className="mt-0.5 font-display text-[22px] leading-none text-ink">{orderNo}</p>
+            stops the ฿ sign colliding with the digits.
+
+            Stacked and centred rather than the label-left / total-right row it
+            used to be: the panel above it is centred and so is the LINE receipt
+            this mirrors, and the old row put the two numbers at opposite edges
+            of the screen — the customer read them one at a time anyway. */}
+        <div className="w-full rounded-2xl border border-black/[0.07] bg-white/60 px-5 py-4 text-center">
+          {/* No uppercase / letter-spacing here: WebKit (LINE's webview)
+              clips the leading Thai vowel of a letter-spaced label. */}
+          <span className="block text-[11px] font-medium text-black/45">{t.orderNo}</span>
+          <p className="mt-0.5 font-display text-[22px] leading-none text-ink">{orderNo}</p>
+          {completed && (
+            <div className="mt-3">
+              <span className="block text-[11px] font-medium text-black/45">{t.total}</span>
+              <p className="mt-0.5 font-display text-[22px] leading-none text-ink tabular-nums"><span className="baht">฿</span>{completed.total}</p>
             </div>
-            {completed && (
-              <div className="shrink-0 text-right">
-                <span className="block text-[11px] font-medium text-black/45">{t.total}</span>
-                <p className="mt-0.5 font-display text-[22px] leading-none text-ink tabular-nums"><span className="baht">฿</span>{completed.total}</p>
-              </div>
-            )}
-          </div>
+          )}
           {sentToLine ? (
-            <p className="mt-3.5 flex items-center gap-1.5 border-t border-black/[0.06] pt-3 text-[12px] text-[#4a3520]/80">
+            <p className="mt-3.5 flex items-center justify-center gap-1.5 border-t border-black/[0.06] pt-3 text-[12px] text-[#4a3520]/80">
               <Check size={13} strokeWidth={3} className="shrink-0" />
               {t.sentToShop}
             </p>
@@ -2576,9 +2588,11 @@ export default function OrderFlow({
                 </span>
               )}
             </div>
-            {/* The step-by-step tracker lives on /delivery?order={orderNo} — the
-                "ติดตามสถานะออเดอร์" button below opens it. This screen stays a
-                receipt: confirmed, paid, here's what to do next. */}
+            {/* This screen stays a receipt: confirmed, paid, here's what to do
+                next. The step-by-step tracker lives on /delivery?order={orderNo},
+                reached from the order card in the LINE chat — and every status
+                change is pushed to that chat anyway, so nothing here needs to
+                send the customer off to go and look. */}
             <p className="w-full rounded-xl bg-black/[0.03] px-4 py-3.5 text-[13px] leading-[1.85] text-black/60">
               {fulfilment}
             </p>
@@ -2618,22 +2632,6 @@ export default function OrderFlow({
               {fulfilment}
             </p>
           </>
-        )}
-
-        {/* The live tracker above only advances while this screen stays open.
-            This opens the full /delivery?order={orderNo} tracker — the same one
-            the LINE status card points to, polling every 10s — in a NEW view so
-            the customer can close it straight back to this confirmation. */}
-        {orderNo && (
-          <a
-            href={`/delivery?order=${encodeURIComponent(orderNo)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6f5230] py-3.5 text-center text-[14px] font-semibold text-white shadow-sm transition-all hover:bg-[#5a4227] active:scale-[0.98]"
-          >
-            <MapPin size={16} strokeWidth={2.4} className="shrink-0" />
-            {t.trackOrder}
-          </a>
         )}
 
         {/* Two separate actions, not one "Done — order again" label: they do

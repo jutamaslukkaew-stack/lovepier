@@ -182,26 +182,90 @@ describe('buildSlipNeedsReviewFlex', () => {
   })
 })
 
-describe('buildPaymentConfirmedFlex — the customer’s route to their points', () => {
-  // Asserted on the label, not the URL: the destination is a liff.line.me
-  // link when the shop has a /rewards LIFF app and the plain page when it
-  // does not, and both are correct.
-  const rewardsButton = (card) => buttonsOf(card).find((a) => a.label === 'ดูคะแนนสะสม')
-
-  it('offers the rewards page when points were actually banked', async () => {
+describe('buildPaymentConfirmedFlex — a receipt, not a control panel', () => {
+  it('carries no buttons and no footer at all', async () => {
     const { buildPaymentConfirmedFlex } = await import('./orderFlex')
-    const action = rewardsButton(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 300, pointsEarned: 15 }))
-    expect(action?.type).toBe('uri')
-    expect(action.uri).toMatch(/\/rewards$|^https:\/\/liff\.line\.me\//)
+    const card = buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 300, pointsEarned: 15 })
+    expect(buttonsOf(card)).toEqual([])
+    // An empty footer box is not valid Flex — the key has to be absent, not
+    // present with nothing in it.
+    expect(card.contents.footer).toBeUndefined()
   })
 
-  it('leaves it off when the order earned nothing', async () => {
+  it('still reports the money and the points it earned', async () => {
     const { buildPaymentConfirmedFlex } = await import('./orderFlex')
-    expect(rewardsButton(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 15, pointsEarned: 0 }))).toBeUndefined()
+    const texts = textsOf(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 300, pointsEarned: 15 }))
+    expect(texts).toContain('฿300')
+    expect(texts).toContain('+15 แต้มสะสม')
   })
 
-  it('keeps the staff copy free of it', async () => {
+  // The whole card is one centred column now, so a stray default-aligned line
+  // would sit visibly off-axis against the order number above it.
+  it('centres every line of the receipt, the amount included', async () => {
     const { buildPaymentConfirmedFlex } = await import('./orderFlex')
-    expect(rewardsButton(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 300, pointsEarned: 15, withStaffActions: true }))).toBeUndefined()
+    const body = buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 300, pointsEarned: 15 }).contents.body
+    const lines = body.contents.filter((c) => c.type === 'text')
+    expect(lines.length).toBeGreaterThan(0)
+    expect(lines.every((c) => c.align === 'center')).toBe(true)
   })
+
+  it('centres the title on the same axis, dot and all', async () => {
+    const { buildPaymentConfirmedFlex } = await import('./orderFlex')
+    const header = buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 300, pointsEarned: 15 }).contents.header
+    expect(header.contents.find((c) => c.contents?.[0]?.type === 'text').contents.every((c) => c.align === 'center')).toBe(true)
+    // A bare align:'center' would centre the title in what the 20px dot leaves
+    // over. The dot needs an invisible twin on the left to hold the axis.
+    expect(header.contents).toHaveLength(3)
+    expect(header.contents[0].width).toBe('20px')
+    expect(header.contents[0].backgroundColor).toBeUndefined()
+    expect(header.contents[2].backgroundColor).toBe('#5cbf62')
+  })
+
+  it('leaves the other cards left-aligned', async () => {
+    const { buildOrderFlex } = await import('./orderFlex')
+    const header = buildOrderFlex({ orderNo: 'LP1', items: [], total: 300 }).contents.header
+    expect(header.contents).toHaveLength(2)
+    expect(header.contents[0].contents[0].align).toBeUndefined()
+  })
+
+  it('drops the points line when the order earned nothing', async () => {
+    const { buildPaymentConfirmedFlex } = await import('./orderFlex')
+    const texts = textsOf(buildPaymentConfirmedFlex({ orderNo: 'LP1', total: 15, pointsEarned: 0 }))
+    expect(texts.some((t) => t.includes('แต้มสะสม'))).toBe(false)
+  })
+})
+
+describe('ตรวจสอบออเดอร์ — the customer-scoped tracker link', () => {
+  // /delivery?order= resolves against the LINE user who placed the order, so a
+  // staff member tapping this could only ever be told the order does not
+  // exist. Asserted on both staff-facing cards because both once carried it.
+  const trackerButton = (card) => buttonsOf(card).find((a) => a.label === 'ตรวจสอบออเดอร์')
+
+  const orderArgs = { orderNo: 'LP1', name: 'ก', phone: '0800000000', items: [], total: 300 }
+  const paidArgs = { orderNo: 'LP1', total: 300, pointsEarned: 15 }
+
+  it('is offered on the customer order card, which is where they wait', async () => {
+    const { buildOrderFlex } = await import('./orderFlex')
+    expect(trackerButton(buildOrderFlex(orderArgs))?.uri).toContain('order=LP1')
+  })
+
+  it('is left off the staff order card', async () => {
+    const { buildOrderFlex } = await import('./orderFlex')
+    expect(trackerButton(buildOrderFlex({ ...orderArgs, withStaffActions: true }))).toBeUndefined()
+  })
+
+  // By the time the receipt lands the order is paid and moving, the order card
+  // a few messages up already carries this link, and every later status change
+  // is pushed to the same chat. A second copy here was just a second copy.
+  it('is left off the receipt, which no longer has a footer to hold it', async () => {
+    const { buildPaymentConfirmedFlex } = await import('./orderFlex')
+    expect(trackerButton(buildPaymentConfirmedFlex(paidArgs))).toBeUndefined()
+  })
+
+  it('keeps the kitchen buttons on the order card, which is where staff work', async () => {
+    const { buildOrderFlex } = await import('./orderFlex')
+    const labels = buttonsOf(buildOrderFlex({ ...orderArgs, withStaffActions: true })).map((a) => a.label)
+    expect(labels).toEqual(['กำลังทำ', 'พร้อมแล้ว', 'ยกเลิกออเดอร์'])
+  })
+
 })
