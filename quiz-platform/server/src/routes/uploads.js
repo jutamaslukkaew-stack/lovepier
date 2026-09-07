@@ -1,0 +1,4 @@
+import crypto from 'node:crypto'; import { Router } from 'express'; import { z } from 'zod'; import { authenticate } from '../middleware/authenticate.js'; import { createDownloadUrl, createUploadUrl } from '../s3.js';
+const router=Router(); router.use(authenticate);
+router.post('/presign', async(req,res,next)=>{try{const {filename,contentType}=z.object({filename:z.string().min(1).max(180),contentType:z.string().regex(/^(image|application)\//)}).parse(req.body);const safe=filename.replace(/[^a-zA-Z0-9._-]/g,'_');const key=`users/${req.user.sub}/${crypto.randomUUID()}-${safe}`;res.json({key,url:await createUploadUrl(key,contentType),expiresIn:900});}catch(e){next(e);}});
+router.post('/access',async(req,res,next)=>{try{const {key}=z.object({key:z.string()}).parse(req.body);if(!key.startsWith(`users/${req.user.sub}/`))return res.status(403).json({error:'Forbidden'});res.json({url:await createDownloadUrl(key),expiresIn:900});}catch(e){next(e);}}); export default router;
