@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { useChrome } from '../lib/chrome'
 import { useLanguage } from '../lib/language'
 import { getProfileIfLoggedIn, isLiffConfigured, loginAndGetProfile, MEMBER_LIFF_ID } from '../lib/liff'
@@ -24,6 +24,82 @@ import { getProfileIfLoggedIn, isLiffConfigured, loginAndGetProfile, MEMBER_LIFF
 // profile, which the access token already proves. First visit and every visit
 // after it take exactly the same path.
 
+// ── The card is cached on the device, and that is the whole speed story ──
+//
+// Nothing on this card changes between visits: the member number and the QR
+// payload are assigned once and never re-rolled (see pages/api/member.js).
+// Yet every visit used to wait on the full chain — LIFF SDK, liff.init(),
+// getProfile(), then /api/member, which itself calls LINE twice before it
+// touches the database — before the customer could see anything but a
+// skeleton. That is a lot of network for bytes we already had.
+//
+// So: paint the last card immediately, then run the same chain as a
+// background refresh that quietly replaces what is on screen. A returning
+// customer sees their QR on the first frame; a failing refresh leaves the
+// cached card up instead of an error (the QR staff scan is still valid).
+const CARD_CACHE_KEY = 'love-pier:member-card:v1'
+// Long, because the card itself does not expire — this is a floor on how
+// stale the tier/name on it may be if the device never gets a refresh in.
+const CARD_CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
+
+function readCachedCard() {
+  if (typeof window === 'undefined') return null
+  try {
+    const cached = JSON.parse(window.localStorage.getItem(CARD_CACHE_KEY) || 'null')
+    if (!cached?.member?.memberNo || !cached?.member?.qrPayload) return null
+    if (Date.now() - Number(cached.savedAt || 0) > CARD_CACHE_MAX_AGE_MS) return null
+    return cached
+  } catch {
+    return null
+  }
+}
+
+// `qrDataUrl` is optional: a refresh that has no QR to hand keeps the stored
+// one as long as it still belongs to this card's payload, so the next visit
+// never has to pull the qrcode bundle in again.
+function writeCachedCard({ userId, member, qrDataUrl }) {
+  if (typeof window === 'undefined' || !member?.memberNo) return
+  try {
+    const prev = readCachedCard()
+    const keptQr = prev?.member?.qrPayload === member.qrPayload ? prev.qrDataUrl || '' : ''
+    window.localStorage.setItem(
+      CARD_CACHE_KEY,
+      JSON.stringify({
+        userId: userId || prev?.userId || '',
+        member,
+        qrDataUrl: qrDataUrl || keptQr,
+        savedAt: Date.now(),
+      })
+    )
+  } catch {}
+}
+
+// Read through useSyncExternalStore rather than in an effect, so the cached
+// card is part of the FIRST client render instead of a second one — and
+// without the hydration mismatch a useState initialiser would cause on this
+// prerendered page (the server has no localStorage; its snapshot is null).
+// The snapshot has to be referentially stable, hence the module-level memo:
+// nothing external mutates this cache mid-visit, only this page does, and
+// fresher data arrives as `member` state.
+let _cardSnapshot
+function cardSnapshot() {
+  if (_cardSnapshot === undefined) _cardSnapshot = readCachedCard()
+  return _cardSnapshot
+}
+function noCardSnapshot() {
+  return null
+}
+function subscribeToNothing() {
+  return () => {}
+}
+
+function clearCachedCard() {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.removeItem(CARD_CACHE_KEY)
+  } catch {}
+}
+
 const COPY = {
   th: {
     title: 'Love Pier ID — บัตรสมาชิก',
@@ -34,7 +110,6 @@ const COPY = {
     login: 'เข้าสู่ระบบด้วย LINE',
     unavailable: 'เปิดหน้านี้จากแอป LINE ของร้าน เพื่อรับบัตรสมาชิก',
     memberNo: 'รหัสสมาชิก',
-    points: 'คะแนนสะสม',
     scanHint: 'ให้พนักงานสแกน QR นี้ก่อนชำระเงิน',
     error: 'ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่',
     errorLiff: 'เปิดบัตรสมาชิกจากเมนูในแชท LINE ของร้าน เพื่อให้ระบบรู้จักบัญชีของคุณ',
@@ -53,7 +128,6 @@ const COPY = {
     login: 'Log in with LINE',
     unavailable: 'Open this page from our LINE account to get your card.',
     memberNo: 'Member ID',
-    points: 'Points balance',
     scanHint: 'Show this QR to our staff before you pay',
     error: 'Could not load your card. Please try again.',
     errorLiff: 'Open your card from our LINE chat menu so we can recognise your account.',
@@ -72,7 +146,6 @@ const COPY = {
     login: '使用 LINE 登录',
     unavailable: '请从本店 LINE 官方账号打开此页面以领取会员卡。',
     memberNo: '会员编号',
-    points: '积分余额',
     scanHint: '结账前请向店员出示此二维码',
     error: '无法加载会员卡，请重试。',
     errorLiff: '请从本店 LINE 聊天的菜单打开会员卡，以便系统识别您的账号。',
@@ -99,6 +172,20 @@ export default function MemberPage() {
   // works) produced the same sentence, and a real-phone report carried no
   // information about which one had happened. See note_2026_08_25_member_liff.
   const [failure, setFailure] = useState(null)
+  // The card this device last saw, and the flag that disowns it when the
+  // refresh comes back for a different LINE account.
+  const storedCard = useSyncExternalStore(subscribeToNothing, cardSnapshot, noCardSnapshot)
+  const [storedCardRejected, setStoredCardRejected] = useState(false)
+  const stored = storedCardRejected ? null : storedCard
+
+  // What is actually on screen: the fetched card the moment there is one,
+  // the stored card until then. Everything downstream reads these, which is
+  // why the network path below needs no "is a card already showing?" flag —
+  // a failed REFRESH cannot blank a card that is right here.
+  const card = member || stored?.member || null
+  const cardQr =
+    qrDataUrl || (stored?.member?.qrPayload === card?.qrPayload ? stored?.qrDataUrl || '' : '')
+  const view = card ? 'card' : status
 
   // This is a card screen reached from the Rich Menu, not a marketing page.
   useEffect(() => {
@@ -117,6 +204,17 @@ export default function MemberPage() {
       return
     }
     setProfile(lineProfile)
+    // Same device, a different LINE account: disown the stored card rather
+    // than leave someone else's QR on screen while this one loads.
+    const onDevice = readCachedCard()
+    if (onDevice?.userId && onDevice.userId !== lineProfile.userId) {
+      clearCachedCard()
+      setStoredCardRejected(true)
+      setMember(null)
+      setQrDataUrl('')
+    }
+    // Invisible while a stored card is showing — `view` keeps that card up —
+    // and the skeleton only when there is genuinely nothing yet.
     setStatus('loading')
     try {
       // POST, not GET: this both issues the card on a first visit and returns
@@ -147,6 +245,7 @@ export default function MemberPage() {
       if (!res.ok) return fail('server', `E${res.status}`)
       if (!data?.member) return fail('server', 'E-EMPTY')
       setMember(data.member)
+      writeCachedCard({ userId: lineProfile.userId, member: data.member })
       setStatus('card')
     } catch {
       // fetch() itself rejected: offline, blocked, or the request was dropped.
@@ -177,16 +276,22 @@ export default function MemberPage() {
   }, [loadMember, fail])
 
   // Only ever runs once a card exists — the qrcode bundle is never pulled in
-  // on the login screen. Same dynamic-import + data-URL technique as
-  // the PromptPay QR in components/delivery/OrderFlow.js.
+  // on the login screen, and never again once the drawn QR is cached. Same
+  // dynamic-import + data-URL technique as the PromptPay QR in
+  // components/delivery/OrderFlow.js.
   useEffect(() => {
-    if (!member?.qrPayload) return
+    if (!card?.qrPayload || cardQr) return
+    const payload = card.qrPayload
     let cancelled = false
     ;(async () => {
       try {
         const QRCode = (await import('qrcode')).default
-        const url = await QRCode.toDataURL(member.qrPayload, { margin: 1, width: 320 })
-        if (!cancelled) setQrDataUrl(url)
+        const url = await QRCode.toDataURL(payload, { margin: 1, width: 320 })
+        if (cancelled) return
+        setQrDataUrl(url)
+        // Stored with the card, so the next visit paints the QR without
+        // pulling the qrcode bundle in at all.
+        writeCachedCard({ member: card, qrDataUrl: url })
       } catch {
         // A missing QR still leaves the member number readable on the card.
       }
@@ -194,7 +299,7 @@ export default function MemberPage() {
     return () => {
       cancelled = true
     }
-  }, [member?.qrPayload])
+  }, [card, cardQr])
 
   async function handleLogin() {
     setStatus('loading')
@@ -220,6 +325,11 @@ export default function MemberPage() {
         <meta property="og:description" content="บัตรสมาชิก Love Pier Beach Cafe" />
         <meta property="og:url" content="https://www.lovepier.cafe/member" />
         <meta property="og:type" content="website" />
+        {/* The critical path here is entirely LINE's — the LIFF SDK's config
+            fetch, then liff.init()/getProfile() against api.line.me — so open
+            those connections while the HTML is still parsing. */}
+        <link rel="preconnect" href="https://api.line.me" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://static.line-scdn.net" crossOrigin="anonymous" />
       </Head>
 
       <main className="min-h-dvh bg-[#f5f1eb] px-4 py-10 sm:px-6 sm:py-14">
@@ -232,23 +342,20 @@ export default function MemberPage() {
             <p className="mt-3 text-[13px] font-light text-[#555]">{t.tagline}</p>
           </header>
 
-          {status === 'loading' ? (
+          {view === 'loading' ? (
             <div className="overflow-hidden rounded-[28px] border border-black/10 bg-[#fffdf8] shadow-[0_24px_70px_rgba(74,53,32,0.08)]" aria-label={t.loading}>
               <div className="px-7 pb-7 pt-8">
                 <div className="mx-auto h-56 w-56 animate-pulse rounded-2xl bg-black/[0.06]" />
               </div>
-              <div className="bg-[#4a3520] px-7 py-7 text-center">
-                <div className="mx-auto h-3 w-24 animate-pulse rounded-full bg-white/20" />
-                <div className="mx-auto mt-3 h-14 w-20 animate-pulse rounded-xl bg-white/20" />
-              </div>
-              <div className="border-t border-black/10 bg-white/35 px-7 py-6">
+              <div className="border-t border-black/10 px-7 pb-7 pt-6">
                 <div className="mx-auto h-3 w-20 animate-pulse rounded-full bg-black/[0.07]" />
-                <div className="mx-auto mt-3 h-9 w-32 animate-pulse rounded-lg bg-black/[0.07]" />
+                <div className="mx-auto mt-3 h-9 w-36 animate-pulse rounded-xl bg-black/[0.07]" />
+                <div className="mx-auto mt-5 h-3 w-32 animate-pulse rounded-full bg-black/[0.07]" />
               </div>
             </div>
           ) : null}
 
-          {status === 'logged-out' ? (
+          {view === 'logged-out' ? (
             <div className="rounded-[28px] border border-black/10 bg-[#fffdf8] p-7 text-center shadow-[0_24px_70px_rgba(74,53,32,0.08)]">
               {isLiffConfigured(MEMBER_LIFF_ID) ? (
                 <>
@@ -270,7 +377,7 @@ export default function MemberPage() {
             </div>
           ) : null}
 
-          {status === 'error' ? (
+          {view === 'error' ? (
             <div className="rounded-[28px] border border-black/10 bg-[#fffdf8] p-7 text-center shadow-[0_24px_70px_rgba(74,53,32,0.08)]">
               <p className="text-[13px] leading-[1.9] text-muted-strong">{failureCopy}</p>
               <button
@@ -288,14 +395,14 @@ export default function MemberPage() {
             </div>
           ) : null}
 
-          {status === 'card' && member ? (
+          {view === 'card' && card ? (
             <div className="overflow-hidden rounded-[28px] border border-black/10 bg-[#fffdf8] shadow-[0_24px_70px_rgba(74,53,32,0.08)]">
               <div className="px-7 pb-7 pt-8 text-center">
-                {qrDataUrl ? (
+                {cardQr ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={qrDataUrl}
+                      src={cardQr}
                       alt=""
                       className="mx-auto h-56 w-56 rounded-2xl border border-black/10 bg-white p-2"
                     />
@@ -308,22 +415,20 @@ export default function MemberPage() {
                 )}
               </div>
 
-              <div className="bg-[#4a3520] px-7 py-7 text-center text-white">
-                <p className="text-[11px] font-medium tracking-[0.18em] text-white/75">{t.points}</p>
-                <p className="mt-2 font-display text-[clamp(52px,16vw,68px)] font-normal leading-none text-white">
-                  {Number(member.pointsBalance || 0).toLocaleString()}
-                </p>
-              </div>
-
-              <div className="border-t border-black/10 bg-white/35 px-7 py-6 text-center">
+              {/* One quiet card, no bands (2026-09-07). The points balance
+                  used to sit in a solid brown strip here and the member number
+                  briefly took its place; both are gone at the shop's request.
+                  What is left is what the counter needs — the QR, and the code
+                  under it. Points live on /rewards. */}
+              <div className="border-t border-black/10 px-7 pb-7 pt-6 text-center">
                 <p className="text-[10px] tracking-[0.24em] text-muted-strong">{t.memberNo}</p>
-                <strong className="mt-2 block font-display text-[clamp(28px,8vw,38px)] font-normal leading-none tracking-[0.08em] text-ink">
-                  {member.memberNo}
+                <strong className="mt-2 block font-display text-[clamp(32px,9vw,42px)] font-normal leading-none tracking-[0.08em] text-ink">
+                  {card.memberNo}
                 </strong>
-                {member.name ? <p className="mt-3 text-[12px] text-muted-strong">{member.name}</p> : null}
+                {card.name ? <p className="mt-3 text-[12px] text-muted-strong">{card.name}</p> : null}
                 <div className="mt-5 border-t border-black/10 pt-4 text-[12px] text-muted-strong">
-                  <p>{t.group}: <strong className="text-ink">{member.tierLabel}</strong></p>
-                  {member.tierExpiresAt ? <p className="mt-1">{t.validUntil}: {member.tierExpiresAt}</p> : null}
+                  <p>{t.group}: <strong className="text-ink">{card.tierLabel}</strong></p>
+                  {card.tierExpiresAt ? <p className="mt-1">{t.validUntil}: {card.tierExpiresAt}</p> : null}
                   <p className="mt-1">{t.allChannels}</p>
                 </div>
               </div>
