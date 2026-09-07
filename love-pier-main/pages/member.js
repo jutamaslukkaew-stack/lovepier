@@ -347,13 +347,10 @@ export default function MemberPage() {
               <div className="px-7 pb-7 pt-8">
                 <div className="mx-auto h-56 w-56 animate-pulse rounded-2xl bg-black/[0.06]" />
               </div>
-              <div className="bg-[#4a3520] px-7 py-7 text-center">
-                <div className="mx-auto h-3 w-20 animate-pulse rounded-full bg-white/20" />
-                <div className="mx-auto mt-3 h-10 w-36 animate-pulse rounded-xl bg-white/20" />
-              </div>
-              <div className="border-t border-black/10 bg-white/35 px-7 py-6">
-                <div className="mx-auto h-3 w-32 animate-pulse rounded-full bg-black/[0.07]" />
-                <div className="mx-auto mt-3 h-3 w-24 animate-pulse rounded-full bg-black/[0.07]" />
+              <div className="border-t border-black/10 px-7 pb-7 pt-6">
+                <div className="mx-auto h-3 w-20 animate-pulse rounded-full bg-black/[0.07]" />
+                <div className="mx-auto mt-3 h-9 w-36 animate-pulse rounded-xl bg-black/[0.07]" />
+                <div className="mx-auto mt-5 h-3 w-32 animate-pulse rounded-full bg-black/[0.07]" />
               </div>
             </div>
           ) : null}
@@ -418,22 +415,22 @@ export default function MemberPage() {
                 )}
               </div>
 
-              {/* The member number takes the brown band the points balance used
-                  to hold (2026-09-07). With the balance gone the code is the
-                  one thing staff read off this screen, and an all-cream card
-                  read as unfinished. Points still live on /rewards. */}
-              <div className="bg-[#4a3520] px-7 py-7 text-center text-white">
-                <p className="text-[10px] tracking-[0.24em] text-white/75">{t.memberNo}</p>
-                <strong className="mt-2 block font-display text-[clamp(34px,10vw,46px)] font-normal leading-none tracking-[0.08em] text-white">
+              {/* One quiet card, no bands (2026-09-07). The points balance
+                  used to sit in a solid brown strip here and the member number
+                  briefly took its place; both are gone at the shop's request.
+                  What is left is what the counter needs — the QR, and the code
+                  under it. Points live on /rewards. */}
+              <div className="border-t border-black/10 px-7 pb-7 pt-6 text-center">
+                <p className="text-[10px] tracking-[0.24em] text-muted-strong">{t.memberNo}</p>
+                <strong className="mt-2 block font-display text-[clamp(32px,9vw,42px)] font-normal leading-none tracking-[0.08em] text-ink">
                   {card.memberNo}
                 </strong>
-                {card.name ? <p className="mt-3 text-[12px] text-white/75">{card.name}</p> : null}
-              </div>
-
-              <div className="border-t border-black/10 bg-white/35 px-7 py-6 text-center text-[12px] text-muted-strong">
-                <p>{t.group}: <strong className="text-ink">{card.tierLabel}</strong></p>
-                {card.tierExpiresAt ? <p className="mt-1">{t.validUntil}: {card.tierExpiresAt}</p> : null}
-                <p className="mt-1">{t.allChannels}</p>
+                {card.name ? <p className="mt-3 text-[12px] text-muted-strong">{card.name}</p> : null}
+                <div className="mt-5 border-t border-black/10 pt-4 text-[12px] text-muted-strong">
+                  <p>{t.group}: <strong className="text-ink">{card.tierLabel}</strong></p>
+                  {card.tierExpiresAt ? <p className="mt-1">{t.validUntil}: {card.tierExpiresAt}</p> : null}
+                  <p className="mt-1">{t.allChannels}</p>
+                </div>
               </div>
             </div>
           ) : null}
