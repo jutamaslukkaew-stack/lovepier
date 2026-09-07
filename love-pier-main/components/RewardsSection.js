@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { useLanguage } from '../lib/language'
 import {
   clearLiffBridgeAttempt,
@@ -9,6 +9,69 @@ import {
   loginAndGetProfile,
   REWARDS_LIFF_ID,
 } from '../lib/liff'
+
+// ── The balance is kept on the device so the page has something to show ──
+//
+// Reading your own points used to mean waiting out the entire LINE handshake
+// before a single digit appeared — and when this page has no LIFF app of its
+// own (NEXT_PUBLIC_REWARDS_LIFF_ID unset, which is the case in production
+// today) that handshake bounces through /delivery and back, three full page
+// loads inside the LINE webview.
+//
+// So the last balance seen on this device is painted immediately and the
+// handshake becomes a background refresh. A refresh that fails or stalls
+// leaves the number up rather than replacing it with an error — stale by a
+// few points beats blank. Same technique as the membership card in
+// pages/member.js; the shorter age limit is because a balance, unlike a
+// member number, does change.
+const BALANCE_CACHE_KEY = 'love-pier:points-balance:v1'
+const BALANCE_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
+
+function readCachedBalance() {
+  if (typeof window === 'undefined') return null
+  try {
+    const cached = JSON.parse(window.localStorage.getItem(BALANCE_CACHE_KEY) || 'null')
+    if (!cached || typeof cached.pointsBalance !== 'number') return null
+    if (Date.now() - Number(cached.savedAt || 0) > BALANCE_CACHE_MAX_AGE_MS) return null
+    return cached
+  } catch {
+    return null
+  }
+}
+
+function writeCachedBalance({ userId, name, pointsBalance }) {
+  if (typeof window === 'undefined' || typeof pointsBalance !== 'number') return
+  try {
+    window.localStorage.setItem(
+      BALANCE_CACHE_KEY,
+      JSON.stringify({ userId: userId || '', name: name || '', pointsBalance, savedAt: Date.now() })
+    )
+  } catch {}
+}
+
+function clearCachedBalance() {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.removeItem(BALANCE_CACHE_KEY)
+  } catch {}
+}
+
+// Read through useSyncExternalStore so the stored balance is part of the
+// FIRST render rather than a second one, and without the hydration mismatch a
+// useState initialiser would cause (the server has no localStorage — its
+// snapshot is null). The snapshot must be referentially stable, hence the
+// module-level memo; anything fresher arrives as state.
+let _balanceSnapshot
+function balanceSnapshot() {
+  if (_balanceSnapshot === undefined) _balanceSnapshot = readCachedBalance()
+  return _balanceSnapshot
+}
+function noBalanceSnapshot() {
+  return null
+}
+function subscribeToNothing() {
+  return () => {}
+}
 
 const COPY = {
   th: {
@@ -61,6 +124,19 @@ export default function RewardsSection() {
   // act on (button), not a spinner — reached once the silent LINE handshake
   // and its one endpoint bridge have both had their turn without a profile.
   const [accountStatus, setAccountStatus] = useState(() => (isLiffConfigured(OWN_LIFF_ID || undefined) ? 'loading' : 'signin'))
+  // The balance this device last saw, and the flag that disowns it when the
+  // refresh comes back for a different LINE account.
+  const storedBalance = useSyncExternalStore(subscribeToNothing, balanceSnapshot, noBalanceSnapshot)
+  const [storedBalanceRejected, setStoredBalanceRejected] = useState(false)
+  const stored = storedBalanceRejected ? null : storedBalance
+
+  // What is actually on screen: the fetched balance the moment there is one,
+  // the stored balance until then. A number here outranks every other state —
+  // a refresh that failed is not worth an error card in front of a figure the
+  // customer can already read.
+  const shownBalance = pointsBalance != null ? pointsBalance : stored ? stored.pointsBalance : null
+  const shownName = profile?.displayName || stored?.name || ''
+  const view = shownBalance != null ? 'ready' : accountStatus
 
   const loadBalance = useCallback(async (lineProfile) => {
     if (!lineProfile?.userId) {
@@ -68,19 +144,38 @@ export default function RewardsSection() {
       return
     }
     setProfile(lineProfile)
+    // Same device, a different LINE account: drop the stored balance rather
+    // than show someone else's points while this one loads.
+    const onDevice = readCachedBalance()
+    if (onDevice?.userId && onDevice.userId !== lineProfile.userId) {
+      clearCachedBalance()
+      setStoredBalanceRejected(true)
+      setPointsBalance(null)
+    }
+    // Invisible while a stored balance is showing — `view` keeps that number
+    // up — and the spinner only when there is genuinely nothing yet.
     setAccountStatus('loading')
     // The LINE in-app browser can leave a fetch pending indefinitely; without
     // a ceiling the card stays on "checking your points…" for good.
     const controller = new AbortController()
     const abortTimer = window.setTimeout(() => controller.abort(), 10000)
     try {
-      const res = await fetch('/api/customer', {
+      // /api/points, not /api/customer: the latter exists to refill the
+      // checkout form and reads the settings, the group catalog and the two
+      // most recent orders on the way to the one field this page shows.
+      const res = await fetch('/api/points', {
         headers: { Authorization: `Bearer ${lineProfile.accessToken || ''}` },
         signal: controller.signal,
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.error || 'Could not load customer')
-      setPointsBalance(Math.max(0, Number(data.customer?.pointsBalance) || 0))
+      if (!res.ok) throw new Error(data?.error || 'Could not load points')
+      const balance = Math.max(0, Number(data.pointsBalance) || 0)
+      setPointsBalance(balance)
+      writeCachedBalance({
+        userId: lineProfile.userId,
+        name: lineProfile.displayName || '',
+        pointsBalance: balance,
+      })
       setAccountStatus('ready')
     } catch {
       setAccountStatus('error')
@@ -170,34 +265,34 @@ export default function RewardsSection() {
             <p className="mt-5 max-w-2xl text-[14px] font-light leading-[1.9] text-[#555] sm:text-[15px]">{t.intro}</p>
           </div>
           <div className="rounded-[28px] border border-black/10 bg-[#fffdf8] p-6 shadow-[0_24px_70px_rgba(74,53,32,0.08)] sm:p-8">
-              {accountStatus === 'ready' ? (
+              {view === 'ready' ? (
                 <div>
                   <p className="text-[10px] tracking-[0.16em] text-muted-strong">{t.myPoints}</p>
-                  {profile?.displayName ? <p className="mt-0.5 text-[13px] text-ink">{profile.displayName}</p> : null}
+                  {shownName ? <p className="mt-0.5 text-[13px] text-ink">{shownName}</p> : null}
                   <div className="mt-5 flex items-end justify-between gap-4">
-                    <strong className="font-display text-[clamp(42px,6vw,64px)] font-normal leading-none text-gold-deep">{pointsBalance.toLocaleString()}</strong>
+                    <strong className="font-display text-[clamp(42px,6vw,64px)] font-normal leading-none text-gold-deep">{shownBalance.toLocaleString()}</strong>
                     <span className="pb-1 text-[12px] text-muted-strong">{t.pointsUnit}</span>
                   </div>
                   <div className="mt-4 flex items-center justify-between border-t border-black/10 pt-4 text-[12px]">
                     <span className="text-muted-strong">{t.discountValue}</span>
-                    <strong className="text-ink">{pointsBalance.toLocaleString()} {t.baht}</strong>
+                    <strong className="text-ink">{shownBalance.toLocaleString()} {t.baht}</strong>
                   </div>
-                  {pointsBalance === 0 ? <p className="mt-3 text-[11px] text-muted-strong">{t.noAccount}</p> : null}
+                  {shownBalance === 0 ? <p className="mt-3 text-[11px] text-muted-strong">{t.noAccount}</p> : null}
                   <p className="mt-3 text-[11px] leading-relaxed text-muted-strong">{t.earnRate}</p>
                 </div>
-              ) : accountStatus === 'loading' ? (
+              ) : view === 'loading' ? (
                 <p className="py-5 text-center text-[12px] text-muted-strong">{t.loading}</p>
               ) : (
                 <div className="py-3 text-center">
                   <p className="text-[12px] text-muted-strong">
-                    {accountStatus === 'error' ? t.unavailable : t.signInPrompt}
+                    {view === 'error' ? t.unavailable : t.signInPrompt}
                   </p>
                   <button
                     type="button"
                     onClick={handleRetry}
                     className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-[#4a3520] px-5 py-3 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#3a2818] active:scale-[0.98]"
                   >
-                    {accountStatus === 'error' ? t.retryCta : t.signInCta}
+                    {view === 'error' ? t.retryCta : t.signInCta}
                   </button>
                 </div>
               )}

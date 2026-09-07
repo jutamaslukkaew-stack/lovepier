@@ -33,6 +33,11 @@ export default function RewardsPage() {
         <meta property="og:image" content="https://www.lovepier.cafe/og-promotion.png" />
         <meta property="og:url" content="https://www.lovepier.cafe/rewards" />
         <meta property="og:type" content="website" />
+        {/* This page's critical path is LINE's, not ours — the LIFF SDK's
+            config fetch and the token/profile calls to api.line.me — so open
+            those connections while the HTML is still parsing. */}
+        <link rel="preconnect" href="https://api.line.me" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://static.line-scdn.net" crossOrigin="anonymous" />
       </Head>
 
       <RewardsSection />
