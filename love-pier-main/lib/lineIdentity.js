@@ -19,10 +19,24 @@ export async function verifyLineAccessToken(accessToken, debug) {
   if (!channelId) { if (debug) debug.reason = 'no_channel_id'; return null }
 
   try {
-    const verifyRes = await fetch(
-      `https://api.line.me/oauth2/v2.1/verify?access_token=${encodeURIComponent(accessToken)}`,
-      { headers: { Accept: 'application/json' } }
-    )
+    // Both calls carry the same bearer token and neither needs the other's
+    // answer, so they are issued together rather than one after the other:
+    // the profile fetch used to sit behind the verify round trip, and those
+    // two hops are most of the time /member spends before it can even look at
+    // the database. Nothing is trusted any earlier — the client_id check
+    // below still gates the profile, and an unverified token simply means the
+    // profile response is dropped unread. `.catch(() => null)` keeps a failed
+    // profile fetch from rejecting the pair (and from going unhandled when
+    // verification is what actually failed).
+    const [verifyRes, profileRes] = await Promise.all([
+      fetch(
+        `https://api.line.me/oauth2/v2.1/verify?access_token=${encodeURIComponent(accessToken)}`,
+        { headers: { Accept: 'application/json' } }
+      ),
+      fetch('https://api.line.me/v2/profile', {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      }).catch(() => null),
+    ])
     if (!verifyRes.ok) {
       if (debug) {
         debug.reason = 'verify_not_ok'
@@ -41,9 +55,10 @@ export async function verifyLineAccessToken(accessToken, debug) {
       return null
     }
 
-    const profileRes = await fetch('https://api.line.me/v2/profile', {
-      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-    })
+    if (!profileRes) {
+      if (debug) debug.reason = 'profile_fetch_failed'
+      return null
+    }
     if (!profileRes.ok) {
       if (debug) {
         debug.reason = 'profile_not_ok'

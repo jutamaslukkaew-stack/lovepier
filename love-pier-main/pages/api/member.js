@@ -115,10 +115,30 @@ export default async function handler(req, res) {
       //    split one person across two rows.
       let customerId
       const [byLine] = await db
-        .select({ id: customers.id, name: customers.name })
+        .select()
         .from(customers)
         .where(eq(customers.lineUserId, lineUserId))
         .limit(1)
+
+      // The common case by far: a member who already has a card, opening it
+      // again. Nothing is left to write — the member number and code are
+      // assigned once — so return the row that was just read instead of
+      // walking the issuing path, whose no-op UPDATE and re-SELECT were two
+      // more database round trips on every single view of the card.
+      // Deliberately narrow: any reason to write (a name to fill in, a
+      // birthday supplied) falls through to the full path below.
+      const nameOnFile = pickString(byLine?.name)
+      if (
+        byLine
+        && byLine.memberNo != null
+        && byLine.memberCode
+        && !birthday
+        && (!requestedName || requestedName === nameOnFile)
+        && (nameOnFile || !displayName)
+      ) {
+        const member = toMemberView(byLine, await getTierCatalog())
+        if (member) return res.status(200).json({ member })
+      }
 
       if (byLine) {
         customerId = byLine.id
