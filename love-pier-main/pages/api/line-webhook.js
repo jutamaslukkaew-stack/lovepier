@@ -232,7 +232,7 @@ async function handleSlipImage(event, userId) {
   // reply (`card`) must not.
   if (result.verified && !result.alreadyPaid) {
     await pushOrderCardToStaff(
-      buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount, pointsEarned: order.pointsEarned, withStaffActions: true })
+      buildPaymentConfirmedFlex({ orderNo: order.orderNo, total: order.totalAmount, pointsEarned: order.pointsEarned })
     )
   } else if (result.stored && !result.verified) {
     // The customer's card above promises the shop will check the slip by

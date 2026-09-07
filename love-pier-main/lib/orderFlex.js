@@ -5,17 +5,6 @@ import { OPTION_GROUPS } from './menuOptions'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://lovepier.cafe'
 
-// Where "ดูคะแนนสะสม" sends the customer. A liff.line.me link opens inside
-// LINE already authenticated, so the balance is simply on screen — tapping
-// through from a chat card and then being asked to log in to LINE again is
-// the tap this avoids. The plain URL is the fallback for a shop that has not
-// created the /rewards LIFF app yet: it still works, it just bridges through
-// /delivery to pick up the login first.
-const REWARDS_LIFF_ID = process.env.NEXT_PUBLIC_REWARDS_LIFF_ID || ''
-const REWARDS_URL = REWARDS_LIFF_ID
-  ? `https://liff.line.me/${REWARDS_LIFF_ID}`
-  : `${SITE_URL}/rewards`
-
 function money(n) {
   return `${(Number(n) || 0).toLocaleString('th-TH')}`
 }
@@ -34,35 +23,42 @@ const STATUS_DOT = {
   alert: '#e2725b', // a human has to look at this one
 }
 
-function cardHeader(title, dotColor, backgroundColor = '#3a2818') {
+// `centered` is for the cards whose body is a single centred column — the
+// title has to sit on that same axis or the card reads as two designs stacked.
+// Note the invisible 20px box it adds on the LEFT: the status dot is 20px on
+// the right, so without a twin to balance it, align:'center' would centre the
+// title in what is left over and land it visibly off-axis from the order
+// number below.
+function cardHeader(title, dotColor, backgroundColor = '#3a2818', { centered = false } = {}) {
   const heading = {
     type: 'box',
     layout: 'vertical',
     flex: 1,
     contents: [
-      { type: 'text', text: title, color: '#ffffff', weight: 'bold', size: 'xl', wrap: true },
-      { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm' },
+      { type: 'text', text: title, color: '#ffffff', weight: 'bold', size: 'xl', wrap: true, ...(centered ? { align: 'center' } : {}) },
+      { type: 'text', text: 'Love Pier Beach Cafe', color: '#c9a96e', size: 'xs', margin: 'sm', ...(centered ? { align: 'center' } : {}) },
     ],
   }
+  const dot = {
+    type: 'box',
+    layout: 'vertical',
+    flex: 0,
+    width: '20px',
+    height: '20px',
+    cornerRadius: '999px',
+    backgroundColor: dotColor,
+    contents: [{ type: 'filler' }],
+  }
+  const spacer = { type: 'box', layout: 'vertical', flex: 0, width: '20px', contents: [{ type: 'filler' }] }
   return {
     type: 'box',
     layout: 'horizontal',
     backgroundColor,
     paddingAll: '18px',
     contents: dotColor
-      ? [
-          heading,
-          {
-            type: 'box',
-            layout: 'vertical',
-            flex: 0,
-            width: '20px',
-            height: '20px',
-            cornerRadius: '999px',
-            backgroundColor: dotColor,
-            contents: [{ type: 'filler' }],
-          },
-        ]
+      ? centered
+        ? [spacer, heading, dot]
+        : [heading, dot]
       : [heading],
   }
 }
@@ -224,23 +220,30 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
       spacing: 'sm',
       contents: [
         ...(withStaffActions ? staffActionButtons(orderNo) : []),
-        {
-          type: 'button',
-          style: withStaffActions ? 'link' : 'primary',
-          color: '#3a2818',
-          height: 'sm',
-          action: { type: 'uri', label: 'ตรวจสอบออเดอร์', uri: orderUrl },
-        },
+        // Customer copy only. /delivery?order= is scoped to the LINE user who
+        // placed the order (pages/api/order-status.js), so on a staff card the
+        // button could only ever answer "ไม่พบออเดอร์นี้" — and the details it
+        // would have shown are already in the order card above it in the same
+        // chat. Staff use /admin/orders.
         ...(withStaffActions
           ? []
-          : [{
-              type: 'text',
-              text: 'กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
-              size: 'xxs',
-              color: '#aaaaaa',
-              wrap: true,
-              align: 'center',
-            }]),
+          : [
+              {
+                type: 'button',
+                style: 'primary',
+                color: '#3a2818',
+                height: 'sm',
+                action: { type: 'uri', label: 'ตรวจสอบออเดอร์', uri: orderUrl },
+              },
+              {
+                type: 'text',
+                text: 'กรุณาแนบสลิปการโอนเพื่อยืนยันการชำระเงิน',
+                size: 'xxs',
+                color: '#aaaaaa',
+                wrap: true,
+                align: 'center',
+              },
+            ]),
       ],
     },
   }
@@ -256,12 +259,16 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
 // Sent right after SlipOK auto-verifies a payment (pages/api/verify-slip.js),
 // so the customer sees a Love Pier-branded confirmation alongside SlipOK's own
 // reply card in the LINE chat.
-export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned, withStaffActions = false }) {
-  const orderUrl = `${SITE_URL}/delivery?order=${encodeURIComponent(orderNo)}`
-
+//
+// Staff and customer get the identical card, so there is no withStaffActions
+// flag here any more. The kitchen buttons live on the order card
+// (buildOrderFlex) alone: the same order produces both cards in the staff chat
+// minutes apart, and two identical button rows meant staff tapping a stale
+// card and wondering why the status did not move.
+export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned }) {
   const bubble = {
     type: 'bubble',
-    header: cardHeader('ชำระเงินสำเร็จ', STATUS_DOT.done),
+    header: cardHeader('ชำระเงินสำเร็จ', STATUS_DOT.done, '#3a2818', { centered: true }),
     body: {
       type: 'box',
       layout: 'vertical',
@@ -270,15 +277,12 @@ export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned, withSt
         { type: 'text', text: 'เลขที่ออเดอร์', size: 'xs', color: '#aaaaaa', align: 'center' },
         { type: 'text', text: String(orderNo), weight: 'bold', size: 'xl', align: 'center', color: '#4a3520' },
         { type: 'separator', margin: 'lg' },
-        {
-          type: 'box',
-          layout: 'horizontal',
-          margin: 'lg',
-          contents: [
-            { type: 'text', text: 'ยอดที่ชำระ', weight: 'bold', size: 'md', color: '#333333' },
-            { type: 'text', text: `฿${money(total)}`, weight: 'bold', size: 'lg', color: '#4a3520', align: 'end' },
-          ],
-        },
+        // Stacked and centred rather than the label-left / figure-right row it
+        // used to be: with the footer gone this card is a receipt and nothing
+        // else, so it reads as one centred column all the way down — order
+        // number, amount, points, thanks.
+        { type: 'text', text: 'ยอดที่ชำระ', size: 'xs', color: '#aaaaaa', align: 'center', margin: 'lg' },
+        { type: 'text', text: `฿${money(total)}`, weight: 'bold', size: 'xl', color: '#4a3520', align: 'center' },
         ...(pointsEarned
           ? [{
               type: 'text',
@@ -304,34 +308,11 @@ export function buildPaymentConfirmedFlex({ orderNo, total, pointsEarned, withSt
         },
       ],
     },
-    footer: {
-      type: 'box',
-      layout: 'vertical',
-      spacing: 'sm',
-      contents: [
-        ...(withStaffActions ? staffActionButtons(orderNo) : []),
-        {
-          type: 'button',
-          style: withStaffActions ? 'link' : 'primary',
-          color: '#3a2818',
-          height: 'sm',
-          action: { type: 'uri', label: 'ตรวจสอบออเดอร์', uri: orderUrl },
-        },
-        // The customer's only route to their balance. /rewards is linked from
-        // nowhere else in the app, so before this the points banked one line
-        // above were unreachable unless someone typed the URL. Staff copy
-        // excluded — it is not their balance, and the card is already three
-        // buttons deep.
-        ...(!withStaffActions && pointsEarned
-          ? [{
-              type: 'button',
-              style: 'link',
-              height: 'sm',
-              action: { type: 'uri', label: 'ดูคะแนนสะสม', uri: REWARDS_URL },
-            }]
-          : []),
-      ],
-    },
+    // No footer for anyone — the key is absent rather than empty, which LINE
+    // rejects. Staff work the order from the order card's buttons; the
+    // customer's tracker link lives on their copy of that same card, and every
+    // status change is pushed to this chat anyway. What is left here is a
+    // receipt: paid, how much, what it earned.
   }
 
   return { type: 'flex', altText: `ชำระเงินสำเร็จ ${orderNo} — ฿${money(total)}`, contents: bubble }

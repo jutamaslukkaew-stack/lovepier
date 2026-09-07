@@ -53,7 +53,7 @@ export default async function handler(req, res) {
     // Always alert the configured shop destination from the server. If it is
     // also the customer's test account, skip only the duplicate customer push.
     // The staff copy carries the กำลังทำ / พร้อมแล้ว quick-action buttons.
-    const staffPush = await pushOrderCardToStaff(buildPaymentConfirmedFlex({ ...cardFields, withStaffActions: true }))
+    const staffPush = await pushOrderCardToStaff(buildPaymentConfirmedFlex(cardFields))
     if (order.lineUserId && !targetIsCustomer) {
       await pushToUser(order.lineUserId, [flex])
     }
