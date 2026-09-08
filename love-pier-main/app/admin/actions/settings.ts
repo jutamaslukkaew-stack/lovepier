@@ -39,6 +39,10 @@ const SETTING_KEYS = {
   shopLastOrderMinutes: 'shop_last_order_minutes',
   preorderLeadMinutes: 'preorder_lead_minutes',
   preorderMaxDaysAhead: 'preorder_max_days_ahead',
+  preorderPickupOpen: 'preorder_pickup_open',
+  preorderPickupClose: 'preorder_pickup_close',
+  preorderSlotMinutes: 'preorder_slot_minutes',
+  preorderCustomTimeEnabled: 'preorder_custom_time_enabled',
 } as const
 
 export type ShopSettingsForm = {
@@ -72,6 +76,10 @@ export type ShopSettingsForm = {
   shopLastOrderMinutes: string
   preorderLeadMinutes: string
   preorderMaxDaysAhead: string
+  preorderPickupOpen: string
+  preorderPickupClose: string
+  preorderSlotMinutes: string
+  preorderCustomTimeEnabled: boolean
 }
 
 export async function getSettings(): Promise<ShopSettingsForm> {
@@ -111,6 +119,13 @@ export async function getSettings(): Promise<ShopSettingsForm> {
     shopLastOrderMinutes: m[SETTING_KEYS.shopLastOrderMinutes] || '0',
     preorderLeadMinutes: m[SETTING_KEYS.preorderLeadMinutes] || '60',
     preorderMaxDaysAhead: m[SETTING_KEYS.preorderMaxDaysAhead] || '7',
+    // No `|| '09:00'` fallback, unlike shopOpenTime above: blank is a real
+    // value here ("use the shop's trading hours") and has to round-trip
+    // through the form, or clearing the field would be impossible.
+    preorderPickupOpen: m[SETTING_KEYS.preorderPickupOpen] || '',
+    preorderPickupClose: m[SETTING_KEYS.preorderPickupClose] || '',
+    preorderSlotMinutes: m[SETTING_KEYS.preorderSlotMinutes] || '60',
+    preorderCustomTimeEnabled: m[SETTING_KEYS.preorderCustomTimeEnabled] === 'true',
   }
 }
 
@@ -158,6 +173,19 @@ export async function saveSettings(data: ShopSettingsForm) {
   await put(SETTING_KEYS.shopLastOrderMinutes, (data.shopLastOrderMinutes || '0').trim())
   await put(SETTING_KEYS.preorderLeadMinutes, (data.preorderLeadMinutes || '60').trim())
   await put(SETTING_KEYS.preorderMaxDaysAhead, (data.preorderMaxDaysAhead || '7').trim())
+  // Trimmed to '' rather than defaulted: clearing the field must actually
+  // clear the window.
+  await put(SETTING_KEYS.preorderPickupOpen, (data.preorderPickupOpen || '').trim())
+  await put(SETTING_KEYS.preorderPickupClose, (data.preorderPickupClose || '').trim())
+  // Whitelisted, not just trimmed: lib/preorder.js will happily step the grid
+  // by any divisor, but a shop must not be able to type 7 and get 09:07.
+  await put(
+    SETTING_KEYS.preorderSlotMinutes,
+    ['15', '30', '60'].includes((data.preorderSlotMinutes || '').trim())
+      ? (data.preorderSlotMinutes || '').trim()
+      : '60'
+  )
+  await put(SETTING_KEYS.preorderCustomTimeEnabled, String(Boolean(data.preorderCustomTimeEnabled)))
   revalidatePath('/admin/settings')
   return { ok: true as const }
 }

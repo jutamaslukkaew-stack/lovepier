@@ -17,6 +17,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { saveSettings, type ShopSettingsForm } from '@/app/admin/actions/settings'
+// Pure and import-free by design, so a client component can use the very same
+// resolver the picker and the server use. The preview below is therefore the
+// real answer, not a re-implementation that can drift from it.
+import { resolvePickupWindow } from '@/lib/preorder'
 
 // Password-style input with a show/hide toggle. Plain type="password" fields
 // can't be copied out on iOS Safari (no context-menu Copy, no dev tools), so
@@ -396,9 +400,75 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
             0 = รับถึงเวลาปิด · เช่น 30 = ปิด 18:00 จะหยุดรับออเดอร์ 17:30
           </p>
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>เริ่มรับพรีออเดอร์</Label>
+            <Input
+              type="time"
+              value={form.preorderPickupOpen}
+              onChange={(e) => set('preorderPickupOpen', e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>รับพรีออเดอร์ถึง</Label>
+            <Input
+              type="time"
+              value={form.preorderPickupClose}
+              onChange={(e) => set('preorderPickupClose', e.target.value)}
+            />
+          </div>
+        </div>
         <p className="text-xs text-muted-foreground">
-          ช่องเวลาที่ลูกค้าเลือกได้เป็นรายชั่วโมง และช่องสุดท้ายจะอยู่ก่อนเวลาปิดหนึ่งชั่วโมง — 09:00–18:00 จะได้ 09:00 ถึง 17:00
+          เว้นว่างทั้งคู่ = ใช้เวลาทำการของร้าน · ตั้งไว้ = ช่วงเวลารับพรีออเดอร์โดยเฉพาะ เช่น ร้านเปิด 09:00–18:00
+          แต่ให้มารับพรีออเดอร์ได้ 10:00–16:00 เท่านั้น · เวลาสิ้นสุดคือ<strong>ช่องเวลาสุดท้ายที่จองได้</strong>
+          และจะไม่เกินเวลาปิดร้านเสมอ ตั้งเช้ากว่าเวลาเปิดร้านก็ไม่มีผล
         </p>
+        <div className="space-y-1.5">
+          <Label>ช่วงห่างของช่องเวลา</Label>
+          <select
+            className="h-10 w-40 rounded-md border bg-background px-3 text-sm"
+            value={form.preorderSlotMinutes}
+            onChange={(e) => set('preorderSlotMinutes', e.target.value)}
+          >
+            <option value="15">ทุก 15 นาที</option>
+            <option value="30">ทุก 30 นาที</option>
+            <option value="60">ทุก 1 ชั่วโมง</option>
+          </select>
+        </div>
+        {/* Derived, never hardcoded: this sentence used to claim the slots were
+            hourly, which stopped being true the moment the interval became a
+            setting. It runs the SAME resolver the customer's picker runs, so it
+            cannot describe a window the picker won't actually offer. */}
+        <p className="text-xs text-muted-foreground">
+          {(() => {
+            const w = resolvePickupWindow({
+              shopOpen: form.shopOpenTime,
+              shopClose: form.shopCloseTime,
+              pickupOpen: form.preorderPickupOpen,
+              pickupClose: form.preorderPickupClose,
+              slotMinutes: Number(form.preorderSlotMinutes) || 60,
+            })
+            if (!w.ok) {
+              return 'ช่วงเวลารับที่ตั้งไว้ไม่ตรงกับเวลาทำการของร้าน — ลูกค้าจะเลือกเวลาไม่ได้เลย กรุณาแก้เวลาเปิด–ปิด หรือช่วงเวลารับ'
+            }
+            const every =
+              form.preorderSlotMinutes === '60' ? 'ทุก 1 ชั่วโมง' : `ทุก ${form.preorderSlotMinutes} นาที`
+            return `ตอนนี้ลูกค้าจะเห็นช่องเวลา ${every} ตั้งแต่ ${w.startTime} ถึง ${w.endTime} (ช่องสุดท้ายเว้นไว้หนึ่งช่วงก่อนร้านปิด เพื่อไม่ให้ต้องส่งของตอนกำลังปิดร้าน)`
+          })()}
+        </p>
+        <div className="flex items-center justify-between gap-4 rounded-lg border px-3.5 py-3">
+          <div className="space-y-0.5">
+            <Label>ให้ลูกค้าพิมพ์เวลาเองได้</Label>
+            <p className="text-xs text-muted-foreground">
+              เปิดแล้วลูกค้าระบุเวลาที่ต้องการเองได้ เช่น 14:20 ไม่ต้องเลือกจากช่องเวลา —
+              แต่ยังต้องอยู่ในช่วงเวลารับด้านบน และตามเวลาสั่งล่วงหน้าขั้นต่ำเหมือนเดิม
+            </p>
+          </div>
+          <Switch
+            checked={form.preorderCustomTimeEnabled}
+            onCheckedChange={(v) => set('preorderCustomTimeEnabled', v)}
+          />
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label>ต้องสั่งล่วงหน้าอย่างน้อย (นาที)</Label>

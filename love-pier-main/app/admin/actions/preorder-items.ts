@@ -8,6 +8,14 @@ import { requireUser } from '@/lib/auth'
 
 type Media = { type: 'image' | 'video'; url: string; label?: string }
 
+/** '' / junk -> null, a real 'HH:MM' -> itself. null means "no restriction". */
+function normHhmm(value: unknown) {
+  const raw = String(value ?? '').trim()
+  if (!raw) return null
+  if (!/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(raw)) throw new Error('รูปแบบเวลาไม่ถูกต้อง (ต้องเป็น HH:MM)')
+  return raw
+}
+
 function clean(input: Record<string, unknown>) {
   const nameTh = String(input.nameTh || '').trim()
   if (!nameTh) throw new Error('กรุณากรอกชื่อเมนู')
@@ -20,6 +28,22 @@ function clean(input: Record<string, unknown>) {
     return (row.type === 'image' || row.type === 'video') && Boolean(String(row.url || '').trim())
   }).map((m) => ({ type: m.type, url: String(m.url).trim(), label: String(m.label || '').trim() })) : []
   const status = ['draft', 'active', 'paused', 'seasonal'].includes(String(input.status)) ? String(input.status) : 'draft'
+  const pickupStart = normHhmm(input.pickupStart)
+  const pickupEnd = normHhmm(input.pickupEnd)
+  // Rejected HERE rather than left for the customer's picker to discover. An
+  // inverted or half-filled window produces an empty slot list, and an empty
+  // slot list is indistinguishable from "fully booked" by the time it reaches
+  // the customer — resolvePickupWindow can report that the range is empty but
+  // never which dish emptied it. Catching it at save time is the only place
+  // the answer is a Thai sentence pointing at the field that caused it.
+  if ((pickupStart == null) !== (pickupEnd == null)) {
+    throw new Error('กรุณากรอกช่วงเวลารับให้ครบทั้งเวลาเริ่มและเวลาสิ้นสุด หรือเว้นว่างทั้งคู่')
+  }
+  // String comparison is a valid ordering for zero-padded 'HH:MM'. Equal is
+  // allowed on purpose — a dish collectable in exactly one slot is legitimate.
+  if (pickupStart != null && pickupEnd != null && pickupStart > pickupEnd) {
+    throw new Error('เวลาเริ่มรับต้องไม่เกินเวลาสิ้นสุด')
+  }
   return {
     nameTh,
     descriptionTh: String(input.descriptionTh || '').trim(),
@@ -28,6 +52,8 @@ function clean(input: Record<string, unknown>) {
     unit: String(input.unit || 'ชุด').trim(),
     minQuantity: Math.max(1, Math.floor(Number(input.minQuantity) || 1)),
     leadDays: Math.max(3, Math.floor(Number(input.leadDays) || 3)),
+    pickupStart,
+    pickupEnd,
     dailyQuota: String(input.dailyQuota ?? '').trim() === '' ? null : Math.max(1, Math.floor(Number(input.dailyQuota))),
     coverImageUrl: String(input.coverImageUrl || '').trim() || null,
     media,

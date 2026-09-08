@@ -7,6 +7,7 @@ import { orders } from '@/lib/db/schema'
 import { requireUser } from '@/lib/auth'
 import { ORDER_STATUSES, type OrderStatus } from '@/app/admin/orders/status'
 import { applyOrderStatusChange } from '@/lib/orderStatusUpdate'
+import { applyOrderScheduleChange } from '@/lib/orderScheduleUpdate'
 
 export async function listOrders() {
   await requireUser()
@@ -70,5 +71,38 @@ export async function setOrderStatus(id: string, status: string) {
     customerNotice: result.customerNotice,
     sentToLine: result.sentToLine ?? false,
     unchanged: result.unchanged,
+  }
+}
+
+/**
+ * Move an existing pre-order's pickup time, optionally telling the customer.
+ *
+ * Intentionally thin, exactly like setOrderStatus above: every rule and every
+ * side effect lives in lib/orderScheduleUpdate.js so a future staff LINE
+ * button can reuse it without a second implementation. Note that module's
+ * comment on what it does NOT validate — the customer's ordering rules are
+ * not the staff's rescheduling rules.
+ */
+export async function updateOrderSchedule(
+  id: string,
+  { scheduledDate, scheduledSlot, reason, notify }: {
+    scheduledDate: string
+    scheduledSlot: string
+    reason?: string
+    notify?: boolean
+  }
+) {
+  await requireUser()
+  const result = await applyOrderScheduleChange({ id, scheduledDate, scheduledSlot, reason, notify })
+  if (!result.ok) return { ok: false as const, error: result.error || 'แก้เวลาไม่สำเร็จ' }
+
+  revalidatePath('/admin/orders')
+  revalidatePath('/admin/preorders')
+  return {
+    ok: true as const,
+    customerNotice: result.customerNotice,
+    sentToLine: result.sentToLine ?? false,
+    unchanged: result.unchanged,
+    to: result.to,
   }
 }

@@ -17,7 +17,7 @@ import { ORDER_STATUSES, STATUS_LABELS } from '@/app/admin/orders/status'
 // answer whether they changed the status here or from a LINE button. `warning`
 // is reserved for the two outcomes that need a human to follow up; the rest
 // are `info` because there was simply nothing to send.
-const NOTICE_TOAST: Record<string, { level: 'success' | 'info' | 'warning'; text: string }> = {
+export const NOTICE_TOAST: Record<string, { level: 'success' | 'info' | 'warning'; text: string }> = {
   sent: { level: 'success', text: 'และแจ้งลูกค้าทาง LINE แล้ว' },
   'no-line': { level: 'info', text: '— ออเดอร์นี้ไม่มีบัญชี LINE' },
   'in-store': { level: 'info', text: '— ออเดอร์หน้าร้าน ไม่ต้องแจ้งลูกค้า' },

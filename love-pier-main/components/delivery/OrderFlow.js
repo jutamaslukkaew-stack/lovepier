@@ -34,7 +34,7 @@ import { Check, CheckCircle2, Clock, Receipt, User, StickyNote, Download, Messag
 // Same constant as components/CartDrawer.js — the add-friend deep link needs
 // the leading @, it is part of the path.
 const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@lovepier.cafe'
-import { availableDates, bangkokDateParts, formatDayThai, formatSlotThai } from '../../lib/preorder'
+import { availableDates, bangkokDateParts, formatDayThai, formatSlotThai, resolvePickupWindow, validateScheduleRequest } from '../../lib/preorder'
 
 // Leaflet touches `window` at import time — must never be pulled into the
 // server bundle, hence ssr:false.
@@ -177,6 +177,16 @@ const COPY = {
     scheduleRecap: (label) => `รับอาหาร ${label} น.`,
     fillSchedule: 'กรุณาเลือกวันและเวลาที่ต้องการรับอาหาร',
     scheduleExpired: 'เวลาที่เลือกเลยกำหนดแล้ว กรุณาเลือกเวลาใหม่',
+    scheduleWindowFrom: (name, open, close) => `“${name}” รับได้เฉพาะ ${open}–${close} น.`,
+    scheduleConflict: 'เมนูในตะกร้ามีช่วงเวลารับไม่ตรงกัน จึงหาเวลาที่รับได้ทั้งหมดพร้อมกันไม่ได้ กรุณาแยกเป็นคนละออเดอร์',
+    scheduleConflictHours: 'ช่วงเวลารับของเมนูที่เลือกอยู่นอกเวลาทำการของร้าน กรุณาติดต่อร้านโดยตรง',
+    scheduleConflictItem: (name, open, close) => `${name} · รับได้ ${open}–${close} น.`,
+    scheduleBackToCart: 'กลับไปแก้ตะกร้า',
+    customTimeToggle: 'ระบุเวลาเอง',
+    customTimeBack: 'เลือกจากช่วงเวลา',
+    customTimeOutside: (open, close) => `กรุณาระบุเวลาระหว่าง ${open}–${close} น.`,
+    pickupNoteLabel: 'หมายเหตุเรื่องเวลา (ถ้ามี)',
+    pickupNotePlaceholder: 'เช่น ขอมารับก่อน 12:00 · ให้เพื่อนมารับแทน',
     scheduledFulfilment: (label) => `ออเดอร์นี้เป็นการสั่งล่วงหน้า ร้านจะเตรียมให้พร้อมเวลา ${label} น.`,
     // step 5 — payment
     paymentTitle: 'ยืนยันและชำระเงิน',
@@ -324,6 +334,16 @@ const COPY = {
     scheduleRecap: (label) => `Ready at ${label}`,
     fillSchedule: 'Please choose the day and time you want your order',
     scheduleExpired: 'That time has passed — please pick a new one',
+    scheduleWindowFrom: (name, open, close) => `“${name}” can only be collected ${open}–${close}.`,
+    scheduleConflict: 'The dishes in your cart have pickup windows that do not overlap, so there is no time that works for all of them. Please split them into separate orders.',
+    scheduleConflictHours: 'The pickup window for these dishes falls outside the shop’s opening hours. Please contact the shop directly.',
+    scheduleConflictItem: (name, open, close) => `${name} · collection ${open}–${close}`,
+    scheduleBackToCart: 'Back to cart',
+    customTimeToggle: 'Enter an exact time',
+    customTimeBack: 'Pick from the list',
+    customTimeOutside: (open, close) => `Please choose a time between ${open} and ${close}.`,
+    pickupNoteLabel: 'Note about timing (optional)',
+    pickupNotePlaceholder: 'e.g. hoping to collect before 12:00 · a friend will collect',
     scheduledFulfilment: (label) => `This is a scheduled order — we'll have it ready at ${label}.`,
     paymentTitle: 'Confirm & pay',
     paymentMethod: 'Payment method',
@@ -466,6 +486,16 @@ const COPY = {
     scheduleRecap: (label) => `取餐时间 ${label}`,
     fillSchedule: '请选择您想取餐的日期和时间',
     scheduleExpired: '所选时间已过，请重新选择',
+    scheduleWindowFrom: (name, open, close) => `“${name}”仅限 ${open}–${close} 取货。`,
+    scheduleConflict: '购物车中菜品的取货时间段没有交集，无法找到同时可取的时间，请分开下单。',
+    scheduleConflictHours: '所选菜品的取货时间段不在营业时间内，请直接联系店家。',
+    scheduleConflictItem: (name, open, close) => `${name} · 取货 ${open}–${close}`,
+    scheduleBackToCart: '返回购物车',
+    customTimeToggle: '自己填写时间',
+    customTimeBack: '从时间段选择',
+    customTimeOutside: (open, close) => `请填写 ${open}–${close} 之间的时间。`,
+    pickupNoteLabel: '时间备注（可选）',
+    pickupNotePlaceholder: '例如：希望 12:00 前取货 · 由朋友代取',
     scheduledFulfilment: (label) => `这是预约订单，本店将于 ${label} 备好。`,
     paymentTitle: '确认并付款',
     paymentMethod: '付款方式',
@@ -661,6 +691,11 @@ export default function OrderFlow({
   // if this component is ever rendered without them.
   preorderEnabled = false, shopOpenTime = '09:00', shopCloseTime = '18:00',
   shopClosedDays = [3], preorderLeadMinutes = 60, preorderMaxDaysAhead = 7,
+  // The pickup window and slot interval the shop configured. '' on the two
+  // times means "use trading hours" — do NOT default them to a time here, or a
+  // blank setting would silently pin the window.
+  preorderPickupOpen = '', preorderPickupClose = '', preorderSlotMinutes = 60,
+  preorderCustomTimeEnabled = false,
   // Whether the shop is taking orders right now, resolved SERVER-side in
   // pages/delivery.js (see shopOpenState in lib/preorder.js) because a
   // customer's device clock can be wrong. Null = ungated, so /preorder and
@@ -739,9 +774,14 @@ export default function OrderFlow({
   const [orderTiming, setOrderTiming] = useState(preOrderOnly ? 'scheduled' : 'now') // 'now' | 'scheduled'
   const [scheduledDate, setScheduledDate] = useState('')
   const [scheduledSlot, setScheduledSlot] = useState('')
+  // Typing an exact time instead of picking off the grid. The typed value goes
+  // into scheduledSlot above rather than a state of its own, so the POST body
+  // keeps exactly the shape it has always had — only the extra `customTime`
+  // flag is new, and the server ignores it unless the shop enabled the feature.
+  const [customTime, setCustomTime] = useState(false)
 
   // step 1b — contact / address (resolved up front now; summary just recaps it)
-  const [form, setForm] = useState({ name: '', phone: '', address: '', note: '' })
+  const [form, setForm] = useState({ name: '', phone: '', address: '', note: '', pickupNote: '' })
   const [summaryError, setSummaryError] = useState('')
   // 'idle' | 'checking' | 'found' | 'notfound' — drives the small note under
   // the phone field once it looks complete. See the lookup effect below.
@@ -860,22 +900,53 @@ export default function OrderFlow({
     ? Math.max(3, ...items.filter((item) => item.preorder).map((item) => Number(item.leadDays) || 3))
     : 0
   const effectivePreorderLeadMinutes = Math.max(preorderLeadMinutes, requiredLeadDays * 24 * 60)
-  const scheduleDays = preorderEnabled
-    ? availableDates({
-        openTime: shopOpenTime,
-        closeTime: shopCloseTime,
-        closedDays: shopClosedDays,
-        leadMinutes: effectivePreorderLeadMinutes,
-        maxDaysAhead: preorderMaxDaysAhead,
-      })
-    : []
+  // Looked up from the freshly-fetched catalogue, NEVER read off the cart
+  // line. lib/cart.js persists to localStorage, so a window copied in at
+  // add-to-cart time would go stale the moment the shop edited it and would
+  // survive across deploys. An id no longer in the catalogue contributes no
+  // window, which is also what makes carts built before this feature work.
+  const cartPickupWindows = items
+    .filter((item) => item.preorder)
+    .map((item) => {
+      const row = preorderItems.find((p) => p.id === item.id)
+      return { name: item.name, start: row?.pickupStart || '', end: row?.pickupEnd || '' }
+    })
+  const pickupWindow = resolvePickupWindow({
+    shopOpen: shopOpenTime,
+    shopClose: shopCloseTime,
+    pickupOpen: preorderPickupOpen,
+    pickupClose: preorderPickupClose,
+    itemWindows: cartPickupWindows,
+    slotMinutes: preorderSlotMinutes,
+  })
+  const scheduleOpts = {
+    openTime: shopOpenTime,
+    closeTime: shopCloseTime,
+    closedDays: shopClosedDays,
+    leadMinutes: effectivePreorderLeadMinutes,
+    maxDaysAhead: preorderMaxDaysAhead,
+    slotMinutes: preorderSlotMinutes,
+    windowStart: pickupWindow.ok ? pickupWindow.startTime : undefined,
+    windowEnd: pickupWindow.ok ? pickupWindow.endTime : undefined,
+  }
+  const scheduleDays = preorderEnabled && pickupWindow.ok ? availableDates(scheduleOpts) : []
   // Empty means nothing is bookable right now (shop closed all week, or the
   // window is today-only and today is used up) — hide the option entirely
   // rather than showing a picker with no dates in it.
   const canPreorder = scheduleDays.length > 0
   const selectedDay = scheduleDays.find((d) => d.ymd === scheduledDate) || null
+  // The typed-time branch calls the SERVER's own validator rather than
+  // re-deriving the rules here. It's the same pure module the API uses, so the
+  // continue button and the POST can never disagree about whether 14:20 is
+  // acceptable — which is the whole reason lib/preorder.js imports nothing.
   const scheduleReady =
-    orderTiming === 'now' || Boolean(selectedDay && selectedDay.slots.includes(scheduledSlot))
+    orderTiming === 'now' ||
+    (customTime
+      ? validateScheduleRequest(
+          { scheduledDate, scheduledSlot },
+          { ...scheduleOpts, allowCustomTime: true }
+        ).ok
+      : Boolean(selectedDay && selectedDay.slots.includes(scheduledSlot)))
   const scheduledLabel =
     orderTiming === 'scheduled' && scheduleReady ? formatSlotThai(scheduledDate, scheduledSlot) : ''
 
@@ -1375,6 +1446,11 @@ export default function OrderFlow({
           // itself. '' rather than omitted keeps the payload shape stable.
           scheduledDate: orderTiming === 'scheduled' ? scheduledDate : '',
           scheduledSlot: orderTiming === 'scheduled' ? scheduledSlot : '',
+          // A request, not a grant: /api/orders honours it only if the shop
+          // has preorder_custom_time_enabled on, so a stale or tampered client
+          // asserting it gains nothing.
+          customTime: orderTiming === 'scheduled' && customTime,
+          pickupNote: orderTiming === 'scheduled' ? form.pickupNote : '',
           lineAccessToken: profile?.accessToken || '',
           pointsToRedeem: requestedPoints,
           items: items.map((i) => ({
@@ -1420,6 +1496,11 @@ export default function OrderFlow({
         distanceKm: distanceResult?.distanceKm ?? null,
         deliveryMethod,
         scheduledLabel,
+        // buildOrderFlex has TWO call sites — this one (the customer's own
+        // in-chat copy via LIFF) and pages/api/orders.js (the shop's card plus
+        // the server-pushed copy). A field added to only one of them
+        // half-ships; see the header of lib/orderFlex.js.
+        pickupNote: form.pickupNote,
       })
       const customerSentOrder = await sendMessagesToChat([orderFlex], liffId)
       setSentToLine(customerSentOrder || Boolean(data.sentToLine))
@@ -1436,6 +1517,7 @@ export default function OrderFlow({
         withinRadius,
         deliveryMethod,
         scheduledLabel,
+        pickupNote: form.pickupNote,
         status: 'pending',
       })
       setSlipVerify(Boolean(data.slipVerify))
@@ -2058,22 +2140,23 @@ export default function OrderFlow({
               <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 flex flex-col gap-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex flex-col gap-2">
-                    {/* Name above, stepper and line total on the row below,
-                        the whole thing centred. They used to share one row
-                        spread edge to edge, which put the item at one side of
-                        the phone and its price at the other. */}
-                    <div className="flex flex-col items-center gap-2 text-center">
-                      <div className="w-full min-w-0">
-                        <p className="text-[13px] font-medium text-ink leading-snug truncate">{item.name}</p>
+                    {/* One row, edge to edge: the item on the left, its
+                        stepper and line total on the right. The name wraps
+                        rather than truncating — the right-hand block is
+                        fixed width, so a long Thai name has a narrow column
+                        and cutting it off would hide which drink it is. */}
+                    <div className="flex items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-medium text-ink leading-snug">{item.name}</p>
                         <p className="text-[12px] text-black/50 tabular-nums">฿{Math.round(parseFloat(item.price))} × {item.qty}</p>
                       </div>
-                      <div className="flex items-center justify-center gap-3">
+                      <div className="flex shrink-0 items-center gap-3">
                         <div className="flex items-center gap-2">
                           <button onClick={() => removeItem(item.id)} className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-ink font-semibold text-sm hover:bg-black/10">−</button>
                           <span className="text-[13px] font-semibold w-4 text-center">{item.qty}</span>
                           <button onClick={() => addItem(item)} className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-ink font-semibold text-sm hover:bg-black/10">+</button>
                         </div>
-                        <p className="text-[13px] font-semibold tabular-nums text-ink">
+                        <p className="min-w-[3.25rem] text-right text-[13px] font-semibold tabular-nums text-ink">
                           ฿{Math.round(parseFloat(item.price) * item.qty)}
                         </p>
                       </div>
@@ -2120,18 +2203,16 @@ export default function OrderFlow({
                   </div>
                 ))}
 
-                {/* Every price row is centred rather than pushed to opposite
-                    edges: on a phone the label and its number ended up a screen
-                    apart, and the totals on the confirmation and in the LINE
-                    receipt are centred too, so this is the same column all the
-                    way through the flow. */}
+                {/* Label left, number right — the same edge-to-edge shape as
+                    the item rows above, so the whole card reads as one receipt
+                    and every figure lines up in a single right-hand column. */}
                 <div className="border-t border-black/10 pt-3 flex flex-col gap-1.5">
-                  <div className="flex items-center justify-center gap-3 text-[13px] text-black/60">
+                  <div className="flex items-center justify-between gap-3 text-[13px] text-black/60">
                     <span>{t.itemsSubtotalLabel}</span>
                     <span className="tabular-nums">฿{itemsSubtotal}</span>
                   </div>
                   {discountAmount > 0 && (
-                    <div className="flex items-center justify-center gap-3 text-[13px] text-emerald-700">
+                    <div className="flex items-center justify-between gap-3 text-[13px] text-emerald-700">
                       {/* The percentage is on the label, not folded into the
                           amount: "ตัวเลขสับสน" was the journey document's
                           complaint about this screen, and a bare "-฿90" does
@@ -2156,12 +2237,12 @@ export default function OrderFlow({
                     </div>
                   )}
                   {pointsRedeemed > 0 && (
-                    <div className="flex items-center justify-center gap-3 text-[13px] text-emerald-700">
+                    <div className="flex items-center justify-between gap-3 text-[13px] text-emerald-700">
                       <span>{t.pointsDiscountLabel}</span>
                       <span className="tabular-nums">-฿{pointsRedeemed}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-center gap-3 text-[13px]">
+                  <div className="flex items-center justify-between gap-3 text-[13px]">
                     <span className="text-black/60">{t.deliveryFeeLabel}</span>
                     {deliveryMethod === 'delivery' ? (
                       belowMinOrder ? (
@@ -2176,7 +2257,7 @@ export default function OrderFlow({
                       <span className="text-amber-700 font-medium">{t.selfArranged}</span>
                     )}
                   </div>
-                  <div className="flex items-baseline justify-center gap-3 pt-1">
+                  <div className="flex items-baseline justify-between gap-3 pt-1">
                     <span className="text-[13px] font-semibold text-ink">{t.total}</span>
                     <span className="font-display text-[20px] text-ink tabular-nums"><span className="baht">฿</span>{amount}</span>
                   </div>
@@ -2217,6 +2298,34 @@ export default function OrderFlow({
                 {/* Scheduling belongs exclusively to /preorder. The normal
                     /delivery route never renders this control and always
                     submits an ASAP order. */}
+                {/* canPreorder false used to just remove the card. On
+                    /preorder a time is REQUIRED, so that left the customer at
+                    a summary they could not leave with nothing on screen
+                    explaining why. Per-dish windows make that reachable for
+                    the first time, so it gets an explanation. */}
+                {preOrderOnly && preorderEnabled && !pickupWindow.ok && (
+                  <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 flex flex-col gap-2 text-[13px] text-amber-900">
+                    <span className="flex items-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-amber-700">
+                      <Clock size={13} strokeWidth={2} />
+                      {t.timingTitle}
+                    </span>
+                    <p className="leading-relaxed">
+                      {pickupWindow.reason === 'ITEM_CONFLICT' ? t.scheduleConflict : t.scheduleConflictHours}
+                    </p>
+                    {cartPickupWindows.filter((w) => w.start && w.end).map((w) => (
+                      <p key={w.name} className="text-[12px] text-amber-800">
+                        {t.scheduleConflictItem(w.name, w.start, w.end)}
+                      </p>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setStep('menu')}
+                      className="self-start mt-1 px-4 py-2 rounded-xl bg-[#4a3520] text-white text-[12px] font-semibold"
+                    >
+                      {t.scheduleBackToCart}
+                    </button>
+                  </div>
+                )}
                 {preOrderOnly && preorderEnabled && canPreorder && (
                   <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 flex flex-col gap-3">
                     <span className="flex items-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/45">
@@ -2257,22 +2366,86 @@ export default function OrderFlow({
                               <option key={d.ymd} value={d.ymd}>{dayLabel(d.ymd)}</option>
                             ))}
                           </select>
-                          <select
-                            className={inputCls}
-                            value={scheduledSlot}
-                            aria-label={t.scheduleTime}
-                            disabled={!selectedDay}
-                            onChange={(e) => setScheduledSlot(e.target.value)}
-                          >
-                            <option value="" disabled>{t.scheduleTime}</option>
-                            {(selectedDay?.slots || []).map((slot) => (
-                              <option key={slot} value={slot}>{slot}</option>
-                            ))}
-                          </select>
+                          {/* Typed time and grid slot share `scheduledSlot`,
+                              so the POST body is identical either way and
+                              only the `customTime` flag tells them apart. */}
+                          {customTime ? (
+                            <input
+                              type="time"
+                              className={inputCls}
+                              value={scheduledSlot}
+                              aria-label={t.scheduleTime}
+                              disabled={!selectedDay}
+                              min={pickupWindow.ok ? pickupWindow.startTime : undefined}
+                              max={pickupWindow.ok ? pickupWindow.endTime : undefined}
+                              step={300}
+                              onChange={(e) => setScheduledSlot(e.target.value)}
+                            />
+                          ) : (
+                            <select
+                              className={inputCls}
+                              value={scheduledSlot}
+                              aria-label={t.scheduleTime}
+                              disabled={!selectedDay}
+                              onChange={(e) => setScheduledSlot(e.target.value)}
+                            >
+                              <option value="" disabled>{t.scheduleTime}</option>
+                              {(selectedDay?.slots || []).map((slot) => (
+                                <option key={slot} value={slot}>{slot}</option>
+                              ))}
+                            </select>
+                          )}
                         </div>
+                        {/* The RESOLVED window, not raw trading hours. This
+                            also fixes a long-standing inaccuracy: it used to
+                            print 09:00–18:00 when 18:00 was never bookable. */}
                         <p className="text-[11px] leading-relaxed text-black/45">
-                          {t.scheduleLeadNote(effectivePreorderLeadMinutes, shopOpenTime, shopCloseTime)}
+                          {t.scheduleLeadNote(effectivePreorderLeadMinutes, pickupWindow.startTime, pickupWindow.endTime)}
                         </p>
+                        {/* Only the dishes that actually narrowed the window,
+                            so the customer can see WHY their choice shrank
+                            rather than guessing at a range that moved. */}
+                        {(pickupWindow.narrowedBy || []).map((w) => (
+                          <p key={w.name} className="text-[11px] leading-relaxed text-[#8c682c]">
+                            {t.scheduleWindowFrom(w.name, w.start, w.end)}
+                          </p>
+                        ))}
+                        {preorderCustomTimeEnabled && (
+                          <button
+                            type="button"
+                            className="self-start text-[12px] font-medium text-[#8c682c] underline underline-offset-2"
+                            onClick={() => {
+                              // Clear on every switch: a grid slot is not
+                              // necessarily typeable and a typed time is not
+                              // necessarily on the grid.
+                              setScheduledSlot('')
+                              setCustomTime((v) => !v)
+                            }}
+                          >
+                            {customTime ? t.customTimeBack : t.customTimeToggle}
+                          </button>
+                        )}
+                        {/* min/max on <input type="time"> are validation-only
+                            in several mobile browsers, so say it in words too.
+                            /api/orders is the actual gate either way. */}
+                        {customTime && scheduledSlot && !scheduleReady && pickupWindow.ok && (
+                          <p className="text-[12px] text-red-600">
+                            {t.customTimeOutside(pickupWindow.startTime, pickupWindow.endTime)}
+                          </p>
+                        )}
+                        {/* Not gated on the toggle: a customer picking a
+                            normal slot may still need to say something about
+                            the handover. */}
+                        <label className="flex flex-col gap-1.5">
+                          <span className="text-[11px] text-black/45">{t.pickupNoteLabel}</span>
+                          <input
+                            className={inputCls}
+                            value={form.pickupNote}
+                            maxLength={200}
+                            placeholder={t.pickupNotePlaceholder}
+                            onChange={(e) => setForm((f) => ({ ...f, pickupNote: e.target.value }))}
+                          />
+                        </label>
                         {/* A customer who lingers can watch their chosen slot
                             fall past the cutoff. Without this the continue
                             button would just start refusing with no cause on

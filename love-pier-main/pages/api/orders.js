@@ -11,7 +11,7 @@ import { calcOrderDiscountAndPoints } from '../../lib/points'
 import { TIER_GENERAL, effectiveTier, tierDiscountPercent } from '../../lib/tiers'
 import { normalizeItemOptions } from '../../lib/menuOptions'
 import { verifyLineAccessToken } from '../../lib/lineIdentity'
-import { formatSlotThai, shopOpenState, validateScheduleRequest } from '../../lib/preorder'
+import { formatSlotThai, resolvePickupWindow, shopOpenState, validateScheduleRequest } from '../../lib/preorder'
 
 function pickString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -51,6 +51,13 @@ export default async function handler(req, res) {
   // order, which is the overwhelming majority.
   const scheduledDate = pickString(req.body?.scheduledDate)
   const scheduledSlot = pickString(req.body?.scheduledSlot)
+  // What the customer wants to say about the handover, in their own words.
+  // Capped rather than rejected — it only ever gets printed on a card.
+  const pickupNote = pickString(req.body?.pickupNote).slice(0, 200)
+  // A REQUEST to be allowed off the slot grid, not a grant. It is ANDed with
+  // the shop's own setting below, so a stale or hand-crafted client asserting
+  // it at a shop that never enabled the feature gains exactly nothing.
+  const customTimeRequested = req.body?.customTime === true
 
   if (!name || !phone) {
     return res.status(400).json({ error: 'กรุณากรอกชื่อและเบอร์โทร' })
@@ -96,6 +103,10 @@ export default async function handler(req, res) {
   // a stale tab and enforces each menu's minimum quantity and lead days.
   let orderItemsInput = rawItems
   let requiredPreorderLeadMinutes = 3 * 24 * 60
+  // Function scope, NOT inside the `if` below: the shop-hours gate sits
+  // between where this is filled and where the scheduler reads it, and a
+  // `const` declared in that block would be out of scope by then.
+  const itemWindows = []
   if (scheduledDate || scheduledSlot) {
     const ids = [...new Set(rawItems.map((item) => pickString(item?.id)).filter(Boolean))]
     const rows = ids.length ? await db.select().from(preorderItems).where(and(
@@ -110,6 +121,12 @@ export default async function handler(req, res) {
       const qty = Math.max(1, parseInt(item?.qty, 10) || 1)
       if (!row || qty < row.minQuantity) return null
       requiredPreorderLeadMinutes = Math.max(requiredPreorderLeadMinutes, row.leadDays * 24 * 60)
+      // Read from the DB row, never from the client payload — this is the
+      // whole reason the server can resolve the pickup window itself instead
+      // of trusting a window the browser claims applies.
+      if (row.pickupStart && row.pickupEnd) {
+        itemWindows.push({ name: row.nameTh, start: row.pickupStart, end: row.pickupEnd })
+      }
       return { ...item, name: row.nameTh, price: row.price, qty }
     })
     if (orderItemsInput.some((item) => !item)) return res.status(400).json({ error: 'จำนวนสินค้าต่ำกว่าขั้นต่ำของเมนู' })
@@ -193,6 +210,23 @@ export default async function handler(req, res) {
     if (!s.preorderEnabled) {
       return res.status(400).json({ error: 'ขณะนี้ยังไม่เปิดให้สั่งล่วงหน้า' })
     }
+    // The window is resolved HERE, from the rows already read above, so the
+    // client never gets to say which hours apply to it.
+    const pickup = resolvePickupWindow({
+      shopOpen: s.shopOpenTime,
+      shopClose: s.shopCloseTime,
+      pickupOpen: s.preorderPickupOpen,
+      pickupClose: s.preorderPickupClose,
+      itemWindows,
+      slotMinutes: s.preorderSlotMinutes,
+    })
+    if (!pickup.ok) {
+      return res.status(400).json({
+        error: pickup.reason === 'ITEM_CONFLICT'
+          ? 'เมนูที่เลือกมีช่วงเวลารับไม่ตรงกัน กรุณาแยกเป็นคนละออเดอร์'
+          : 'ช่วงเวลารับของเมนูที่เลือกอยู่นอกเวลาทำการของร้าน กรุณาติดต่อร้านโดยตรง',
+      })
+    }
     const schedule = validateScheduleRequest(
       { scheduledDate, scheduledSlot },
       {
@@ -201,6 +235,13 @@ export default async function handler(req, res) {
         closedDays: s.shopClosedDays,
         leadMinutes: Math.max(s.preorderLeadMinutes, requiredPreorderLeadMinutes),
         maxDaysAhead: s.preorderMaxDaysAhead,
+        slotMinutes: s.preorderSlotMinutes,
+        windowStart: pickup.startTime,
+        windowEnd: pickup.endTime,
+        // The `&&` is the gate: the customer may only leave the grid if the
+        // SHOP turned that on. Without it, the client flag alone would be the
+        // authorisation, which is exactly backwards.
+        allowCustomTime: s.preorderCustomTimeEnabled && customTimeRequested,
       }
     )
     // 400 like the other order-level rejections above — 401 is reserved for
@@ -308,6 +349,7 @@ export default async function handler(req, res) {
         distanceKm: distanceKm != null ? String(distanceKm) : null,
         // null = ASAP. drizzle's timestamp({withTimezone:true}) takes a Date.
         scheduledFor,
+        pickupNote,
       }).returning({ id: orders.id })
 
       if (pointsRedeemed > 0) {
@@ -406,7 +448,7 @@ export default async function handler(req, res) {
     // and the shop's own staff LINE (LINE_ORDER_NOTIFY_TO). Both best-effort
     // — a push failure never fails the order itself. The staff copy carries the
     // กำลังทำ / พร้อมแล้ว / ยกเลิก quick-action buttons; the customer's must not.
-    const cardFields = { orderNo, name, phone, address, items, total: totalAmount, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel: scheduledFor ? formatSlotThai(scheduledDate, scheduledSlot) : '' }
+    const cardFields = { orderNo, name, phone, address, items, total: totalAmount, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel: scheduledFor ? formatSlotThai(scheduledDate, scheduledSlot) : '', pickupNote }
     const flex = buildOrderFlex(cardFields)
     const staffFlex = buildOrderFlex({ ...cardFields, withStaffActions: true })
 
@@ -467,7 +509,7 @@ export default async function handler(req, res) {
     // response. Still a 200 — the order is saved and paid for either way, so
     // failing the request here would tell the customer their order didn't go
     // through, which is worse and untrue.
-    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify, scheduledFor: scheduledFor ? scheduledFor.toISOString() : null, sentToLine: Boolean(customerPush.ok), customerNotice, staffAlerted: Boolean(staffPush.ok) })
+    return res.status(200).json({ ok: true, orderNo, totalAmount, itemsSubtotal, discountAmount, pointsRedeemed, pointsEarned, deliveryFee, slipVerify, scheduledFor: scheduledFor ? scheduledFor.toISOString() : null, pickupNote, sentToLine: Boolean(customerPush.ok), customerNotice, staffAlerted: Boolean(staffPush.ok) })
   } catch (err) {
     if (err?.message === 'POINTS_BALANCE_CHANGED') {
       return res.status(409).json({ error: 'ยอดคะแนนมีการเปลี่ยนแปลง กรุณาลองใหม่อีกครั้ง' })

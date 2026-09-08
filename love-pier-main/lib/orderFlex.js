@@ -130,7 +130,7 @@ function plainRow(label, value) {
 // customer's own inbound copy via sendMessagesToChat). Passing a new field at
 // only one of them half-ships it silently: one copy shows the time and the
 // other doesn't.
-export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel, withStaffActions = false }) {
+export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel, pickupNote, withStaffActions = false }) {
   const orderUrl = `${SITE_URL}/delivery?order=${encodeURIComponent(orderNo)}`
 
   const itemRows = items.flatMap((i) => {
@@ -165,6 +165,9 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
   // to four characters so it sits in the same width band as its neighbours
   // (ชื่อ / รับอาหาร / ที่อยู่ / ระยะส่ง) and the value column doesn't jump.
   if (scheduledLabel) detail.push(plainRow('รับเวลา', String(scheduledLabel)))
+  // Directly under the time it qualifies. Only ever shown on a scheduled
+  // order: on an ASAP order there is no handover time for it to be about.
+  if (scheduledLabel && pickupNote) detail.push(plainRow('โน้ตเวลา', String(pickupNote)))
   if (address) detail.push(plainRow('ที่อยู่', String(address)))
   if (distanceKm != null) detail.push(plainRow('ระยะส่ง', `${distanceKm} กม.`))
   detail.push(plainRow('ชำระโดย', 'QR ของร้าน'))
@@ -389,6 +392,88 @@ export function buildSlipReceivedFlex({ orderNo, total, reason }) {
 // Sent when staff changes an order status in /admin/orders. This closes the
 // operational loop: changing the dropdown is not merely an internal database
 // update; the customer immediately receives the same status in their LINE chat.
+/**
+ * "The shop moved your pickup time" — pushed when staff reschedule a
+ * pre-order from /admin/preorders.
+ *
+ * Deliberately NOT a variant of buildOrderStatusFlex: the status has not
+ * changed, and announcing a time move under a headline like "ยืนยันการชำระ
+ * เงินแล้ว" would tell the customer something untrue. Showing the OLD time
+ * beside the new one is the point of the card — a customer who only sees the
+ * new time cannot tell whether they misread it the first time.
+ *
+ * Single call site (lib/orderScheduleUpdate.js), so unlike buildOrderFlex
+ * above there is no second builder to keep in step.
+ */
+export function buildScheduleChangedFlex({ orderNo, fromLabel, toLabel, reason, deliveryMethod }) {
+  const orderUrl = `${SITE_URL}/delivery?order=${encodeURIComponent(orderNo)}`
+  const pickup = deliveryMethod === 'pickup'
+
+  const body = [
+    { type: 'text', text: 'เลขที่ออเดอร์', size: 'xs', color: '#aaaaaa', align: 'center' },
+    { type: 'text', text: String(orderNo), weight: 'bold', size: 'xl', align: 'center', color: '#4a3520' },
+    { type: 'separator', margin: 'md' },
+  ]
+  if (fromLabel) {
+    body.push({
+      type: 'box',
+      layout: 'baseline',
+      margin: 'md',
+      contents: [
+        { type: 'text', text: 'เดิม', size: 'sm', color: '#8c8c8c', flex: 0 },
+        { type: 'text', text: String(fromLabel), size: 'sm', color: '#aaaaaa', align: 'end', decoration: 'line-through', wrap: true },
+      ],
+    })
+  }
+  body.push({
+    type: 'box',
+    layout: 'baseline',
+    margin: 'md',
+    contents: [
+      { type: 'text', text: 'ใหม่', size: 'sm', color: '#8c8c8c', flex: 0 },
+      { type: 'text', text: String(toLabel || '-'), size: 'sm', weight: 'bold', color: '#4a3520', align: 'end', wrap: true },
+    ],
+  })
+  if (reason) {
+    body.push({ type: 'text', text: String(reason), size: 'xs', color: '#8c8c8c', wrap: true, margin: 'md' })
+  }
+  body.push({
+    type: 'text',
+    text: pickup
+      ? 'ขออภัยในความไม่สะดวก รบกวนมารับตามเวลาใหม่นี้นะคะ'
+      : 'ขออภัยในความไม่สะดวก ทางร้านจะจัดส่งตามเวลาใหม่นี้นะคะ',
+    size: 'sm',
+    color: '#555555',
+    wrap: true,
+    align: 'center',
+    margin: 'md',
+  })
+
+  return {
+    type: 'flex',
+    // The new time goes in the alt text: this often lands on a locked phone,
+    // and "your time changed" without saying to what is the one thing that
+    // would make the customer open the app just to find out.
+    altText: `เปลี่ยนเวลารับออเดอร์ ${orderNo} เป็น ${toLabel || '-'}`,
+    contents: {
+      type: 'bubble',
+      header: cardHeader('เปลี่ยนเวลารับออเดอร์', STATUS_DOT.waiting),
+      body: { type: 'box', layout: 'vertical', spacing: 'sm', contents: body },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [{
+          type: 'button',
+          style: 'primary',
+          color: '#3a2818',
+          height: 'sm',
+          action: { type: 'uri', label: 'ตรวจสอบออเดอร์', uri: orderUrl },
+        }],
+      },
+    },
+  }
+}
+
 export function buildOrderStatusFlex({ orderNo, status, deliveryMethod }) {
   const orderUrl = `${SITE_URL}/delivery?order=${encodeURIComponent(orderNo)}`
   const pickup = deliveryMethod === 'pickup'

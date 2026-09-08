@@ -2,6 +2,8 @@ import { listOrders, listPreorders } from '@/app/admin/actions/orders'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { OrderStatusSelect } from '@/components/admin/order-status-select'
+import { OrderScheduleEdit } from '@/components/admin/order-schedule-edit'
+import { getShopSettings } from '@/lib/settings'
 import { DELIVERY_METHOD_LABELS, STATUS_LABELS, STATUS_VARIANT } from '@/app/admin/orders/status'
 import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
@@ -67,6 +69,9 @@ function formatSchedule(d: Date | string | null) {
 
 export async function AdminOrdersContent({ preordersOnly = false }: { preordersOnly?: boolean }) {
   const orders = preordersOnly ? await listPreorders() : await listOrders()
+  // Only so the reschedule editor can WARN when staff pick a day the shop is
+  // closed. It never blocks the save — see lib/orderScheduleUpdate.js.
+  const { shopClosedDays } = await getShopSettings()
   const slipUrls = await signSlipUrls(
     orders.map((o) => o.slipUrl).filter((p): p is string => Boolean(p))
   )
@@ -117,9 +122,18 @@ export async function AdminOrdersContent({ preordersOnly = false }: { preordersO
                             beside it: this is the one fact on the card that
                             changes what staff do right now. */}
                         {o.scheduledFor && (
-                          <Badge className="bg-[#8c682c] text-white hover:bg-[#8c682c]">
-                            ล่วงหน้า · {formatSchedule(o.scheduledFor)}
-                          </Badge>
+                          <>
+                            <Badge className="bg-[#8c682c] text-white hover:bg-[#8c682c]">
+                              ล่วงหน้า · {formatSchedule(o.scheduledFor)}
+                            </Badge>
+                            {/* Client island inside this server component,
+                                exactly as OrderStatusSelect already is. */}
+                            <OrderScheduleEdit
+                              id={o.id}
+                              scheduledFor={o.scheduledFor}
+                              closedDays={shopClosedDays}
+                            />
+                          </>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
@@ -148,6 +162,9 @@ export async function AdminOrdersContent({ preordersOnly = false }: { preordersO
                           <span className="ml-1 text-[#4a3520]">· {o.distanceKm} กม.</span>
                         )}
                       </p>
+                    )}
+                    {o.pickupNote && (
+                      <p className="text-[13px] text-[#8c682c] mt-0.5">โน้ตเวลา: {o.pickupNote}</p>
                     )}
                     {o.note && (
                       <p className="text-[13px] text-amber-700 mt-0.5">หมายเหตุ: {o.note}</p>

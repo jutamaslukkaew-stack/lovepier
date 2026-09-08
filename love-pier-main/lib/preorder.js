@@ -261,29 +261,148 @@ export function shopOpenState({
 }
 
 /**
- * The hourly slots still bookable on one date. Always an array, never throws.
+ * The first and last bookable slot START on a day, in minutes since midnight.
  *
- * opts: { openTime, closeTime, closedDays, leadMinutes, now }
+ * ONE function, so what the picker offers (slotsForDate) and what the server
+ * accepts (validateScheduleRequest) cannot drift apart. Two kinds of bound
+ * meet here and they are NOT the same kind of number:
+ *
+ *   - closeTime is the moment the door shuts, so it is EXCLUSIVE: the last
+ *     slot has to leave a whole slot before it. 09:00-18:00 at 60 gives
+ *     09:00…17:00, exactly the nine the reservation form already offers
+ *     (pages/reservation.js). An 18:00 slot would promise a handover at the
+ *     moment staff are shutting down.
+ *   - windowStart/windowEnd are a pickup window the shop typed in, so the end
+ *     is INCLUSIVE: "รับได้ 10:00-14:00" has to offer 14:00, or the shop's own
+ *     words contradict its own picker.
+ *
+ * Trading hours are the outer bound either way. A window can only ever narrow
+ * the day, never widen it, so nothing an admin types can weaken the
+ * shut-the-door rule above. That is a deliberate product decision, not a
+ * limitation: a shop wanting collection before it opens has to move its
+ * opening time, where the "we're closed right now" banner will see it too.
+ *
+ * With windowStart/windowEnd/slotMinutes all absent this returns exactly
+ * { first: open, last: close - 60 }, and `m <= last` is arithmetically the
+ * same loop as the `m + SLOT_MINUTES <= close` it replaced. That identity is
+ * what lets an unconfigured shop keep today's behaviour bit for bit — the
+ * existing tests are the proof and must pass untouched.
+ */
+function resolveSlotBounds(opts = {}) {
+  const slotMinutes = Math.max(1, Math.floor(Number(opts.slotMinutes) || SLOT_MINUTES))
+  const open = resolveTime(opts.openTime, DEFAULT_OPEN_TIME)
+  const close = resolveTime(opts.closeTime, DEFAULT_CLOSE_TIME)
+  if (open == null || close == null) return null
+
+  // hhmmToMinutes, NOT resolveTime: resolveTime substitutes the module default
+  // for anything unparseable, which would silently turn "no window set" into a
+  // hard 09:00 and pin every shop to the same window.
+  const wStart = hhmmToMinutes(opts.windowStart)
+  const wEnd = hhmmToMinutes(opts.windowEnd)
+
+  const first = wStart == null ? open : Math.max(open, wStart)
+  const last = wEnd == null ? close - slotMinutes : Math.min(close - slotMinutes, wEnd)
+  return { first, last, slotMinutes }
+}
+
+/**
+ * Intersect every rule that can narrow when an order may be collected:
+ * trading hours, the shop's pre-order pickup window, and a pickup window on
+ * each ordered dish. Returns the window the picker should offer.
+ *
+ * { ok: true, startTime, endTime, narrowedBy } — 'HH:MM' bounds, both
+ * inclusive slot starts, plus the names of the dishes that actually made the
+ * window smaller (so the customer can be told WHY their choice shrank).
+ *
+ * { ok: false, reason } where reason is 'ITEM_CONFLICT' (two dishes whose
+ * windows don't overlap each other — the fix is to split the order) or
+ * 'OUTSIDE_HOURS' (the window falls outside trading hours — the fix is on the
+ * shop's side). Returning a reason rather than a bare null is the difference
+ * between a customer seeing an explanation and a customer seeing an empty
+ * picker with no way forward.
+ *
+ * itemWindows: [{ name, start, end }] — blank/absent start or end means that
+ * dish imposes no restriction and is skipped.
+ */
+export function resolvePickupWindow({
+  shopOpen,
+  shopClose,
+  pickupOpen,
+  pickupClose,
+  itemWindows,
+  slotMinutes,
+} = {}) {
+  const base = resolveSlotBounds({
+    openTime: shopOpen,
+    closeTime: shopClose,
+    windowStart: pickupOpen,
+    windowEnd: pickupClose,
+    slotMinutes,
+  })
+  if (!base) return { ok: false, reason: 'OUTSIDE_HOURS' }
+  // The shop's own pre-order window can already miss its trading hours (open
+  // 09:00, pickup window typed as 07:00-08:00). Caught here so the item loop
+  // below never has to distinguish "the shop did this" from "a dish did".
+  if (base.first > base.last) return { ok: false, reason: 'OUTSIDE_HOURS' }
+
+  const windows = (Array.isArray(itemWindows) ? itemWindows : [])
+    .map((w) => ({ name: String(w?.name || ''), start: hhmmToMinutes(w?.start), end: hhmmToMinutes(w?.end) }))
+    .filter((w) => w.start != null && w.end != null)
+
+  // Items are folded against EACH OTHER first. Two dishes with disjoint
+  // windows is a different problem with a different fix than a dish that
+  // simply falls outside trading hours, and only this ordering can tell them
+  // apart — fold everything at once and both come out as one empty range.
+  let itemFirst = -Infinity
+  let itemLast = Infinity
+  for (const w of windows) {
+    if (w.start > itemFirst) itemFirst = w.start
+    if (w.end < itemLast) itemLast = w.end
+  }
+  if (itemFirst > itemLast) return { ok: false, reason: 'ITEM_CONFLICT' }
+
+  const first = Math.max(base.first, itemFirst === -Infinity ? base.first : itemFirst)
+  const last = Math.min(base.last, itemLast === Infinity ? base.last : itemLast)
+  if (first > last) return { ok: false, reason: 'OUTSIDE_HOURS' }
+
+  return {
+    ok: true,
+    startTime: minutesToHhmm(first),
+    endTime: minutesToHhmm(last),
+    narrowedBy: windows
+      .filter((w) => w.start > base.first || w.end < base.last)
+      .map((w) => ({ name: w.name, start: minutesToHhmm(w.start), end: minutesToHhmm(w.end) })),
+  }
+}
+
+/**
+ * The slots still bookable on one date. Always an array, never throws.
+ *
+ * opts: { openTime, closeTime, closedDays, leadMinutes, now,
+ *         slotMinutes, windowStart, windowEnd }
+ *
+ * The last three are the pickup-window opts described on resolveSlotBounds;
+ * omit them and this is the hourly, trading-hours-only grid it has always
+ * been.
  */
 export function slotsForDate(ymd, opts = {}) {
   const weekday = weekdayOfYmd(ymd)
   if (weekday == null) return []
   if (resolveClosedDays(opts.closedDays).includes(weekday)) return []
 
-  const open = resolveTime(opts.openTime, DEFAULT_OPEN_TIME)
-  const close = resolveTime(opts.closeTime, DEFAULT_CLOSE_TIME)
-  if (open == null || close == null) return []
+  const bounds = resolveSlotBounds(opts)
+  if (!bounds) return []
 
   const leadMinutes = Math.max(0, Number(opts.leadMinutes) || 0)
   const nowMs = opts.now instanceof Date ? opts.now.getTime() : Date.now()
   const cutoff = nowMs + leadMinutes * 60000
 
   const out = []
-  // The last slot is the last whole hour that still leaves a full hour before
-  // closing: 09:00-18:00 yields 09:00…17:00, exactly the nine the reservation
-  // form already offers (pages/reservation.js). An 18:00 slot would promise a
-  // handover at the moment staff are shutting down.
-  for (let m = open; m + SLOT_MINUTES <= close; m += SLOT_MINUTES) {
+  // `<= last` rather than `+ slotMinutes <= close`: resolveSlotBounds already
+  // subtracted the closing allowance, and doing it there is what lets an
+  // explicit pickup-window end stay inclusive while the trading close stays
+  // exclusive. An inverted or impossible range simply never enters the loop.
+  for (let m = bounds.first; m <= bounds.last; m += bounds.slotMinutes) {
     const hhmm = minutesToHhmm(m)
     const at = bangkokSlotToInstant(ymd, hhmm)
     // The lead-time rule is applied to EVERY date, not just today. For
@@ -391,13 +510,16 @@ export function validateScheduleRequest({ scheduledDate, scheduledSlot } = {}, o
     return fail('CLOSED_DAY', 'ร้านปิดในวันที่เลือก กรุณาเลือกวันอื่น')
   }
 
-  const open = resolveTime(opts.openTime, DEFAULT_OPEN_TIME)
-  const close = resolveTime(opts.closeTime, DEFAULT_CLOSE_TIME)
+  // The SAME bounds the picker drew its options from, so the two can never
+  // disagree about what "inside the window" means. The message names the
+  // RESOLVED window, not raw trading hours — a customer refused at 09:20
+  // because the dish is only collectable from 10:00 has to be told 10:00.
+  const bounds = resolveSlotBounds(opts)
   const mins = hhmmToMinutes(scheduledSlot)
-  if (open == null || close == null || mins < open || mins + SLOT_MINUTES > close) {
-    const openLabel = minutesToHhmm(open ?? hhmmToMinutes(DEFAULT_OPEN_TIME))
-    const closeLabel = minutesToHhmm(close ?? hhmmToMinutes(DEFAULT_CLOSE_TIME))
-    return fail('OUTSIDE_HOURS', `เวลาที่เลือกอยู่นอกเวลาทำการ (${openLabel}–${closeLabel})`)
+  if (!bounds || mins < bounds.first || mins > bounds.last) {
+    const openLabel = minutesToHhmm(bounds ? bounds.first : hhmmToMinutes(DEFAULT_OPEN_TIME))
+    const closeLabel = minutesToHhmm(bounds ? bounds.last : hhmmToMinutes(DEFAULT_CLOSE_TIME))
+    return fail('OUTSIDE_HOURS', `เวลาที่เลือกอยู่นอกช่วงเวลารับ (${openLabel}–${closeLabel})`)
   }
 
   // A time in the past needs no rule of its own — slotsForDate filters on
@@ -410,7 +532,19 @@ export function validateScheduleRequest({ scheduledDate, scheduledSlot } = {}, o
 
   // Belt and braces: whatever the branches above concluded, the answer has to
   // be something the picker would actually offer right now.
-  if (!slotsForDate(scheduledDate, { ...opts, now }).includes(scheduledSlot)) {
+  //
+  // `allowCustomTime` (the shop letting customers type an exact time) relaxes
+  // the GRID check and nothing else — every rule above still applies, and the
+  // empty-day check below still applies, so a typed time can never land on a
+  // day the picker would refuse to show. It defaults to false, which is what
+  // keeps a hand-crafted POST to an un-opted-in shop failing exactly as it
+  // does today.
+  //
+  // NOTE for whoever finally enforces preorder_items.daily_quota: count per
+  // DATE or per slot bucket, never `where scheduled_for = <exact instant>`.
+  // An off-grid custom time would walk straight past an exact-instant count.
+  const grid = slotsForDate(scheduledDate, { ...opts, now })
+  if (grid.length === 0 || (!opts.allowCustomTime && !grid.includes(scheduledSlot))) {
     return fail('UNAVAILABLE', 'เวลาที่เลือกไม่พร้อมให้บริการ กรุณาเลือกเวลาอื่น')
   }
 
