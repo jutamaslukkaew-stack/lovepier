@@ -7,6 +7,7 @@ import {
   formatDayThai,
   formatSlotThai,
   parseClosedDays,
+  resolvePickupWindow,
   shopOpenState,
   slotsForDate,
   validateScheduleRequest,
@@ -247,10 +248,176 @@ describe('validateScheduleRequest', () => {
   it('carries the configured numbers into its messages', () => {
     expect(validateScheduleRequest({ scheduledDate: WED, scheduledSlot: '14:00' }, opts).error)
       .toContain('ร้านปิด')
+    // The BOOKABLE window, not raw trading hours: 09:00-18:00 at hourly slots
+    // has only ever offered 09:00…17:00, so the old '09:00–18:00' wording
+    // named a time the picker never had. Now that a shop can narrow the
+    // window per dish, the message has to name what it actually resolved to
+    // or a customer refused at 09:20 is told to try a time that is also
+    // refused.
     expect(validateScheduleRequest({ scheduledDate: FRI, scheduledSlot: '08:00' }, opts).error)
-      .toContain('09:00–18:00')
+      .toContain('09:00–17:00')
     expect(validateScheduleRequest({ scheduledDate: addDaysYmd(THU, 8), scheduledSlot: '14:00' }, opts).error)
       .toContain('7 วัน')
+  })
+})
+
+describe('slotsForDate — slot interval', () => {
+  const now = new Date('2026-08-19T00:00:00Z') // well before any of these days
+
+  it('halves the grid at 30 minutes without moving either end', () => {
+    const slots = slotsForDate(FRI, { ...HOURS, now, slotMinutes: 30 })
+    expect(slots).toHaveLength(18)
+    expect(slots[0]).toBe('09:00')
+    // 17:30 and not 18:00: the closing allowance is one SLOT, so a finer
+    // interval legitimately buys a later last handover.
+    expect(slots.at(-1)).toBe('17:30')
+  })
+
+  it('falls back to hourly on a missing or unusable interval', () => {
+    const hourly = slotsForDate(FRI, { ...HOURS, now })
+    expect(slotsForDate(FRI, { ...HOURS, now, slotMinutes: 0 })).toEqual(hourly)
+    expect(slotsForDate(FRI, { ...HOURS, now, slotMinutes: 'ทุกครึ่งชั่วโมง' })).toEqual(hourly)
+    expect(slotsForDate(FRI, { ...HOURS, now, slotMinutes: null })).toEqual(hourly)
+  })
+
+  it('lets a finer interval rescue a day too short for an hourly slot', () => {
+    // The one place the interval legitimately CHANGES an existing answer:
+    // 09:00-09:30 fits no whole hour, so hourly yields nothing at all.
+    expect(slotsForDate(FRI, { ...HOURS, now, closeTime: '09:30' })).toEqual([])
+    expect(slotsForDate(FRI, { ...HOURS, now, closeTime: '09:30', slotMinutes: 30 })).toEqual(['09:00'])
+  })
+})
+
+describe('slotsForDate — pickup window', () => {
+  const now = new Date('2026-08-19T00:00:00Z') // well before any of these days
+
+  it('treats the window end as the last bookable slot, not as a closing time', () => {
+    // The whole point of the inclusive end: a shop that writes "รับได้
+    // 10:00-14:00" must see 14:00 in its own picker.
+    const slots = slotsForDate(FRI, { ...HOURS, now, windowStart: '10:00', windowEnd: '14:00' })
+    expect(slots[0]).toBe('10:00')
+    expect(slots.at(-1)).toBe('14:00')
+    expect(slots).not.toContain('09:00')
+    expect(slots).not.toContain('15:00')
+  })
+
+  it('never lets a window widen the day past trading hours', () => {
+    const slots = slotsForDate(FRI, { ...HOURS, now, windowStart: '07:00', windowEnd: '23:00' })
+    expect(slots).toEqual(slotsForDate(FRI, { ...HOURS, now }))
+  })
+
+  it('returns nothing for an inverted or unreachable window', () => {
+    expect(slotsForDate(FRI, { ...HOURS, now, windowStart: '14:00', windowEnd: '10:00' })).toEqual([])
+    expect(slotsForDate(FRI, { ...HOURS, now, windowStart: '06:00', windowEnd: '08:00' })).toEqual([])
+  })
+
+  it('still refuses a closed day however narrow the window', () => {
+    expect(slotsForDate(WED, { ...HOURS, now, windowStart: '10:00', windowEnd: '14:00' })).toEqual([])
+  })
+})
+
+describe('resolvePickupWindow', () => {
+  const SHOP = { shopOpen: '09:00', shopClose: '18:00' }
+
+  it('falls back to the bookable trading window when nothing is configured', () => {
+    expect(resolvePickupWindow(SHOP)).toMatchObject({ ok: true, startTime: '09:00', endTime: '17:00' })
+  })
+
+  it('honours the interval when computing the closing allowance', () => {
+    expect(resolvePickupWindow({ ...SHOP, slotMinutes: 30 }))
+      .toMatchObject({ ok: true, startTime: '09:00', endTime: '17:30' })
+  })
+
+  it('clamps the shop-wide pre-order window to trading hours', () => {
+    // The confirmed product decision: a pickup window can only ever narrow
+    // the day. 08:00 with the shop opening at 09:00 has no effect.
+    expect(resolvePickupWindow({ ...SHOP, pickupOpen: '08:00', pickupClose: '16:00' }))
+      .toMatchObject({ ok: true, startTime: '09:00', endTime: '16:00' })
+  })
+
+  it('takes the tightest bound across overlapping dishes', () => {
+    const out = resolvePickupWindow({
+      ...SHOP,
+      itemWindows: [
+        { name: 'ขนมจีน', start: '10:00', end: '14:00' },
+        { name: 'แกงเขียวหวาน', start: '11:00', end: '16:00' },
+      ],
+    })
+    expect(out).toMatchObject({ ok: true, startTime: '11:00', endTime: '14:00' })
+    expect(out.narrowedBy.map((w) => w.name)).toEqual(['ขนมจีน', 'แกงเขียวหวาน'])
+  })
+
+  it('names only the dishes that actually narrowed the window', () => {
+    const out = resolvePickupWindow({
+      ...SHOP,
+      itemWindows: [
+        { name: 'ขนมจีน', start: '10:00', end: '14:00' },
+        { name: 'ข้าวเหนียว', start: '', end: '' },
+      ],
+    })
+    expect(out.narrowedBy.map((w) => w.name)).toEqual(['ขนมจีน'])
+  })
+
+  it('reports two dishes that cannot share a time as an item conflict', () => {
+    expect(resolvePickupWindow({
+      ...SHOP,
+      itemWindows: [
+        { name: 'ขนมจีน', start: '10:00', end: '12:00' },
+        { name: 'ข้าวหมกไก่', start: '15:00', end: '17:00' },
+      ],
+    })).toEqual({ ok: false, reason: 'ITEM_CONFLICT' })
+  })
+
+  it('distinguishes one dish falling outside trading hours from a dish conflict', () => {
+    // Same emptiness, different fix — the shop changes its hours here, and
+    // the customer splits the order in the case above.
+    expect(resolvePickupWindow({
+      ...SHOP,
+      itemWindows: [{ name: 'ขนมปังเช้า', start: '06:00', end: '08:00' }],
+    })).toEqual({ ok: false, reason: 'OUTSIDE_HOURS' })
+  })
+
+  it('reports a shop-wide window outside trading hours as OUTSIDE_HOURS', () => {
+    expect(resolvePickupWindow({ ...SHOP, pickupOpen: '19:00', pickupClose: '21:00' }))
+      .toEqual({ ok: false, reason: 'OUTSIDE_HOURS' })
+  })
+})
+
+describe('validateScheduleRequest — custom times', () => {
+  const NOW = new Date('2026-08-20T01:00:00Z') // 08:00 in Bangkok
+  const opts = { ...HOURS, leadMinutes: 60, maxDaysAhead: 7, now: NOW }
+
+  it('accepts an off-grid time only when the shop opted in', () => {
+    const req = { scheduledDate: FRI, scheduledSlot: '14:20' }
+    expect(validateScheduleRequest(req, opts).code).toBe('UNAVAILABLE')
+    expect(validateScheduleRequest(req, { ...opts, allowCustomTime: true }).ok).toBe(true)
+  })
+
+  it('still applies every non-grid rule to a typed time', () => {
+    const custom = { ...opts, allowCustomTime: true }
+    expect(validateScheduleRequest({ scheduledDate: WED, scheduledSlot: '14:20' }, custom).code)
+      .toBe('CLOSED_DAY')
+    expect(validateScheduleRequest({ scheduledDate: THU, scheduledSlot: '08:20' }, custom).code)
+      .toBe('OUTSIDE_HOURS')
+    expect(validateScheduleRequest({ scheduledDate: THU, scheduledSlot: '09:20' }, { ...custom, leadMinutes: 24 * 60 }).code)
+      .toBe('TOO_SOON')
+    expect(validateScheduleRequest({ scheduledDate: addDaysYmd(THU, 8), scheduledSlot: '14:20' }, custom).code)
+      .toBe('TOO_FAR')
+  })
+
+  it('refuses a typed time outside the resolved pickup window', () => {
+    const custom = { ...opts, allowCustomTime: true, windowStart: '10:00', windowEnd: '14:00' }
+    expect(validateScheduleRequest({ scheduledDate: FRI, scheduledSlot: '09:20' }, custom).code)
+      .toBe('OUTSIDE_HOURS')
+    expect(validateScheduleRequest({ scheduledDate: FRI, scheduledSlot: '13:40' }, custom).ok).toBe(true)
+  })
+
+  it('refuses a typed time on a day the picker would never offer', () => {
+    // The empty-grid check has to survive allowCustomTime, or a typed time
+    // becomes a way to book a day that is entirely used up.
+    const custom = { ...opts, allowCustomTime: true, windowStart: '06:00', windowEnd: '08:00' }
+    expect(validateScheduleRequest({ scheduledDate: FRI, scheduledSlot: '07:20' }, custom).code)
+      .toBe('OUTSIDE_HOURS')
   })
 })
 

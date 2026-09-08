@@ -136,6 +136,15 @@ export const preorderItems = pgTable(
     unit: text('unit').notNull().default('ชุด'),
     minQuantity: integer('min_quantity').notNull().default(1),
     leadDays: integer('lead_days').notNull().default(3),
+    // When this dish can be COLLECTED, as Bangkok wall-clock 'HH:MM'. NULL on
+    // both means no restriction — the customer gets the shop's whole day.
+    //
+    // pickupEnd is INCLUSIVE: it is the last slot bookable, so '10:00'-'14:00'
+    // offers 14:00. That is the opposite of shop_close_time, which is the
+    // moment the door shuts and so excludes its own last slot. The two are
+    // reconciled in exactly one place, resolveSlotBounds() in lib/preorder.js.
+    pickupStart: text('pickup_start'),
+    pickupEnd: text('pickup_end'),
     dailyQuota: integer('daily_quota'),
     coverImageUrl: text('cover_image_url'),
     // [{ type: 'image'|'video', url, label? }] in display order.
@@ -320,6 +329,12 @@ export const orders = pgTable(
     // column with toLocale*() without an explicit timeZone: 'Asia/Bangkok':
     // the server runs in UTC on Vercel and would render it 7 hours early.
     scheduledFor: timestamp('scheduled_for', { withTimezone: true }),
+    // What the customer wants to say about the HANDOVER — "ขอมารับก่อน 12:00
+    // ได้ไหม", "จะให้คนอื่นมารับแทน". Deliberately not folded into `note`
+    // above: that one is about the food and reaches the kitchen, this one is
+    // about the pickup and reaches whoever is at the counter. They render as
+    // separate rows on the LINE card for exactly that reason.
+    pickupNote: text('pickup_note').notNull().default(''),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

@@ -105,6 +105,26 @@ export const SETTING_KEYS = {
   // days ahead the picker offers. Both are policy rather than trading hours.
   preorderLeadMinutes: 'preorder_lead_minutes',
   preorderMaxDaysAhead: 'preorder_max_days_ahead',
+  // The pre-order COLLECTION window, which is a different thing from the
+  // trading hours above: the shop may be open 09:00-18:00 but only hand
+  // pre-orders over between 10:00 and 16:00. Blank means "use trading hours".
+  //
+  // Unlike shopClosedDays, blank and never-set mean the SAME thing here, so
+  // the plain `m[K] || ''` idiom is correct below — and `|| DEFAULT_OPEN_TIME`
+  // would be actively wrong, silently pinning every shop to a 09:00 window.
+  //
+  // The close is the LAST BOOKABLE SLOT, inclusive, and is still clamped to
+  // trading hours: a pickup window can only ever narrow the day. See
+  // resolveSlotBounds() in lib/preorder.js.
+  preorderPickupOpen: 'preorder_pickup_open',
+  preorderPickupClose: 'preorder_pickup_close',
+  // How far apart the offered slots are. 60 is the code default so an
+  // un-migrated shop is untouched; migration 0018 writes '30'.
+  preorderSlotMinutes: 'preorder_slot_minutes',
+  // Lets the customer type an exact time instead of picking off the grid. Off
+  // by default, and it relaxes ONLY the grid check — the window, the lead time
+  // and the closed days all still apply. See validateScheduleRequest.
+  preorderCustomTimeEnabled: 'preorder_custom_time_enabled',
 }
 
 function num(v) {
@@ -196,5 +216,14 @@ export async function getShopSettings() {
     preorderMaxDaysAhead: m[SETTING_KEYS.preorderMaxDaysAhead]
       ? num(m[SETTING_KEYS.preorderMaxDaysAhead])
       : 7,
+    // No fallback on purpose — '' IS the value, meaning "use shop hours", and
+    // lib/preorder.js reads it with hhmmToMinutes (which returns null for '')
+    // rather than resolveTime (which would substitute 09:00).
+    preorderPickupOpen: m[SETTING_KEYS.preorderPickupOpen] || '',
+    preorderPickupClose: m[SETTING_KEYS.preorderPickupClose] || '',
+    preorderSlotMinutes: m[SETTING_KEYS.preorderSlotMinutes]
+      ? num(m[SETTING_KEYS.preorderSlotMinutes])
+      : 60,
+    preorderCustomTimeEnabled: m[SETTING_KEYS.preorderCustomTimeEnabled] === 'true',
   }
 }

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useCart } from '../../lib/cart'
+import { resolvePickupWindow } from '../../lib/preorder'
 
 function youtubeId(url) {
   return url.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{6,})/)?.[1] || ''
@@ -33,8 +34,49 @@ function mediaOf(item) {
 }
 
 export default function PreorderCatalog({ preorderItems = [], onCartClick, cartBlockedNote = '' }) {
-  const { addItem, totalQty } = useCart()
+  const { addItem, items, totalQty } = useCart()
   const [selected, setSelected] = useState(null)
+  const [addError, setAddError] = useState('')
+
+  // Two dishes whose pickup windows don't overlap can never share one order,
+  // and the summary step can only report that no time works — it cannot say
+  // which dish caused it. Catching it at the moment of the add is the only
+  // place we still know both names.
+  //
+  // This is an affordance, not the gate: the shop can narrow a window after a
+  // cart was built, so the picker explains it and /api/orders refuses it.
+  function tryAdd(item, image) {
+    const windowOf = (id) => {
+      const row = preorderItems.find((p) => p.id === id)
+      return { start: row?.pickupStart || '', end: row?.pickupEnd || '' }
+    }
+    const check = resolvePickupWindow({
+      // Deliberately permissive bounds: trading hours aren't a prop here, and
+      // the only failure this function is entitled to report is dish-vs-dish.
+      // Whether the result also falls outside the shop's day is the picker's
+      // question, asked there with the real settings.
+      shopOpen: '00:00',
+      shopClose: '23:59',
+      slotMinutes: 1,
+      itemWindows: [
+        ...items.filter((i) => i.preorder).map((i) => ({ name: i.name, ...windowOf(i.id) })),
+        { name: item.nameTh, ...windowOf(item.id) },
+      ],
+    })
+    if (!check.ok && check.reason === 'ITEM_CONFLICT') {
+      const clash = items
+        .filter((i) => i.preorder && windowOf(i.id).start)
+        .map((i) => `${i.name} (${windowOf(i.id).start}–${windowOf(i.id).end})`)
+        .join(', ')
+      setAddError(
+        `“${item.nameTh}” รับได้ ${item.pickupStart}–${item.pickupEnd} น. ซึ่งไม่ตรงกับ ${clash} ที่อยู่ในรายการแล้ว กรุณาแยกเป็นคนละออเดอร์`
+      )
+      return false
+    }
+    setAddError('')
+    addItem({ id: item.id, name: item.nameTh, price: String(item.price), image, qty: item.minQuantity, leadDays: item.leadDays, preorder: true })
+    return true
+  }
   const groups = useMemo(() => Object.entries(preorderItems.reduce((all, item) => {
     ;(all[item.category] ||= []).push(item)
     return all
@@ -54,8 +96,8 @@ export default function PreorderCatalog({ preorderItems = [], onCartClick, cartB
         <div className="px-5 pt-5 sm:px-6">
           <div className="flex justify-between gap-3"><h3 className="text-lg font-semibold">{item.nameTh}</h3><strong>฿{Number(item.price).toLocaleString()}</strong></div>
           <p className="mt-2 whitespace-pre-line text-sm leading-7 text-black/60">{item.descriptionTh || `ปรุงสดใหม่ตามออเดอร์ สั่งล่วงหน้าอย่างน้อย ${item.leadDays} วัน`}</p>
-          <p className="mt-3 text-xs text-[#8c682c]">ขั้นต่ำ {item.minQuantity} {item.unit} · ล่วงหน้า {item.leadDays} วัน{videos.length ? ' · มีวิดีโอ' : ''}</p>
-          <button type="button" onClick={() => addItem({ id: item.id, name: item.nameTh, price: String(item.price), image: cover, qty: item.minQuantity, leadDays: item.leadDays, preorder: true })} className="mt-4 w-full rounded-xl bg-[#4a3520] py-3 text-sm font-semibold text-white">เพิ่มลงรายการ</button>
+          <p className="mt-3 text-xs text-[#8c682c]">ขั้นต่ำ {item.minQuantity} {item.unit} · ล่วงหน้า {item.leadDays} วัน{item.pickupStart && item.pickupEnd ? ` · รับ ${item.pickupStart}–${item.pickupEnd} น.` : ''}{videos.length ? ' · มีวิดีโอ' : ''}</p>
+          <button type="button" onClick={() => tryAdd(item, cover)} className="mt-4 w-full rounded-xl bg-[#4a3520] py-3 text-sm font-semibold text-white">เพิ่มลงรายการ</button>
         </div>
       </article>
     })}</div></div></section>)}
@@ -64,9 +106,10 @@ export default function PreorderCatalog({ preorderItems = [], onCartClick, cartB
       return <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/65 p-0 sm:items-center sm:p-5" onClick={() => setSelected(null)}><div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-[#fffdf8] pb-6 sm:rounded-3xl" onClick={(e) => e.stopPropagation()}>
         {images.length > 0 && <div className="grid gap-2">{images.map((m, i) => <img key={`${m.url}-${i}`} src={m.url} alt={m.label || selected.nameTh} className="aspect-video w-full object-cover" />)}</div>}
         {videos.length > 0 && <div className="mt-2 grid gap-2 border-t border-black/10 pt-2">{videos.map((m, i) => <VideoFrame key={`${m.url}-${i}`} media={m} name={selected.nameTh} />)}</div>}
-        <div className="px-6 pt-6"><div className="flex justify-between gap-4"><h2 className="font-display text-3xl">{selected.nameTh}</h2><strong className="text-xl">฿{Number(selected.price).toLocaleString()}</strong></div><p className="mt-3 whitespace-pre-line text-sm leading-7 text-black/60">{selected.descriptionTh}</p><p className="mt-4 text-sm text-[#8c682c]">ขั้นต่ำ {selected.minQuantity} {selected.unit} · สั่งล่วงหน้า {selected.leadDays} วัน</p><button type="button" className="mt-5 w-full rounded-xl bg-[#4a3520] py-3 text-white" onClick={() => { addItem({ id: selected.id, name: selected.nameTh, price: String(selected.price), image: images[0]?.url, qty: selected.minQuantity, leadDays: selected.leadDays, preorder: true }); setSelected(null) }}>เพิ่มลงรายการ</button><button type="button" className="mt-2 w-full py-2 text-sm text-black/50" onClick={() => setSelected(null)}>ปิด</button></div>
+        <div className="px-6 pt-6"><div className="flex justify-between gap-4"><h2 className="font-display text-3xl">{selected.nameTh}</h2><strong className="text-xl">฿{Number(selected.price).toLocaleString()}</strong></div><p className="mt-3 whitespace-pre-line text-sm leading-7 text-black/60">{selected.descriptionTh}</p><p className="mt-4 text-sm text-[#8c682c]">ขั้นต่ำ {selected.minQuantity} {selected.unit} · สั่งล่วงหน้า {selected.leadDays} วัน{selected.pickupStart && selected.pickupEnd ? ` · รับได้ ${selected.pickupStart}–${selected.pickupEnd} น.` : ''}</p>{addError && <p className="mt-3 text-sm text-red-600">{addError}</p>}<button type="button" className="mt-5 w-full rounded-xl bg-[#4a3520] py-3 text-white" onClick={() => { if (tryAdd(selected, images[0]?.url)) setSelected(null) }}>เพิ่มลงรายการ</button><button type="button" className="mt-2 w-full py-2 text-sm text-black/50" onClick={() => setSelected(null)}>ปิด</button></div>
       </div></div>
     })()}
+    {addError && <div className="fixed inset-x-0 bottom-[76px] z-[130] px-4"><p className="mx-auto max-w-lg rounded-xl bg-red-50 px-4 py-3 text-center text-xs leading-relaxed text-red-700 shadow-sm" onClick={() => setAddError('')}>{addError}</p></div>}
     {totalQty > 0 && <div className="fixed inset-x-0 bottom-0 z-[120] border-t border-black/10 bg-[#fffdf8]/95 p-4 backdrop-blur"><button type="button" onClick={onCartClick} disabled={Boolean(cartBlockedNote)} className="mx-auto block w-full max-w-lg rounded-xl bg-[#4a3520] py-3.5 font-semibold text-white disabled:opacity-50">ดูรายการสั่งซื้อ ({totalQty})</button>{cartBlockedNote ? <p className="mt-1 text-center text-xs text-red-600">{cartBlockedNote}</p> : null}</div>}
   </div>
 }

@@ -69,6 +69,7 @@ export async function getServerSideProps() {
   const {
     radiusKm, minDeliveryOrder, pointsPerBaht, menuOptionsEnabled,
     preorderEnabled, shopOpenTime, shopCloseTime, shopClosedDays, preorderLeadMinutes, preorderMaxDaysAhead,
+    preorderPickupOpen, preorderPickupClose, preorderSlotMinutes, preorderCustomTimeEnabled,
   } = await getShopSettings()
 
   return {
@@ -86,6 +87,12 @@ export async function getServerSideProps() {
       shopClosedDays: shopClosedDays ?? [3],
       preorderLeadMinutes: Math.max(preorderLeadMinutes ?? 60, 3 * 24 * 60),
       preorderMaxDaysAhead: preorderMaxDaysAhead ?? 7,
+      // '' is the real value for these two — it means "use the shop's trading
+      // hours" — so they must NOT be ?? -defaulted to a time.
+      preorderPickupOpen: preorderPickupOpen ?? '',
+      preorderPickupClose: preorderPickupClose ?? '',
+      preorderSlotMinutes: preorderSlotMinutes ?? 60,
+      preorderCustomTimeEnabled: preorderCustomTimeEnabled ?? false,
     },
   }
 }
