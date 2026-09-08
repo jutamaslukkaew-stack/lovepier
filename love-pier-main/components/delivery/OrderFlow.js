@@ -2058,22 +2058,23 @@ export default function OrderFlow({
               <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 flex flex-col gap-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex flex-col gap-2">
-                    {/* Name above, stepper and line total on the row below,
-                        the whole thing centred. They used to share one row
-                        spread edge to edge, which put the item at one side of
-                        the phone and its price at the other. */}
-                    <div className="flex flex-col items-center gap-2 text-center">
-                      <div className="w-full min-w-0">
-                        <p className="text-[13px] font-medium text-ink leading-snug truncate">{item.name}</p>
+                    {/* One row, edge to edge: the item on the left, its
+                        stepper and line total on the right. The name wraps
+                        rather than truncating — the right-hand block is
+                        fixed width, so a long Thai name has a narrow column
+                        and cutting it off would hide which drink it is. */}
+                    <div className="flex items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-medium text-ink leading-snug">{item.name}</p>
                         <p className="text-[12px] text-black/50 tabular-nums">฿{Math.round(parseFloat(item.price))} × {item.qty}</p>
                       </div>
-                      <div className="flex items-center justify-center gap-3">
+                      <div className="flex shrink-0 items-center gap-3">
                         <div className="flex items-center gap-2">
                           <button onClick={() => removeItem(item.id)} className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-ink font-semibold text-sm hover:bg-black/10">−</button>
                           <span className="text-[13px] font-semibold w-4 text-center">{item.qty}</span>
                           <button onClick={() => addItem(item)} className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-ink font-semibold text-sm hover:bg-black/10">+</button>
                         </div>
-                        <p className="text-[13px] font-semibold tabular-nums text-ink">
+                        <p className="min-w-[3.25rem] text-right text-[13px] font-semibold tabular-nums text-ink">
                           ฿{Math.round(parseFloat(item.price) * item.qty)}
                         </p>
                       </div>
@@ -2120,18 +2121,16 @@ export default function OrderFlow({
                   </div>
                 ))}
 
-                {/* Every price row is centred rather than pushed to opposite
-                    edges: on a phone the label and its number ended up a screen
-                    apart, and the totals on the confirmation and in the LINE
-                    receipt are centred too, so this is the same column all the
-                    way through the flow. */}
+                {/* Label left, number right — the same edge-to-edge shape as
+                    the item rows above, so the whole card reads as one receipt
+                    and every figure lines up in a single right-hand column. */}
                 <div className="border-t border-black/10 pt-3 flex flex-col gap-1.5">
-                  <div className="flex items-center justify-center gap-3 text-[13px] text-black/60">
+                  <div className="flex items-center justify-between gap-3 text-[13px] text-black/60">
                     <span>{t.itemsSubtotalLabel}</span>
                     <span className="tabular-nums">฿{itemsSubtotal}</span>
                   </div>
                   {discountAmount > 0 && (
-                    <div className="flex items-center justify-center gap-3 text-[13px] text-emerald-700">
+                    <div className="flex items-center justify-between gap-3 text-[13px] text-emerald-700">
                       {/* The percentage is on the label, not folded into the
                           amount: "ตัวเลขสับสน" was the journey document's
                           complaint about this screen, and a bare "-฿90" does
@@ -2156,12 +2155,12 @@ export default function OrderFlow({
                     </div>
                   )}
                   {pointsRedeemed > 0 && (
-                    <div className="flex items-center justify-center gap-3 text-[13px] text-emerald-700">
+                    <div className="flex items-center justify-between gap-3 text-[13px] text-emerald-700">
                       <span>{t.pointsDiscountLabel}</span>
                       <span className="tabular-nums">-฿{pointsRedeemed}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-center gap-3 text-[13px]">
+                  <div className="flex items-center justify-between gap-3 text-[13px]">
                     <span className="text-black/60">{t.deliveryFeeLabel}</span>
                     {deliveryMethod === 'delivery' ? (
                       belowMinOrder ? (
@@ -2176,7 +2175,7 @@ export default function OrderFlow({
                       <span className="text-amber-700 font-medium">{t.selfArranged}</span>
                     )}
                   </div>
-                  <div className="flex items-baseline justify-center gap-3 pt-1">
+                  <div className="flex items-baseline justify-between gap-3 pt-1">
                     <span className="text-[13px] font-semibold text-ink">{t.total}</span>
                     <span className="font-display text-[20px] text-ink tabular-nums"><span className="baht">฿</span>{amount}</span>
                   </div>
