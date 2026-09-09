@@ -17,22 +17,25 @@ function getSrcSet(url) {
 }
 
 function formatEventDate(dateStr, lang) {
-  if (!dateStr) return { dateFull: '', year: '' }
+  if (!dateStr) return { dateFull: '', year: '', day: '', monthShort: '' }
   const d = new Date(dateStr + 'T00:00:00')
   const day = d.getDate()
   const year = d.getFullYear()
+  // `monthShort` carries NO year — it is the top line of the date chip on the
+  // poster cards, where the year would not fit and, for an upcoming event, is
+  // rarely the thing in doubt. dateFull + year still spell it out in full.
   if (lang === 'th') {
     const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
     const weekdays = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.']
-    return { dateFull: `${weekdays[d.getDay()]} ${day} ${months[d.getMonth()]}`, year: String(year) }
+    return { dateFull: `${weekdays[d.getDay()]} ${day} ${months[d.getMonth()]}`, year: String(year), day: String(day), monthShort: months[d.getMonth()] }
   }
   if (lang === 'zh') {
     const weekdays = ['周日','周一','周二','周三','周四','周五','周六']
-    return { dateFull: `${d.getMonth()+1}月${day}日 ${weekdays[d.getDay()]}`, year: String(year) }
+    return { dateFull: `${d.getMonth()+1}月${day}日 ${weekdays[d.getDay()]}`, year: String(year), day: String(day), monthShort: `${d.getMonth()+1}月` }
   }
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
-  return { dateFull: `${weekdays[d.getDay()]} ${day} ${months[d.getMonth()]}`, year: String(year) }
+  return { dateFull: `${weekdays[d.getDay()]} ${day} ${months[d.getMonth()]}`, year: String(year), day: String(day), monthShort: months[d.getMonth()] }
 }
 
 // ── copy ──────────────────────────────────────────────────────────────────────
@@ -55,6 +58,8 @@ const COPY = {
     galleryTitle: 'บรรยากาศ',
     gallerySub: 'ริมทะเล บางแสน',
     galleryMore: 'ดูแกลเลอรีทั้งหมด',
+    galleryPrev: 'เลื่อนไปทางซ้าย',
+    galleryNext: 'เลื่อนไปทางขวา',
     drinksTitle: 'เครื่องดื่มแนะนำ',
     drinksSub: 'กาแฟ · มัทฉะ · อิตาเลียนโซดา',
     drinksMore: 'ดูเมนูเครื่องดื่มทั้งหมด',
@@ -78,6 +83,7 @@ const COPY = {
     eventsMore: 'ดูอีเวนต์ทั้งหมด',
     eventsEmpty: 'ยังไม่มีอีเวนต์ที่กำลังจะมาถึง',
     eventsEmptySub: 'อีเวนต์รอบใหม่จะขึ้นที่นี่ทันทีที่ประกาศ — ระหว่างนี้ดูอีเวนต์ที่ผ่านมาได้',
+    eventsPastLabel: 'ผ่านมาแล้ว',
     rewardsEyebrow: 'LOVE PIER REWARDS',
     rewardsTitle: 'อิ่มอร่อยทุกครั้ง ได้แต้มกลับไปทุกมื้อ',
     rewardsIntro: 'เพิ่มเพื่อน LINE Official ของร้านก่อนสั่งซื้อ เพื่อเริ่มสะสมคะแนนและรับส่วนลดเพิ่มจากโปรโมชันอื่นได้',
@@ -108,6 +114,8 @@ const COPY = {
     galleryTitle: 'Gallery',
     gallerySub: 'By the sea, Bangsaen',
     galleryMore: 'View full gallery',
+    galleryPrev: 'Scroll left',
+    galleryNext: 'Scroll right',
     drinksTitle: 'Signature Drinks',
     drinksSub: 'Coffee · Matcha · Italian Soda',
     drinksMore: 'View all drinks',
@@ -131,6 +139,7 @@ const COPY = {
     eventsMore: 'View all events',
     eventsEmpty: 'No upcoming events yet',
     eventsEmptySub: 'The next one appears here as soon as it is announced — meanwhile, browse past events.',
+    eventsPastLabel: 'Past event',
     rewardsEyebrow: 'LOVE PIER REWARDS',
     rewardsTitle: 'Every visit tastes better with rewards',
     rewardsIntro: 'Add our LINE Official account before ordering to collect points and stack your reward with other promotions.',
@@ -161,6 +170,8 @@ const COPY = {
     galleryTitle: '环境照片',
     gallerySub: '海边 · 邦盛',
     galleryMore: '查看全部图库',
+    galleryPrev: '向左滚动',
+    galleryNext: '向右滚动',
     drinksTitle: '推荐饮品',
     drinksSub: '咖啡 · 抹茶 · 意式苏打',
     drinksMore: '查看全部饮品',
@@ -184,6 +195,7 @@ const COPY = {
     eventsMore: '查看全部活动',
     eventsEmpty: '暂无即将到来的活动',
     eventsEmptySub: '新活动一经公布就会显示在这里 — 期间可查看过往活动。',
+    eventsPastLabel: '已结束',
     rewardsEyebrow: 'LOVE PIER REWARDS',
     rewardsTitle: '每次消费，都有积分回馈',
     rewardsIntro: '下单前添加本店 LINE 官方账号，即可累积积分，并与其他优惠叠加使用。',
@@ -211,6 +223,124 @@ const GALLERY_PHOTOS = [
 ]
 
 // ── components ────────────────────────────────────────────────────────────────
+
+/**
+ * The home page's atmosphere strip.
+ *
+ * The row has always been a scroll container; on a phone a thumb was all it
+ * ever needed. On a desktop without a trackpad there was nothing to grab —
+ * the scrollbar is hidden by design and a mouse wheel scrolls the page, not
+ * the row — so the only hint that more photos existed was the one clipped at
+ * the right edge. This adds the two things a mouse expects: arrows, and
+ * click-and-drag.
+ */
+function GalleryStrip({ photos, prevLabel, nextLabel }) {
+  const scroller = useRef(null)
+  const drag = useRef(null)
+  // Both true before the first measure so neither arrow flashes on mount at a
+  // width where it would immediately be disabled again.
+  const [atStart, setAtStart] = useState(true)
+  const [atEnd, setAtEnd] = useState(true)
+
+  useEffect(() => {
+    const el = scroller.current
+    if (!el) return undefined
+    function measure() {
+      // A pixel of slack at both ends: sub-pixel card widths leave scrollLeft
+      // a fraction short of scrollWidth - clientWidth, which would otherwise
+      // keep the right arrow lit with nowhere left to go.
+      setAtStart(el.scrollLeft <= 1)
+      setAtEnd(el.scrollLeft >= el.scrollWidth - el.clientWidth - 1)
+    }
+    measure()
+    el.addEventListener('scroll', measure, { passive: true })
+    // ResizeObserver on the row itself, NOT a window resize listener. Every
+    // card is sized in vw and the images load late, so the row's scrollWidth
+    // settles after mount without the window ever resizing — and a measure
+    // taken too early says "there is nothing to scroll" and leaves both
+    // arrows dead with no second chance. Watching the element covers viewport
+    // resizes too, since its width follows the viewport anyway.
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => {
+      el.removeEventListener('scroll', measure)
+      observer.disconnect()
+    }
+  }, [])
+
+  function page(direction) {
+    const el = scroller.current
+    if (!el) return
+    // One CARD, not one viewport: the wide cards are most of the screen on a
+    // phone and a viewport-sized jump would skip a photo entirely. Falls back
+    // to most of a screen only if the row is somehow empty.
+    const card = el.firstElementChild
+    const step = card ? card.getBoundingClientRect().width + 8 : el.clientWidth * 0.8
+    el.scrollBy({ left: direction * step, behavior: 'smooth' })
+  }
+
+  // Mouse only. Touch and pen already scroll this natively, and hijacking
+  // them would replace a good gesture with a worse imitation of it.
+  function startDrag(e) {
+    if (e.pointerType === 'touch') return
+    drag.current = { x: e.clientX, left: scroller.current.scrollLeft }
+  }
+  function moveDrag(e) {
+    if (!drag.current) return
+    scroller.current.scrollLeft = drag.current.left - (e.clientX - drag.current.x)
+  }
+  function endDrag() {
+    drag.current = null
+  }
+
+  const arrowCls =
+    'absolute top-1/2 -translate-y-1/2 z-10 hidden sm:grid place-items-center size-10 rounded-full bg-white/85 backdrop-blur border border-black/10 text-ink shadow-sm transition-opacity duration-300 hover:bg-white disabled:opacity-0 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4a3520]'
+
+  return (
+    <div className="relative">
+      <button type="button" onClick={() => page(-1)} disabled={atStart} aria-label={prevLabel}
+        className={`${arrowCls} left-2 sm:left-3 lg:left-5`}>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+          <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      <button type="button" onClick={() => page(1)} disabled={atEnd} aria-label={nextLabel}
+        className={`${arrowCls} right-2 sm:right-3 lg:right-5`}>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+          <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {/* No `scroll-smooth` class: it applies to direct scrollLeft writes too,
+          so the drag below would chase the pointer through an animation.
+          page() asks for smooth explicitly instead, where it is wanted. */}
+      <div
+        ref={scroller}
+        onPointerDown={startDrag}
+        onPointerMove={moveDrag}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onPointerLeave={endDrag}
+        className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory px-4 sm:px-6 lg:px-10 pb-1 sm:cursor-grab sm:active:cursor-grabbing"
+      >
+        {photos.map(({ src, alt, wide }) => (
+          <div key={src} className={`shrink-0 snap-start overflow-hidden rounded-xl ${wide ? 'w-[72vw] sm:w-[52vw] lg:w-[38vw]' : 'w-[52vw] sm:w-[36vw] lg:w-[26vw]'}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt={alt}
+              loading="lazy"
+              // Without this the browser's own image-drag starts on mousedown
+              // and the row never sees the move events.
+              draggable={false}
+              className="w-full h-[58vw] sm:h-[42vw] lg:h-[32vw] max-h-[480px] object-cover select-none [filter:saturate(0.68)_contrast(1.02)] hover:[filter:saturate(1)_contrast(1)] transition-[filter] duration-700"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function SectionHeader({ title, sub, moreLabel, moreHref }) {
   return (
     <div className="mb-6 sm:mb-8">
@@ -236,11 +366,18 @@ function SectionHeader({ title, sub, moreLabel, moreHref }) {
 // a "view all" link stranded above an empty grid.
 function MenuHighlights({ items, lang, href, title, sub, moreLabel, tone }) {
   if (!items || items.length === 0) return null
+  // The column count follows the number of dishes instead of being fixed at
+  // four. A category with only three photographed items used to leave a
+  // quarter of the row empty, which reads as a picture that failed to load
+  // rather than as a row that is simply three wide. Written as whole class
+  // strings so Tailwind still finds them in the source.
+  const columns =
+    items.length >= 4 ? 'sm:grid-cols-4' : items.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
   return (
     <ScrollStackPanel tone={tone}>
       <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 reveal border-t border-black/10">
         <SectionHeader title={title} sub={sub} moreLabel={moreLabel} moreHref={href} />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+        <div className={`grid grid-cols-2 ${columns} gap-4 sm:gap-6 lg:gap-8`}>
           {items.map((item) => (
             <Link
               key={item.id}
@@ -279,18 +416,29 @@ function MenuCard({ item, lang }) {
   const priceMax = item.priceMax ? `–฿${Number(item.priceMax).toLocaleString()}` : ''
   return (
     <div className="flex flex-col h-full group">
+      {/* The photo sits in a tinted, hairline-bordered tile rather than
+          straight on the page. Most menu shots are a dish cut out on pure
+          white, and on this page's off-white background that white had no
+          edge — the food floated in a void and the rounded corners were
+          invisible. The tile is what makes it read as a card.
+
+          Square, not 4/5: the same cut-out shots leave the subject small in a
+          tall frame, so the extra height was empty white that pushed the name
+          and price far below the food. */}
       {item.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={item.imageUrl}
-          alt={name}
-          loading="lazy"
-          srcSet={getSrcSet(item.imageUrl)}
-          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 25vw, 50vw"
-          className="w-full aspect-[4/5] object-cover rounded-2xl [filter:saturate(0.75)] group-hover:[filter:saturate(1)] transition-[filter] duration-500"
-        />
+        <div className="w-full aspect-square overflow-hidden rounded-2xl bg-[#f4efe8] border border-black/[0.06]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={item.imageUrl}
+            alt={name}
+            loading="lazy"
+            srcSet={getSrcSet(item.imageUrl)}
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 25vw, 50vw"
+            className="w-full h-full object-cover [filter:saturate(0.75)] group-hover:[filter:saturate(1)] group-hover:scale-[1.03] transition-[filter,transform] duration-500"
+          />
+        </div>
       ) : (
-        <div className="w-full aspect-[4/5] bg-[#e8e4de] flex items-center justify-center">
+        <div className="w-full aspect-square rounded-2xl bg-[#e8e4de] flex items-center justify-center">
           <span className="text-muted-strong text-xs tracking-widest uppercase">No image</span>
         </div>
       )}
@@ -427,6 +575,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
 
   const titleKey = lang === 'th' ? 'titleTh' : lang === 'zh' ? 'titleZh' : 'titleEn'
   const descKey  = lang === 'th' ? 'descriptionTh' : lang === 'zh' ? 'descriptionZh' : 'descriptionEn'
+  const categoryKey = lang === 'th' ? 'categoryTh' : lang === 'zh' ? 'categoryZh' : 'categoryEn'
   const perLabel = lang === 'th' ? 'คน' : lang === 'zh' ? '人' : 'person'
   const freeLabel = lang === 'th' ? 'ฟรี' : lang === 'zh' ? '免费' : 'Free'
 
@@ -435,19 +584,25 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
   // eventDate) — soonest first. Anything already over belongs on /events under
   // Past Events, not on the home page.
   const todayStr = new Date().toISOString().slice(0, 10)
-  const upcomingEvents = dbEvents
-    .filter((e) => e.isActive)
-    .filter((e) => {
-      const effectiveEnd = e.endDate || e.eventDate
-      return effectiveEnd ? effectiveEnd >= todayStr : false
-    })
-    .sort((a, b) => (a.endDate || a.eventDate).localeCompare(b.endDate || b.eventDate))
+  const activeEvents = dbEvents.filter((e) => e.isActive)
+  const endOf = (e) => e.endDate || e.eventDate || ''
+  const upcomingEvents = activeEvents
+    .filter((e) => endOf(e) >= todayStr && endOf(e) !== '')
+    .sort((a, b) => endOf(a).localeCompare(endOf(b)))
+  // Most recently finished first, so the row fills with what people are most
+  // likely to remember. An event with no date at all lands in NEITHER list —
+  // it is not upcoming and it is not over, and calling it either would be a
+  // guess printed on the page.
+  const finishedEvents = activeEvents
+    .filter((e) => endOf(e) !== '' && endOf(e) < todayStr)
+    .sort((a, b) => endOf(b).localeCompare(endOf(a)))
 
-  const eventsItems = upcomingEvents
-    .slice(0, 3)
-    .map((ev) => {
+  const toEventItem = (ev) => {
         const d = formatEventDate(ev.eventDate, lang)
-        const fullTitle = ev[titleKey] || ev.titleEn
+        // Thai is the last resort, not English: a shop that filled in only
+        // one language filled in Thai, and a blank card title is worse than a
+        // title the reader has to translate.
+        const fullTitle = ev[titleKey] || ev.titleEn || ev.titleTh
         const em = ev.titleEm || ''
         const titleMain = em && fullTitle.endsWith(em) ? fullTitle.slice(0, -em.length).trim() : fullTitle
         const dateStr = d.dateFull ? `${d.dateFull} ${d.year} · ${ev.timeRange}` : ev.timeRange
@@ -460,6 +615,9 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
           date: dateStr,
           // Short form for the poster cards, which have no room for the time range.
           dateShort: d.dateFull ? `${d.dateFull} ${d.year}` : '',
+          dateDay: d.day,
+          dateMonth: d.monthShort,
+          category: ev[categoryKey] || ev.categoryEn || ev.categoryTh || '',
           location: ev.location,
           fullTitle,
           desc: ev[descKey] || ev.descriptionEn,
@@ -467,11 +625,46 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
           img: ev.imageUrl || '',
           images: (ev.albumImages && ev.albumImages.length > 0) ? ev.albumImages : (ev.imageUrl ? [ev.imageUrl] : []),
         }
-      })
+  }
+
+  const eventsItems = upcomingEvents.slice(0, 3).map(toEventItem)
 
   // Nearest event leads at full width; any others follow as poster cards, so
   // every upcoming event stays visible instead of being hidden behind a slide.
   const [leadEvent, ...restEvents] = eventsItems
+  // A row of three, filled first with whatever upcoming events are left over
+  // and only then with events that already happened. Padding with the past is
+  // honest as long as it is SAID — each of those cards carries the label and
+  // the grey image — and the alternative here is a section that looks unused
+  // because the shop happens to have one thing coming up.
+  const posterEvents = [
+    ...restEvents,
+    ...finishedEvents
+      .slice(0, Math.max(0, 3 - restEvents.length))
+      .map((ev) => ({ ...toEventItem(ev), isPast: true })),
+  ]
+
+  // Built once and used by both branches below — the row is the same whether
+  // it is sitting under the lead event or under the "nothing coming up" note.
+  const posterGrid = posterEvents.length > 0 ? (
+    <div className="mt-4 grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      {posterEvents.map((ev) => (
+        <EventCard
+          key={ev.id}
+          href={`/events/${ev.id}`}
+          imageUrl={ev.img}
+          title={ev.fullTitle}
+          dateLabel={ev.dateShort}
+          dateDay={ev.dateDay}
+          dateMonth={ev.dateMonth}
+          category={ev.category}
+          location={ev.location}
+          pastLabel={ev.isPast ? t.eventsPastLabel : ''}
+          desaturate={Boolean(ev.isPast)}
+        />
+      ))}
+    </div>
+  ) : null
 
   return (
     <>
@@ -531,20 +724,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
             </div>
             <Link href="/gallery" className="text-[11px] tracking-[0.2em] uppercase text-muted-strong hover:text-ink transition-colors inline-flex items-center min-h-[24px] gap-1.5 shrink-0 rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4a3520]">{t.galleryMore} <span aria-hidden="true">→</span></Link>
           </div>
-          {/* Horizontal scroll strip — snap per card */}
-          <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth snap-x snap-mandatory -mx-0 px-4 sm:px-6 lg:px-10 pb-1">
-            {GALLERY_PHOTOS.map(({ src, alt, wide }) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <div key={src} className={`shrink-0 snap-start overflow-hidden rounded-xl ${wide ? 'w-[72vw] sm:w-[52vw] lg:w-[38vw]' : 'w-[52vw] sm:w-[36vw] lg:w-[26vw]'}`}>
-                <img
-                  src={src}
-                  alt={alt}
-                  loading="lazy"
-                  className="w-full h-[58vw] sm:h-[42vw] lg:h-[32vw] max-h-[480px] object-cover [filter:saturate(0.68)_contrast(1.02)] hover:[filter:saturate(1)_contrast(1)] transition-[filter] duration-700"
-                />
-              </div>
-            ))}
-          </div>
+          <GalleryStrip photos={GALLERY_PHOTOS} prevLabel={t.galleryPrev} nextLabel={t.galleryNext} />
         </section>
       </ScrollStackPanel>
 
@@ -592,18 +772,23 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
         <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 reveal border-t border-black/10">
           <SectionHeader title={t.eventsTitle} sub={t.eventsSub} moreLabel={t.eventsMore} moreHref="/events" />
           {eventsItems.length === 0 ? (
-            // The section always holds its place; when nothing is upcoming it
-            // says so rather than falling back to an event that already happened.
-            <div className="border border-black/10 rounded-xl px-6 py-10 sm:py-14 text-center">
-              <p className="font-display font-light text-ink text-[clamp(20px,2.6vw,28px)] leading-snug">{t.eventsEmpty}</p>
-              <p className="mt-2 text-[13px] text-muted-strong leading-relaxed max-w-[420px] mx-auto">{t.eventsEmptySub}</p>
-              <Link
-                href="/events"
-                className="mt-6 inline-flex items-center gap-2 min-h-[24px] text-[13px] tracking-[0.03em] text-gold-deep hover:text-ink transition-colors rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4a3520]"
-              >
-                {t.eventsMore} <span aria-hidden="true">→</span>
-              </Link>
-            </div>
+            // Nothing coming up SAYS nothing coming up first, in its own
+            // panel, and only then shows what has already happened underneath
+            // it. Those cards are labelled and grey; the note above them is
+            // what stops the section reading as a list of things to attend.
+            <>
+              <div className="border border-black/10 rounded-xl px-6 py-10 sm:py-14 text-center">
+                <p className="font-display font-light text-ink text-[clamp(20px,2.6vw,28px)] leading-snug">{t.eventsEmpty}</p>
+                <p className="mt-2 text-[13px] text-muted-strong leading-relaxed max-w-[420px] mx-auto">{t.eventsEmptySub}</p>
+                <Link
+                  href="/events"
+                  className="mt-6 inline-flex items-center gap-2 min-h-[24px] text-[13px] tracking-[0.03em] text-gold-deep hover:text-ink transition-colors rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4a3520]"
+                >
+                  {t.eventsMore} <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+              {posterGrid}
+            </>
           ) : (
           <>
             {/* Lead: the nearest event, full width */}
@@ -653,22 +838,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
               </div>
             </div>
 
-            {/* Any further upcoming events, as poster cards — same component the
-                /events grid uses, so the two pages stay visually consistent. */}
-            {restEvents.length > 0 && (
-              <div className="mt-4 grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {restEvents.map((ev) => (
-                  <EventCard
-                    key={ev.id}
-                    href={`/events/${ev.id}`}
-                    imageUrl={ev.img}
-                    title={ev.fullTitle}
-                    dateLabel={ev.dateShort}
-                    location={ev.location}
-                  />
-                ))}
-              </div>
-            )}
+            {posterGrid}
           </>
           )}
         </section>
@@ -852,13 +1022,34 @@ export async function getServerSideProps() {
 
   const catMap = Object.fromEntries(cats.map((c) => [c.slug, c.id]))
 
-  const drinkIds = ['coffee', 'matcha', 'non-coffee'].map((s) => catMap[s]).filter(Boolean)
-  const foodIds  = ['chicken-rice', 'breakfast'].map((s) => catMap[s]).filter(Boolean)
-  const sweetIds = ['sweets'].map((s) => catMap[s]).filter(Boolean)
+  // Slugs drift whenever the shop renames a category in /admin, and a slug
+  // that no longer exists fails SILENTLY here: catMap[s] is undefined,
+  // filter(Boolean) drops it, pick() returns [], and MenuHighlights renders
+  // null — the section vanishes from the home page with nothing logged and
+  // nothing on screen to say it went. That had already happened to two of the
+  // three: 'coffee' is now 'coffee-drinks' (52 drinks, none of them shown)
+  // and 'sweets' is now 'cake-bakery' + 'icecream' (21 items, none shown),
+  // while food was quietly down to the three breakfast dishes because
+  // 'chicken-rice' had become 'chicken-rice-1'.
+  //
+  // Every known spelling is listed, old ones included: they cost one lookup
+  // that resolves to undefined, and they are what makes a rename survivable.
+  const drinkIds = ['coffee-drinks', 'coffee', 'matcha', 'non-coffee'].map((s) => catMap[s]).filter(Boolean)
+  const foodIds  = ['chicken-rice-1', 'chicken-rice', 'breakfast'].map((s) => catMap[s]).filter(Boolean)
+  const sweetIds = ['cake-bakery', 'icecream', 'sweets'].map((s) => catMap[s]).filter(Boolean)
 
   const withImg = allItems.filter((i) => i.imageUrl)
+  // Anything the shop flagged as featured comes first, then plain sortOrder —
+  // sort() is stable, so within each group the admin's own ordering survives.
+  // Nothing is flagged today, so this returns the list it already returned;
+  // what it buys is a way to CHOOSE the four. Without it a section headed
+  // "แนะนำ" simply shows whatever sorts first, which for drinks was four
+  // americano and espresso variants, hot and iced, in a row.
   const pick = (ids, limit) =>
-    withImg.filter((i) => ids.includes(i.categoryId)).slice(0, limit)
+    withImg
+      .filter((i) => ids.includes(i.categoryId))
+      .sort((a, b) => Number(Boolean(b.isFeatured)) - Number(Boolean(a.isFeatured)))
+      .slice(0, limit)
 
   const ser = (items) =>
     items.map((i) => ({

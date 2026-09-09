@@ -103,7 +103,7 @@ const EVENTS_COPY = {
 }
 
 function formatEventDate(dateStr, lang) {
-  if (!dateStr) return { day: '', month: '', dateFull: '', year: '', weekday: '' }
+  if (!dateStr) return { day: '', month: '', monthShort: '', dateFull: '', year: '', weekday: '' }
   const d = new Date(dateStr + 'T00:00:00')
   const day = d.getDate()
   const year = d.getFullYear()
@@ -113,15 +113,15 @@ function formatEventDate(dateStr, lang) {
   if (lang === 'th') {
     const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
     const m = months[d.getMonth()]
-    return { day: String(day), month: `${m} ${year}`, dateFull: `${weekdayTh} ${day} ${m}`, year: String(year) }
+    return { day: String(day), month: `${m} ${year}`, monthShort: m, dateFull: `${weekdayTh} ${day} ${m}`, year: String(year) }
   }
   if (lang === 'zh') {
     const m = d.getMonth() + 1
-    return { day: String(day), month: `${year}年${m}月`, dateFull: `${m}月${day}日 ${weekdayZh}`, year: String(year) }
+    return { day: String(day), month: `${year}年${m}月`, monthShort: `${m}月`, dateFull: `${m}月${day}日 ${weekdayZh}`, year: String(year) }
   }
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   const m = months[d.getMonth()]
-  return { day: String(day), month: `${m} ${year}`, dateFull: `${weekdayEn} ${day} ${m}`, year: String(year) }
+  return { day: String(day), month: `${m} ${year}`, monthShort: m, dateFull: `${weekdayEn} ${day} ${m}`, year: String(year) }
 }
 
 export default function Events({ dbEvents = [] }) {
@@ -131,6 +131,7 @@ export default function Events({ dbEvents = [] }) {
   const activeEvents = dbEvents.filter((e) => e.isActive)
 
   const titleKey = lang === 'th' ? 'titleTh' : lang === 'zh' ? 'titleZh' : 'titleEn'
+  const categoryKey = lang === 'th' ? 'categoryTh' : lang === 'zh' ? 'categoryZh' : 'categoryEn'
 
   // Upcoming vs Past is always derived from the date (never a manual admin
   // toggle) — effective end = endDate if set, else the single eventDate.
@@ -142,10 +143,15 @@ export default function Events({ dbEvents = [] }) {
     const effectiveEnd = e.endDate || e.eventDate
     return {
       id: e.id,
-      title: e[titleKey] || e.titleEn,
+      // Thai is the last resort, not English — see the same fallback in
+      // pages/index.js. An event entered in Thai only must still show a title.
+      title: e[titleKey] || e.titleEn || e.titleTh,
       imageUrl: e.imageUrl,
       location: e.location,
       dateLabel: d.dateFull ? `${d.dateFull} ${d.year}` : '',
+      dateDay: d.day,
+      dateMonth: d.monthShort,
+      category: e[categoryKey] || e.categoryEn || e.categoryTh || '',
       isPast: effectiveEnd ? effectiveEnd < todayStr : false,
       sortKey: effectiveEnd || '',
     }
@@ -177,7 +183,7 @@ export default function Events({ dbEvents = [] }) {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
             {upcomingEvents.map((ev) => (
-              <EventCard key={ev.id} href={`/events/${ev.id}`} imageUrl={ev.imageUrl} title={ev.title} dateLabel={ev.dateLabel} location={ev.location} />
+              <EventCard key={ev.id} href={`/events/${ev.id}`} imageUrl={ev.imageUrl} title={ev.title} dateLabel={ev.dateLabel} dateDay={ev.dateDay} dateMonth={ev.dateMonth} category={ev.category} location={ev.location} />
             ))}
           </div>
         </section>
@@ -194,7 +200,7 @@ export default function Events({ dbEvents = [] }) {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
             {pastEvents.map((ev) => (
-              <EventCard key={ev.id} href={`/events/${ev.id}`} imageUrl={ev.imageUrl} title={ev.title} dateLabel={ev.dateLabel} location={ev.location} desaturate />
+              <EventCard key={ev.id} href={`/events/${ev.id}`} imageUrl={ev.imageUrl} title={ev.title} dateLabel={ev.dateLabel} dateDay={ev.dateDay} dateMonth={ev.dateMonth} category={ev.category} location={ev.location} desaturate />
             ))}
           </div>
         </section>
