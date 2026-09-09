@@ -81,8 +81,7 @@ const COPY = {
     eventsTitle: 'อีเวนต์ที่กำลังจะมาถึง',
     eventsSub: 'กิจกรรมพิเศษประจำเดือน',
     eventsMore: 'ดูอีเวนต์ทั้งหมด',
-    eventsEmpty: 'ยังไม่มีอีเวนต์ที่กำลังจะมาถึง',
-    eventsEmptySub: 'อีเวนต์รอบใหม่จะขึ้นที่นี่ทันทีที่ประกาศ — ระหว่างนี้ดูอีเวนต์ที่ผ่านมาได้',
+    eventsPastTitle: 'อีเวนต์ที่ผ่านมา',
     eventsPastLabel: 'ผ่านมาแล้ว',
     rewardsEyebrow: 'LOVE PIER REWARDS',
     rewardsTitle: 'อิ่มอร่อยทุกครั้ง ได้แต้มกลับไปทุกมื้อ',
@@ -137,8 +136,7 @@ const COPY = {
     eventsTitle: 'Upcoming Events',
     eventsSub: 'Special monthly activities',
     eventsMore: 'View all events',
-    eventsEmpty: 'No upcoming events yet',
-    eventsEmptySub: 'The next one appears here as soon as it is announced — meanwhile, browse past events.',
+    eventsPastTitle: 'Past events',
     eventsPastLabel: 'Past event',
     rewardsEyebrow: 'LOVE PIER REWARDS',
     rewardsTitle: 'Every visit tastes better with rewards',
@@ -193,8 +191,7 @@ const COPY = {
     eventsTitle: '即将到来的活动',
     eventsSub: '每月特别活动',
     eventsMore: '查看全部活动',
-    eventsEmpty: '暂无即将到来的活动',
-    eventsEmptySub: '新活动一经公布就会显示在这里 — 期间可查看过往活动。',
+    eventsPastTitle: '往期活动',
     eventsPastLabel: '已结束',
     rewardsEyebrow: 'LOVE PIER REWARDS',
     rewardsTitle: '每次消费，都有积分回馈',
@@ -768,27 +765,29 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
       </ScrollStackPanel>
 
       {/* ── 8. EVENTS ───────────────────────────────────────────────────── */}
+      {/* The section is not rendered at all when there is nothing to put in
+          it. It used to hold its place with a "ยังไม่มีอีเวนต์ที่กำลังจะมาถึง"
+          panel, on the reasoning that a section which vanishes looks broken —
+          but the shop saw the result on the live page and the panel read as a
+          gap the site had failed to fill, not as an answer. Saying nothing is
+          the better way to say nothing.
+
+          With upcoming events gone but finished ones on file, the heading
+          switches to "อีเวนต์ที่ผ่านมา" rather than the section disappearing:
+          the cards are worth showing, and leaving them under a heading that
+          promises what is COMING would be the one genuinely misleading
+          arrangement of the three. */}
+      {(eventsItems.length > 0 || posterEvents.length > 0) && (
       <ScrollStackPanel>
         <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16 reveal border-t border-black/10">
-          <SectionHeader title={t.eventsTitle} sub={t.eventsSub} moreLabel={t.eventsMore} moreHref="/events" />
+          <SectionHeader
+            title={eventsItems.length === 0 ? t.eventsPastTitle : t.eventsTitle}
+            sub={t.eventsSub}
+            moreLabel={t.eventsMore}
+            moreHref="/events"
+          />
           {eventsItems.length === 0 ? (
-            // Nothing coming up SAYS nothing coming up first, in its own
-            // panel, and only then shows what has already happened underneath
-            // it. Those cards are labelled and grey; the note above them is
-            // what stops the section reading as a list of things to attend.
-            <>
-              <div className="border border-black/10 rounded-xl px-6 py-10 sm:py-14 text-center">
-                <p className="font-display font-light text-ink text-[clamp(20px,2.6vw,28px)] leading-snug">{t.eventsEmpty}</p>
-                <p className="mt-2 text-[13px] text-muted-strong leading-relaxed max-w-[420px] mx-auto">{t.eventsEmptySub}</p>
-                <Link
-                  href="/events"
-                  className="mt-6 inline-flex items-center gap-2 min-h-[24px] text-[13px] tracking-[0.03em] text-gold-deep hover:text-ink transition-colors rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4a3520]"
-                >
-                  {t.eventsMore} <span aria-hidden="true">→</span>
-                </Link>
-              </div>
-              {posterGrid}
-            </>
+            posterGrid
           ) : (
           <>
             {/* Lead: the nearest event, full width */}
@@ -843,6 +842,7 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
           )}
         </section>
       </ScrollStackPanel>
+      )}
 
       {/* ── 9. MAP + FOOTER ─────────────────────────────────────────────── */}
       <ScrollStackPanel>
