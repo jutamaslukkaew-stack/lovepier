@@ -581,7 +581,16 @@ export default function Home({ featuredDrinks, featuredFood, featuredSweets, dbE
   // eventDate) — soonest first. Anything already over belongs on /events under
   // Past Events, not on the home page.
   const todayStr = new Date().toISOString().slice(0, 10)
-  const activeEvents = dbEvents.filter((e) => e.isActive)
+  // A photo is required HERE and only here. The home page is the shop window:
+  // every card on it is a picture with a caption, and an event with no image
+  // renders as a beige rectangle with the title floating in it — worse for
+  // the event than being left out. /events still lists everything, because
+  // that page is the record and a missing photo is no reason to hide a real
+  // event from it. Same split the menu sections already use (`withImg`).
+  //
+  // The practical consequence, worth knowing before wondering where an event
+  // went: uploading the image in /admin is what puts it on the front page.
+  const activeEvents = dbEvents.filter((e) => e.isActive && e.imageUrl)
   const endOf = (e) => e.endDate || e.eventDate || ''
   const upcomingEvents = activeEvents
     .filter((e) => endOf(e) >= todayStr && endOf(e) !== '')
