@@ -4,6 +4,7 @@ import {
   availableDates,
   bangkokDateParts,
   bangkokSlotToInstant,
+  customTimeOptions,
   formatDayThai,
   formatSlotThai,
   parseClosedDays,
@@ -108,14 +109,16 @@ describe('weekdayOfYmd / addDaysYmd', () => {
 describe('slotsForDate', () => {
   const now = new Date('2026-08-19T00:00:00Z') // well before any of these days
 
-  it('offers whole hours from opening, and stops an hour before closing', () => {
+  it('offers whole hours from opening through closing time', () => {
     const slots = slotsForDate(THU, { ...HOURS, now })
     expect(slots).toEqual([
-      '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
+      '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00',
     ])
-    // 18:00 would promise a handover at the moment staff are shutting down.
-    expect(slots).toHaveLength(9)
-    expect(slots.at(-1)).toBe('17:00')
+    // Closing time is collectable (2026-09-09). It used to stop at 17:00 to
+    // leave a whole slot before the door shut; a shop that wants that back
+    // sets a pickup window or shop_last_order_minutes, both of which say so.
+    expect(slots).toHaveLength(10)
+    expect(slots.at(-1)).toBe('18:00')
   })
 
   it('returns nothing on a closed day', () => {
@@ -124,7 +127,7 @@ describe('slotsForDate', () => {
   })
 
   it('opens every day when closedDays is empty', () => {
-    expect(slotsForDate(WED, { ...HOURS, closedDays: [], now })).toHaveLength(9)
+    expect(slotsForDate(WED, { ...HOURS, closedDays: [], now })).toHaveLength(10)
   })
 
   it('drops slots inside the lead time', () => {
@@ -143,7 +146,9 @@ describe('slotsForDate', () => {
   })
 
   it('never throws on degenerate opening hours', () => {
-    expect(slotsForDate(THU, { ...HOURS, closeTime: '09:30', now })).toEqual([])
+    // Opening at 09:00 and closing at 09:30 leaves exactly one collectable
+    // moment on an hourly grid, and 09:00 is it.
+    expect(slotsForDate(THU, { ...HOURS, closeTime: '09:30', now })).toEqual(['09:00'])
     expect(slotsForDate(THU, { ...HOURS, openTime: '18:00', closeTime: '09:00', now })).toEqual([])
     expect(slotsForDate(THU, { ...HOURS, openTime: 'nonsense', now })[0]).toBe('09:00')
     expect(slotsForDate('nope', { ...HOURS, now })).toEqual([])
@@ -225,10 +230,12 @@ describe('validateScheduleRequest', () => {
     expect(code(WED, '14:00')).toBe('CLOSED_DAY')
   })
 
-  it('rejects times outside opening hours, including the closing hour itself', () => {
+  it('rejects times outside opening hours, but accepts the closing hour', () => {
     expect(code(FRI, '08:00')).toBe('OUTSIDE_HOURS')
-    expect(code(FRI, '18:00')).toBe('OUTSIDE_HOURS')
     expect(code(FRI, '23:00')).toBe('OUTSIDE_HOURS')
+    // The picker offers 18:00, so the server has to accept it. These two read
+    // the same bounds for exactly this reason.
+    expect(validateScheduleRequest({ scheduledDate: FRI, scheduledSlot: '18:00' }, opts).ok).toBe(true)
   })
 
   it('rejects a time in the past or inside the lead time', () => {
@@ -248,14 +255,12 @@ describe('validateScheduleRequest', () => {
   it('carries the configured numbers into its messages', () => {
     expect(validateScheduleRequest({ scheduledDate: WED, scheduledSlot: '14:00' }, opts).error)
       .toContain('ร้านปิด')
-    // The BOOKABLE window, not raw trading hours: 09:00-18:00 at hourly slots
-    // has only ever offered 09:00…17:00, so the old '09:00–18:00' wording
-    // named a time the picker never had. Now that a shop can narrow the
-    // window per dish, the message has to name what it actually resolved to
-    // or a customer refused at 09:20 is told to try a time that is also
-    // refused.
+    // The RESOLVED window, not raw trading hours. They coincide here, but a
+    // shop can narrow the window per dish, and then the message has to name
+    // what it actually resolved to — or a customer refused at 09:20 is told to
+    // try a time that is also refused.
     expect(validateScheduleRequest({ scheduledDate: FRI, scheduledSlot: '08:00' }, opts).error)
-      .toContain('09:00–17:00')
+      .toContain('09:00–18:00')
     expect(validateScheduleRequest({ scheduledDate: addDaysYmd(THU, 8), scheduledSlot: '14:00' }, opts).error)
       .toContain('7 วัน')
   })
@@ -266,11 +271,11 @@ describe('slotsForDate — slot interval', () => {
 
   it('halves the grid at 30 minutes without moving either end', () => {
     const slots = slotsForDate(FRI, { ...HOURS, now, slotMinutes: 30 })
-    expect(slots).toHaveLength(18)
+    expect(slots).toHaveLength(19)
     expect(slots[0]).toBe('09:00')
-    // 17:30 and not 18:00: the closing allowance is one SLOT, so a finer
-    // interval legitimately buys a later last handover.
-    expect(slots.at(-1)).toBe('17:30')
+    // Both ends are the shop's own hours whatever the interval — the interval
+    // is spacing and nothing else. It used to shorten the day by one slot.
+    expect(slots.at(-1)).toBe('18:00')
   })
 
   it('falls back to hourly on a missing or unusable interval', () => {
@@ -280,11 +285,12 @@ describe('slotsForDate — slot interval', () => {
     expect(slotsForDate(FRI, { ...HOURS, now, slotMinutes: null })).toEqual(hourly)
   })
 
-  it('lets a finer interval rescue a day too short for an hourly slot', () => {
-    // The one place the interval legitimately CHANGES an existing answer:
-    // 09:00-09:30 fits no whole hour, so hourly yields nothing at all.
-    expect(slotsForDate(FRI, { ...HOURS, now, closeTime: '09:30' })).toEqual([])
-    expect(slotsForDate(FRI, { ...HOURS, now, closeTime: '09:30', slotMinutes: 30 })).toEqual(['09:00'])
+  it('fills a short day with more offers, not with a later last one', () => {
+    // 09:00-09:30 is one hourly offer and two half-hourly ones. The extra
+    // offer is 09:30, INSIDE the day — the interval never moves the end.
+    expect(slotsForDate(FRI, { ...HOURS, now, closeTime: '09:30' })).toEqual(['09:00'])
+    expect(slotsForDate(FRI, { ...HOURS, now, closeTime: '09:30', slotMinutes: 30 }))
+      .toEqual(['09:00', '09:30'])
   })
 })
 
@@ -319,13 +325,13 @@ describe('slotsForDate — pickup window', () => {
 describe('resolvePickupWindow', () => {
   const SHOP = { shopOpen: '09:00', shopClose: '18:00' }
 
-  it('falls back to the bookable trading window when nothing is configured', () => {
-    expect(resolvePickupWindow(SHOP)).toMatchObject({ ok: true, startTime: '09:00', endTime: '17:00' })
+  it('falls back to the whole trading day when nothing is configured', () => {
+    expect(resolvePickupWindow(SHOP)).toMatchObject({ ok: true, startTime: '09:00', endTime: '18:00' })
   })
 
-  it('honours the interval when computing the closing allowance', () => {
+  it('reports the same end whatever the interval', () => {
     expect(resolvePickupWindow({ ...SHOP, slotMinutes: 30 }))
-      .toMatchObject({ ok: true, startTime: '09:00', endTime: '17:30' })
+      .toMatchObject({ ok: true, startTime: '09:00', endTime: '18:00' })
   })
 
   it('clamps the shop-wide pre-order window to trading hours', () => {
@@ -418,6 +424,54 @@ describe('validateScheduleRequest — custom times', () => {
     const custom = { ...opts, allowCustomTime: true, windowStart: '06:00', windowEnd: '08:00' }
     expect(validateScheduleRequest({ scheduledDate: FRI, scheduledSlot: '07:20' }, custom).code)
       .toBe('OUTSIDE_HOURS')
+  })
+})
+
+describe('customTimeOptions', () => {
+  const NOW = new Date('2026-08-20T01:00:00Z') // 08:00 in Bangkok
+  const opts = { ...HOURS, leadMinutes: 60, now: NOW }
+
+  it('offers five-minute steps between the same bounds as the grid', () => {
+    const times = customTimeOptions(FRI, opts)
+    expect(times[0]).toBe('09:00')
+    expect(times[1]).toBe('09:05')
+    // The LAST value is the grid's last slot, not close - 5. This is the whole
+    // reason the function exists rather than slotsForDate({ slotMinutes: 5 }).
+    expect(times.at(-1)).toBe(slotsForDate(FRI, opts).at(-1))
+    expect(times.at(-1)).toBe('18:00')
+  })
+
+  it('keeps an explicit pickup window inclusive, as the grid does', () => {
+    const windowed = { ...opts, windowStart: '10:00', windowEnd: '14:00', slotMinutes: 30 }
+    const times = customTimeOptions(FRI, windowed)
+    expect(times[0]).toBe('10:00')
+    expect(times.at(-1)).toBe('14:00')
+  })
+
+  it('applies the lead time and the closed days', () => {
+    // 08:00 + 60 minutes, so today starts at 09:00 anyway; push the lead out
+    // and the early part of the day has to disappear.
+    expect(customTimeOptions(THU, { ...opts, leadMinutes: 3 * 60 })[0]).toBe('11:00')
+    expect(customTimeOptions(WED, opts)).toEqual([])
+  })
+
+  it('offers nothing on a day the grid has nothing left on', () => {
+    // The two must agree: a day the date <select> refuses to list must not be
+    // reachable by choosing an hour and a minute either.
+    const late = { ...opts, now: new Date('2026-08-20T11:00:00Z') } // 18:00 Bangkok
+    expect(slotsForDate(THU, late)).toEqual([])
+    expect(customTimeOptions(THU, late)).toEqual([])
+  })
+
+  it('only returns times validateScheduleRequest will accept', () => {
+    const windowed = { ...opts, windowStart: '10:00', windowEnd: '14:00', slotMinutes: 30, maxDaysAhead: 7 }
+    for (const hhmm of customTimeOptions(FRI, windowed)) {
+      const res = validateScheduleRequest(
+        { scheduledDate: FRI, scheduledSlot: hhmm },
+        { ...windowed, allowCustomTime: true }
+      )
+      expect(res.ok, `${hhmm} -> ${res.code}`).toBe(true)
+    }
   })
 })
 

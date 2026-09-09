@@ -121,9 +121,17 @@ export const SETTING_KEYS = {
   // How far apart the offered slots are. 60 is the code default so an
   // un-migrated shop is untouched; migration 0018 writes '30'.
   preorderSlotMinutes: 'preorder_slot_minutes',
-  // Lets the customer type an exact time instead of picking off the grid. Off
-  // by default, and it relaxes ONLY the grid check — the window, the lead time
-  // and the closed days all still apply. See validateScheduleRequest.
+  // Lets the customer type an exact time instead of picking off the grid. It
+  // relaxes ONLY the grid check — the window, the lead time and the closed days
+  // all still apply. See validateScheduleRequest.
+  //
+  // ON when unset, unlike every other switch in this file. Those ship inert
+  // because turning them on changes what the shop charges or promises; this one
+  // only lets a customer say "I'm coming at 14:20" inside hours the shop has
+  // already agreed to, and the shop asked for that to be the normal case.
+  // Read it with `!== 'false'` in BOTH places that read it — here and
+  // app/admin/actions/settings.ts — or the settings page will show a switch
+  // that contradicts the picker the customer is actually looking at.
   preorderCustomTimeEnabled: 'preorder_custom_time_enabled',
 }
 
@@ -224,6 +232,9 @@ export async function getShopSettings() {
     preorderSlotMinutes: m[SETTING_KEYS.preorderSlotMinutes]
       ? num(m[SETTING_KEYS.preorderSlotMinutes])
       : 60,
-    preorderCustomTimeEnabled: m[SETTING_KEYS.preorderCustomTimeEnabled] === 'true',
+    // `!== 'false'`, not the `=== 'true'` the switches above use: unset means
+    // on. Only the literal 'false', written by the settings page when staff
+    // turn the switch off, takes the typed-time field away from customers.
+    preorderCustomTimeEnabled: m[SETTING_KEYS.preorderCustomTimeEnabled] !== 'false',
   }
 }
