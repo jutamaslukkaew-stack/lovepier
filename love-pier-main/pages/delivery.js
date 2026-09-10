@@ -6,7 +6,7 @@ import OrderFlow from '../components/delivery/OrderFlow'
 import OrderStatus from '../components/delivery/OrderStatus'
 import { useChrome } from '../lib/chrome'
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { cacheLiffProfile, initLiff, LIFF_RETURN_TO_KEY } from '../lib/liff'
 import { getMenuPageData } from '../lib/db/menuPageData'
 import { getShopSettings } from '../lib/settings'
@@ -17,6 +17,34 @@ import { shopOpenState } from '../lib/preorder'
 function safePath(value) {
   const path = Array.isArray(value) ? value[0] : value
   return typeof path === 'string' && path.startsWith('/') && !path.startsWith('//') ? path : ''
+}
+
+// Where the customer was heading before LINE login interrupted them, as the
+// holding screen below needs it. The query parameter does NOT survive the
+// LINE round trip — login returns to the LIFF app's registered endpoint URL,
+// carrying none of our own parameters — so after the trip that path exists
+// only in sessionStorage, which is exactly when the customer has been waiting
+// longest and most needs a way out. Read through useSyncExternalStore so it
+// is part of the first client render, without the hydration mismatch reading
+// storage during render would cause (the server has no sessionStorage; its
+// snapshot is ''). Memoised because a snapshot has to be referentially
+// stable, and because nothing else changes it while this screen is up.
+let _storedReturnTo
+function storedReturnToSnapshot() {
+  if (_storedReturnTo === undefined) {
+    try {
+      _storedReturnTo = window.sessionStorage.getItem(LIFF_RETURN_TO_KEY) || ''
+    } catch {
+      _storedReturnTo = ''
+    }
+  }
+  return _storedReturnTo
+}
+function noStoredReturnTo() {
+  return ''
+}
+function subscribeToNothing() {
+  return () => {}
 }
 
 const PAGE_COPY = {
@@ -37,9 +65,13 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
   // Start guarded so an OAuth callback can never flash the delivery wizard
   // before the client has checked sessionStorage for its intended route.
   const [checkingLiffReturn, setCheckingLiffReturn] = useState(true)
-  // Where the customer was going before LINE login interrupted them; the
-  // holding screen offers it as a link the moment it gives up waiting.
-  const bridgeTarget = safePath(router.query.__liff_return_to)
+  // Query first, storage second: the parameter is present on the way IN to
+  // the bridge and gone on the way BACK from LINE, and the link has to work
+  // in both directions. Until 2026-09-07 this read the query alone, so the
+  // screen a customer saw after the LINE round trip — the slow half — was the
+  // one with no way off it.
+  const storedReturnTo = useSyncExternalStore(subscribeToNothing, storedReturnToSnapshot, noStoredReturnTo)
+  const bridgeTarget = safePath(router.query.__liff_return_to) || safePath(storedReturnTo)
   // ?order=<orderNo> turns this page into the order tracker. It shares the
   // delivery LIFF app's Endpoint URL, so the tracker inits LIFF and reuses the
   // cached profile in place — it never bridges, so it also never shows the
