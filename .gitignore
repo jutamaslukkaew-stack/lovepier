@@ -10,3 +10,6 @@ lovepier-data-export/
 
 # Internal handoff docs + real menu source data — never commit
 lovep/
+
+# Supabase storage backups (contain customer payment slips) — never commit
+supabase-backup-*/
