@@ -22,7 +22,7 @@ import { orders } from './db/schema'
 import { getShopSettings } from './settings'
 import { verifySlip } from './slipok'
 import { createAdminClient } from './supabase/admin'
-import { awardPoints } from './pointsAward'
+import { awardPoints, restorePointsOnUncancel } from './pointsAward'
 
 const SLIP_BUCKET = 'slips'
 
@@ -186,6 +186,17 @@ export async function processSlipForOrder(order, imageBase64) {
       duplicate: true,
       error: customerSlipMessage(null, { duplicate: true }),
       rawError: 'mark-paid failed (slip_ref already banked)',
+    }
+  }
+
+  // Paying for an order staff had cancelled un-cancels it, so the points the
+  // cancel handed back are spent again — otherwise the customer keeps both
+  // the refund and the discount those points already bought on this order.
+  if (order.status === 'cancelled') {
+    try {
+      await restorePointsOnUncancel(order.id)
+    } catch (err) {
+      console.error('POINTS_SETTLE_FAILED — paid a cancelled order but points were not restored:', order.orderNo, err)
     }
   }
 

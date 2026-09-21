@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calcInStoreVisit, calcOrderDiscountAndPoints } from './points'
+import { calcInStoreVisit, calcOrderDiscountAndPoints, planCancelSettlement, planUncancelSettlement } from './points'
 
 describe('calcOrderDiscountAndPoints', () => {
   it('does not award or redeem points without a LINE account', () => {
@@ -164,5 +164,54 @@ describe('calcInStoreVisit', () => {
   it('treats an invalid or negative amount as zero', () => {
     expect(calcInStoreVisit(null, DEFAULTS).netAmount).toBe(0)
     expect(calcInStoreVisit(-500, DEFAULTS).netAmount).toBe(0)
+  })
+})
+
+describe('planCancelSettlement', () => {
+  it('gives back every point spent on an unpaid order', () => {
+    expect(planCancelSettlement({ redeemed: 19, balance: 43 })).toEqual({ refund: 19, reversal: 0 })
+  })
+
+  it('takes back the points a paid order earned, alongside the refund', () => {
+    expect(planCancelSettlement({ redeemed: 15, earned: 7, balance: 7 })).toEqual({ refund: 15, reversal: 7 })
+  })
+
+  it('never takes the balance below zero when earned points were already spent', () => {
+    expect(planCancelSettlement({ earned: 29, balance: 5 })).toEqual({ refund: 0, reversal: 5 })
+  })
+
+  it('counts the refund it is about to give when capping the reversal', () => {
+    expect(planCancelSettlement({ redeemed: 10, earned: 8, balance: 0 })).toEqual({ refund: 10, reversal: 8 })
+  })
+
+  it('does nothing on a second cancel of the same order', () => {
+    expect(planCancelSettlement({ redeemed: 19, earned: 8, refunded: 19, reversed: 8, balance: 50 })).toEqual({ refund: 0, reversal: 0 })
+  })
+
+  it('only tops up a refund that an undone cancel left partly with the customer', () => {
+    expect(planCancelSettlement({ redeemed: 19, refunded: 4, balance: 0 })).toEqual({ refund: 15, reversal: 0 })
+  })
+
+  it('does nothing for an order that never touched points', () => {
+    expect(planCancelSettlement({ balance: 12 })).toEqual({ refund: 0, reversal: 0 })
+  })
+})
+
+describe('planUncancelSettlement', () => {
+  it('re-spends the refund and returns the reversed earn', () => {
+    expect(planUncancelSettlement({ refunded: 15, reversed: 7, balance: 30 })).toEqual({ delta: -8, keptRefund: 0 })
+  })
+
+  it('lets the customer keep refunded points they have already spent', () => {
+    expect(planUncancelSettlement({ refunded: 19, balance: 4 })).toEqual({ delta: -4, keptRefund: 15 })
+  })
+
+  it('cancel then un-cancel leaves the balance where it started', () => {
+    const start = 7
+    const c = planCancelSettlement({ redeemed: 15, earned: 7, balance: start })
+    const afterCancel = start + c.refund - c.reversal
+    const u = planUncancelSettlement({ refunded: c.refund, reversed: c.reversal, balance: afterCancel })
+    expect(afterCancel + u.delta).toBe(start)
+    expect(u.keptRefund).toBe(0)
   })
 })

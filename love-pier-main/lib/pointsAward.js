@@ -3,9 +3,10 @@
 // (drizzle/postgres), which must never end up in the client bundle — see the
 // note at the top of lib/points.js. Only import this from server code
 // (API routes, lib/slipVerification.js), never from components/.
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { db } from './db'
 import { customers, pointTransactions } from './db/schema'
+import { planCancelSettlement, planUncancelSettlement } from './points'
 
 /**
  * Credits `points` to the customer matching `lineUserId` (falling back to
@@ -102,4 +103,109 @@ async function resolveCustomer({ lineUserId, phone }) {
     if (created) return created
   }
   return null
+}
+
+/**
+ * Settles the points of an order that has just been cancelled: gives back the
+ * points spent on it and takes back the points it earned (never below zero).
+ * The arithmetic, and why, is planCancelSettlement in lib/points.js.
+ *
+ * Recorded as `refund` / `earn_reversal` ledger rows so points_balance stays
+ * equal to the sum of the ledger. Runs in one transaction with the customer
+ * row locked, so two cancels racing each other (admin dropdown + LINE button)
+ * settle once.
+ *
+ * @returns {Promise<{ refund: number, reversal: number }>}
+ */
+export async function settlePointsOnCancel(orderId) {
+  return db.transaction(async (tx) => {
+    const ledger = await orderLedger(tx, orderId)
+    const customer = await lockCustomer(tx, ledger)
+    if (!customer) return { refund: 0, reversal: 0 }
+
+    const { refund, reversal } = planCancelSettlement({
+      redeemed: -(ledger.redeem?.points ?? 0),
+      earned: ledger.earn?.points ?? 0,
+      refunded: ledger.refund?.points ?? 0,
+      reversed: -(ledger.earn_reversal?.points ?? 0),
+      balance: customer.pointsBalance,
+    })
+    if (!refund && !reversal) return { refund, reversal }
+
+    if (refund) {
+      // A partial refund row can survive an undone cancel (see
+      // restorePointsOnUncancel), so top it up rather than insert blindly.
+      await tx
+        .insert(pointTransactions)
+        .values({ orderId, customerId: customer.id, phone: customer.phone || '', points: refund, type: 'refund' })
+        .onConflictDoUpdate({
+          target: [pointTransactions.orderId, pointTransactions.type],
+          set: { points: sql`${pointTransactions.points} + ${refund}` },
+        })
+    }
+    if (reversal) {
+      await tx
+        .insert(pointTransactions)
+        .values({ orderId, customerId: customer.id, phone: customer.phone || '', points: -reversal, type: 'earn_reversal' })
+    }
+    await tx
+      .update(customers)
+      .set({ pointsBalance: sql`${customers.pointsBalance} + ${refund - reversal}`, updatedAt: sql`now()` })
+      .where(eq(customers.id, customer.id))
+    return { refund, reversal }
+  })
+}
+
+/**
+ * The reverse of settlePointsOnCancel, for an order moved OUT of cancelled
+ * (staff cancelled by mistake): re-spends the refunded points as far as the
+ * balance allows and returns the reversed earn. See planUncancelSettlement.
+ *
+ * @returns {Promise<{ delta: number, keptRefund: number }>}
+ */
+export async function restorePointsOnUncancel(orderId) {
+  return db.transaction(async (tx) => {
+    const ledger = await orderLedger(tx, orderId)
+    if (!ledger.refund && !ledger.earn_reversal) return { delta: 0, keptRefund: 0 }
+    const customer = await lockCustomer(tx, ledger)
+    if (!customer) return { delta: 0, keptRefund: 0 }
+
+    const { delta, keptRefund } = planUncancelSettlement({
+      refunded: ledger.refund?.points ?? 0,
+      reversed: -(ledger.earn_reversal?.points ?? 0),
+      balance: customer.pointsBalance,
+    })
+
+    await tx
+      .delete(pointTransactions)
+      .where(and(eq(pointTransactions.orderId, orderId), inArray(pointTransactions.type, ['earn_reversal', ...(keptRefund ? [] : ['refund'])])))
+    if (keptRefund) {
+      await tx
+        .update(pointTransactions)
+        .set({ points: keptRefund })
+        .where(and(eq(pointTransactions.orderId, orderId), eq(pointTransactions.type, 'refund')))
+      console.warn('POINTS_UNCANCEL_SHORT — refunded points already spent, customer keeps them:', { orderId, keptRefund })
+    }
+    if (delta) {
+      await tx
+        .update(customers)
+        .set({ pointsBalance: sql`${customers.pointsBalance} + ${delta}`, updatedAt: sql`now()` })
+        .where(eq(customers.id, customer.id))
+    }
+    return { delta, keptRefund }
+  })
+}
+
+/** The order's ledger rows, keyed by type (unique per order, see 0007). */
+async function orderLedger(tx, orderId) {
+  const rows = await tx.select().from(pointTransactions).where(eq(pointTransactions.orderId, orderId))
+  return Object.fromEntries(rows.map((r) => [r.type, r]))
+}
+
+/** Locks the customer the order's points belong to; null if there is none. */
+async function lockCustomer(tx, ledger) {
+  const customerId = ledger.redeem?.customerId ?? ledger.earn?.customerId ?? ledger.refund?.customerId
+  if (!customerId) return null
+  const [customer] = await tx.select().from(customers).where(eq(customers.id, customerId)).for('update').limit(1)
+  return customer ?? null
 }

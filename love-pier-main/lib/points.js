@@ -77,3 +77,44 @@ export function calcInStoreVisit(grossAmount, { discountPercent = 0, pointsPerBa
   const pointsEarned = perPoint > 0 ? Math.floor(netAmount / perPoint) : 0
   return { grossAmount: gross, discountAmount, pointsRedeemed: redeemed, netAmount, pointsEarned }
 }
+
+/**
+ * What cancelling an order does to the customer's points. Pure — the DB half
+ * is settlePointsOnCancel in lib/pointsAward.js.
+ *
+ * Points spent on the order (its `redeem` ledger row) go back in full: the
+ * customer never got the food. Points EARNED on it (only there once it was
+ * paid) come back out, but never below zero: if they were already spent on a
+ * later order, the shop eats the difference rather than leaving the customer
+ * owing points. Neither half is repeated: the refund only tops up to what was
+ * spent (an earlier cancel that was undone may have left part of it with the
+ * customer), and an earn already reversed stays reversed — so cancelling the
+ * same order twice is a no-op.
+ *
+ * @param {{ redeemed: number, earned: number, refunded: number, reversed: number, balance: number }} state
+ *   redeemed/earned: points on the order's redeem/earn rows (positive numbers)
+ *   refunded/reversed: points on its existing refund/earn_reversal rows
+ *   balance: the customer's current points_balance
+ * @returns {{ refund: number, reversal: number }} points to add back / take away
+ */
+export function planCancelSettlement({ redeemed = 0, earned = 0, refunded = 0, reversed = 0, balance = 0 }) {
+  const refund = Math.max(0, Math.max(0, redeemed) - Math.max(0, refunded))
+  const reversal = reversed > 0 ? 0 : Math.min(Math.max(0, earned), Math.max(0, balance) + refund)
+  return { refund, reversal }
+}
+
+/**
+ * Undoing a cancel (staff moved a cancelled order back to another status):
+ * take back the refund and return the reversed earn. The refund can only be
+ * reclaimed as far as the balance allows — whatever the customer already
+ * spent stays theirs, and is what `keptRefund` reports so the ledger row can
+ * be left at that amount (keeping ledger sum === points_balance).
+ *
+ * @param {{ refunded: number, reversed: number, balance: number }} state
+ * @returns {{ delta: number, keptRefund: number }} delta to apply to points_balance
+ */
+export function planUncancelSettlement({ refunded = 0, reversed = 0, balance = 0 }) {
+  const afterReturn = Math.max(0, balance) + Math.max(0, reversed)
+  const reclaim = Math.min(Math.max(0, refunded), afterReturn)
+  return { delta: Math.max(0, reversed) - reclaim, keptRefund: Math.max(0, refunded) - reclaim }
+}

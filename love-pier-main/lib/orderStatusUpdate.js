@@ -1,5 +1,5 @@
 // Shared core for changing an order's status. Updates the row, credits loyalty
-// points on the pending→paid transition, and pushes the customer the matching
+// points on the pending→paid transition, settles them on a cancel, and pushes the customer the matching
 // LINE status card. Called from BOTH the admin panel
 // (app/admin/actions/orders.ts) and the staff LINE quick-action buttons
 // (pages/api/line-webhook.js), so a status change lands identically whichever
@@ -10,7 +10,7 @@ import { orders } from './db/schema'
 import { pushToUser } from './lineMessaging'
 import { markUnfriended } from './lineFriendship'
 import { buildOrderStatusFlex } from './orderFlex'
-import { awardPoints } from './pointsAward'
+import { awardPoints, restorePointsOnUncancel, settlePointsOnCancel } from './pointsAward'
 import { IN_STORE_METHOD } from './inStore'
 
 // Mirror of ORDER_STATUSES in app/admin/orders/status.ts. Duplicated (not
@@ -90,10 +90,27 @@ export async function applyOrderStatusChange({ id, orderNo, status }) {
 
   await db.update(orders).set({ status }).where(eq(orders.id, order.id))
 
+  // A cancelled order gives back the points spent on it and takes back what
+  // it earned; undoing the cancel reverses that. Before the award below so a
+  // cancelled→paid move restores the earn row first (awardPoints then no-ops
+  // on it). Best-effort like every other side effect here — but loud, because
+  // a failure leaves a customer's balance wrong: grep for POINTS_SETTLE_FAILED.
+  try {
+    if (status === 'cancelled') {
+      const settled = await settlePointsOnCancel(order.id)
+      if (settled.refund || settled.reversal) console.log('points settled on cancel:', order.orderNo, settled)
+    } else if (order.status === 'cancelled') {
+      const restored = await restorePointsOnUncancel(order.id)
+      if (restored.delta || restored.keptRefund) console.log('points restored on un-cancel:', order.orderNo, restored)
+    }
+  } catch (err) {
+    console.error('POINTS_SETTLE_FAILED — order status changed but points were not settled:', order.orderNo, err)
+  }
+
   // Manual payment confirmation must have the same loyalty outcome as an
   // auto-verified slip. awardPoints is idempotent by order id, so a later
   // retry or status change cannot credit the customer twice.
-  if (status === 'paid' && order.status === 'pending' && order.pointsEarned > 0) {
+  if (status === 'paid' && (order.status === 'pending' || order.status === 'cancelled') && order.pointsEarned > 0) {
     try {
       await awardPoints({
         orderId: order.id,
