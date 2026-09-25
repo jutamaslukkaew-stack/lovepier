@@ -125,7 +125,10 @@ export async function getSettings(): Promise<ShopSettingsForm> {
     preorderPickupOpen: m[SETTING_KEYS.preorderPickupOpen] || '',
     preorderPickupClose: m[SETTING_KEYS.preorderPickupClose] || '',
     preorderSlotMinutes: m[SETTING_KEYS.preorderSlotMinutes] || '60',
-    preorderCustomTimeEnabled: m[SETTING_KEYS.preorderCustomTimeEnabled] === 'true',
+    // Must stay identical to the read in lib/settings.js: unset is ON, and
+    // only an explicit 'false' turns it off. With `=== 'true'` here the switch
+    // would render off while customers were already being offered the field.
+    preorderCustomTimeEnabled: m[SETTING_KEYS.preorderCustomTimeEnabled] !== 'false',
   }
 }
 

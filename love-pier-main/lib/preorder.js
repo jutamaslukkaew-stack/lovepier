@@ -264,29 +264,27 @@ export function shopOpenState({
  * The first and last bookable slot START on a day, in minutes since midnight.
  *
  * ONE function, so what the picker offers (slotsForDate) and what the server
- * accepts (validateScheduleRequest) cannot drift apart. Two kinds of bound
- * meet here and they are NOT the same kind of number:
+ * accepts (validateScheduleRequest) cannot drift apart.
  *
- *   - closeTime is the moment the door shuts, so it is EXCLUSIVE: the last
- *     slot has to leave a whole slot before it. 09:00-18:00 at 60 gives
- *     09:00…17:00, exactly the nine the reservation form already offers
- *     (pages/reservation.js). An 18:00 slot would promise a handover at the
- *     moment staff are shutting down.
- *   - windowStart/windowEnd are a pickup window the shop typed in, so the end
- *     is INCLUSIVE: "รับได้ 10:00-14:00" has to offer 14:00, or the shop's own
- *     words contradict its own picker.
+ * BOTH ends are INCLUSIVE. closeTime is the last collectable moment, not the
+ * first forbidden one: 09:00-18:00 at 60 gives 09:00…18:00, and a shop that
+ * closes at 18:00 hands over an order at 18:00. windowStart/windowEnd, the
+ * pickup window the shop typed in, work the same way — "รับได้ 10:00-14:00"
+ * offers 14:00, or the shop's own words contradict its own picker.
  *
- * Trading hours are the outer bound either way. A window can only ever narrow
- * the day, never widen it, so nothing an admin types can weaken the
- * shut-the-door rule above. That is a deliberate product decision, not a
- * limitation: a shop wanting collection before it opens has to move its
- * opening time, where the "we're closed right now" banner will see it too.
+ * It used to reserve a whole slot before closing (last = close - slotMinutes,
+ * so 17:00 on an hourly grid) on the reasoning that an 18:00 slot promises a
+ * handover while staff are shutting down. The shop overruled that on
+ * 2026-09-09: a pre-order is a bag already packed and waiting, not a table
+ * being seated, and refusing the closing hour was turning away the customers
+ * who collect on their way home. Two knobs cover the case that reasoning was
+ * really about — shop_last_order_minutes stops NEW orders early, and the
+ * pickup window ends collection early — and both say so explicitly instead of
+ * silently eating an hour.
  *
- * With windowStart/windowEnd/slotMinutes all absent this returns exactly
- * { first: open, last: close - 60 }, and `m <= last` is arithmetically the
- * same loop as the `m + SLOT_MINUTES <= close` it replaced. That identity is
- * what lets an unconfigured shop keep today's behaviour bit for bit — the
- * existing tests are the proof and must pass untouched.
+ * Trading hours are still the outer bound. A window can only ever narrow the
+ * day, never widen it: a shop wanting collection before it opens has to move
+ * its opening time, where the "we're closed right now" banner will see it too.
  */
 function resolveSlotBounds(opts = {}) {
   const slotMinutes = Math.max(1, Math.floor(Number(opts.slotMinutes) || SLOT_MINUTES))
@@ -301,7 +299,9 @@ function resolveSlotBounds(opts = {}) {
   const wEnd = hhmmToMinutes(opts.windowEnd)
 
   const first = wStart == null ? open : Math.max(open, wStart)
-  const last = wEnd == null ? close - slotMinutes : Math.min(close - slotMinutes, wEnd)
+  // `close`, not `close - slotMinutes`: closing time is bookable. slotMinutes
+  // is now only the spacing between offers, never a reserved tail.
+  const last = wEnd == null ? close : Math.min(close, wEnd)
   return { first, last, slotMinutes }
 }
 
@@ -386,23 +386,50 @@ export function resolvePickupWindow({
  * been.
  */
 export function slotsForDate(ymd, opts = {}) {
+  return bookableTimes(ymd, opts, null)
+}
+
+/**
+ * The same bookable times, but every `stepMinutes` instead of every slot —
+ * what the customer may choose from when the shop lets them state an exact
+ * time (preorder_custom_time_enabled).
+ *
+ * NOT slotsForDate(ymd, { ...opts, slotMinutes: 5 }). The slot interval is two
+ * things at once inside resolveSlotBounds: the spacing between offers AND the
+ * gap left before closing. Overriding it there would walk the last bookable
+ * time from 17:30 to 17:55 and offer a handover the shop never agreed to.
+ * Here the bounds stay exactly the shop's; only the spacing changes.
+ *
+ * Every value this returns therefore passes validateScheduleRequest with
+ * allowCustomTime — which is the point. The customer picks hours and minutes
+ * off this list rather than typing into a native time field, so a time outside
+ * the window is unpickable rather than merely rejected afterwards. Same reason
+ * the date is a <select> and not <input type="date">: min/max on the native
+ * control is advisory, and several mobile browsers ignore it outright.
+ */
+export function customTimeOptions(ymd, opts = {}, stepMinutes = 5) {
+  return bookableTimes(ymd, opts, stepMinutes)
+}
+
+// step === null means "one per slot", the grid's own spacing.
+function bookableTimes(ymd, opts, step) {
   const weekday = weekdayOfYmd(ymd)
   if (weekday == null) return []
   if (resolveClosedDays(opts.closedDays).includes(weekday)) return []
 
   const bounds = resolveSlotBounds(opts)
   if (!bounds) return []
+  const stride = step == null ? bounds.slotMinutes : Math.max(1, Math.floor(Number(step) || 5))
 
   const leadMinutes = Math.max(0, Number(opts.leadMinutes) || 0)
   const nowMs = opts.now instanceof Date ? opts.now.getTime() : Date.now()
   const cutoff = nowMs + leadMinutes * 60000
 
   const out = []
-  // `<= last` rather than `+ slotMinutes <= close`: resolveSlotBounds already
-  // subtracted the closing allowance, and doing it there is what lets an
-  // explicit pickup-window end stay inclusive while the trading close stays
-  // exclusive. An inverted or impossible range simply never enters the loop.
-  for (let m = bounds.first; m <= bounds.last; m += bounds.slotMinutes) {
+  // `<= last`, and `last` is closing time itself — both ends of the range are
+  // inclusive now (see resolveSlotBounds). An inverted or impossible range
+  // simply never enters the loop.
+  for (let m = bounds.first; m <= bounds.last; m += stride) {
     const hhmm = minutesToHhmm(m)
     const at = bangkokSlotToInstant(ymd, hhmm)
     // The lead-time rule is applied to EVERY date, not just today. For

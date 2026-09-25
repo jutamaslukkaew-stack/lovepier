@@ -34,7 +34,7 @@ import { Check, CheckCircle2, Clock, Receipt, User, StickyNote, Download, Messag
 // Same constant as components/CartDrawer.js — the add-friend deep link needs
 // the leading @, it is part of the path.
 const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@lovepier.cafe'
-import { availableDates, bangkokDateParts, formatDayThai, formatSlotThai, resolvePickupWindow, validateScheduleRequest } from '../../lib/preorder'
+import { availableDates, bangkokDateParts, customTimeOptions, formatDayThai, formatSlotThai, resolvePickupWindow, validateScheduleRequest } from '../../lib/preorder'
 
 // Leaflet touches `window` at import time — must never be pulled into the
 // server bundle, hence ssr:false.
@@ -183,6 +183,8 @@ const COPY = {
     scheduleConflictItem: (name, open, close) => `${name} · รับได้ ${open}–${close} น.`,
     scheduleBackToCart: 'กลับไปแก้ตะกร้า',
     customTimeToggle: 'ระบุเวลาเอง',
+    scheduleHour: 'ชั่วโมง',
+    scheduleMinute: 'นาที',
     customTimeBack: 'เลือกจากช่วงเวลา',
     customTimeOutside: (open, close) => `กรุณาระบุเวลาระหว่าง ${open}–${close} น.`,
     pickupNoteLabel: 'หมายเหตุเรื่องเวลา (ถ้ามี)',
@@ -340,6 +342,8 @@ const COPY = {
     scheduleConflictItem: (name, open, close) => `${name} · collection ${open}–${close}`,
     scheduleBackToCart: 'Back to cart',
     customTimeToggle: 'Enter an exact time',
+    scheduleHour: 'Hour',
+    scheduleMinute: 'Minute',
     customTimeBack: 'Pick from the list',
     customTimeOutside: (open, close) => `Please choose a time between ${open} and ${close}.`,
     pickupNoteLabel: 'Note about timing (optional)',
@@ -492,6 +496,8 @@ const COPY = {
     scheduleConflictItem: (name, open, close) => `${name} · 取货 ${open}–${close}`,
     scheduleBackToCart: '返回购物车',
     customTimeToggle: '自己填写时间',
+    scheduleHour: '小时',
+    scheduleMinute: '分钟',
     customTimeBack: '从时间段选择',
     customTimeOutside: (open, close) => `请填写 ${open}–${close} 之间的时间。`,
     pickupNoteLabel: '时间备注（可选）',
@@ -779,6 +785,28 @@ export default function OrderFlow({
   // keeps exactly the shape it has always had — only the extra `customTime`
   // flag is new, and the server ignores it unless the shop enabled the feature.
   const [customTime, setCustomTime] = useState(false)
+  // Whether the two-column time panel is showing. Purely presentational — the
+  // chosen value still lives in scheduledSlot above, so closing the panel can
+  // never lose or change a selection.
+  const [timeOpen, setTimeOpen] = useState(false)
+  const timeFieldRef = useRef(null)
+
+  // Dismiss the time panel on any press outside it. Both mousedown and
+  // touchstart: inside LINE's in-app browser a tap does not always produce a
+  // mouse event in time, and a panel that stays open over the rest of the
+  // summary is worse than one that closes a moment early.
+  useEffect(() => {
+    if (!timeOpen) return undefined
+    function onPressOutside(e) {
+      if (timeFieldRef.current && !timeFieldRef.current.contains(e.target)) setTimeOpen(false)
+    }
+    document.addEventListener('mousedown', onPressOutside)
+    document.addEventListener('touchstart', onPressOutside)
+    return () => {
+      document.removeEventListener('mousedown', onPressOutside)
+      document.removeEventListener('touchstart', onPressOutside)
+    }
+  }, [timeOpen])
 
   // step 1b — contact / address (resolved up front now; summary just recaps it)
   const [form, setForm] = useState({ name: '', phone: '', address: '', note: '', pickupNote: '' })
@@ -935,6 +963,18 @@ export default function OrderFlow({
   // rather than showing a picker with no dates in it.
   const canPreorder = scheduleDays.length > 0
   const selectedDay = scheduleDays.find((d) => d.ymd === scheduledDate) || null
+  // Every exact time bookable on the chosen day, five minutes apart. Built
+  // even when the shop's switch is off (it costs a loop over one day) so the
+  // hour/minute selects below never have to special-case an empty list on the
+  // render right after the customer flips to typed entry.
+  const customTimes = scheduledDate ? customTimeOptions(scheduledDate, scheduleOpts) : []
+  // The pair is DERIVED from scheduledSlot, never held in state of its own:
+  // that string is what the POST sends and what validateScheduleRequest reads,
+  // so a second copy could disagree with it.
+  const customHour = customTime && scheduledSlot ? scheduledSlot.slice(0, 2) : ''
+  const customMinute = customTime && scheduledSlot ? scheduledSlot.slice(3, 5) : ''
+  const customHours = [...new Set(customTimes.map((hhmm) => hhmm.slice(0, 2)))]
+  const customMinutes = customTimes.filter((hhmm) => hhmm.slice(0, 2) === customHour).map((hhmm) => hhmm.slice(3, 5))
   // The typed-time branch calls the SERVER's own validator rather than
   // re-deriving the rules here. It's the same pure module the API uses, so the
   // continue button and the POST can never disagree about whether 14:20 is
@@ -2357,8 +2397,10 @@ export default function OrderFlow({
                               setScheduledDate(e.target.value)
                               // MUST clear: the same HH:MM may not exist on
                               // the new day (today's list is truncated by the
-                              // lead time).
+                              // lead time). The panel closes with it, since
+                              // what it was listing belonged to the old day.
                               setScheduledSlot('')
+                              setTimeOpen(false)
                             }}
                           >
                             <option value="" disabled>{t.scheduleDate}</option>
@@ -2366,21 +2408,108 @@ export default function OrderFlow({
                               <option key={d.ymd} value={d.ymd}>{dayLabel(d.ymd)}</option>
                             ))}
                           </select>
-                          {/* Typed time and grid slot share `scheduledSlot`,
+                          {/* Exact time and grid slot share `scheduledSlot`,
                               so the POST body is identical either way and
                               only the `customTime` flag tells them apart. */}
                           {customTime ? (
-                            <input
-                              type="time"
-                              className={inputCls}
-                              value={scheduledSlot}
-                              aria-label={t.scheduleTime}
-                              disabled={!selectedDay}
-                              min={pickupWindow.ok ? pickupWindow.startTime : undefined}
-                              max={pickupWindow.ok ? pickupWindow.endTime : undefined}
-                              step={300}
-                              onChange={(e) => setScheduledSlot(e.target.value)}
-                            />
+                            /* Two <select>s, NOT <input type="time">, for the
+                               same reason the date above is a <select>: the
+                               native control treats min/max as advice and
+                               several mobile browsers scroll cheerfully past
+                               them to 22:24. Off a list built by
+                               customTimeOptions(), a time the shop won't
+                               honour cannot be reached at all — and picking an
+                               hour fills in the earliest valid minute, so the
+                               field is never left half-answered. */
+                            <div className="relative" ref={timeFieldRef}>
+                              <button
+                                type="button"
+                                disabled={!selectedDay}
+                                aria-haspopup="listbox"
+                                aria-expanded={timeOpen}
+                                aria-label={t.scheduleTime}
+                                onClick={() => setTimeOpen((v) => !v)}
+                                className={`${inputCls} flex items-center justify-between gap-1 text-left disabled:opacity-50`}
+                              >
+                                <span className={scheduledSlot ? 'text-ink' : 'text-black/30'}>
+                                  {scheduledSlot || '--:--'}
+                                </span>
+                                <Clock size={14} strokeWidth={2} className="shrink-0 text-[#8c682c]" />
+                              </button>
+                              {timeOpen && (
+                                <div className="absolute right-0 top-full z-30 mt-1 flex gap-1 rounded-xl border border-black/15 bg-white p-1 shadow-lg">
+                                  {/* Two scrolling columns, hours then minutes,
+                                      because that is the shape people already
+                                      know from their phone's own time picker.
+                                      The difference is what is IN them: only
+                                      times customTimeOptions() says the shop
+                                      will honour, so scrolling to 22:24 is not
+                                      something the control can do. */}
+                                  <div
+                                    role="listbox"
+                                    aria-label={t.scheduleHour}
+                                    className="h-[168px] w-[62px] overflow-y-auto overscroll-contain"
+                                  >
+                                    {customHours.map((h) => (
+                                      <button
+                                        key={h}
+                                        type="button"
+                                        role="option"
+                                        aria-selected={h === customHour}
+                                        onClick={() =>
+                                          setScheduledSlot(
+                                            customTimes.find((hhmm) => hhmm.slice(0, 2) === h) || ''
+                                          )
+                                        }
+                                        className={`block w-full rounded-lg py-2 text-center text-[14px] transition-colors ${
+                                          h === customHour
+                                            ? 'bg-[#4a3520] font-medium text-white'
+                                            : 'text-ink hover:bg-black/[0.04]'
+                                        }`}
+                                      >
+                                        {h}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <div
+                                    role="listbox"
+                                    aria-label={t.scheduleMinute}
+                                    className="h-[168px] w-[62px] overflow-y-auto overscroll-contain"
+                                  >
+                                    {/* Empty until an hour is chosen: which
+                                        minutes are legal depends on the hour
+                                        (the lead time can eat the first part of
+                                        an hour), so offering them early would
+                                        mean offering some that aren't. */}
+                                    {customHour ? (
+                                      customMinutes.map((m) => (
+                                        <button
+                                          key={m}
+                                          type="button"
+                                          role="option"
+                                          aria-selected={m === customMinute}
+                                          onClick={() => {
+                                            setScheduledSlot(`${customHour}:${m}`)
+                                            setTimeOpen(false)
+                                          }}
+                                          className={`block w-full rounded-lg py-2 text-center text-[14px] transition-colors ${
+                                            m === customMinute
+                                              ? 'bg-[#4a3520] font-medium text-white'
+                                              : 'text-ink hover:bg-black/[0.04]'
+                                          }`}
+                                        >
+                                          {m}
+                                        </button>
+                                      ))
+                                    ) : (
+                                      <span className="block px-1 py-2 text-center text-[12px] leading-snug text-black/30">
+                                        {t.scheduleHour}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <select
                               className={inputCls}
@@ -2396,9 +2525,9 @@ export default function OrderFlow({
                             </select>
                           )}
                         </div>
-                        {/* The RESOLVED window, not raw trading hours. This
-                            also fixes a long-standing inaccuracy: it used to
-                            print 09:00–18:00 when 18:00 was never bookable. */}
+                        {/* The RESOLVED window, not raw trading hours: the
+                            shop's pre-order window and the windows on the
+                            dishes in this cart have already narrowed it. */}
                         <p className="text-[11px] leading-relaxed text-black/45">
                           {t.scheduleLeadNote(effectivePreorderLeadMinutes, pickupWindow.startTime, pickupWindow.endTime)}
                         </p>
@@ -2420,6 +2549,9 @@ export default function OrderFlow({
                               // necessarily on the grid.
                               setScheduledSlot('')
                               setCustomTime((v) => !v)
+                              // The panel belongs to the typed-time field; it
+                              // must not survive a switch back to the grid.
+                              setTimeOpen(false)
                             }}
                           >
                             {customTime ? t.customTimeBack : t.customTimeToggle}
