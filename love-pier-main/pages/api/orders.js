@@ -41,6 +41,13 @@ export default async function handler(req, res) {
   const lineAccessToken = pickString(req.body?.lineAccessToken)
   const distanceRaw = Number(req.body?.distanceKm)
   const distanceKm = Number.isFinite(distanceRaw) ? distanceRaw : null
+  // The customer's own pinned GPS location (see the migration note on
+  // orders.lat/lng) — absent whenever distanceKm itself was replayed rather
+  // than freshly read, so validating them together would be redundant.
+  const latRaw = Number(req.body?.lat)
+  const lngRaw = Number(req.body?.lng)
+  const lat = Number.isFinite(latRaw) && Math.abs(latRaw) <= 90 ? latRaw : null
+  const lng = Number.isFinite(lngRaw) && Math.abs(lngRaw) <= 180 ? lngRaw : null
   // Anything other than the literal 'delivery' is treated as pickup — a
   // missing/garbled value must never default to the one option that costs
   // the customer money.
@@ -347,6 +354,8 @@ export default async function handler(req, res) {
         paymentMethod: 'promptpay',
         paymentRef: paymentRef || null,
         distanceKm: distanceKm != null ? String(distanceKm) : null,
+        lat: lat != null ? String(lat) : null,
+        lng: lng != null ? String(lng) : null,
         // null = ASAP. drizzle's timestamp({withTimezone:true}) takes a Date.
         scheduledFor,
         pickupNote,
@@ -448,7 +457,7 @@ export default async function handler(req, res) {
     // and the shop's own staff LINE (LINE_ORDER_NOTIFY_TO). Both best-effort
     // — a push failure never fails the order itself. The staff copy carries the
     // กำลังทำ / พร้อมแล้ว / ยกเลิก quick-action buttons; the customer's must not.
-    const cardFields = { orderNo, name, phone, address, items, total: totalAmount, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel: scheduledFor ? formatSlotThai(scheduledDate, scheduledSlot) : '', pickupNote }
+    const cardFields = { orderNo, name, phone, address, lat, lng, items, total: totalAmount, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel: scheduledFor ? formatSlotThai(scheduledDate, scheduledSlot) : '', pickupNote }
     const flex = buildOrderFlex(cardFields)
     const staffFlex = buildOrderFlex({ ...cardFields, withStaffActions: true })
 

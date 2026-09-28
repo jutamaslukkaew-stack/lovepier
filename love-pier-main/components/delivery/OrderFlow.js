@@ -1445,6 +1445,12 @@ export default function OrderFlow({
           note: form.note,
           paymentRef,
           distanceKm: distanceResult?.distanceKm ?? null,
+          // The customer's own pinned GPS fix, when this delivery's distance
+          // came from one (see the migration note on orders.lat/lng) — lets
+          // the staff card link straight to the pin instead of just the
+          // typed address.
+          lat: deliveryMethod === 'delivery' ? coords?.lat ?? null : null,
+          lng: deliveryMethod === 'delivery' ? coords?.lng ?? null : null,
           deliveryMethod: deliveryMethod || 'pickup',
           // The two raw strings the picker displayed, never a client-computed
           // instant — /api/orders re-runs the same lib/preorder.js rules
@@ -1488,6 +1494,8 @@ export default function OrderFlow({
         name: form.name,
         phone: form.phone,
         address: form.address,
+        lat: deliveryMethod === 'delivery' ? coords?.lat ?? null : null,
+        lng: deliveryMethod === 'delivery' ? coords?.lng ?? null : null,
         items: items.map((i) => ({
           name: i.name,
           price: parseFloat(i.price) || 0,

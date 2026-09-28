@@ -318,6 +318,14 @@ export const orders = pgTable(
     slipRef: text('slip_ref'),
     // driving distance from the shop (km), null when unknown
     distanceKm: numeric('distance_km', { precision: 5, scale: 1 }),
+    // The customer's own pinned GPS location (browser geolocation, taken
+    // during the delivery distance check) — lets delivery staff open the
+    // exact drop-off point in Google Maps instead of phoning to ask which
+    // building/floor. Null for pickup orders, and for a delivery order whose
+    // distance was replayed from a returning customer's last order (see
+    // OrderFlow.js's "ใช้ที่อยู่เดิม" bypass) rather than a fresh GPS fix.
+    lat: numeric('lat', { precision: 9, scale: 6 }),
+    lng: numeric('lng', { precision: 9, scale: 6 }),
     // Pre-order: the instant the customer wants this order ready, for delivery
     // or pickup alike. NULL = order now (ASAP) — every row that predates this
     // column, and still the common case.

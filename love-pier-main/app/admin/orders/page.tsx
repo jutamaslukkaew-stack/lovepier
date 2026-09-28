@@ -157,7 +157,18 @@ export async function AdminOrdersContent({ preordersOnly = false }: { preordersO
                     </p>
                     {o.address && (
                       <p className="text-muted-foreground text-[13px] leading-snug mt-0.5">
-                        {o.address}
+                        {o.lat != null && o.lng != null ? (
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${o.lat},${o.lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            {o.address}
+                          </a>
+                        ) : (
+                          o.address
+                        )}
                         {o.distanceKm != null && (
                           <span className="ml-1 text-[#4a3520]">· {o.distanceKm} กม.</span>
                         )}
