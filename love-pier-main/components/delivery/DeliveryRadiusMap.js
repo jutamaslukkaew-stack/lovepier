@@ -1,8 +1,8 @@
-// Leaflet map showing the shop, its delivery radius, and the customer's
-// pinned location. Client-only (Leaflet touches `window` at import time), so
+// Google Maps map showing the shop, its delivery radius, and the customer's
+// pinned location. Client-only (touches `window` to load the Maps script), so
 // this must be loaded via next/dynamic with { ssr: false } — see OrderFlow.js.
 import { useEffect, useRef } from 'react'
-import L from 'leaflet'
+import { loadGoogleMaps, emojiMarkerIcon } from '../../lib/googleMaps'
 
 export default function DeliveryRadiusMap({ shopLat, shopLng, userLat, userLng, radiusKm, withinRadius }) {
   const containerRef = useRef(null)
@@ -12,51 +12,55 @@ export default function DeliveryRadiusMap({ shopLat, shopLng, userLat, userLng, 
     if (!containerRef.current || mapRef.current) return
     if (![shopLat, shopLng].every(Number.isFinite)) return
 
-    const map = L.map(containerRef.current, {
-      zoomControl: false,
-      attributionControl: false,
-      dragging: true,
-      scrollWheelZoom: false,
-    })
-    mapRef.current = map
+    let cancelled = false
 
-    // Leaflet needs a view (center/zoom) set before any bounds/projection
-    // math — e.g. circle.getBounds() — works; setView before adding layers.
-    map.setView([shopLat, shopLng], 14)
+    loadGoogleMaps().then((maps) => {
+      if (cancelled || !containerRef.current || mapRef.current) return
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map)
-
-    const shopIcon = L.divIcon({
-      className: '',
-      html: '<div style="font-size:22px;line-height:1;transform:translate(-50%,-100%)">🏠</div>',
-      iconSize: [0, 0],
-    })
-    L.marker([shopLat, shopLng], { icon: shopIcon }).addTo(map)
-
-    const circle = L.circle([shopLat, shopLng], {
-      radius: (radiusKm || 5) * 1000,
-      color: '#4a3520',
-      weight: 1.5,
-      fillColor: '#4a3520',
-      fillOpacity: 0.08,
-    }).addTo(map)
-
-    const bounds = circle.getBounds()
-
-    if (Number.isFinite(userLat) && Number.isFinite(userLng)) {
-      const userIcon = L.divIcon({
-        className: '',
-        html: `<div style="font-size:24px;line-height:1;transform:translate(-50%,-100%)">${withinRadius === false ? '⚠️' : '📍'}</div>`,
-        iconSize: [0, 0],
+      const map = new maps.Map(containerRef.current, {
+        center: { lat: shopLat, lng: shopLng },
+        zoom: 14,
+        disableDefaultUI: true,
+        gestureHandling: 'greedy',
+        scrollwheel: false,
+        clickableIcons: false,
       })
-      L.marker([userLat, userLng], { icon: userIcon }).addTo(map)
-      bounds.extend([userLat, userLng])
-    }
+      mapRef.current = map
 
-    map.fitBounds(bounds, { padding: [24, 24] })
+      new maps.Marker({
+        position: { lat: shopLat, lng: shopLng },
+        map,
+        icon: emojiMarkerIcon(maps, '🏠', 22),
+      })
+
+      const circle = new maps.Circle({
+        map,
+        center: { lat: shopLat, lng: shopLng },
+        radius: (radiusKm || 5) * 1000,
+        strokeColor: '#4a3520',
+        strokeWeight: 1.5,
+        fillColor: '#4a3520',
+        fillOpacity: 0.08,
+      })
+
+      const bounds = circle.getBounds()
+
+      if (Number.isFinite(userLat) && Number.isFinite(userLng)) {
+        new maps.Marker({
+          position: { lat: userLat, lng: userLng },
+          map,
+          icon: emojiMarkerIcon(maps, withinRadius === false ? '⚠️' : '📍', 24),
+        })
+        bounds.extend({ lat: userLat, lng: userLng })
+      }
+
+      map.fitBounds(bounds, 24)
+    }).catch((err) => {
+      console.error('Google Maps failed to load:', err)
+    })
 
     return () => {
-      map.remove()
+      cancelled = true
       mapRef.current = null
     }
   }, [shopLat, shopLng, userLat, userLng, radiusKm, withinRadius])

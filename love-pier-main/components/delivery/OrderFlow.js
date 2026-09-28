@@ -36,7 +36,7 @@ import { Check, CheckCircle2, Clock, Receipt, User, StickyNote, Download, Messag
 const LINE_OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID || '@lovepier.cafe'
 import { availableDates, bangkokDateParts, formatDayThai, formatSlotThai, resolvePickupWindow, validateScheduleRequest } from '../../lib/preorder'
 
-// Leaflet touches `window` at import time — must never be pulled into the
+// Loads the Google Maps script client-side — must never be pulled into the
 // server bundle, hence ssr:false.
 const DeliveryRadiusMap = dynamic(() => import('./DeliveryRadiusMap'), { ssr: false })
 
@@ -701,6 +701,12 @@ export default function OrderFlow({
   // customer's device clock can be wrong. Null = ungated, so /preorder and
   // any other caller behaves exactly as before.
   shopState = null,
+  // Admin kill switch (/admin/settings) for shop delivery — the counter can
+  // be too busy to send anyone out, at which point the "delivery" choice on
+  // the method step is disabled and pickup is the only option. Defaults to
+  // on so a caller that doesn't pass it (or an old cached page) behaves
+  // exactly as before this switch existed.
+  deliveryEnabled = true,
 }) {
   const { lang } = useLanguage()
   const t = COPY[lang] || COPY.en
@@ -1439,6 +1445,12 @@ export default function OrderFlow({
           note: form.note,
           paymentRef,
           distanceKm: distanceResult?.distanceKm ?? null,
+          // The customer's own pinned GPS fix, when this delivery's distance
+          // came from one (see the migration note on orders.lat/lng) — lets
+          // the staff card link straight to the pin instead of just the
+          // typed address.
+          lat: deliveryMethod === 'delivery' ? coords?.lat ?? null : null,
+          lng: deliveryMethod === 'delivery' ? coords?.lng ?? null : null,
           deliveryMethod: deliveryMethod || 'pickup',
           // The two raw strings the picker displayed, never a client-computed
           // instant — /api/orders re-runs the same lib/preorder.js rules
@@ -1482,6 +1494,8 @@ export default function OrderFlow({
         name: form.name,
         phone: form.phone,
         address: form.address,
+        lat: deliveryMethod === 'delivery' ? coords?.lat ?? null : null,
+        lng: deliveryMethod === 'delivery' ? coords?.lng ?? null : null,
         items: items.map((i) => ({
           name: i.name,
           price: parseFloat(i.price) || 0,
@@ -2025,28 +2039,30 @@ export default function OrderFlow({
                   step's cart bar blocks below it), and the minimum applies to
                   both methods anyway, so neither can be the way around it.
                   See the belowMinOrder note above. */}
-              <button
-                type="button"
-                onClick={() => setDeliveryMethod('delivery')}
-                className={`text-left rounded-2xl border px-5 py-5 transition-colors ${
-                  deliveryMethod === 'delivery'
-                    ? 'border-[#4a3520] bg-[#4a3520]/[0.04]'
-                    : 'border-black/10 bg-white hover:border-black/20'
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <span
-                    aria-hidden="true"
-                    className={`w-6 h-6 rounded-full border-[3px] flex items-center justify-center shrink-0 ${deliveryMethod === 'delivery' ? 'border-[#4a3520]' : 'border-black/20'}`}
-                  >
-                    {deliveryMethod === 'delivery' && <span className="w-3 h-3 rounded-full bg-[#4a3520]" />}
-                  </span>
-                  <span className="flex-1">
-                    <span className="block text-[18px] font-medium text-ink leading-snug">{t.methodDeliveryLabel}</span>
-                    <span className="block text-[15px] leading-relaxed text-black/50 mt-1">{previewFee > 0 ? t.methodDeliveryDesc(previewFee) : t.methodDeliveryDescUnknown}</span>
-                  </span>
-                </div>
-              </button>
+              {deliveryEnabled && (
+                <button
+                  type="button"
+                  onClick={() => setDeliveryMethod('delivery')}
+                  className={`text-left rounded-2xl border px-5 py-5 transition-colors ${
+                    deliveryMethod === 'delivery'
+                      ? 'border-[#4a3520] bg-[#4a3520]/[0.04]'
+                      : 'border-black/10 bg-white hover:border-black/20'
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <span
+                      aria-hidden="true"
+                      className={`w-6 h-6 rounded-full border-[3px] flex items-center justify-center shrink-0 ${deliveryMethod === 'delivery' ? 'border-[#4a3520]' : 'border-black/20'}`}
+                    >
+                      {deliveryMethod === 'delivery' && <span className="w-3 h-3 rounded-full bg-[#4a3520]" />}
+                    </span>
+                    <span className="flex-1">
+                      <span className="block text-[18px] font-medium text-ink leading-snug">{t.methodDeliveryLabel}</span>
+                      <span className="block text-[15px] leading-relaxed text-black/50 mt-1">{previewFee > 0 ? t.methodDeliveryDesc(previewFee) : t.methodDeliveryDescUnknown}</span>
+                    </span>
+                  </div>
+                </button>
+              )}
 
               <button
                 type="button"

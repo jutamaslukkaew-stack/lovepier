@@ -130,7 +130,7 @@ function plainRow(label, value) {
 // customer's own inbound copy via sendMessagesToChat). Passing a new field at
 // only one of them half-ships it silently: one copy shows the time and the
 // other doesn't.
-export function buildOrderFlex({ orderNo, name, phone, address, items = [], total, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel, pickupNote, withStaffActions = false }) {
+export function buildOrderFlex({ orderNo, name, phone, address, lat, lng, items = [], total, deliveryFee, discountAmount, pointsRedeemed, distanceKm, deliveryMethod, scheduledLabel, pickupNote, withStaffActions = false }) {
   const orderUrl = `${SITE_URL}/delivery?order=${encodeURIComponent(orderNo)}`
 
   const itemRows = items.flatMap((i) => {
@@ -168,7 +168,24 @@ export function buildOrderFlex({ orderNo, name, phone, address, items = [], tota
   // Directly under the time it qualifies. Only ever shown on a scheduled
   // order: on an ASAP order there is no handover time for it to be about.
   if (scheduledLabel && pickupNote) detail.push(plainRow('โน้ตเวลา', String(pickupNote)))
-  if (address) detail.push(plainRow('ที่อยู่', String(address)))
+  // A clickable "แผนที่" link when the customer's own GPS fix is on file
+  // (see the migration note on orders.lat/lng) — the pin, not just the typed
+  // address, is what saves the courier a call to ask which building or
+  // floor. Falls back to a plain text row when there is no fix to link to
+  // (pickup orders, and a delivery whose distance was replayed from a
+  // returning customer's last order rather than a fresh GPS read).
+  const hasPin = Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))
+  if (address) {
+    detail.push(
+      hasPin
+        ? checkRow('ที่อยู่', String(address), {
+            type: 'uri',
+            label: 'แผนที่',
+            uri: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+          })
+        : plainRow('ที่อยู่', String(address))
+    )
+  }
   if (distanceKm != null) detail.push(plainRow('ระยะส่ง', `${distanceKm} กม.`))
   detail.push(plainRow('ชำระโดย', 'QR ของร้าน'))
 

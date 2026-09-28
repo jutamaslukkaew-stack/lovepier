@@ -1,7 +1,54 @@
 import Head from 'next/head'
+import { useEffect, useRef } from 'react'
 import Footer from '../components/Footer'
 import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
+import { loadGoogleMaps, emojiMarkerIcon } from '../lib/googleMaps'
+
+// Same pin used by about.js and the "Open in Google Maps" links below.
+const SHOP_LAT = 13.2537115
+const SHOP_LNG = 100.9287388
+
+function LocationMap({ title }) {
+  const containerRef = useRef(null)
+  const mapRef = useRef(null)
+
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return
+    let cancelled = false
+
+    loadGoogleMaps().then((maps) => {
+      if (cancelled || !containerRef.current || mapRef.current) return
+      const map = new maps.Map(containerRef.current, {
+        center: { lat: SHOP_LAT, lng: SHOP_LNG },
+        zoom: 16,
+        disableDefaultUI: true,
+        zoomControl: true,
+        gestureHandling: 'greedy',
+      })
+      mapRef.current = map
+      new maps.Marker({
+        position: { lat: SHOP_LAT, lng: SHOP_LNG },
+        map,
+        title,
+        icon: emojiMarkerIcon(maps, '🏠', 32),
+      })
+    }).catch((err) => {
+      console.error('Google Maps failed to load:', err)
+    })
+
+    return () => { cancelled = true }
+  }, [title])
+
+  return (
+    <div
+      ref={containerRef}
+      role="img"
+      aria-label={title}
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', filter: 'saturate(0.7) contrast(1.05)' }}
+    />
+  )
+}
 
 export default function Location() {
   const { lang } = useLanguage()
@@ -90,16 +137,9 @@ export default function Location() {
         <p className="mt-4 text-sm text-[#666] font-light max-w-[580px] mx-auto leading-[1.8]">{t.sub}</p>
       </header>
 
-      {/* Big map (iframe) */}
+      {/* Big map */}
       <div className="w-full h-[420px] lg:h-[540px] bg-[#dedad3] relative overflow-hidden border-b border-black/10 reveal sm:h-[360px]">
-        <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2189!2d100.9272293!3d13.2520411!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3102b54b8ceda3d5%3A0x6dad4e501d5d1adf!2sLOVE%20PIER%20BEACH%20CAFE!5e1!3m2!1sth!2sth!4v1716000000000"
-          style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:0, filter:'saturate(0.7) contrast(1.05)' }}
-          allowFullScreen=""
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          title={t.mapTitle}
-        />
+        <LocationMap title={t.mapTitle} />
       </div>
 
       {/* Info bar */}

@@ -8,6 +8,7 @@ import { requireUser } from '@/lib/auth'
 
 const SETTING_KEYS = {
   distanceMethod: 'distance_method',
+  deliveryEnabled: 'delivery_enabled',
   shopLat: 'shop_lat',
   shopLng: 'shop_lng',
   radiusKm: 'delivery_radius_km',
@@ -47,6 +48,7 @@ const SETTING_KEYS = {
 
 export type ShopSettingsForm = {
   distanceMethod: string
+  deliveryEnabled: boolean
   shopLat: string
   shopLng: string
   radiusKm: string
@@ -88,6 +90,7 @@ export async function getSettings(): Promise<ShopSettingsForm> {
   const m = Object.fromEntries(rows.map((r) => [r.key, r.value ?? '']))
   return {
     distanceMethod: m[SETTING_KEYS.distanceMethod] || 'straight',
+    deliveryEnabled: m[SETTING_KEYS.deliveryEnabled] !== 'false',
     shopLat: m[SETTING_KEYS.shopLat] || '',
     shopLng: m[SETTING_KEYS.shopLng] || '',
     radiusKm: m[SETTING_KEYS.radiusKm] || '5',
@@ -140,6 +143,7 @@ export async function saveSettings(data: ShopSettingsForm) {
   await requireUser()
   const method = data.distanceMethod === 'google' ? 'google' : 'straight'
   await put(SETTING_KEYS.distanceMethod, method)
+  await put(SETTING_KEYS.deliveryEnabled, String(Boolean(data.deliveryEnabled)))
   await put(SETTING_KEYS.shopLat, (data.shopLat || '').trim())
   await put(SETTING_KEYS.shopLng, (data.shopLng || '').trim())
   await put(SETTING_KEYS.radiusKm, (data.radiusKm || '5').trim())
