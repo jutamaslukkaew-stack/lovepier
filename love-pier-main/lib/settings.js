@@ -9,6 +9,12 @@ import { DEFAULT_CLOSE_TIME, DEFAULT_OPEN_TIME, parseClosedDays } from './preord
 // Keys stored in the `settings` table (edited from /admin/settings).
 export const SETTING_KEYS = {
   distanceMethod: 'distance_method', // 'straight' | 'google'
+  // Counter kill switch for shop delivery — when the shop is too busy to send
+  // anyone out, this hides the "delivery" choice on /delivery and /preorder's
+  // method step and leaves pickup as the only option. Unlike menuOptionsEnabled
+  // and preorderEnabled above, this defaults ON (existing behaviour), so it
+  // reads `!== 'false'` rather than `=== 'true'`.
+  deliveryEnabled: 'delivery_enabled',
   shopLat: 'shop_lat',
   shopLng: 'shop_lng',
   radiusKm: 'delivery_radius_km',
@@ -150,6 +156,7 @@ export async function getShopSettings() {
 
   return {
     distanceMethod: m[SETTING_KEYS.distanceMethod] || 'straight',
+    deliveryEnabled: m[SETTING_KEYS.deliveryEnabled] !== 'false',
     shopLat: m[SETTING_KEYS.shopLat] ? num(m[SETTING_KEYS.shopLat]) : num(process.env.SHOP_LAT),
     shopLng: m[SETTING_KEYS.shopLng] ? num(m[SETTING_KEYS.shopLng]) : num(process.env.SHOP_LNG),
     radiusKm: m[SETTING_KEYS.radiusKm]

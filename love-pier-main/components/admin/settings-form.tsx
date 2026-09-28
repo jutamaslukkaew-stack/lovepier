@@ -75,6 +75,16 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
 
   return (
     <div className="space-y-5">
+      <div className="flex items-center justify-between gap-4 rounded-lg border px-3.5 py-3">
+        <div className="space-y-0.5">
+          <Label>เปิดรับจัดส่ง</Label>
+          <p className="text-xs text-muted-foreground">
+            ปิดเมื่อหน้าร้านยุ่งจนจัดส่งไม่ไหว — ลูกค้าจะเลือกได้แค่ &ldquo;รับเองที่ร้าน&rdquo; บน /delivery และ /preorder
+          </p>
+        </div>
+        <Switch checked={form.deliveryEnabled} onCheckedChange={(v) => set('deliveryEnabled', v)} />
+      </div>
+
       <div className="space-y-1.5">
         <Label>วิธีคำนวณระยะจัดส่ง</Label>
         <Select value={form.distanceMethod} onValueChange={(v) => set('distanceMethod', v)}>

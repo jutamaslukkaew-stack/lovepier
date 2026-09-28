@@ -29,7 +29,7 @@ const PAGE_COPY = {
 // payment → success) — see components/delivery/OrderFlow.js. The menu step
 // reuses components/menu/MenuExperience, the same shared menu layout as
 // /menu, so section/layout edits there apply to both pages.
-export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDeliveryOrder, pointsPerBaht, menuOptionsEnabled, shopState }) {
+export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDeliveryOrder, pointsPerBaht, menuOptionsEnabled, deliveryEnabled, shopState }) {
   const { lang } = useLanguage()
   const t = PAGE_COPY[lang] || PAGE_COPY.en
   const { hidden, setHidden } = useChrome()
@@ -169,6 +169,7 @@ export default function Delivery({ dbMenuData, dbPromotions, radiusKm, minDelive
         minDeliveryOrder={minDeliveryOrder}
         pointsPerBaht={pointsPerBaht}
         menuOptionsEnabled={menuOptionsEnabled}
+        deliveryEnabled={deliveryEnabled}
         shopState={shopState}
       />
 
@@ -195,6 +196,7 @@ export async function getServerSideProps({ query }) {
         minDeliveryOrder: 300,
         pointsPerBaht: 20,
         menuOptionsEnabled: false,
+        deliveryEnabled: true,
         shopState: null,
       },
     }
@@ -205,7 +207,7 @@ export async function getServerSideProps({ query }) {
   // to a LINE login, so it has to know it up front — /api/delivery-distance
   // only reports it after the GPS check.
   const {
-    radiusKm, minDeliveryOrder, pointsPerBaht, menuOptionsEnabled,
+    radiusKm, minDeliveryOrder, pointsPerBaht, menuOptionsEnabled, deliveryEnabled,
     shopOpenTime, shopCloseTime, shopClosedDays, shopLastOrderMinutes,
   } = await getShopSettings()
   // Resolved on the server: a customer's device clock can be wrong or
@@ -224,6 +226,7 @@ export async function getServerSideProps({ query }) {
       minDeliveryOrder: minDeliveryOrder ?? 300,
       pointsPerBaht: pointsPerBaht ?? 20,
       menuOptionsEnabled: menuOptionsEnabled ?? false,
+      deliveryEnabled: deliveryEnabled ?? true,
       shopState,
     },
   }

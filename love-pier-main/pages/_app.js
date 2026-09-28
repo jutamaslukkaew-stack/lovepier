@@ -1,5 +1,4 @@
 import '../styles/globals.css'
-import 'leaflet/dist/leaflet.css'
 import { useEffect } from 'react'
 import Layout from '../components/Layout'
 import { LanguageProvider, useLanguage } from '../lib/language'
