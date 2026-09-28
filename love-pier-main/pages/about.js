@@ -281,14 +281,14 @@ export default function About() {
         <div className="mt-10 overflow-hidden rounded-xl border border-black/10" style={{ height: '220px' }}>
           <iframe
             title="Love Pier Beach Cafe"
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3879.4!2d100.9261639!3d13.2537115!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3102b54b8ceda3d5%3A0x6dad4e501d5d1adf!2sLOVE%20PIER%20BEACH%20CAFE!5e0!3m2!1sth!2sth!4v1700000000000!5m2!1sth!2sth"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3879.4!2d100.9283756!3d13.2541886!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3102b54b8ceda3d5%3A0x6dad4e501d5d1adf!2sLOVE%20PIER%20BEACH%20CAFE!5e0!3m2!1sth!2sth!4v1700000000000!5m2!1sth!2sth"
             width="100%" height="100%" style={{ border: 0 }}
             allowFullScreen="" loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />
         </div>
         <a
-          href="https://www.google.com/maps/place/LOVE+PIER+BEACH+CAFE/@13.2537115,100.9287388,17z"
+          href="https://www.google.com/maps/place/LOVE+PIER+BEACH+CAFE/@13.2541886,100.9283756,17z"
           target="_blank" rel="noopener noreferrer"
           className="mt-3 inline-flex items-center gap-2 text-[11px] tracking-[0.1em] uppercase text-gold hover:text-ink transition-colors font-light"
         >
