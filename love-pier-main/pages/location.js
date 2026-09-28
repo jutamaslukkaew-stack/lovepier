@@ -5,9 +5,12 @@ import { FOOTER_TAGLINES } from '../lib/footerTagline'
 import { useLanguage } from '../lib/language'
 import { loadGoogleMaps, emojiMarkerIcon } from '../lib/googleMaps'
 
-// Same pin used by about.js and the "Open in Google Maps" links below.
-const SHOP_LAT = 13.2537115
-const SHOP_LNG = 100.9287388
+// Same pin used by about.js and the "Open in Google Maps" links below —
+// resolved from the shop's current Google Maps listing (share.google short
+// link), which also matches the shop_lat/shop_lng admin setting used for the
+// delivery radius.
+const SHOP_LAT = 13.2541886
+const SHOP_LNG = 100.9283756
 
 function LocationMap({ title }) {
   const containerRef = useRef(null)
@@ -163,7 +166,7 @@ export default function Location() {
         <div>
           <h4 className="text-[10px] tracking-[0.4em] uppercase text-gold mb-3">{t.coords}</h4>
           <p className="text-sm text-ink leading-[1.7] font-light">
-            13.2537° N<br/>100.9287° E<br/>
+            13.2542° N<br/>100.9284° E<br/>
             <span className="text-muted text-xs"><a href="https://www.google.com/maps/search/?api=1&query=Love+Pier+Beach+Cafe+Chonburi" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">{t.openGoogle}</a></span>
           </p>
         </div>
