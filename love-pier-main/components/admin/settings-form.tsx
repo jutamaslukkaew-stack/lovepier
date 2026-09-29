@@ -57,8 +57,28 @@ function RevealInput({
   )
 }
 
+// The delivery earn rate is stored as "baht per 1 point" (what lib/points.js
+// divides by), but staff think in "points per 100 baht" — 100 baht = 3 points
+// is 33.33 baht per point, which nobody would type. The field converts both
+// ways so the stored key and every reader of it stay unchanged.
+function per100FromBahtPerPoint(v: string): string {
+  const n = parseFloat(v)
+  if (!Number.isFinite(n)) return ''
+  if (n <= 0) return '0'
+  return String(Math.round((100 / n) * 100) / 100)
+}
+
+function bahtPerPointFromPer100(v: string): string {
+  const t = v.trim()
+  if (!t) return ''
+  const n = parseFloat(t)
+  if (!Number.isFinite(n) || n <= 0) return '0'
+  return String(100 / n)
+}
+
 export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
   const [form, setForm] = useState<ShopSettingsForm>(initial)
+  const [pointsPer100, setPointsPer100] = useState(() => per100FromBahtPerPoint(initial.pointsPerBaht))
   const [pending, startTransition] = useTransition()
 
   function set<K extends keyof ShopSettingsForm>(k: K, v: ShopSettingsForm[K]) {
@@ -151,16 +171,19 @@ export function SettingsForm({ initial }: { initial: ShopSettingsForm }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label>อัตราสะสมแต้ม (บาทต่อ 1 แต้ม)</Label>
+        <Label>อัตราสะสมแต้ม (แต้มต่อทุก 100 บาท)</Label>
         <Input
-          value={form.pointsPerBaht}
-          onChange={(e) => set('pointsPerBaht', e.target.value)}
-          placeholder="20"
+          value={pointsPer100}
+          onChange={(e) => {
+            setPointsPer100(e.target.value)
+            set('pointsPerBaht', bahtPerPointFromPer100(e.target.value))
+          }}
+          placeholder="3"
           inputMode="decimal"
           className="w-32"
         />
         <p className="text-xs text-muted-foreground">
-          ค่าแนะนำ 20 บาท = 1 แต้ม (ครบ 100 บาทได้ 5 แต้ม) และ 1 แต้มใช้ลดออเดอร์ถัดไปได้ 1 บาท
+          เช่น ใส่ 3 = ทุก 100 บาทได้ 3 แต้ม (ยอด 200 บาทได้ 6 แต้ม) และ 1 แต้มใช้ลดออเดอร์ถัดไปได้ 1 บาท
         </p>
       </div>
 

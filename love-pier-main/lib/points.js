@@ -46,9 +46,15 @@ export function calcOrderDiscountAndPoints(
     ? Math.min(Math.max(0, Math.floor(Number(pointsRedeemed) || 0)), redemptionCeiling)
     : 0
   const netSubtotal = Math.max(0, afterDiscount - redeemed)
-  const pointsEarned = hasLineId && pointsPerBaht > 0 ? Math.floor(netSubtotal / pointsPerBaht) : 0
+  const pointsEarned = hasLineId && pointsPerBaht > 0 ? Math.floor(netSubtotal / pointsPerBaht + FLOOR_EPSILON) : 0
   return { discountAmount, discountPercent: pct, pointsRedeemed: redeemed, pointsEarned }
 }
+
+// Used by both earn calculations. A rate like "100 baht = 3 points" is stored
+// as 100/3 baht per point, which isn't exact in floating point, so a bill
+// that is an exact multiple can divide to a hair under the whole number and
+// floor one point short. The nudge is far below any real fraction of a point.
+const FLOOR_EPSILON = 1e-9
 
 /**
  * In-store visit math for /admin/scan — staff type the gross bill, this works
@@ -74,7 +80,7 @@ export function calcInStoreVisit(grossAmount, { discountPercent = 0, pointsPerBa
   const redeemed = Math.min(afterDiscount, Math.max(0, Math.floor(Number(pointsRedeemed) || 0)))
   const netAmount = Math.max(0, afterDiscount - redeemed)
   const perPoint = Number(pointsPerBaht) || 0
-  const pointsEarned = perPoint > 0 ? Math.floor(netAmount / perPoint) : 0
+  const pointsEarned = perPoint > 0 ? Math.floor(netAmount / perPoint + FLOOR_EPSILON) : 0
   return { grossAmount: gross, discountAmount, pointsRedeemed: redeemed, netAmount, pointsEarned }
 }
 

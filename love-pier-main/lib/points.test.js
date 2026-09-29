@@ -26,6 +26,14 @@ describe('calcOrderDiscountAndPoints', () => {
     expect(calcOrderDiscountAndPoints(500, { hasLineId: true, pointsPerBaht: 50 }).pointsEarned).toBe(10)
   })
 
+  it('earns exactly 3 points per ฿100 when the rate is stored as 100/3', () => {
+    const rate = { hasLineId: true, pointsPerBaht: 100 / 3 }
+    expect(calcOrderDiscountAndPoints(99, rate).pointsEarned).toBe(2)
+    expect(calcOrderDiscountAndPoints(100, rate).pointsEarned).toBe(3)
+    expect(calcOrderDiscountAndPoints(300, rate).pointsEarned).toBe(9)
+    expect(calcOrderDiscountAndPoints(1000, rate).pointsEarned).toBe(30)
+  })
+
   it('can disable earning without disabling redemption', () => {
     expect(calcOrderDiscountAndPoints(100, { hasLineId: true, pointsPerBaht: 0, pointsRedeemed: 20 })).toEqual({ discountAmount: 0, discountPercent: 0, pointsRedeemed: 20, pointsEarned: 0 })
   })
